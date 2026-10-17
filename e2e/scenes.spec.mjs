@@ -101,3 +101,26 @@ test('?scene=vasa-1628 plays the Vasa at 1628, steps to its last beat, and Esc r
   expect(await across(page)).toEqual(home);
   expect(errors).toEqual([]);
 });
+
+test('a 1912 beat with a photo shows it from the site itself, with its alt text and a linked credit', async ({ page }) => {
+  const errors = watchErrors(page);
+  await scenesOn(page);
+  const s10 = await (await page.request.get('scenes/s10-olympics-1912.json')).json();
+  const photo = s10.beats[0].photo;
+  await page.goto('/?scene=s10-olympics-1912');
+  await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
+  await page.locator('.sp-warn-go').click();
+  const img = page.locator('.sp-photo img');
+  await expect(img).toBeVisible();
+  await expect(img).toHaveAttribute('alt', photo.caption.en);
+  expect(new URL(await img.evaluate(i => i.currentSrc)).origin).toBe(new URL(page.url()).origin);
+  await expect.poll(() => img.evaluate(i => i.complete && i.naturalWidth)).toBeGreaterThan(0);
+  const credit = page.locator('.sp-photo-credit');
+  await expect(credit).toHaveText(`Photo: ${photo.credit.author}, ${photo.credit.licence}, Wikimedia Commons`);
+  await expect(credit).toHaveAttribute('href', photo.credit.page);
+  // a beat without a photo hides the card
+  const plain = s10.beats.findIndex(b => !b.photo);
+  for (let i = 0; i < plain; i++) await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.sp-photo')).toBeHidden();
+  expect(errors).toEqual([]);
+});

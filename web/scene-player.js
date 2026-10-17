@@ -121,6 +121,8 @@ const STR = {
     warn: 'Berättelsen handlar om människor som dog. Den visar bara platser, datum och korta texter.',
     faint: 'Svagt: dagens stad, för orientering' },
 };
+// "Photo: <author>, <licence>, Wikimedia Commons" (Foto in Swedish).
+export const photoCredit = (c, lang) => `${lang === 'sv' ? 'Foto' : 'Photo'}: ${c.author}, ${c.licence}, Wikimedia Commons`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 // opts: THREE, scene, camera, controls, origin (config.origin), surfaceAt(x, z), calm (the reduced-motion query),
@@ -163,8 +165,16 @@ export function mountScenePlayer(opts) {
   </div>
   <div class="sp-year" aria-live="polite"></div>
   <div class="sp-bottom">
-    <p class="sp-caption" aria-live="polite"></p>
-    <p class="sp-source"></p>
+    <div class="sp-beat">
+      <div class="sp-text">
+        <p class="sp-caption" aria-live="polite"></p>
+        <p class="sp-source"></p>
+      </div>
+      <figure class="sp-photo" hidden>
+        <img alt="" decoding="async">
+        <figcaption><span class="sp-photo-cap"></span> <a class="sp-photo-credit" target="_blank" rel="noopener"></a></figcaption>
+      </figure>
+    </div>
     <div class="sp-progress"><div class="sp-fill"></div></div>
     <div class="sp-controls">
       <button class="sp-prev">⏮&#xFE0E;</button>
@@ -298,10 +308,23 @@ export function mountScenePlayer(opts) {
       $('.sp-year').textContent = st.scene.year;
       capEl.textContent = L(b.caption);
       $('.sp-source').textContent = b.sources?.length ? `${s.source}: ${b.sources.join('; ')}` : '';
+      showPhoto(b.photo);
       capEl.classList.remove('sp-fading');
     };
     if (reduced()) write();
     else { capEl.classList.add('sp-fading'); setTimeout(() => st && write(), 250); }
+  }
+  // The beat's photo card: served from the site itself (scenes/img/, built by scripts/scenes/build.mjs).
+  function showPhoto(p) {
+    const fig = $('.sp-photo'), img = fig.querySelector('img'), a = $('.sp-photo-credit');
+    fig.hidden = !p;
+    if (!p) { img.removeAttribute('src'); return; }
+    img.src = `${base}${p.src}`;
+    if (p.width && p.height) { img.width = p.width; img.height = p.height; }
+    img.alt = L(p.caption);
+    $('.sp-photo-cap').textContent = L(p.caption);
+    a.textContent = photoCredit(p.credit, opts.lang());
+    a.href = p.credit.page;
   }
   function staticText() {
     const s = S();
@@ -383,10 +406,10 @@ export function mountScenePlayer(opts) {
       } else if (o.type === 'marker' && o.at) {
         const at = toLocal(o.at[0], o.at[1], origin);
         const el = document.createElement('div');
-        el.className = 'sp-pin';
+        el.className = o.always ? 'sp-pin sp-always' : 'sp-pin';
         el.innerHTML = `<span class="sp-pin-dot"></span><span class="sp-pin-label">${esc(L(o.label))}</span>`;
         pins.append(el);
-        overlays.push({ kind: 'marker', at, el });
+        overlays.push({ kind: 'marker', at, el, always: !!o.always });
       } else if (o.type === 'ghost') {
         overlays.push(o.ship ? ship(o) : ghost(o));
       }
@@ -436,9 +459,12 @@ export function mountScenePlayer(opts) {
     const m = [[22, mast1], [2, mast2], [-24, mast3]].flatMap(([x, h]) => [x, hull, 0, x, h, 0]);
     const mg = new THREE.BufferGeometry();
     mg.setAttribute('position', new THREE.Float32BufferAttribute(m, 3));
-    group.add(new THREE.LineSegments(mg, new THREE.LineBasicMaterial({ color: GHOST.edge })));
+    const mastMat = new THREE.LineBasicMaterial({ color: GHOST.edge });
+    group.add(new THREE.LineSegments(mg, mastMat));
     group.renderOrder = 10;
     opts.scene.add(group);
+    mats.push(mastMat);
+    if (o.ship.sinks_in_beat) for (const m of mats) m.transparent = true;   // it fades as it goes under
     return { kind: 'ship', o, group, mats, el: label(o), top: Math.max(mast1, mast2, mast3) };
   }
   function ribbon(line, width) {
@@ -480,11 +506,11 @@ export function mountScenePlayer(opts) {
         const on = ghostShown(o.o, st.beat);
         o.group.visible = on;
         if (on && o.kind === 'ship') placeShip(o);
-        put(o.el, on ? screenAt(o.at[0], o.at[1], o.top - surfaceAt(o.at[0], o.at[1]) + 6) : null);
+        put(o.el, on ? screenAt(o.at[0], o.at[1], o.top - (o.sunk ?? 0) - surfaceAt(o.at[0], o.at[1]) + 6) : null);
       } else {
         put(o.el, screenAt(o.at[0], o.at[1]));
-        // the marker at this beat's target carries its label; the others are points
-        o.el.classList.toggle('sp-here', Math.hypot(o.at[0] - tx, o.at[1] - tz) < ON_ROUTE_M);
+        // the marker at this beat's target carries its label (or every beat, when it asks to); the others are points
+        o.el.classList.toggle('sp-here', o.always || Math.hypot(o.at[0] - tx, o.at[1] - tz) < ON_ROUTE_M);
       }
     }
   }
@@ -497,7 +523,13 @@ export function mountScenePlayer(opts) {
       const a = pointAt(route.line, Math.max(0, s - 20)), b = pointAt(route.line, Math.min(route.line.length, s + 20));
       if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 1) dir = [b[0] - a[0], b[1] - a[1]];
     }
-    o.group.position.set(p[0], surfaceAt(p[0], p[1]), p[1]);
+    // In the beat it sinks in (sinks_in_beat), over the beat's second half it settles below the water and fades
+    // (at once with reduced motion).
+    let k = 0;
+    if (o.o.ship.sinks_in_beat === st.beat + 1) k = reduced() ? 1 : Math.min(1, Math.max(0, 2 * st.elapsed / st.tm.durations[st.beat] - 1));
+    o.sunk = k * (o.o.heights[0] + 6);
+    for (const m of o.mats) m.opacity = 1 - 0.75 * k;
+    o.group.position.set(p[0], surfaceAt(p[0], p[1]) - o.sunk, p[1]);
     o.group.rotation.y = -Math.atan2(dir[1], dir[0]);   // the bow (+x) along the route
     o.at = p;
   }

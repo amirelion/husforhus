@@ -20,38 +20,182 @@
       },
       "duration_s": 10,
       "caption": {
-        "en": "Stockholm is chosen for the 1912 Games in 1909 and builds a brick stadium for them, finished in 1912.",
-        "sv": "Stockholm får spelen 1912 år 1909 och bygger en arena i tegel till dem, klar 1912."
+        "en": "Stockholm gets the 1912 Games in 1909. Work on a stadium starts in November 1910, designed by the architect Torben Grut.",
+        "sv": "Stockholm får spelen 1912 år 1909. Bygget av en arena börjar i november 1910, ritad av arkitekten Torben Grut."
       },
       "sources": [
         "sv Wikipedia: Stockholms stadion (IOC choice 28 May 1909",
         "foundations from 23 November 1910",
-        "opened 1 June 1912)"
-      ]
+        "architect Torben Grut",
+        "builders Kreuger & Toll)"
+      ],
+      "photo": {
+        "src": "img/c2463e8a833e561494cdfef0d2f3733fe8af0c46.jpg",
+        "width": 800,
+        "height": 580,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholms_stadion_bygget_1911-12.jpg",
+          "file": "File:Stockholms stadion bygget 1911-12.jpg"
+        },
+        "caption": {
+          "en": "Stadion under construction, 1911–1912",
+          "sv": "Stadion under bygget, 1911–1912"
+        }
+      }
     },
     {
       "n": 2,
       "camera": {
-        "lat": 59.3284,
-        "lon": 17.94311,
-        "height_m": 7713
+        "lat": 59.344,
+        "lon": 18.0835,
+        "height_m": 180
       },
       "target": {
-        "lat": 59.406,
-        "lon": 17.9986
+        "lat": 59.345278,
+        "lon": 18.078889
       },
-      "duration_s": 11,
+      "duration_s": 8,
       "caption": {
-        "en": "The marathon on 14 July 1912 runs 40.2 km, out to Sollentuna and back, in strong heat.",
-        "sv": "Maratonloppet den 14 juli 1912 är 40,2 km, ut till Sollentuna och tillbaka, i stark hetta."
+        "en": "Dark hand-made brick and a horseshoe plan after the ancient stadium. It opens on 1 June 1912.",
+        "sv": "Mörkt handslaget tegel och en hästskoform efter den antika arenan. Den invigs 1 juni 1912."
       },
       "sources": [
-        "en Wikipedia: Athletics at the 1912 Summer Olympics – Men's marathon",
-        "sv Wikipedia: Shiso Kanaguri (turning point)"
-      ]
+        "sv Wikipedia: Stockholms stadion (Helsingborg brick",
+        "horseshoe plan",
+        "opened 1 June 1912)"
+      ],
+      "photo": {
+        "src": "img/5cda0fad4616ae5a5a6f61e7c2a13b2ffc0c589c.jpg",
+        "width": 800,
+        "height": 570,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholms_stadion_1912.jpg",
+          "file": "File:Stockholms stadion 1912.jpg"
+        },
+        "caption": {
+          "en": "Stadion being built, 1912",
+          "sv": "Stadion byggs, 1912"
+        }
+      }
     },
     {
       "n": 3,
+      "camera": {
+        "lat": 59.347,
+        "lon": 18.074,
+        "height_m": 200
+      },
+      "target": {
+        "lat": 59.345278,
+        "lon": 18.078889
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "The Games open here on 6 July 1912: 2,408 competitors from 28 nations, 48 of them women.",
+        "sv": "Spelen invigs här den 6 juli 1912: 2 408 deltagare från 28 länder, varav 48 kvinnor."
+      },
+      "sources": [
+        "en Wikipedia: 1912 Summer Olympics"
+      ],
+      "photo": {
+        "src": "img/c748b92c7d7a1690ea07fa2f054669485a07c206.jpg",
+        "width": 800,
+        "height": 228,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholms_stadion_1912_invigning_panorama.jpg",
+          "file": "File:Stockholms stadion 1912 invigning panorama.jpg"
+        },
+        "caption": {
+          "en": "Stadion in a panorama long titled the opening; Commons dates it probably after 1912, as the north stand is missing",
+          "sv": "Stadion i ett panorama som kallats invigningen; Commons daterar det troligen efter 1912, eftersom norra läktaren saknas"
+        }
+      }
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.3445,
+        "lon": 18.077,
+        "height_m": 120
+      },
+      "target": {
+        "lat": 59.345278,
+        "lon": 18.078889
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "Jim Thorpe of the USA wins the pentathlon and the new decathlon. Stripped of his medals in 1913, he was named sole champion again in 2022.",
+        "sv": "Jim Thorpe från USA vinner femkampen och den nya tiokampen. Medaljerna togs ifrån honom 1913; 2022 blev han åter ensam segrare."
+      },
+      "sources": [
+        "en Wikipedia: 1912 Summer Olympics"
+      ]
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.346,
+        "lon": 18.081,
+        "height_m": 140
+      },
+      "target": {
+        "lat": 59.345278,
+        "lon": 18.078889
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "Electric timing is used in athletics for the first time, and the Games hold the first Olympic art competitions.",
+        "sv": "Elektrisk tidtagning används i friidrott för första gången, och spelen har de första olympiska konsttävlingarna."
+      },
+      "sources": [
+        "en Wikipedia: 1912 Summer Olympics"
+      ]
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.25312,
+        "lon": 18.1993,
+        "height_m": 8507
+      },
+      "target": {
+        "lat": 59.3729,
+        "lon": 18.0428
+      },
+      "duration_s": 11,
+      "caption": {
+        "en": "The marathon on 14 July 1912 starts here at 13:48: 40.2 km out to Sollentuna and back, in strong heat.",
+        "sv": "Maratonloppet den 14 juli 1912 startar här kl. 13.48: 40,2 km ut till Sollentuna och tillbaka, i stark hetta."
+      },
+      "sources": [
+        "en Wikipedia: Athletics at the 1912 Summer Olympics – Men's marathon",
+        "sv Wikipedia: Shiso Kanaguri (turning point)",
+        "Commons: File:Marathon Stockholm 14 juli 1912.gif (start 13.48)"
+      ],
+      "photo": {
+        "src": "img/296b56bb602da116cf73bc0e4ea8012d0b3ad3c4.gif",
+        "width": 800,
+        "height": 524,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Marathon_Stockholm_14_juli_1912.gif",
+          "file": "File:Marathon Stockholm 14 juli 1912.gif"
+        },
+        "caption": {
+          "en": "The start of the marathon in Stadion, 14 July 1912",
+          "sv": "Starten av maratonloppet på Stadion, 14 juli 1912"
+        }
+      }
+    },
+    {
+      "n": 7,
       "camera": {
         "lat": 59.34851,
         "lon": 18.0812,
@@ -69,6 +213,28 @@
       "sources": [
         "en Wikipedia: Athletics at the 1912 Summer Olympics – Men's marathon",
         "en Wikipedia: Francisco Lázaro"
+      ]
+    },
+    {
+      "n": 8,
+      "camera": {
+        "lat": 59.34,
+        "lon": 18.07,
+        "height_m": 400
+      },
+      "target": {
+        "lat": 59.345278,
+        "lon": 18.078889
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "Stadion is a listed building since 1990 and the oldest Olympic arena still in use. Athletes have set 83 world records here.",
+        "sv": "Stadion är byggnadsminne sedan 1990 och den äldsta olympiska arenan som fortfarande används. Här har 83 världsrekord satts."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholms stadion (byggnadsminne 1990",
+        "oldest active Olympic arena",
+        "83 world records)"
       ]
     }
   ],
@@ -132,9 +298,10 @@
         17.918333
       ],
       "label": {
-        "en": "Sollentuna kyrka (turning point)",
-        "sv": "Sollentuna kyrka (turning point)"
-      }
+        "en": "Turning point at Sollentuna church, 20 km",
+        "sv": "Vändpunkt vid Sollentuna kyrka, 20 km"
+      },
+      "always": true
     },
     {
       "type": "marker",

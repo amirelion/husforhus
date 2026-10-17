@@ -36,7 +36,8 @@ export function parseWkt(wkt) {
 }
 
 // The story's lost buildings (ghosts.csv): an extruded shape per row from from_beat to until_beat (both 1-based,
-// until empty = the end); height_m per part, ";"-separated. footprint "ship" is the Vasa's hull, drawn along the route.
+// until empty = the end); height_m per part, ";"-separated. footprint "ship" is the Vasa's hull, drawn along the route;
+// its sinks_in_beat (1-based) is the beat in which it goes under.
 export function ghostOverlays(dir, id) {
   const file = path.join(dir, 'ghosts.csv');
   if (!fs.existsSync(file)) return [];
@@ -47,7 +48,11 @@ export function ghostOverlays(dir, id) {
     const o = { type: 'ghost', label: { en: r.name, sv: r.name }, from: num(r.from_beat, w), heights,
       confidence: r.geometry_confidence || r.confidence };
     if (r.until_beat) o.until = num(r.until_beat, w);
-    if (geom === 'ship') return { ...o, ship: { length_m: 69, beam_m: 12 } };
+    if (geom === 'ship') {
+      const ship = { length_m: 69, beam_m: 12 };
+      if (r.sinks_in_beat) ship.sinks_in_beat = num(r.sinks_in_beat, w);
+      return { ...o, ship };
+    }
     o.rings = parseWkt(geom);
     if (o.rings.length !== heights.length) throw new Error(`${w}: ${o.rings.length} parts but ${heights.length} heights`);
     return o;
@@ -110,6 +115,7 @@ export function buildScene(id, root = REPO) {
       duration_s: seconds.get(r.beat) || DEFAULT_DURATION_S,
       caption: { en: r.caption_en, sv: r.caption_sv },
       sources: (r.sources ?? r.caption_source ?? '').split(';').map((s) => s.trim()).filter(Boolean),
+      ...(r.photo_file ? { photo_file: r.photo_file, photo_caption: { en: r.photo_caption_en, sv: r.photo_caption_sv } } : {}),
     };
   });
   const scene = { id, title: meta.title, year: meta.year, sensitive: meta.sensitive, beats };
@@ -126,7 +132,9 @@ export function buildScene(id, root = REPO) {
         const key = `${p.lat},${p.lon}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        overlays.push({ type: 'marker', at: [Number(p.lat), Number(p.lon)], label: { en: p[o.markers], sv: p[o.markers] } });
+        // a row with its own label_en/label_sv keeps that label on the map in every beat it is in view
+        if (p.label_en) overlays.push({ type: 'marker', at: [Number(p.lat), Number(p.lon)], label: { en: p.label_en, sv: p.label_sv || p.label_en }, always: true });
+        else overlays.push({ type: 'marker', at: [Number(p.lat), Number(p.lon)], label: { en: p[o.markers], sv: p[o.markers] } });
       }
     }
   }
@@ -135,12 +143,85 @@ export function buildScene(id, root = REPO) {
   return scene;
 }
 
-export function buildAll(root = REPO) {
+// ---------- Photos from Wikimedia Commons ----------
+const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
+export const USER_AGENT = 'HusForHus/1.0 (+https://github.com/amirelion/husforhus)';
+const THUMB_W = 800;
+const stripHtml = (s) => String(s ?? '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+
+// Open licences only: public domain, CC0, CC BY and CC BY-SA (any version). extmetadata.License is Commons' code
+// ("pd", "cc0", "cc-by-4.0", "cc-by-sa-3.0"); anything with NC or ND, or any other licence, is refused.
+export function checkLicence(meta) {
+  const code = stripHtml(meta?.License?.value).toLowerCase();
+  const name = stripHtml(meta?.LicenseShortName?.value);
+  if (!code) return { ok: false, reason: 'no licence in the file metadata' };
+  if (code === 'pd' || code.startsWith('pd-')) return { ok: true, licence: 'Public domain' };
+  if (code === 'cc0' || code.startsWith('cc0-') || code.startsWith('cc-zero')) return { ok: true, licence: 'CC0' };
+  if (/^cc-by(-sa)?(-\d+(\.\d+)?)?([a-z-]*)?$/.test(code) && !/-(nc|nd)\b/.test(code)) return { ok: true, licence: name || code.toUpperCase() };
+  return { ok: false, reason: `licence "${name || code}" is not public domain, CC0, CC BY or CC BY-SA` };
+}
+export function photoAuthor(meta) {
+  const a = stripHtml(meta?.Artist?.value);
+  return !a || /^(ingen uppgift|unknown|okänd|anonymous|anonym)/i.test(a) ? 'unknown author' : a;
+}
+
+// One Commons file: its metadata, the licence check, and an 800 px thumbnail (or the original, if narrower) saved
+// as img/<sha1>.<ext> under outDir, skipped when already there. Returns { photo } or { reason }.
+// fetchFn is injectable for the tests; every request runs one after the other.
+export async function resolvePhoto(file, outDir, fetchFn = fetch) {
+  const title = file.startsWith('File:') ? file : `File:${file}`;
+  const q = new URLSearchParams({ action: 'query', titles: title, prop: 'imageinfo', iiprop: 'url|sha1|size|extmetadata',
+    iiurlwidth: String(THUMB_W), format: 'json', formatversion: '2' });
+  let info;
+  try {
+    const r = await fetchFn(`${COMMONS_API}?${q}`, { headers: { 'User-Agent': USER_AGENT } });
+    if (!r.ok) return { reason: `Commons API answered HTTP ${r.status}` };
+    const page = (await r.json())?.query?.pages?.[0];
+    info = page?.imageinfo?.[0];
+    if (!info) return { reason: 'no such file on Commons' };
+  } catch (e) { return { reason: `Commons API failed: ${e.message}` }; }
+  const lic = checkLicence(info.extmetadata);
+  if (!lic.ok) return { reason: lic.reason };
+  if (!/^[0-9a-f]{40}$/.test(info.sha1 ?? '')) return { reason: 'no sha1 in the file metadata' };
+  const url = info.thumburl || info.url;
+  const ext = (path.extname(new URL(url).pathname).slice(1) || 'jpg').toLowerCase();
+  if (!['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return { reason: `unexpected image type .${ext}` };
+  const name = `${info.sha1}.${ext}`;
+  const dest = path.join(outDir, 'img', name);
+  if (!fs.existsSync(dest)) {
+    try {
+      const r = await fetchFn(url, { headers: { 'User-Agent': USER_AGENT } });
+      if (!r.ok) return { reason: `thumbnail download answered HTTP ${r.status}` };
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.writeFileSync(dest, Buffer.from(await r.arrayBuffer()));
+    } catch (e) { return { reason: `thumbnail download failed: ${e.message}` }; }
+  }
+  return { photo: { src: `img/${name}`, width: info.thumbwidth || info.width, height: info.thumbheight || info.height,
+    credit: { author: photoAuthor(info.extmetadata), licence: lic.licence, page: info.descriptionurl, file: title } } };
+}
+
+// Turns each beat's photo_file into a photo (or drops it, saying why). Returns the reasons, for the build's log.
+export async function addPhotos(scene, outDir, fetchFn = fetch) {
+  const problems = [];
+  for (const b of scene.beats) {
+    if (!b.photo_file) continue;
+    const { photo_file: file, photo_caption: caption } = b;
+    delete b.photo_file; delete b.photo_caption;
+    if (!caption?.en || !caption?.sv) { problems.push(`${scene.id} beat ${b.n}: ${file}: no photo, caption missing in EN or SV`); continue; }
+    const r = await resolvePhoto(file, outDir, fetchFn);
+    if (r.photo) b.photo = { ...r.photo, caption };
+    else problems.push(`${scene.id} beat ${b.n}: ${file}: no photo, ${r.reason}`);
+  }
+  return problems;
+}
+
+export async function buildAll(root = REPO, fetchFn = fetch) {
   const out = path.join(root, 'web', 'scenes');
   fs.mkdirSync(out, { recursive: true });
   const index = [];
   for (const id of Object.keys(SCENES)) {
     const scene = buildScene(id, root);
+    for (const p of await addPhotos(scene, out, fetchFn)) console.warn(p);
     fs.writeFileSync(path.join(out, `${id}.json`), JSON.stringify(scene, null, 2) + '\n');
     index.push({ id, title: scene.title, year: scene.year, beats: scene.beats.length, ...(scene.ready && { ready: true }) });
   }
@@ -149,5 +230,5 @@ export function buildAll(root = REPO) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  for (const s of buildAll()) console.log(`${s.id}: ${s.beats} beats`);
+  for (const s of await buildAll()) console.log(`${s.id}: ${s.beats} beats`);
 }

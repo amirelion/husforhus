@@ -79,11 +79,26 @@ body.scene-on .quest, body.scene-on .howto, body.scene-on .timeline { visibility
 /* A lost building's name, centred above its roof, always shown, in the ghosts' sandstone (GHOST.edge). */
 .sp-pin.sp-ghost { margin: 0; }
 .sp-pin.sp-ghost .sp-pin-label { opacity: 1; translate: -50% -100%; border: 1px solid #b9844e; color: #5a3a1c; background: #f6e7d2; white-space: nowrap; }
+.sp-pin.sp-always .sp-pin-label { max-width: min(48ch, 70vw); }
+
+/* A beat's photo: a card beside the caption, below it on phones. */
+.sp-beat { display: flex; align-items: flex-end; gap: 20px; }
+.sp-text { flex: 1 1 auto; min-width: 0; }
+.sp-photo { flex: 0 0 auto; width: min(300px, 28vw); margin: 0 0 12px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px; pointer-events: auto; }
+.sp-photo[hidden] { display: none; }
+.sp-photo img { display: block; width: 100%; height: auto; max-height: 32vh; object-fit: contain; border-radius: 4px; background: var(--line); }
+.sp-photo figcaption { margin-top: 5px; font-size: 12px; line-height: 1.35; }
+.sp-photo-credit { display: block; color: var(--muted); font-size: 11px; }
 
 /* Phone, portrait (prototype): larger targets, a smaller caption with room for three lines, the list above the timeline. */
 @media (max-width: 600px) and (orientation: portrait) {
   .sp-year { margin-top: 6vh; }
   .sp-caption { font-size: 18px; min-height: 4em; }
+  .sp-beat { flex-direction: column; align-items: stretch; gap: 0; }
+  .sp-photo { width: auto; display: flex; gap: 8px; align-items: flex-start; }
+  .sp-photo img { width: 38%; max-height: 18vh; }
+  .sp-photo figcaption { margin-top: 0; flex: 1; }
   .sp-controls { flex-wrap: wrap; }
   .sp-controls > button { width: 48px; height: 48px; }
   .sp-stories { max-height: 60vh; overflow: auto; }

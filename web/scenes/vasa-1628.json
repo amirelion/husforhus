@@ -134,9 +134,9 @@
     {
       "n": 7,
       "camera": {
-        "lat": 59.32196,
-        "lon": 18.09505,
-        "height_m": 321
+        "lat": 59.32462,
+        "lon": 18.08064,
+        "height_m": 1017
       },
       "target": {
         "lat": 59.319,
@@ -437,7 +437,8 @@
       "confidence": "low",
       "ship": {
         "length_m": 69,
-        "beam_m": 12
+        "beam_m": 12,
+        "sinks_in_beat": 7
       }
     }
   ]
