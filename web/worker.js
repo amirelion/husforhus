@@ -14,6 +14,8 @@ export function build(t) {
   const pos = new Int16Array(nVert * 3), bld = new Uint16Array(nVert), idx = new Uint32Array(nIdx);
   let v = 0, k = 0;
   for (let b = 0; b < t.nB; b++) {
+    // Every part of building b (its footprint, then any laser tower) gets bld = b: one building to the shader,
+    // the picker and the highlight
     for (let p = t.partStart[b]; p < t.partStart[b + 1]; p++) {
       const roof = Math.round(t.height[p] * 10);   // decimetres
       const r0 = t.ringStart[p], r1 = t.ringStart[p + 1];

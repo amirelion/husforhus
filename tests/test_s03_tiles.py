@@ -2,6 +2,7 @@ import gzip
 import hashlib
 import json
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,7 +10,7 @@ import pytest
 from pipeline import city, codes, s03_tiles, tiles_decode
 from pipeline.sources import load_sources
 from tests.tinycity import (ACCURACY, ADDRESSES, DISTRICTS, LANDMARKS, PHOTO_KEY, SOURCES, TERRAIN, WIKI, ground_rows,
-                            tiny_city, write_data)
+                            local_box, tiny_city, write_data)
 
 PLACES = {"addresses": ADDRESSES, "districts": DISTRICTS}
 
@@ -438,4 +439,88 @@ def test_photo_gids_lists_the_cards_with_a_photo(tmp_path):
     assert json.loads((tmp_path / "photo-gids.json").read_text()) == [1]
     cards = [{"1": {"photo": {"key": "a"}}, "65": {"name": "x"}}, {"2": {"photo": {"key": "b"}}}]
     assert s03_tiles.photo_gids(cards) == [1, 2]
+
+
+# --- laser towers (s02_towers): further parts of their building ---
+
+LASER_SRC = dict(SOURCES[0], id="lm_laser", attribution="Laserdata Nedladdning, skog")
+
+
+def towers_for(rows):
+    """data/towers.parquet rows from (gid, part, top_z, outline)."""
+    n = len(rows)
+    return gpd.GeoDataFrame({"gid": [r[0] for r in rows], "part": [r[1] for r in rows],
+                             "height_m": [r[2] - 3.0 for r in rows], "n_points": [20] * n,
+                             "top_z": [r[2] for r in rows], "ground_z": [3.0] * n, "ground_basis": ["ring"] * n,
+                             "basis": ["laser"] * n}, geometry=[r[3] for r in rows], crs=city.CRS)
+
+
+def test_tower_parts_belong_to_their_building_and_skip_private_houses():
+    b, y, a = tiny_city()
+    df = s03_tiles.join(b, y, a, ground_rows(b, a))
+    spire = local_box(4, 4, 7, 7)                    # inside gid 0 (Tyska kyrkan: ground 3.1, 26.7 m)
+    half_out = local_box(-299, 41, -280, 49)         # over gid 2's two pieces and the gap between them
+    t = towers_for([(0, 0, 3.1 + 95.0, spire), (0, 1, 3.1 + 20.0, local_box(1, 1, 4, 4)),
+                    (4, 0, 29.2 + 30.0, local_box(-18, -1598, -12, -1592)),   # gid 4 is a private house
+                    (99, 0, 50.0, spire),                                     # no such building
+                    (2, 0, 7.7 + 60.0, half_out)])
+    parts = s03_tiles.tower_parts(df, t)
+    assert sorted(parts) == [0, 2]
+    (h, g), = parts[0]                                # gid 0's second part stays under its own roof: left out
+    assert h == pytest.approx(95.0) and g.equals(spire)
+    (h2, g2), = parts[2]
+    assert h2 == pytest.approx(60.0) and df.geometry[2].covers(g2) and g2.area < half_out.area
+    assert g2.geom_type in ("Polygon", "MultiPolygon")             # never the line where the cut touches a piece
+    assert s03_tiles.tower_parts(df, None) == {}
+    tiles_decode.parse(s03_tiles.pack_tile((-1200.0, 0.0), [{
+        "gid": 2, "year": 1625, "yflag": codes.LONG, "period": 1, "floors": 7, "ground_dm": 77, "height": 39.1,
+        "geometry": df.geometry[2], "parts": parts[2]}]))
+
+
+def test_a_tower_is_a_second_part_of_the_same_building_in_the_tile():
+    rows = [{"gid": 7, "year": 1647, "yflag": codes.EXACT, "period": 1, "floors": 6, "ground_dm": 31, "height": 26.7,
+             "geometry": local_box(0, 0, 10, 10), "parts": [(95.0, local_box(4, 4, 7, 7))]},
+            {"gid": 8, "year": 1900, "yflag": codes.EXACT, "period": 5, "floors": 3, "ground_dm": 0, "height": 12.0,
+             "geometry": local_box(20, 0, 30, 10)}]
+    t = tiles_decode.parse(s03_tiles.pack_tile((0.0, 0.0), rows))
+    assert (t["nB"], t["nP"], t["nR"]) == (2, 3, 3)
+    assert t["partStart"].tolist() == [0, 2, 3] and t["gid"].tolist() == [7, 8]
+    (h0, _), (h1, r1) = tiles_decode.parts(t, 0)
+    assert (h0, h1) == (pytest.approx(26.7), 95.0)
+    assert r1[0][0].min(axis=0).tolist() == [4.0, 4.0] and r1[0][0].max(axis=0).tolist() == [7.0, 7.0]
+
+
+def test_the_laser_is_credited_only_when_the_build_draws_towers(tmp_path):
+    b, y, a = tiny_city()
+    df = s03_tiles.join(b, y, a, ground_rows(b, a))
+    t = towers_for([(0, 0, 3.1 + 95.0, local_box(4, 4, 7, 7))])
+    ids = {}
+    for name, towers in (("none", None), ("towers", t)):
+        s = s03_tiles.write_outputs(df, tmp_path / name, VERSION, sources=SOURCES + [LASER_SRC], accuracy=ACCURACY,
+                                    terrain=TERRAIN, wiki=WIKI, landmarks=LANDMARKS, places=PLACES, towers=towers)
+        cfg = json.loads((tmp_path / name / "stockholm.json").read_text())
+        ids[name] = [c["id"] for c in cfg["attribution"]]
+        assert cfg["stats"]["buildings"] == 11 and s["towers"] == (0 if towers is None else 1)
+    assert ids == {"none": ["test-src"], "towers": ["test-src", "lm_laser"]}
+    # the tower is drawn with its building: one more part, no more buildings
+    cfg = json.loads((tmp_path / "towers" / "stockholm.json").read_text())
+    packs = {p: gzip.decompress((tmp_path / "towers" / p).read_bytes()) for p in cfg["packs"]}
+    n_parts = {}
+    for e in cfg["tiles"]:
+        tile = tiles_decode.parse(packs[e["pack"]], e["offset"])
+        for i, g in enumerate(tile["gid"].tolist()):
+            n_parts[g] = int(tile["partStart"][i + 1] - tile["partStart"][i])
+    assert n_parts[0] == 2 and sum(n_parts.values()) == 12 and len(n_parts) == 11
+
+
+def test_load_towers_refuses_parts_made_from_other_buildings(tmp_path, capsys):
+    write_data(tmp_path)
+    assert s03_tiles.load_towers(tmp_path) is None                         # none made
+    towers_for([(0, 0, 98.1, local_box(4, 4, 7, 7))]).to_parquet(tmp_path / "towers.parquet")
+    sha = hashlib.sha256((tmp_path / "buildings.parquet").read_bytes()).hexdigest()
+    (tmp_path / "towers.json").write_text(json.dumps({"buildings_sha256": sha}))
+    assert s03_tiles.load_towers(tmp_path).gid.tolist() == [0]
+    (tmp_path / "towers.json").write_text(json.dumps({"buildings_sha256": "0" * 64}))
+    assert s03_tiles.load_towers(tmp_path) is None
+    assert "run s02_towers again" in capsys.readouterr().err
 

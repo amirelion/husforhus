@@ -76,3 +76,38 @@ test('a MultiPolygon part gets one roof per exterior ring', () => {
   assert.equal(plan(m), 100 * 100 + 200 * 200 - 80 * 80);
   assert.equal(m.idx.length, 12 * 6 + (2 + 8) * 3);
 });
+
+test('a laser tower is a second part of its building, not another building', () => {
+  // pipeline/s03_tiles.py tower_parts: a church (part 0, 15 m) and its spire (part 1, 90 m, 3 x 3 m inside it),
+  // then a neighbour. The spire's vertices carry the church's index, so it takes the church's year, colour, card
+  // and highlight (the shader and the picker read bld); the tile still holds two buildings.
+  const rings = [
+    [[0, 0], [200, 0], [200, 400], [0, 400]],          // the church, decimetres
+    [[90, 330], [120, 330], [120, 360], [90, 360]],    // its spire
+    [[300, 0], [400, 0], [400, 100], [300, 100]],      // the neighbour
+  ];
+  const t = {
+    nB: 2, origin: [0, 0], gid: Uint32Array.of(40, 41), year: Int16Array.of(1300, 1900), yflag: Uint8Array.of(0, 0),
+    period: Uint8Array.of(0, 5), floors: Uint8Array.of(4, 3), ground: Int16Array.of(50, 20),
+    lay0: Uint32Array.of(0, 0), lay1: Uint32Array.of(0, 0), partStart: Uint32Array.of(0, 2, 3),
+    height: Float32Array.of(15, 90, 10), ringStart: Uint32Array.of(0, 1, 2, 3), vertStart: Uint32Array.of(0, 4, 8, 12),
+    hole: Uint8Array.of(0, 0, 0), xz: Int16Array.from(rings.flat(2)),
+  };
+  const m = build(t);
+  assert.equal(m.nB, 2);
+  assert.equal(m.attr.length, 2 * ATTR_FLOATS);
+  const of = b => [...m.bld.keys()].filter(i => m.bld[i] === b);
+  const ys = idx => idx.map(i => m.pos[3 * i + 1]);
+  // 4 walls x 4 vertices + 4 roof vertices per part: the church's two parts, then the neighbour's one
+  assert.equal(of(0).length, 2 * 20);
+  assert.equal(of(1).length, 20);
+  assert.equal(Math.max(...ys(of(0))), 900);
+  assert.equal(Math.max(...ys(of(1))), 100);
+  // the spire stands on the church's ground: its walls start at 0, like every wall (the shader adds the ground)
+  const spire = of(0).filter(i => m.pos[3 * i] >= 90 && m.pos[3 * i] <= 120 && m.pos[3 * i + 2] >= 330);
+  assert.equal(Math.min(...ys(spire)), 0);
+  // the roofs seen from above: the church, the spire's top over it, the neighbour
+  assert.equal(plan(m), 200 * 400 + 30 * 30 + 100 * 100);
+  // the culling box reaches the spire's tip
+  assert.equal(m.top, 900);
+});

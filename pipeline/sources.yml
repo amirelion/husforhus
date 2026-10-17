@@ -123,6 +123,23 @@
   status: confirmed
   corner: {en: "© Lantmäteriet", sv: "© Lantmäteriet"}
 
+# The laser point cloud (STAC collection dsm-skoglig-copc, scanned 2020-2021), read around the tower candidates by
+# s00_fetch_laser; s02_towers derives the towers and spires. Credited only when a build draws towers
+# (s03_tiles.attribution). Terms: anvandningsvillkor-for-laserdata-nedladdning-skog.pdf (2026-05-20), CC BY 4.0; they
+# note the points may hold personal data, so no point is committed or published, only the derived building parts.
+- id: lm_laser
+  url: https://www.lantmateriet.se/sv/geodata/vara-produkter/produktlista/laserdata-nedladdning-skog/
+  publisher: Lantmäteriet
+  product: Laserdata Nedladdning, skog
+  dataset: Laserdata Nedladdning, skog
+  credit_as: {en: "© Lantmäteriet", sv: "© Lantmäteriet"}
+  licence: CC-BY-4.0
+  licence_url: https://creativecommons.org/licenses/by/4.0/
+  attribution: Laserdata Nedladdning, skog, © Lantmäteriet, CC BY 4.0 (bearbetad / modified)
+  modified: true
+  status: confirmed
+  corner: {en: "© Lantmäteriet", sv: "© Lantmäteriet"}
+
 - id: wikipedia
   url: https://www.wikipedia.org/
   publisher: Wikipedia contributors

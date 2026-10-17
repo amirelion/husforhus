@@ -44,7 +44,7 @@ def parse(buf: bytes | memoryview, offset: int = 0) -> dict:
 
 
 def rings(t: dict, b: int) -> list[tuple[np.ndarray, int]]:
-    """Rings of building index `b` (not gid) in local metres (x east, z south), with their hole flag."""
+    """Rings of building index `b` (not gid) in local metres (x east, z south), with their hole flag: every part's."""
     out = []
     ox, oz = t["origin"]
     for p in range(t["partStart"][b], t["partStart"][b + 1]):
@@ -52,4 +52,18 @@ def rings(t: dict, b: int) -> list[tuple[np.ndarray, int]]:
             s, e = t["vertStart"][r], t["vertStart"][r + 1]
             xz = t["xz"][s:e].astype(np.float64) / 10.0 + (ox, oz)
             out.append((xz, int(t["hole"][r])))
+    return out
+
+
+def parts(t: dict, b: int) -> list[tuple[float, list[tuple[np.ndarray, int]]]]:
+    """(height in metres, rings in local metres with their hole flag) for each part of building index `b`: the
+    footprint first, then any laser tower parts (s03_tiles.tower_parts)."""
+    out = []
+    ox, oz = t["origin"]
+    for p in range(t["partStart"][b], t["partStart"][b + 1]):
+        rs = []
+        for r in range(t["ringStart"][p], t["ringStart"][p + 1]):
+            s, e = t["vertStart"][r], t["vertStart"][r + 1]
+            rs.append((t["xz"][s:e].astype(np.float64) / 10.0 + (ox, oz), int(t["hole"][r])))
+        out.append((float(t["height"][p]), rs))
     return out

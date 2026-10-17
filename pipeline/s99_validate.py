@@ -65,6 +65,10 @@ Fails (exit 1, with a readable list) on:
   shard, an excerpt on a building whose card may not link an article, one without text or revision, in a language
   the card's `wp` does not list, or one that says who owns the building or had it built (privacy.owner);
 - landmarks: a timeline landmark that is not the curated year of a building outside the private-house categories;
+- towers (the laser parts s03_tiles draws after a building's footprint): one on a private house (marked private, or a
+  non-curated house in a private-house category) or on no building, one outside TOWER_M (5..400 m above its
+  building's ground), one reaching more than TOWER_INSIDE_M past its footprint; Lantmäteriet's laser data credited
+  when no tile draws a tower, or not credited when one does;
 - a card address on a private-category house while city.PRIVATE_ADDRESSES is False; districts.bin.gz not one
   byte per gid within stockholm.json `districts`; search/index.json missing while features.search is on, a building
   entry naming what its card does not, another name (city.BUILDING_ALIASES) pointing at a building whose card does not
@@ -99,12 +103,14 @@ from .estimate import GROUPS
 from .geo import lonlat_to_3011
 from .privacy import mentions, normalise, owner, phrases
 from .s02_attributes import REGISTER_CODE, load_private_firms, load_private_names
-from .s03_tiles import ATTR_DTYPE, CARD_FIELDS, CURRENT, DTM_SOURCE, N_CARD_SHARDS, PHOTO_FIELDS, SOURCES, WIKI_LICENCE
+from .s03_tiles import (ATTR_DTYPE, CARD_FIELDS, CURRENT, DTM_SOURCE, LASER_SOURCE, N_CARD_SHARDS, PHOTO_FIELDS, SOURCES,
+                       WIKI_LICENCE)
 from .s04_base import unpack
 from .s08_landmarks import REBUILD_KINDS
 from .sources import PROCESSED, check_sources, licence_names, load_sources
 from . import terrain
 from .tiles_decode import parse
+from .tiles_decode import parts as tile_parts
 from .wiki import beside_private
 
 DATA = Path("data")
@@ -119,6 +125,9 @@ MAX_GROUND_DM = 2000           # a building's drawn ground above 200 m
 YEAR_MIN, YEAR_MAX = 1000, 2026
 MAX_HEIGHT_DM = 2000
 MAX_FLOORS = 60
+TOWER_M = (5.0, 400.0)         # a laser tower part's height above its building's ground
+TOWER_INSIDE_M = 0.2           # ... and how far past its footprint its outline may reach (decimetre vertices)
+TOWER_OUTSIDE_M2 = 0.5
 MAX_LOCAL_M = 30_000  # the municipality spans about ±16 km around Stortorget
 MIN_PRIVATE_OVERLAP = 2  # years a private row's decade must share with its period, or the pair pins the year
 YFLAGS = (codes.EXACT, codes.RANGE, codes.LONG, codes.AREA, codes.ESTIMATE, codes.PERIOD, codes.UNKNOWN)
@@ -1203,6 +1212,56 @@ def check_landmarks(cfg: dict, a: np.ndarray, data: Path) -> list[str]:
     return errors
 
 
+def _outline(rings):
+    """A part's rings (tiles_decode.parts: exteriors, each followed by its holes) as one (Multi)Polygon."""
+    import shapely
+    polys = []
+    for xz, hole in rings:
+        if len(xz) < 3:
+            continue
+        if hole and polys:
+            polys[-1][1].append(xz)
+        elif not hole:
+            polys.append((xz, []))
+    return shapely.make_valid(shapely.union_all([shapely.Polygon(e, h) for e, h in polys]))
+
+
+def check_towers(out: Path, cfg: dict, a: np.ndarray, data: Path) -> list[str]:
+    """Laser tower parts (s03_tiles.tower_parts, every part of a building after its first): each on a gid that is not a
+    private house (marked private, or a non-curated house in a private-house category), TOWER_M[0]..TOWER_M[1] m above
+    its building's ground, and inside its building's footprint (within TOWER_INSIDE_M, for the decimetre vertices);
+    Lantmäteriet's laser credited exactly when a tile draws one."""
+    errors, scratch, n = [], [], len(a)
+    in_set = private_category(n, data)
+    hide = a["private"].astype(bool) | ((in_set if in_set is not None else np.zeros(n, bool))
+                                        & (a["ysrc"] != codes.SRC_CURATED))
+    found, private, height, outside = 0, set(), set(), set()
+    for _, tile in decoded_tiles(out, cfg, scratch):        # a tile that does not decode is check_tiles' to report
+        for b in np.flatnonzero(np.diff(tile["partStart"].astype(np.int64)) > 1):
+            g = int(tile["gid"][b])
+            first, *towers = tile_parts(tile, int(b))
+            foot = _outline(first[1]).buffer(TOWER_INSIDE_M)
+            for h, rings in towers:
+                found += 1
+                if g >= n or hide[g]:
+                    private.add(g)
+                if not TOWER_M[0] <= h <= TOWER_M[1]:
+                    height.add(g)
+                if _outline(rings).difference(foot).area > TOWER_OUTSIDE_M2:
+                    outside.add(g)
+    for gids, what in ((private, "on a private house or no building"),
+                       (height, f"outside {TOWER_M[0]:g}..{TOWER_M[1]:g} m"), (outside, "outside its footprint")):
+        if gids:
+            g = sorted(gids)
+            errors.append(f"towers: {len(g)} buildings with a laser part {what} (gids {', '.join(map(str, g[:5]))}"
+                          f"{' …' if len(g) > 5 else ''})")
+    credited = LASER_SOURCE in {s.get("id") for s in cfg.get("attribution", [])}
+    if credited != bool(found):
+        errors.append(f"attribution: Lantmäteriet's laser data is {'credited' if credited else 'not credited'}, but "
+                      f"the tiles draw {found} laser tower parts")
+    return errors
+
+
 def strings(obj, path="$", numbers: bool = False):
     """Every string (keys and values) in a JSON value, with its JSON path; with numbers, every whole number too (an
     int, or a float with no fraction; never a bool). A key that is not identifier-like (it could be a UUID or a
@@ -1336,6 +1395,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     errors += check_photo_gids(out, hidden)
     errors += check_beside_private(out, a, data)
     errors += check_landmarks(cfg, a, data)
+    errors += check_towers(out, cfg, a, data)
     errors += check_districts(out, cfg, len(a))
     errors += check_suppressed(out, a, data, takedowns)
     sets = privacy_sets(data) if (data / "buildings.parquet").exists() else None

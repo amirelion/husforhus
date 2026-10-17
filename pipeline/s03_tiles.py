@@ -12,7 +12,13 @@ section 4-byte aligned):
   P       f32 height[nP]; u32 ringStart[nP+1]
   R       u32 vertStart[nR+1]; u8 hole[nR]
   V       i16 xz[2*nV], decimetres from the tile origin
-One part per building in v1. s01_load has already simplified footprints at city.SIMPLIFY.
+A building's first part is its LOD1 footprint at its LOD1 height. Further parts are the towers and spires s02_towers
+found in Lantmäteriet's laser points (data/towers.parquet): each is an outline inside the footprint, drawn from the
+building's own ground to the laser's top (its top_z less the building's settled ground, so the tip keeps its true
+height wherever s02_terrain moved the ground). They are parts of the same building, not buildings: one gid, one
+year, colour and card, picked and highlighted with it (web/worker.js gives every vertex of a building its index),
+never counted. This is the least invasive place for them: the format always had partStart, so neither the layout nor
+the viewer changes. s01_load has already simplified footprints at city.SIMPLIFY.
 
 A card also carries the English label, protection and the year it was decided, the Wikidata
 item, the languages with an article, the photo's credit and whether to leave the floors row out (s02_attributes,
@@ -87,7 +93,8 @@ def rings_of(geom):
 
 def pack_tile(origin, rows) -> bytes:
     """One tile. `origin` is the tile corner (x, z) in local metres. Each row is a dict with
-    gid, year, yflag, period, floors, ground_dm, height (m) and geometry (EPSG:3011 Polygon/MultiPolygon)."""
+    gid, year, yflag, period, floors, ground_dm, height (m) and geometry (EPSG:3011 Polygon/MultiPolygon), and
+    optionally parts: [(height (m), geometry)], the building's further parts (towers), drawn from its ground."""
     ox, oz = float(origin[0]), float(origin[1])
     gid, year, yflag, period, floors, ground, part_start = [], [], [], [], [], [], [0]
     heights, ring_start, vert_start, holes, verts = [], [0], [0], [], []
@@ -98,18 +105,19 @@ def pack_tile(origin, rows) -> bytes:
         period.append(b["period"])
         floors.append(b["floors"])
         ground.append(b["ground_dm"])
-        heights.append(b["height"])
-        for ring, hole in rings_of(b["geometry"]):
-            if len(ring) < 3:
-                continue
-            x, z = city.to_local(ring[:, 0], ring[:, 1])
-            loc = np.round(np.c_[x - ox, z - oz] * 10.0)
-            if loc.min() < -32768 or loc.max() > 32767:
-                raise ValueError(f"gid {b['gid']}: vertex beyond i16 decimetres from tile origin {origin}")
-            verts.append(loc.astype("<i2"))
-            holes.append(hole)
-            vert_start.append(vert_start[-1] + len(ring))
-        ring_start.append(len(holes))
+        for height, geom in [(b["height"], b["geometry"]), *b.get("parts", ())]:
+            heights.append(height)
+            for ring, hole in rings_of(geom):
+                if len(ring) < 3:
+                    continue
+                x, z = city.to_local(ring[:, 0], ring[:, 1])
+                loc = np.round(np.c_[x - ox, z - oz] * 10.0)
+                if loc.min() < -32768 or loc.max() > 32767:
+                    raise ValueError(f"gid {b['gid']}: vertex beyond i16 decimetres from tile origin {origin}")
+                verts.append(loc.astype("<i2"))
+                holes.append(hole)
+                vert_start.append(vert_start[-1] + len(ring))
+            ring_start.append(len(holes))
         part_start.append(len(heights))
     nB, nP, nR = len(gid), len(heights), len(holes)
     V = np.concatenate(verts) if verts else np.zeros((0, 2), "<i2")
@@ -270,8 +278,47 @@ def join(b: gpd.GeoDataFrame, y: pd.DataFrame, a: pd.DataFrame, g: pd.DataFrame 
     return df
 
 
-def build_tiles(df: pd.DataFrame, tile: float) -> list[dict]:
-    """Tiles by centroid, sorted centre-out by the distance of the tile centre from the origin."""
+def load_towers(data: Path = DATA) -> gpd.GeoDataFrame | None:
+    """s02_towers' parts (data/towers.parquet), or None when there are none, or when data/towers.json says they were
+    made from another data/buildings.parquet (its gids would point at other footprints: run s02_towers again)."""
+    path, rec = data / "towers.parquet", data / "towers.json"
+    if not path.exists():
+        return None
+    made_from = json.loads(rec.read_text(encoding="utf-8")).get("buildings_sha256") if rec.exists() else None
+    if made_from != hashlib.sha256((data / "buildings.parquet").read_bytes()).hexdigest():
+        print(f"warning: {path} was made from another {data / 'buildings.parquet'}, so this build draws no laser "
+              "towers (run s02_towers again)", file=sys.stderr)
+        return None
+    return gpd.read_parquet(path)
+
+
+def tower_parts(df: pd.DataFrame, towers: pd.DataFrame | None) -> dict[int, list[tuple[float, object]]]:
+    """{gid: [(drawn height (m), outline)]}: each laser part drawn from its building's settled ground to its top_z,
+    cut to the footprint. A part on a `hidden` row (a private house), on no building of df, or not above the
+    building's own roof is left out."""
+    if towers is None or not len(towers):
+        return {}
+    row = {int(g): i for i, g in enumerate(df.gid)}
+    hide = hidden(df)
+    out = {}
+    for t in towers.sort_values(["gid", "part"]).itertuples():
+        i = row.get(int(t.gid))
+        if i is None or hide[i]:
+            continue
+        drawn = float(t.top_z) - float(df.ground.iat[i])
+        cut = shapely.intersection(t.geometry, df.geometry.iat[i])
+        polys = [g for g in getattr(cut, "geoms", [cut]) if isinstance(g, (shapely.Polygon, shapely.MultiPolygon))]
+        geom = shapely.union_all(polys) if polys else shapely.Polygon()   # a cut can leave lines where pieces touch
+        if drawn <= float(df.height.iat[i]) or geom.is_empty or geom.area < 1.0:
+            continue
+        out.setdefault(int(t.gid), []).append((round(drawn, 1), geom))
+    return out
+
+
+def build_tiles(df: pd.DataFrame, tile: float, parts: dict | None = None) -> list[dict]:
+    """Tiles by centroid, sorted centre-out by the distance of the tile centre from the origin. `parts`:
+    tower_parts(), the further parts per gid."""
+    parts = parts or {}
     tx = np.floor(df.x.to_numpy() / tile).astype(int)
     tz = np.floor(df.z.to_numpy() / tile).astype(int)
     ground = np.round(df.ground.to_numpy(np.float64) * 10).astype(int)
@@ -283,7 +330,8 @@ def build_tiles(df: pd.DataFrame, tile: float) -> list[dict]:
         origin = (a * tile, b * tile)
         rows = [{"gid": int(df.gid.iat[i]), "year": int(df.year.iat[i]), "yflag": int(df.yflag.iat[i]),
                  "period": int(df.period.iat[i]), "floors": int(df.floors.iat[i]), "ground_dm": int(ground[i]),
-                 "height": float(df.height.iat[i]), "geometry": df.geometry.iat[i]} for i in idx]
+                 "height": float(df.height.iat[i]), "geometry": df.geometry.iat[i],
+                 "parts": parts.get(int(df.gid.iat[i]), [])} for i in idx]
         data = pack_tile(origin, rows)
         dist = round(float(np.hypot(origin[0] + tile / 2, origin[1] + tile / 2)))
         tiles.append({"file": f"{a}_{b}.bin", "tx": int(a), "tz": int(b), "n": len(rows), "bytes": len(data),
@@ -493,17 +541,19 @@ def histograms(df: pd.DataFrame) -> tuple[dict, dict]:
 
 
 DTM_SOURCE = "lm_markhojd"   # sources.yml: Lantmäteriet's terrain model, credited only when the build used it
+LASER_SOURCE = "lm_laser"    # sources.yml: Lantmäteriet's laser points, credited only when the build drew towers
 
 
-def attribution(sources: list[dict], terrain_source: str = "dtm") -> list[dict]:
+def attribution(sources: list[dict], terrain_source: str = "dtm", laser: bool = False) -> list[dict]:
     """CC BY attribution needs the licence name and a link to it, next to the source. Lantmäteriet's terrain is
-    credited only when the terrain came from it (a contour build uses the Stadskarta, credited already). It adds
+    credited only when the terrain came from it (a contour build uses the Stadskarta, credited already), and its laser
+    points only when the build drew towers from them (`laser`). It adds
     the source's words in the map's corner credit where it has them (sources.yml corner), and the standard credit line ("Dataset: publisher, licence"), which About
     lists: `credit`, {en, sv}, "Dataset: publisher, licence" plus ", processed" / ", bearbetad" (sources.credit)."""
     return [{"id": s["id"], "text": s["attribution"], "url": s["url"], "licence": s["licence"],
              "licence_url": s["licence_url"], **({"corner": s["corner"]} if s.get("corner") else {}),
              "credit": credit(s)}
-            for s in sources if (s["id"] != DTM_SOURCE or terrain_source == "dtm")
+            for s in sources if (s["id"] != DTM_SOURCE or terrain_source == "dtm") and (s["id"] != LASER_SOURCE or laser)
             and city.FEATURES.get(s.get("feature"), True)]   # a source of a switched-off feature waits
 
 
@@ -516,7 +566,8 @@ def terrain_config(record: dict) -> dict:
             "fadeM": t["fade_m"], "terrace": t["terrace"], "chunk": t["chunk"]}
 
 
-def make_config(df, tiles, packs, version, tile, sources, accuracy, terrain, landmarks=(), wiki_stats=None) -> dict:
+def make_config(df, tiles, packs, version, tile, sources, accuracy, terrain, landmarks=(), wiki_stats=None,
+                laser: bool = False) -> dict:
     hist, hist_est = histograms(df)
     dated = df.year.to_numpy() > 0
     years = np.concatenate([df.year.to_numpy(np.int64)[dated], histogram_years(df)[dated]])
@@ -544,7 +595,7 @@ def make_config(df, tiles, packs, version, tile, sources, accuracy, terrain, lan
         },
         "features": city.FEATURES,
         "langFromBrowser": city.LANG_FROM_BROWSER,
-        "attribution": attribution(sources, terrain["source"]),
+        "attribution": attribution(sources, terrain["source"], laser),
         "accuracy": accuracy,
         "terrain": terrain_config(terrain),
         "links": city.LINKS,
@@ -560,10 +611,10 @@ def photo_gids(cards: list[dict]) -> list[int]:
 def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = city.TILE,
                   n_packs: int = city.N_PACKS, sources: list[dict] | None = None, accuracy: dict | None = None,
                   terrain: dict | None = None, wiki: dict | None = None, landmarks: list[dict] | None = None,
-                  places: dict | None = None) -> dict:
+                  places: dict | None = None, towers: pd.DataFrame | None = None) -> dict:
     """Write packs, attrs, cards, excerpt shards, photos.json, layers.json and stockholm.json into `out`; return a size
     summary. wiki: load_wiki()'s shape (default: read from data/); landmarks: s08_landmarks' entries (likewise);
-    places: load_places()'s shape (likewise)."""
+    places: load_places()'s shape (likewise); towers: s02_towers' parts (load_towers(); default: none)."""
     out = Path(out)
     sources = load_sources(SOURCES) if sources is None else sources
     accuracy = load_accuracy() if accuracy is None else accuracy
@@ -572,7 +623,8 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     landmarks = load_landmarks() if landmarks is None else landmarks
     places = load_places() if places is None else places
     df = with_places(with_wiki(df, wiki["table"]), places)
-    tiles = build_tiles(df, tile)
+    parts = tower_parts(df, towers)
+    tiles = build_tiles(df, tile, parts)
     packs = assign_packs(tiles, n_packs)
     gz = [io.write_gz(out / f"pack{k}.bin.gz", p) for k, p in enumerate(packs)]
     attrs = attrs_array(df)
@@ -592,7 +644,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     excerpts = [v for shard in texts for v in shard["items"].values()]
     wiki_stats = {"photos": len(used), "extracts": {lang: sum(lang in v for v in excerpts) for lang in city.WIKI["langs"]}}
     config = make_config(df, tiles, packs, version, tile, sources, accuracy, terrain, timeline_landmarks(df, landmarks),
-                         wiki_stats)
+                         wiki_stats, laser=bool(parts))
     config["districts"] = names
     config["about"] = about_stats(df, cards)
     # the accuracy table's rows and columns in each language (About): the groups by key, the eras by their English
@@ -603,7 +655,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     return {"tiles": len(tiles), "buildings": len(df), "max_tile": max(t["n"] for t in tiles),
             "packs_raw": sum(map(len, packs)), "packs_gz": sum(gz), "pack0_gz": gz[0],
             "attrs_raw": attrs.nbytes, "attrs_gz": attrs_gz, "config_gz": config_gz,
-            "first_load": config_gz + attrs_gz + gz[0]}
+            "first_load": config_gz + attrs_gz + gz[0], "towers": sum(map(len, parts.values()))}
 
 
 def out_dir(version: str | None = None) -> Path:
@@ -631,14 +683,14 @@ def main(argv: list[str] | None = None) -> None:
     args = ap.parse_args(argv)
     out = io.version_dir(args.version)
     version = out.name
-    s = write_outputs(load(), out, version, tile=args.tile)
+    s = write_outputs(load(), out, version, tile=args.tile, towers=load_towers())
     io.write_json(CURRENT, {"version": version})
     keep_keys(DATA / "buildings.parquet", DATA / "keys", version)
     mb = 1e6
     print(f"{s['buildings']} buildings in {s['tiles']} tiles of {args.tile:g} m (max {s['max_tile']} per tile); "
           f"packs {s['packs_raw'] / mb:.2f} MB raw, {s['packs_gz'] / mb:.2f} MB gz; "
           f"attrs {s['attrs_raw'] / mb:.2f} MB raw, {s['attrs_gz'] / mb:.2f} MB gz; "
-          f"first load {s['first_load'] / mb:.2f} MB → {out}")
+          f"first load {s['first_load'] / mb:.2f} MB; {s['towers']} laser tower parts → {out}")
 
 
 if __name__ == "__main__":

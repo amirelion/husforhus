@@ -314,6 +314,22 @@ OUTSIDE = ("Botkyrka", "Danderyd", "Ekerö", "Haninge", "Huddinge", "Järfälla"
 # examples that resolve in the build.
 SEARCH = dict(addr_max_m=10.0, min_chars=2, max_rows=8, max_per_kind=4, max_edits=2,
               examples=("Hornsgatan 30", "Engelbrektskyrkan", "Gamla stan", "Vällingby"))
+# Towers and spires from Lantmäteriet's laser points (s00_fetch_laser, s02_towers). The LOD1 gives each footprint one
+# flat height, so a tower is as low as its roof. The laser is read around these buildings: every non-private building
+# named on a card, every church (s02_attributes' nofloors) and every one whose LOD1 height reaches min_lod1_m, plus this
+# hand list, matched by the card's name (casefolded; each entry's first name is how the review page writes it, the
+# others are the names a card may carry). Each footprint's box grows by ring_m on every side: the ground around it.
+# Not Globen: the card named Globen is the arena beside the dome; the dome is its own footprint, already 71 m in LOD1
+# (checked against the laser on 2026-10-17).
+LASER = dict(ring_m=15.0, min_lod1_m=25.0, budget_bytes=500_000_000)
+LASER_TOWERS = (
+    ("Kaknästornet",), ("Stadshuset", "Stockholms stadshus"), ("Riddarholmskyrkan",),
+    ("Storkyrkan", "Stockholms domkyrka", "Sankt Nikolai kyrka"), ("Tyska kyrkan", "Sankta Gertruds kyrka"),
+    ("Engelbrektskyrkan",), ("Katarina kyrka",), ("Hedvig Eleonora kyrka", "Hedvig Eleonora"), ("Oscarskyrkan",),
+    ("Klara kyrka", "Sankta Clara kyrka"), ("Johannes kyrka", "Sankt Johannes kyrka", "S:t Johannes kyrka"),
+    ("Adolf Fredriks kyrka",), ("Gustav Vasa kyrka",), ("Sofia kyrka",), ("Högalidskyrkan",), ("Kungsholms kyrka",),
+    ("Skatteskrapan",), ("Wenner-Gren Center",),
+)
 # Decided 2026-10-17: shown. True shows a private house's street address on its card and lets
 # search find it by that address (an address names no one, and the card still gives only the decade); False would
 # leave both out for every non-curated private-category house, wherever the address landed (s03_tiles.shown_addresses).

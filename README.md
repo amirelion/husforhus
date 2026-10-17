@@ -58,6 +58,17 @@ npm run test:e2e                 # browser smoke tests
 
 By default the ground is built from the City's 2 m contour lines, which need no account. The pipeline can instead use Lantmäteriet's 1 m terrain model if `LM_USER` and `LM_PASSWORD` for a free Lantmäteriet Geotorget account are in the environment of `s00_fetch_dem`. The pipeline never reads a `.env` file by itself; pass one explicitly, for example `uv run --env-file .env python -m pipeline.s00_fetch_dem`. Later builds reuse the cached model.
 
+### Towers and spires
+
+The City's 3D buildings give each footprint one flat height, so a tower or a spire is no higher than the roof beside it. With the same Lantmäteriet login (and an order of Laserdata Nedladdning, skog on Geotorget), `s00_fetch_laser` reads Lantmäteriet's laser points around the landmarks, churches and tall buildings (never around private houses), and `s02_towers` finds the parts that rise well above each roof. They are drawn as parts of their building: the same card, colour and year. The step prints how much it will read before it reads it and stops above 500 MB unless given `--full`; `--only list` reads just the hand-picked landmarks in `pipeline/city.py`, a small first check:
+
+```bash
+uv run --env-file .env python -m pipeline.s00_fetch_laser
+uv run python -m pipeline.run s02_towers s03_tiles s04_base s07_labels s14_search s15_plaques s99_validate -- --version v20261017-2
+```
+
+`s02_towers` also writes `data/review-towers.md`, the largest raises and the buildings it skipped, for a check by hand before a version ships. The points stay in `data/raw/laser/` and are never published.
+
 ### Versions
 
 Each build writes to `web/data/v<YYYYMMDD>/` and points `web/data/current.json` at it. To rebuild under another name, pass a version after `--`:
@@ -84,6 +95,8 @@ uv run python -m pipeline.run s03_tiles s04_base s07_labels s14_search s99_valid
 | `s02_attributes` | Adds floors, heritage rating, protection status, architects and a display name. |
 | `s02_terrain` | Builds the terrain grid and fixes each building's ground level to it. |
 | `s06_wiki` | Fetches photos and short Wikipedia excerpts for the buildings that have them. |
+| `s00_fetch_laser` | Reads Lantmäteriet's laser points around landmarks, churches and tall buildings, when a login is available. |
+| `s02_towers` | Finds the towers and spires that rise above each building's flat roof in those points. |
 | `s03_tiles` | Writes the building tiles the viewer loads. |
 | `s04_base` | Writes the base map: water, land, terrain and the municipal edge. |
 | `s07_labels` | Writes street-name and place labels. |

@@ -9,6 +9,8 @@ export const MAGIC = 0x31484648; // 'HFH1', little-endian
 // P       f32 height[nP]; u32 ringStart[nP+1]
 // R       u32 vertStart[nR+1]; u8 hole[nR]
 // V       i16 xz[2*nV], decimetres from the tile origin
+// A building's first part is its footprint; any further part is a tower or spire from the laser points
+// (s03_tiles.tower_parts), drawn as part of the same building (one gid, one card, one colour).
 export function parse(buf) {
   const h = new DataView(buf);
   const magic = h.getUint32(0, true);

@@ -20,12 +20,14 @@ The machine-readable list is [`pipeline/sources.yml`](pipeline/sources.yml). Its
 | Wikidata | Wikidata contributors | CC0 1.0 | Years, building names, photo and article links | Wikidata: Wikidata contributors, CC0, bearbetad / processed |
 | OpenStreetMap | OpenStreetMap contributors | ODbL 1.0 | Years, floor counts | OpenStreetMap: © OpenStreetMap contributors, ODbL, bearbetad / processed |
 | Markhöjdmodell Nedladdning (1 m terrain model) | Lantmäteriet | CC BY 4.0 | Terrain, when the build has a login for it | Markhöjdmodell Nedladdning: © Lantmäteriet, CC BY 4.0, bearbetad / processed |
+| Laserdata Nedladdning, skog (laser point cloud) | Lantmäteriet | CC BY 4.0 | Towers and spires that rise above a building's flat LOD1 roof, when the build has a login for it | Laserdata Nedladdning, skog: © Lantmäteriet, CC BY 4.0, bearbetad / processed |
 | Wikipedia (Swedish and English) | Wikipedia contributors | CC BY-SA 4.0 | Short excerpts on building cards; the citations behind the curated landmarks | Wikipedia: © Wikipedia contributors, CC BY-SA 4.0, bearbetad / processed |
 | Wikimedia Commons photos | Each photographer | Per file (CC BY-SA, CC BY, CC0 or public domain) | One photo on a notable building's card | Each photo is credited on the card with its author and licence |
 
 Notes:
 
 - The Lantmäteriet terrain model is optional. Without a login, the terrain comes from the Stadskarta contour lines, and the Lantmäteriet credit is not shown.
+- The laser points are optional too. They are read only around landmarks, churches and tall buildings, never around private houses, and stay on the build machine: Lantmäteriet's terms note that the points may contain personal data, so only the derived tower outlines and heights are published. Without them, or when a build draws no tower, their credit is not shown.
 - Only photos under licences that allow reuse are used, and each is credited where it appears.
 - Excerpts are cut from the article's introduction and link back to it, so the share-alike terms carry with them.
 
