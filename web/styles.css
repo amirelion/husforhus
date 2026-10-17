@@ -697,3 +697,6 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 #card .metro-line { display: inline-flex; align-items: center; gap: 6px; }
 #card .metro-line i { width: 14px; height: 4px; border-radius: 2px; }
 #card .metro-formerly { color: var(--muted); }
+/* On a narrow phone the corner's row (search, north, Look, Stories, About, EN | SV) wraps right-aligned onto a second
+   line rather than pushing the first buttons off the left edge (e2e/credits.spec.mjs checks 390 and 360 px). */
+@media (max-width: 430px) { .corner .buttons { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; } }

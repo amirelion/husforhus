@@ -10,7 +10,6 @@ Plans, not promises: the order can change.
 - **Narration** for the history stories, in English and Swedish.
 - **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 37 plaques not yet placed on a building.
 - **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
-- **Faster first load on phones**, with a smaller build of the 3D library.
 
 ## 2026-10-17: launch day
 
@@ -23,7 +22,7 @@ Plans, not promises: the order can change.
 - **Real tower heights** for 189 buildings, from Lantmäteriet's laser data: Stadshuset 103 m, Kaknästornet 139 m, Klara kyrka 95 m, the Gamla stan churches, Hötorgscity, DN-skrapan, Folksamhuset and more, instead of flat blocks. About 3,100 buildings were checked; one that changed since the 2021 scan keeps its old height.
 - **Highlight buildings with a photo**: a legend switch that turns the others pale.
 - **Share a building**: a link that opens its card, or the phone's share sheet.
-- **Phones and accessibility**: 44-pixel tap targets, the whole interface by keyboard, and screen-reader labels.
+- **Phones and accessibility**: 44-pixel tap targets, the whole interface by keyboard, and screen-reader labels; a smaller build of the 3D library (about 220 KB less to download on a first visit).
 - A link to the source code in About, and issue forms on GitHub for corrections, photos, data sources and translations.
 
 ### Data

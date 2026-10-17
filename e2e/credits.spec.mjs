@@ -16,7 +16,7 @@ test('the credit names its sources in the corner and leads into About', async ({
   await open(page);
   const line = page.locator('#credit');
   await expect(line).toBeVisible();
-  const lm = (await attribution(page)).some(a => a.id === 'lm_markhojd');
+  const lm = (await attribution(page)).some(a => a.id === 'lm_markhojd' || a.id === 'lm_laser');
   await expect(line).toContainText(`© Stockholms stad · RAÄ · © OpenStreetMap contributors${lm ? ' · © Lantmäteriet' : ''} · Sources`);
   await expect(line.getByRole('link', { name: '© OpenStreetMap contributors' }))
     .toHaveAttribute('href', 'https://www.openstreetmap.org/copyright');
@@ -27,7 +27,7 @@ test('the credit names its sources in the corner and leads into About', async ({
   await expect(page.locator('#about-sources')).toBeInViewport();
   await page.keyboard.press('Escape');
   await page.locator('.lang [data-lang="sv"]').click();
-  await expect(line).toContainText('© OpenStreetMap-bidragsgivare · Källor');
+  await expect(line).toContainText(`© OpenStreetMap-bidragsgivare${lm ? ' · © Lantmäteriet' : ''} · Källor`);
 });
 
 test.describe('on a phone', () => {
@@ -63,7 +63,7 @@ test.describe('on a phone', () => {
   });
 
   for (const width of [390, 360]) {
-    test(`the corner's row (search, north, Look, About, EN | SV) fits ${width} px in both languages`, async ({ page }) => {
+    test(`the corner's row (search, north, Look, Stories, About, EN | SV) stays on screen at ${width} px in both languages`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
       await open(page);
       for (const lang of ['en', 'sv']) {
