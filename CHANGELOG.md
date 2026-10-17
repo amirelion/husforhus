@@ -1,0 +1,43 @@
+# Changelog
+
+What changed on [husforhus.se](https://husforhus.se), newest first: the map's features and the data behind it. Each data build has a version (shown in About), such as `v20261017-p4i`.
+
+## Planned
+
+Plans, not promises: the order can change.
+
+- **Taller towers everywhere.** Real heights from Lantmäteriet's laser data for about 3,100 more buildings: named buildings, churches and everything over 25 m (today 17 landmarks have them).
+- **More history stories.** The great fire of 1625, the clearance of Klara (1952–1977), Queen Kristina's lock (1637–1642), and stories about Tunnelbanan: Vällingby, a town built around its station; the first line in 1950; the blue line and Järvafältet; Kymlinge, the station that never opened.
+- **Narration** for the history stories, in English and Swedish.
+- **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 37 plaques not yet placed on a building.
+- **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
+- **Faster first load on phones**, with a smaller build of the 3D library.
+
+## 2026-10-17: launch day
+
+### Features
+- **The map is public** at husforhus.se, in English and Swedish (Swedish for Swedish browsers), with no cookies and no tracking.
+- **Search** for a street, an address, a named building, a district, or what is inside a building ("Nobel" finds the Nobel Prize Museum in Börshuset).
+- **History stories** (Berättelser): the Vasa sinks, 1628; Tre Kronor burns, 1697; the Stockholm Olympics, 1912; the Stockholm Exhibition, 1930. Today's city is drawn faintly for orientation and the lost buildings in sandstone, with period photos and sources on every step.
+- **Tunnelbanan** as a legend switch: the green, red and blue lines grow with the timeline from 1950, and every station has a card with its opening date and earlier names.
+- **Blue plaques** as a legend switch: 127 of Samfundet S:t Erik's plaques, with their Swedish texts on the cards.
+- **Real tower heights** for 17 landmarks, from Lantmäteriet's laser data: Stadshuset 103 m, Kaknästornet 139 m, Klara kyrka 95 m and the Gamla stan churches, instead of flat blocks.
+- **Highlight buildings with a photo**: a legend switch that turns the others pale.
+- **Share a building**: a link that opens its card, or the phone's share sheet.
+- **Phones and accessibility**: 44-pixel tap targets, the whole interface by keyboard, and screen-reader labels.
+- A link to the source code in About, and issue forms on GitHub for corrections, photos, data sources and translations.
+
+### Data
+- Data versions `v20261017-p4c` to `v20261017-p4i`.
+- 77 public institutions inside buildings, from Wikidata, for search.
+- Samfundet S:t Erik's plaque list and texts (CC BY 4.0), placed by address and by Open Plaques positions.
+- Tunnelbanan: 101 stations (Wikidata) and 32 dated line sections on OpenStreetMap's track.
+- Lantmäteriet's Laserdata Nedladdning, skog (CC BY 4.0) for the 17 landmark towers.
+- Period photos for the stories from Wikimedia Commons, public domain or CC licences only, each checked by hand.
+
+## 2026-10-14 to 2026-10-16: before launch
+
+- The 3D map of all 77,743 buildings in Stockholm municipality, coloured by construction year, ported from [Amsterdam, building by building](https://github.com/alexbarakov/amsterdam-by-building).
+- Years from RAÄ's building registers, area years, a hand-checked landmark list, Wikidata and OpenStreetMap; estimates for houses only where a test showed they work; "Year unknown" for the rest. See [How the years work](HOW-YEARS-WORK.md).
+- The timeline and its film, twelve periods, the Floors view, four looks, the hills from the City's contour lines.
+- Building cards with about 900 photos and Wikipedia excerpts, and the privacy rules for private houses (see [Privacy](PRIVACY.md)).

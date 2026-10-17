@@ -18,6 +18,7 @@ More in this folder:
 - [How the years work](HOW-YEARS-WORK.md): where each building's year comes from, how gaps are estimated, and why private houses show only a decade.
 - [Data sources](DATA-SOURCES.md): every dataset, with its licence and credit.
 - [Privacy](PRIVACY.md): what the map shows about private houses, what the site does not collect, and how to ask for a correction or a takedown.
+- [Changelog](CHANGELOG.md): what changed on the map, features and data, and what is planned next.
 - [Contributing](CONTRIBUTING.md): how to propose corrections, building details, history sources, new cities, translations and code.
 
 ## How it fits together
