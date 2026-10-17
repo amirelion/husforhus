@@ -75,6 +75,8 @@ export function rebuildLine(card, T) {
 }
 
 export const heightLine = (b, T) => T('card.height.value', { m: T.num(b.height, 1) });
+// A tower or spire measured in Lantmäteriet's laser scan (s02_towers): its top, whole metres; '' without one.
+export const towerLine = (more, T) => (more && more.tower ? T('card.tower.value', { m: T.num(more.tower, 0) }) : '');
 
 // "6 (OpenStreetMap)" or "≈ 6 (from its height)"; '' when the card leaves the row out (a church or a water tower whose
 // floors come only from the height: s02_attributes' nofloors).

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { yearLine, sourceLine, floorsLine, heightLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
+import { yearLine, sourceLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
   decade, band, decadeOnly, isEstimate, rebuildLine, placeLine, whyAnchor, wrongHref } from '../card.js';
 import { makeT } from '../i18n.js';
 import { YFLAG, YSRC, FSRC } from '../codes.js';
@@ -239,4 +239,10 @@ test('"Something wrong?" writes to the project\'s address, naming the building; 
   // the data version too: a gid belongs to one version's data (the takedown routine reads that version's buildings)
   assert.match(wrongHref('hej@example.org', {}, 7, EN, 'v20261016-m8'), /body=About%20building%207%20on%20the%20map%20\(data%20v20261016-m8\)/);
   assert.match(wrongHref('hej@example.org', {}, 7, EN), /subject=Hus%20f%C3%B6r%20hus%3A%20building%207&/);
+});
+
+test('the tower row: a laser-measured tower, to its top', () => {
+  assert.equal(towerLine({ tower: 103 }, EN), '103 m to the top');
+  assert.equal(towerLine({ tower: 103 }, SV), '103 m till toppen');
+  assert.equal(towerLine({}, EN), '');
 });

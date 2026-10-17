@@ -527,3 +527,13 @@ def test_load_towers_refuses_parts_made_from_other_buildings(tmp_path, capsys):
     assert s03_tiles.load_towers(tmp_path) is None
     assert "run s02_towers again" in capsys.readouterr().err
 
+
+
+def test_a_card_carries_its_laser_tower_height():
+    # the tallest of a building's laser parts (tower_parts' drawn heights), whole metres; never on a hidden house
+    df = pd.DataFrame({"gid": [0, 1], "name": ["Stadshuset", ""], "architects": [[], []], "raa_id": ["", ""],
+                       "private": [False, True], "kategori": ["Samhällsfunktion", "Enbostadshus"],
+                       "ysrc": [codes.SRC_RAA, codes.SRC_RAA]})
+    cards = {g: c for shard in s03_tiles.card_shards(df, towers={0: 103.3, 1: 30.0}) for g, c in shard.items()}
+    assert cards["0"]["tower"] == 103 and "tower" not in cards.get("1", {})
+    assert "tower" in s03_tiles.CARD_FIELDS

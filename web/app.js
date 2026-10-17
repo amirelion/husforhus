@@ -4,7 +4,7 @@ import { fetchGz, decoder } from './gz.js';
 import { readAttrs, ATTR_FLOATS } from './tile.js';
 import { liftBounds } from './bounds.js';
 import { YFLAG } from './codes.js';
-import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
+import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
   isEstimate, placeLine, whyAnchor, wrongHref } from './card.js';
 import { shareText, shareLink, parseAt } from './share.js';
 import { withTry } from './features.js';
@@ -1298,6 +1298,7 @@ function cardHtml(gid, pinned) {
   const floors = floorsLine(b, T, more);
   const facts = [
     [`<span title="${esc(T('card.height.note'))}">${esc(T('card.height'))}</span>`, esc(heightLine(b, T))],
+    more.tower && [`<span title="${esc(T('card.tower.note'))}">${esc(T('card.tower'))}</span>`, esc(towerLine(more, T))],
     floors && [esc(T('card.floors')), approx(floors)],
     architects.length && [esc(T(architects.length > 1 ? 'card.architects' : 'card.architect')), architects.map(esc).join(', ')],
     b.rating && [esc(T('card.rating')), `<i class="rating r${b.rating}"></i>${esc(ratingLine(b.rating, T))}`],

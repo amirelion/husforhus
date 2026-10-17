@@ -72,7 +72,7 @@ SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_
 KNOWN_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
 ESTIMATED_FLAGS = (codes.AREA, codes.ESTIMATE, codes.PERIOD)
 CARD_FIELDS = ("name", "en", "architects", "raa", "prot", "since", "qid", "wp", "photo", "nofloors", "rebuilt",
-               "cellars", "addr", "addrn")
+               "cellars", "addr", "addrn", "tower")
 PHOTO_FIELDS = ("key", "w", "h", "by", "lic", "lu", "page", "title")
 WIKI_LICENCE = "CC BY-SA 4.0"
 
@@ -384,14 +384,17 @@ def _text(v) -> str:
     return v if isinstance(v, str) else ""
 
 
-def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[dict] | None = None) -> list[dict]:
+def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[dict] | None = None,
+                towers: dict[int, float] | None = None) -> list[dict]:
     """64 shards keyed by gid % 64; each holds {gid: card} with only CARD_FIELDS. `df` may carry s06_wiki's columns
     (qid, wname, wname_en, langs, photo), s02_attributes' (prot, since, nofloors) and with_places' (addr, addrn);
     `photos` maps a photo key to its credit (s06_wiki's photos.json). On a `hidden` row: no raa, qid, wp, photo or
     English label, and no address when city.PRIVATE_ADDRESSES is False. `landmarks` are s08_landmarks' entries: a
     curated row (years.parquet `landmark`) takes its entry's `rebuilt`, by year, and `cellars`; no other
-    row does."""
+    row does. `towers` maps a gid to its tallest laser part's height (tower_parts): the card's `tower`, whole metres,
+    never on a hidden row."""
     photos = photos or {}
+    towers = towers or {}
     shards = [{} for _ in range(N_CARD_SHARDS)]
     hide = hidden(df)
     entries = {L["name"]: L for L in landmarks or ()}
@@ -412,6 +415,8 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
             card["architects"] = arch
         if isinstance(raa, str) and raa and not hide[i]:
             card["raa"] = raa
+        if int(gid) in towers and not hide[i]:
+            card["tower"] = int(round(towers[int(gid)]))
         if col["prot"][i]:
             card["prot"] = int(col["prot"][i])
             if col["since"][i]:
@@ -629,7 +634,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     gz = [io.write_gz(out / f"pack{k}.bin.gz", p) for k, p in enumerate(packs)]
     attrs = attrs_array(df)
     attrs_gz = io.write_gz(out / "attrs.bin.gz", attrs.tobytes())
-    cards = card_shards(df, wiki["photos"], landmarks)
+    cards = card_shards(df, wiki["photos"], landmarks, towers={g: max(h for h, _ in ps) for g, ps in parts.items()})
     for k, shard in enumerate(cards):
         io.write_json(out / "cards" / f"{k:02d}.json", shard)
     texts = wiki_shards(df, wiki["extracts"])
