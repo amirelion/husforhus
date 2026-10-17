@@ -1,0 +1,5 @@
+# Names a private house (KATEGORI Enbostadshus or Kolonistuga, not curated) may carry on its card and in search
+# (Plan 4a, D18 with spec §6.3: a house's name can carry its owner's). One name per line, exactly as RAÄ writes it.
+# A name goes here only after a person has read it: a historical house or croft name ("…torp", "…gården") with no
+# given name, surname or possessive in it. When in doubt, leave it out. s02_attributes writes the names still
+# waiting for a decision to data/review-names.txt (internal).

@@ -1,0 +1,73 @@
+{
+  "id": "s07-kristina-lock",
+  "title": {
+    "en": "Queen Kristina's lock, 1637–1642",
+    "sv": "Drottning Kristinas sluss 1637–1642"
+  },
+  "year": 1642,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.3225,
+        "lon": 18.07,
+        "height_m": 60
+      },
+      "target": {
+        "lat": 59.32117,
+        "lon": 18.07264
+      },
+      "duration_s": 10,
+      "caption": {
+        "en": "Before 1637 there is no lock here. Boats are pulled up through the current, and a fee is charged.",
+        "sv": "Före 1637 finns ingen sluss här. Båtar dras upp genom strömmen, och det kostar en avgift."
+      },
+      "sources": [
+        "sv Wikipedia: Drottning Kristinas sluss",
+        "Slussens historia"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.3222,
+        "lon": 18.0745,
+        "height_m": 90
+      },
+      "target": {
+        "lat": 59.32117,
+        "lon": 18.07264
+      },
+      "duration_s": 11,
+      "caption": {
+        "en": "From 1637 the channel is dammed and dug out. A lock chamber built on Skeppsholmen is sunk into place, and the lock opens in 1642.",
+        "sv": "Från 1637 dämms strömmen och grävs ur. En slussdamm som byggts på Skeppsholmen sänks på plats, och slussen öppnar 1642."
+      },
+      "sources": [
+        "sv Wikipedia: Drottning Kristinas sluss",
+        "Slussens historia"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.3218,
+        "lon": 18.0718,
+        "height_m": 40
+      },
+      "target": {
+        "lat": 59.32117,
+        "lon": 18.07264
+      },
+      "duration_s": 10,
+      "caption": {
+        "en": "A boat passes through. For the first time ships can move between Mälaren and the sea without being hauled.",
+        "sv": "En båt slussas igenom. För första gången kan fartyg ta sig mellan Mälaren och havet utan att dras."
+      },
+      "sources": [
+        "sv Wikipedia: Drottning Kristinas sluss"
+      ]
+    }
+  ]
+}

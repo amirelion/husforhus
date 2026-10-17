@@ -1,0 +1,150 @@
+{
+  "id": "s10-olympics-1912",
+  "title": {
+    "en": "The Stockholm Olympics, 1912",
+    "sv": "Olympiska spelen i Stockholm 1912"
+  },
+  "year": 1912,
+  "sensitive": true,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.342,
+        "lon": 18.074,
+        "height_m": 300
+      },
+      "target": {
+        "lat": 59.345278,
+        "lon": 18.078889
+      },
+      "duration_s": 10,
+      "caption": {
+        "en": "Stockholm is chosen for the 1912 Games in 1909 and builds a brick stadium for them, finished in 1912.",
+        "sv": "Stockholm får spelen 1912 år 1909 och bygger en arena i tegel till dem, klar 1912."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholms stadion (IOC choice 28 May 1909",
+        "foundations from 23 November 1910",
+        "opened 1 June 1912)"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.3,
+        "lon": 18,
+        "height_m": 6000
+      },
+      "target": {
+        "lat": 59.406,
+        "lon": 17.9986
+      },
+      "duration_s": 11,
+      "caption": {
+        "en": "The marathon on 14 July 1912 runs 40.2 km, out to Sollentuna and back, in strong heat.",
+        "sv": "Maratonloppet den 14 juli 1912 är 40,2 km, ut till Sollentuna och tillbaka, i stark hetta."
+      },
+      "sources": [
+        "en Wikipedia: Athletics at the 1912 Summer Olympics – Men's marathon",
+        "sv Wikipedia: Shiso Kanaguri (turning point)"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.348,
+        "lon": 18.083,
+        "height_m": 150
+      },
+      "target": {
+        "lat": 59.345278,
+        "lon": 18.078889
+      },
+      "duration_s": 12,
+      "caption": {
+        "en": "Ken McArthur of South Africa wins. Francisco Lázaro of Portugal collapsed during the race and died the next day; a memorial was held here the following weekend.",
+        "sv": "Ken McArthur från Sydafrika vinner. Francisco Lázaro från Portugal föll ihop under loppet och dog dagen efter; en minnesstund hölls här helgen därpå."
+      },
+      "sources": [
+        "en Wikipedia: Athletics at the 1912 Summer Olympics – Men's marathon",
+        "en Wikipedia: Francisco Lázaro"
+      ]
+    }
+  ],
+  "overlays": [
+    {
+      "type": "route",
+      "coords": [
+        [
+          59.345278,
+          18.078889
+        ],
+        [
+          59.385556,
+          18.061389
+        ],
+        [
+          59.466667,
+          17.918333
+        ],
+        [
+          59.428611,
+          17.935833
+        ],
+        [
+          59.345278,
+          18.078889
+        ]
+      ],
+      "label": {
+        "en": "Marathon route, 14 July 1912",
+        "sv": "Maratonbanan 14 juli 1912"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.345278,
+        18.078889
+      ],
+      "label": {
+        "en": "Stockholms stadion (start)",
+        "sv": "Stockholms stadion (start)"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.385556,
+        18.061389
+      ],
+      "label": {
+        "en": "Stocksund (5 km checkpoint)",
+        "sv": "Stocksund (5 km checkpoint)"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.466667,
+        17.918333
+      ],
+      "label": {
+        "en": "Sollentuna kyrka (turning point)",
+        "sv": "Sollentuna kyrka (turning point)"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.428611,
+        17.935833
+      ],
+      "label": {
+        "en": "Tureberg (about 30 km)",
+        "sv": "Tureberg (about 30 km)"
+      }
+    }
+  ]
+}

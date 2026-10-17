@@ -1,0 +1,173 @@
+{
+  "id": "s12",
+  "title": {
+    "en": "The clearance of Klara, 1952–1977",
+    "sv": "Klararivningarna 1952–1977"
+  },
+  "year": 1952,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.327,
+        "lon": 18.056,
+        "height_m": 500
+      },
+      "target": {
+        "lat": 59.32972,
+        "lon": 18.06306
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "Klara around 1950: a dense grid of old blocks between Vasagatan, Kungsgatan and Drottninggatan.",
+        "sv": "Klara omkring 1950: täta, gamla kvarter mellan Vasagatan, Kungsgatan och Drottninggatan."
+      },
+      "sources": [
+        "sv Wikipedia: Klarakvarteren",
+        "Lantmäteriet orthophoto 1949"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.33,
+        "lon": 18.06,
+        "height_m": 90
+      },
+      "target": {
+        "lat": 59.331111,
+        "lon": 18.061667
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "Until the 1960s, most of Stockholm's daily papers had their offices here, close to the railway.",
+        "sv": "Fram till 1960-talet låg de flesta av Stockholms dagstidningar här, nära järnvägen."
+      },
+      "sources": [
+        "sv Wikipedia: Klarakvarteren"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.332,
+        "lon": 18.069,
+        "height_m": 150
+      },
+      "target": {
+        "lat": 59.334167,
+        "lon": 18.063611
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "Decided in principle in 1945, the demolitions began in March 1952, where Sveavägen was to be extended south.",
+        "sv": "Rivningarna, principbeslutade 1945, började i mars 1952 där Sveavägen skulle förlängas söderut."
+      },
+      "sources": [
+        "sv Wikipedia: Norrmalmsregleringen"
+      ]
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.331,
+        "lon": 18.067,
+        "height_m": 120
+      },
+      "target": {
+        "lat": 59.331944,
+        "lon": 18.064722
+      },
+      "duration_s": 13,
+      "caption": {
+        "en": "The metro was dug in an open cut through the ridge's gravel and sand. Slussen–Hötorget opened on 24 November 1957.",
+        "sv": "Tunnelbanan grävdes i öppet schakt genom åsens grus och sand. Slussen–Hötorget öppnade den 24 november 1957."
+      },
+      "sources": [
+        "sv Wikipedia: Norrmalmsregleringen"
+      ]
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.3325,
+        "lon": 18.059,
+        "height_m": 200
+      },
+      "target": {
+        "lat": 59.334167,
+        "lon": 18.063611
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "Five office towers rose at Hötorget. With Hötorgscity finished in 1966, the first building phase was complete.",
+        "sv": "Fem höghus reste sig vid Hötorget. När Hötorgscity stod klart 1966 var den första byggetappen avslutad."
+      },
+      "sources": [
+        "sv Wikipedia: Norrmalmsregleringen",
+        "Hötorgsskraporna"
+      ]
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.33,
+        "lon": 18.062,
+        "height_m": 250
+      },
+      "target": {
+        "lat": 59.331944,
+        "lon": 18.064722
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "The second phase filled the area south of Sergels torg: Kulturhuset and the Riksbank building, and Gallerian on Hamngatan.",
+        "sv": "Den andra etappen fyllde ytan söder om Sergels torg: Kulturhuset och Riksbankshuset, och Gallerian vid Hamngatan."
+      },
+      "sources": [
+        "sv Wikipedia: Norrmalmsregleringen"
+      ]
+    },
+    {
+      "n": 7,
+      "camera": {
+        "lat": 59.33,
+        "lon": 18.062,
+        "height_m": 250
+      },
+      "target": {
+        "lat": 59.331944,
+        "lon": 18.064722
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "Some cleared plots stayed empty for years. Opposition grew, and later phases were never carried out.",
+        "sv": "Vissa rivna tomter stod tomma i flera år. Motståndet växte, och de senare etapperna genomfördes aldrig."
+      },
+      "sources": [
+        "sv Wikipedia: Norrmalmsregleringen"
+      ]
+    },
+    {
+      "n": 8,
+      "camera": {
+        "lat": 59.326,
+        "lon": 18.058,
+        "height_m": 600
+      },
+      "target": {
+        "lat": 59.32972,
+        "lon": 18.06306
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "About 700 buildings were replaced. Several of the new ones are now listed buildings.",
+        "sv": "Omkring 700 byggnader ersattes. Flera av de nya är idag byggnadsminnen."
+      },
+      "sources": [
+        "sv Wikipedia: Norrmalmsregleringen"
+      ]
+    }
+  ]
+}

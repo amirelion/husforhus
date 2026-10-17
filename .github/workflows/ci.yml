@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Offline on every push: lint, pipeline unit tests (the network tests skip) and web unit tests.
+    # network.yml runs the network tests and the e2e job weekly and on demand.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: "0.13.1"
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check pipeline tests scripts
+
+      - name: Pipeline tests (offline)
+        run: uv run pytest -q
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Leak check
+        run: |
+          if [ -f scripts/public/leaks.txt ]; then
+            node scripts/public/export.mjs --check
+          else
+            echo "no leak rules in this copy"
+          fi
+
+      - name: Web unit tests
+        run: |
+          if ls web/test/*.test.mjs >/dev/null 2>&1; then
+            node --test "web/test/*.test.mjs"
+          else
+            echo "no web/test/*.test.mjs yet"
+          fi

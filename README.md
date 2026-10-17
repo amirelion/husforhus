@@ -1,0 +1,88 @@
+# Hus för hus
+
+*Stockholm, building by building.* A 3D map of every building in Stockholm municipality, about 78,000 of them, each coloured by when it was built.
+
+You can drag a timeline to watch the city grow, pick one of twelve periods of Stockholm's building history, and open a card for any building to see its year, where that year comes from, and, for notable buildings, a photo and a short excerpt from Wikipedia.
+
+The map is a port of [Amsterdam, building by building](https://github.com/alexbarakov/amsterdam-by-building) (MIT). It keeps that project's renderer and file layout and puts everything Stockholm-specific in one thin city layer (`pipeline/city.py`), so engine fixes can still move between the two.
+
+More in this folder:
+
+- [How the years work](HOW-YEARS-WORK.md): where each building's year comes from, how gaps are estimated, and why private houses show only a decade.
+- [Data sources](DATA-SOURCES.md): every dataset, with its licence and credit.
+- [Contributing](CONTRIBUTING.md): how to propose corrections, building details, history sources, new cities, translations and code.
+
+## How it fits together
+
+```
+open data ──► pipeline/ (Python) ──► web/data/<version>/ (gzipped binaries + JSON) ──► web/ (three.js, no build step)
+```
+
+- **`pipeline/`** downloads open data, joins it onto the City's building footprints, works out a year, a height and a ground level for each building, and writes compact tiles.
+- **`web/`** is a static viewer. It has no build step: serve the folder and open it in a browser.
+- Raw downloads go to `data/` and generated output to `web/data/`. Neither is in the repository; you build them.
+
+## Build it
+
+You need [uv](https://docs.astral.sh/uv/) (it installs the Python the project pins) and, for the web tests, Node 22.
+
+```bash
+uv sync
+uv run python -m pipeline.run --list     # the steps, in order
+HFH_FIXTURE=1 uv run python -m pipeline.run   # quick build: Gamla stan and Riddarholmen only (519 buildings)
+uv run python -m pipeline.run            # the whole city (downloads several hundred MB; takes a while)
+python3 scripts/serve.py 8642            # then open http://localhost:8642
+```
+
+Start with the quick build: it runs every step on a small area and is what the continuous-integration checks use. The quick build replaces the current version folder, so run the full build afterwards if you want the whole city back.
+
+Tests:
+
+```bash
+uv run pytest -q                 # pipeline tests (add --network for the ones that download data)
+npm ci
+npm run test:web                 # viewer unit tests
+npx playwright install chromium  # once
+npm run test:e2e                 # browser smoke tests
+```
+
+### Terrain
+
+By default the ground is built from the City's 2 m contour lines, which need no account. The pipeline can instead use Lantmäteriet's 1 m terrain model if `LM_USER` and `LM_PASSWORD` for a free Lantmäteriet Geotorget account are in the environment of `s00_fetch_dem`. The pipeline never reads a `.env` file by itself; pass one explicitly, for example `uv run --env-file .env python -m pipeline.s00_fetch_dem`. Later builds reuse the cached model.
+
+### Versions
+
+Each build writes to `web/data/v<YYYYMMDD>/` and points `web/data/current.json` at it. To rebuild under another name, pass a version after `--`:
+
+```bash
+uv run python -m pipeline.run s03_tiles s04_base s07_labels s14_search s99_validate -- --version v20261015-2
+```
+
+## The pipeline steps
+
+`uv run python -m pipeline.run` runs these in order; `uv run python -m pipeline.run <step> <step>` runs only the ones you name, still in this order.
+
+| Step | What it does |
+|---|---|
+| `s00_fetch_city` | Downloads the City of Stockholm's 3D buildings, its 117 districts and the map layers (water, land, street names, contours). |
+| `s00_fetch_raa` | Downloads the National Heritage Board's (RAÄ) building register for Stockholm county. |
+| `s00_fetch_raa_old` | Keeps a snapshot of RAÄ's older register file, which dates some buildings the current register no longer does. |
+| `s00_fetch_wikidata` | Queries Wikidata for buildings with a start or opening date, and for photos and article links. |
+| `s00_fetch_osm` | Queries OpenStreetMap for dated buildings and for floor counts. |
+| `s00_fetch_dem` | Fetches the contour lines, and Lantmäteriet's terrain model when a login is available. |
+| `s01_load` | Turns the City's 3D buildings into one table of footprints with heights and building types. |
+| `s08_landmarks` | Checks the hand-curated landmark list: each entry must match the Wikipedia article it cites, or it is dropped. |
+| `s02_years` | Gives each building a year from the best source available, and estimates houses where that can be done reliably. See [How the years work](HOW-YEARS-WORK.md). |
+| `s02_attributes` | Adds floors, heritage rating, protection status, architects and a display name. |
+| `s02_terrain` | Builds the terrain grid and fixes each building's ground level to it. |
+| `s06_wiki` | Fetches photos and short Wikipedia excerpts for the buildings that have them. |
+| `s03_tiles` | Writes the building tiles the viewer loads. |
+| `s04_base` | Writes the base map: water, land, terrain and the municipal edge. |
+| `s07_labels` | Writes street-name and place labels. |
+| `s99_validate` | Checks the output: counts, ranges, privacy rules and that every source carries its credit. |
+
+Arguments after `--` go to every chosen step, for example `-- --version v20261017-2`.
+
+## Licence
+
+Code: MIT, see [LICENSE](LICENSE). Each dataset keeps its own licence; see [Data sources](DATA-SOURCES.md).

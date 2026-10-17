@@ -1,0 +1,661 @@
+/* Self-hosted fonts, one per look (web/themes.js `font`; app.js sets --font). Variable fonts, latin subset (covers
+   å ä ö), from the @fontsource-variable packages; each family's licence is the SIL Open Font License, kept beside
+   the file as OFL.txt. */
+@font-face {
+  font-family: "Albert Sans";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/albert-sans/albert-sans-latin-wght-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Familjen Grotesk";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/familjen-grotesk/familjen-grotesk-latin-wght-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/inter/inter-latin-wght-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+/* Hus för hus: a pale architectural model under a northern sky. The colour tokens, the font and the color-scheme
+   below are the default look, Ärg (D28, web/look.js DEFAULT_LOOK), so the first paint is already in it;
+   app.js overwrites them from web/themes.js for the other looks (?theme=kalk|blatimme|paper).
+   web/test/styles.test.mjs checks that they match. */
+:root {
+  --bg: #d9dfe3;
+  --panel: #f6f6f4;
+  --ink: #15232b;
+  --muted: #56636b;
+  --line: #c8cfd3;
+  --accent: #1e625d;
+  --gutter: clamp(16px, 2.4vw, 32px);
+  --font: "Albert Sans";
+  color-scheme: light;
+  font: 400 14px/1.5 var(--font), "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+/* Hidden v1.1 controls (feature flags) must stay hidden even where a rule sets their display. */
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+/* Sky veils keep the masthead and the timeline legible over the model. */
+.veil { position: fixed; left: 0; right: 0; pointer-events: none; }
+.veil-top { top: 0; height: 150px; background: linear-gradient(var(--bg) 35%, transparent); }
+.veil-bottom { bottom: 0; height: 150px; background: linear-gradient(transparent, var(--bg) 55%); }
+
+/* Masthead: the name set large and tight, the subtitle under it. */
+.masthead { position: fixed; top: calc(env(safe-area-inset-top, 0px) + var(--gutter)); left: var(--gutter);
+  display: flex; gap: 14px; align-items: flex-start; pointer-events: none; }
+.sibling { position: fixed; right: var(--gutter); top: calc(env(safe-area-inset-top, 0px) + var(--gutter) + 124px);
+  color: var(--muted); font-size: 12px; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-spacing: -0.035em; line-height: .9; }
+.dek { margin: 8px 0 0; color: var(--muted); max-width: 26ch; font-size: 14px; line-height: 1.4; }
+
+/* Mode switch: a single bar, the active mode filled black. */
+.modes { position: fixed; top: calc(env(safe-area-inset-top, 0px) + var(--gutter)); left: 50%; transform: translateX(-50%);
+  display: flex; background: var(--panel); border-radius: 999px; padding: 3px; box-shadow: 0 1px 0 var(--line); }
+.modes button { border: 0; background: none; padding: 7px 16px; border-radius: 999px; cursor: pointer; font-weight: 500; }
+.modes button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+
+/* Top right: the tally, and the buttons under it. A column, so a title on two lines pushes the buttons down. */
+.corner { position: fixed; top: calc(env(safe-area-inset-top, 0px) + var(--gutter)); right: var(--gutter);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 14px; }
+.tally { text-align: right; }
+/* The title's line box is tighter than its letters (line-height .85): the descenders of "Today" and "I dag" hang below
+   it by up to about a seventh of the size, so a margin keeps them clear of the count line under it, by 3 px or more in
+   every look (e2e: the title over the count never touches the count line). */
+.tally-year { display: block; font-size: clamp(40px, 5vw, 64px); font-weight: 800; letter-spacing: -0.04em; line-height: .85;
+  margin-bottom: .12em; }
+/* A period's name is a phrase, not a number: smaller, and on up to two balanced lines. */
+.tally-year.named { font-size: clamp(24px, 2.6vw, 34px); letter-spacing: -0.025em; line-height: 1.02; max-width: 12em;
+  margin-left: auto; margin-bottom: 4px; text-wrap: balance; }
+.tally-count { color: var(--muted); }
+
+/* Context panel: legend, ramp or layer list, always on the left under the masthead. */
+.panel { position: fixed; left: var(--gutter); top: calc(env(safe-area-inset-top, 0px) + var(--gutter) + 120px);
+  width: min(340px, calc(100vw - 2 * var(--gutter))); max-height: calc(100vh - 300px); overflow-y: auto;
+  background: var(--panel); border-radius: 10px; padding: 14px 16px; }
+.panel h2 { margin: 0 0 8px; font-size: 13px; font-weight: 700; }
+.panel h2.section { margin: 14px 0 4px; color: var(--muted); font-weight: 600; }
+.panel h2.section:first-child { margin-top: 0; }
+.panel h2.section { display: flex; align-items: center; gap: 7px; scroll-margin-top: 6px; }
+.icon { width: 16px; height: 16px; flex: none; }
+.layer-title .icon { width: 20px; height: 20px; margin-right: 8px; vertical-align: -3px; }
+.jump { display: flex; gap: 4px; margin: 0 0 10px; position: sticky; top: -14px; background: var(--panel); padding: 6px 0; z-index: 1; }
+.jump button { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+  display: grid; place-items: center; cursor: pointer; color: var(--ink); }
+.jump button:hover { background: var(--bg); }
+.jump .icon { width: 18px; height: 18px; }
+/* Under the tally: the north button, the Look button, then About (and the two language letters). */
+.buttons { display: flex; align-items: center; gap: 6px; }
+.lang { display: flex;
+  background: var(--panel); border-radius: 999px; padding: 2px; }
+.lang button { border: 0; background: none; padding: 3px 9px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted); }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.swatches { display: flex; flex-direction: column; }
+.swatch { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; background: none; border: 0;
+  text-align: left; padding: 4px 0; cursor: pointer; }
+.swatch i { width: 12px; height: 12px; border-radius: 2px; }
+.swatch .n { color: var(--muted); font-size: 12px; }
+.swatch.unknown { cursor: default; row-gap: 2px; }
+/* The "Year unknown" row's switch, "Show" (D30, revised): under the label, a small track in the muted ink that fills
+   with the accent when on. On reads "they are on the map now". A button with aria-pressed, like the legend's other
+   choices; with a period shown alone it reads off and is aria-disabled, dimmed. Its hint, what the switch does now, is
+   the row's last line. The hide-estimates switch (spec §3.3) is the same switch on a row of its own (.est-row below). */
+.swatch.unknown .switch, .est-row .switch { grid-column: 2 / -1; justify-self: start; display: inline-flex; align-items: center; gap: 8px;
+  min-height: 24px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 12px; text-align: left; cursor: pointer; }
+.switch .toggle { position: relative; flex: none; width: 24px; height: 14px; border: 1.5px solid var(--muted); border-radius: 999px; }
+.switch .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--muted); transition: transform .15s ease; }
+.swatch.unknown .switch[aria-pressed="true"], .est-row .switch[aria-pressed="true"] { color: var(--ink); } /* as specific as the base rule above, which sets the muted ink */
+.switch[aria-pressed="true"] .toggle { background: var(--accent); border-color: var(--accent); }
+.switch[aria-pressed="true"] .toggle::after { background: var(--panel); transform: translateX(10px); }
+.switch[aria-disabled="true"] { opacity: .45; cursor: default; }
+.swatch.unknown .unknown-hint { grid-column: 2 / -1; color: var(--muted); font-size: 12px; line-height: 1.35; }
+/* The hide-estimates row stands apart from "Year unknown": under a hairline, its track at the legend's left edge, under
+   the period chips rather than under the "Show" track. On reads "the estimated years are hidden". */
+.est-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+/* Legend handle. On a desktop it is the panel's header row (sticky, so it stays reachable in a long list) and,
+   when folded, the whole panel shrinks to this one pill. The phone sheet below restyles it. */
+@media not all and (max-width: 720px) {
+  .panel { --handle-h: 34px; padding-top: 0; }
+  .sheet-handle { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
+    width: calc(100% + 32px); height: var(--handle-h); margin: 0 -16px; padding: 0 16px; border: 0; background: var(--panel);
+    font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); text-align: left; cursor: pointer; }
+  .sheet-handle:focus-visible { outline-offset: -2px; }
+  .sheet-handle::after { content: ""; flex: none; width: 7px; height: 7px; margin: 0 2px 0 14px; border: solid var(--muted);
+    border-width: 0 2px 2px 0; transform: translateY(2px) rotate(225deg); }
+  .jump { top: var(--handle-h); }
+  .panel.collapsed { width: auto; padding: 0; overflow: hidden; border-radius: 999px; box-shadow: 0 1px 0 var(--line); }
+  .panel.collapsed .sheet-handle { width: auto; margin: 0; padding: 0 14px 0 16px; }
+  .panel.collapsed .sheet-handle::after { transform: translateY(-2px) rotate(45deg); }
+  .panel.collapsed #panel-body { display: none; }
+}
+.src { font-size: 12px; color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.layer-intro { margin: 6px 0 10px; line-height: 1.5; }
+.filter { width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 6px; background: var(--panel); }
+.people .addr { color: var(--ink); opacity: .55; }
+.n, .tally, .card dd, .card .y { font-variant-numeric: tabular-nums; }
+/* Classic's font (Schibsted Grotesk) has tabular forms of the comma and the full stop as wide as a figure, so a count read
+   "77 , 743". In that look the counts, which carry a thousands separator, take proportional figures; the years keep
+   tabular ones (e2e: a count's thousands comma is drawn narrow). */
+[data-theme="paper"] :is(.n, .tally-count, .card dd) { font-variant-numeric: normal; }
+.swatch[aria-pressed="false"] { opacity: .35; }
+.ramp { height: 10px; border-radius: 2px; margin: 4px 0 6px; }
+.ramp-scale { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
+.note { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+/* The latin font subsets lack "≈" (W7): the card, the legend's note and the About notice set it in the system font on
+   purpose, never a random fallback. */
+.approx { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+.layers { display: flex; flex-direction: column; gap: 2px; margin: 0 -8px; }
+.layer { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; background: none; border: 0; text-align: left;
+  padding: 8px; border-radius: 6px; cursor: pointer; }
+.layer:hover { background: var(--bg); }
+.layer[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.layer b { font-weight: 700; }
+.layer .era, .layer .n { font-size: 12px; opacity: .7; }
+.layer .n { grid-row: 1 / 3; grid-column: 2; align-self: center; }
+.layer-detail { margin-top: 10px; }
+.stories { list-style: none; margin: 0 -8px; padding: 0; }
+.story { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 6px; padding: 7px 8px; cursor: pointer; }
+.story:hover { background: var(--bg); }
+.story b { display: block; font-weight: 600; }
+.story span { display: block; color: var(--muted); font-size: 12px; line-height: 1.45; margin-top: 2px; }
+.back { border: 0; background: none; padding: 0; margin: 0 0 10px; color: var(--muted); cursor: pointer; font-size: 13px; }
+.back::before { content: "‹ "; }
+.layer-title { font-size: 22px !important; font-weight: 800 !important; letter-spacing: -0.02em; margin: 0 !important; line-height: 1.1; }
+.layer-era { margin: 2px 0 0; color: var(--muted); }
+.layer-detail p { margin: 0 0 10px; line-height: 1.55; }
+.layer-detail a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; font-size: 12px; }
+.caveat { color: var(--muted); font-size: 12px; }
+
+/* Building card: a white slip of paper. Follows the pointer on hover; pinned by a click, then it takes clicks.
+   Hierarchy: name and year are the heading; small sentence-case headings mark the sections below. */
+.card { position: fixed; z-index: 10; pointer-events: none; background: var(--panel); border-radius: 10px;
+  width: 330px; max-height: calc(100vh - 24px); overflow-y: auto; box-shadow: 0 8px 28px rgba(30, 40, 50, .16); font-size: 13px; }
+.card.pinned { pointer-events: auto; width: 400px; }
+.card-close { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: color-mix(in srgb, var(--panel) 92%, transparent); cursor: pointer; font-size: 18px; line-height: 1; z-index: 1; }
+.card .photo { margin: 0; }
+.card .photo img { display: block; width: 100%; max-height: 210px; object-fit: cover; border-radius: 10px 10px 0 0; background: var(--bg); }
+.card .photo figcaption { font-size: 11px; color: var(--muted); padding: 5px 16px 0; }
+/* Photos through the years: today's first, then the archive; the year sits on the picture, tabs below jump. */
+.card .photo .frame { position: relative; }
+.card .photo .year { position: absolute; left: 10px; bottom: 8px; background: var(--ink); color: var(--panel);
+  font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+.card .photo .prev, .card .photo .next { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px;
+  border: 0; border-radius: 50%; background: rgba(255,255,255,.92); cursor: pointer; font-size: 20px; line-height: 1; }
+.card .photo .prev { left: 8px; } .card .photo .next { right: 8px; }
+.card .photo .years { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 16px 0; }
+.card .photo .years button { border: 1px solid #d6d9dc; background: none; border-radius: 4px; padding: 2px 7px; font: inherit;
+  font-size: 12px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.card .photo .years button[aria-current] { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.card .photo button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card .more-photos { font-size: 11px; margin: 3px 16px 0; color: var(--ink); }
+.card a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+/* The header band carries the period colour; --band-ink is black or white, whichever reads on it (app.js). */
+.card-head { padding: 12px 16px 10px; background: var(--band, var(--panel)); color: var(--band-ink, var(--ink)); }
+.card.pinned .card-head { padding-right: 46px; }
+.card .card-head .period { color: inherit; }   /* full ink: faded, it fell under 4.5:1 on some bands */
+.card .rating { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.card .rating.r1 { background: #2b6cb0; }
+.card .rating.r2 { background: #2f855a; }
+.card .rating.r3 { background: #d69e2e; }
+.card-head h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; padding-right: 26px; }
+.card .when { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.card .y { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.card .period { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.card .period i, .card .chips i { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.card section { padding: 10px 16px; border-top: 1px solid var(--line); }
+.card h4 { margin: 0 0 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.card .extract { margin: 0; line-height: 1.55; }
+.card .fact { background: #fff6e8; border-top-color: #f0dcc0; }
+.card .fact p { margin: 0; line-height: 1.5; }
+.card .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.card .chips li { display: flex; gap: 8px; align-items: flex-start; }
+.card .chips li i { margin-top: 5px; }
+.card .chips b { font-weight: 600; }
+.card .chips span { color: var(--muted); }
+.card .chips p { margin: 3px 0 0; line-height: 1.5; }
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; text-align: right; }
+.card .why { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.card .sources p { margin: 0; }
+.card .residents { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.card .residents span, .card .residents .desc { color: var(--muted); }
+.card .residents blockquote { margin: 4px 0 0; padding-left: 10px; border-left: 2px solid var(--line); font-size: 12px; line-height: 1.5; color: #3e4448; }
+.card .photo.inline { margin: 0 -16px -10px; }
+.card .photo.inline img { border-radius: 0; }
+.card .hint { margin: 0; padding: 8px 16px 12px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+/* Plan 4a: how the year is known, one line under the band; the English label under the Swedish name; the excerpt's
+   credit; a pinned card's photo above the band (its credit under it), sized before it loads so nothing jumps. */
+.card .dating { margin: 0; padding: 8px 16px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.card-head .en { margin: -4px 0 6px; font-size: 13px; }   /* its size, not a fade, sets it under the name */
+.card-head .place { margin: -2px 0 8px; font-size: 13px; }   /* full ink, like .en: 4.5:1 on every band */
+.card .extract .credit { margin: 6px 0 0; color: var(--muted); font-size: 11px; }
+.card .photo img { height: auto; }   /* with the img's width and height attributes the browser keeps the room */
+.card .photo figcaption { padding-bottom: 6px; line-height: 1.4; }
+.card.pinned .photo + .card-head { padding-top: 10px; }
+.card .sources a { white-space: nowrap; }
+
+/* How to move: a quiet line under the timeline's right end. */
+.howto { position: fixed; right: var(--gutter); bottom: calc(env(safe-area-inset-bottom, 0px) + 146px); color: var(--muted); background: color-mix(in srgb, var(--bg) 85%, transparent); padding: 2px 8px; border-radius: 4px;
+  font-size: 12px; pointer-events: none; }
+@media (max-width: 720px), (hover: none) { .howto { display: none; } }
+
+.timeline { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; gap: 14px;
+  padding: 0 var(--gutter) calc(env(safe-area-inset-bottom, 0px) + 14px); pointer-events: none; }
+.timeline > * { pointer-events: auto; }
+/* min-width: 0 keeps the canvas out of the flex sizing: its bitmap (width × devicePixelRatio, rounded down) would
+   otherwise set its minimum width, and at a fractional ratio (browser zoom) each redraw widened it a little. */
+.hist-wrap { position: relative; flex: 1; min-width: 0; }
+.timeline canvas { display: block; width: 100%; min-width: 0; height: 96px; cursor: ew-resize; touch-action: none; }
+/* Plan 4a: the handles' grips, keyboard sliders over the histogram (app.js places them at their years). The pointer goes
+   through them to the canvas, which drags the nearer handle as before. The from-grip at rest sits at the left end,
+   faint, so it can be found. */
+.grip { position: absolute; top: 0; width: 14px; height: 76px; margin-left: -7px; pointer-events: none; border-radius: 7px; }
+.grip::before { content: ""; position: absolute; left: 3px; top: 2px; width: 8px; height: 14px; border-radius: 4px;
+  background: var(--ink); box-shadow: 0 0 0 2px var(--bg); }
+.grip-from::before { background: var(--muted); }
+.grip-from.rest::before { opacity: .45; }   /* the knob only: its focus ring stays at full strength */
+.grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+.play { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--ink); color: var(--panel);
+  cursor: pointer; margin-bottom: 24px; display: grid; place-items: center; flex: none; }
+.play svg { width: 16px; height: 16px; fill: currentColor; }
+
+.loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--muted); }
+/* ?debug=1: renderer statistics, above the timeline on the right. */
+.debug { position: fixed; right: var(--gutter); bottom: 150px; z-index: 30; padding: 8px 10px; border-radius: 6px;
+  background: rgba(0, 0, 0, .78); color: #e6efe6; font: 11px/1.35 ui-monospace, Menlo, monospace; }
+.debug pre { margin: 0 0 6px; font: inherit; }
+.debug button { font: inherit; color: #111; margin-right: 6px; padding: 3px 8px; border: 0; border-radius: 4px; cursor: pointer; }
+
+@media (max-width: 720px) {
+  .dek { display: none; }
+  h1 { font-size: 30px; }
+  .tally-year { font-size: 30px; }
+  .tally-year.named { font-size: 19px; max-width: 10em; margin-bottom: 2px; }
+  .tally-count { font-size: 12px; }
+  .masthead, .corner { top: calc(env(safe-area-inset-top, 0px) + 14px); }
+  .corner { gap: 8px; }
+  .sibling { top: calc(env(safe-area-inset-top, 0px) + 98px); }
+  /* Modes: one scrolling strip above the timeline. */
+  .modes { top: auto; left: 12px; right: 12px; transform: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
+    overflow-x: auto; scrollbar-width: none; justify-content: flex-start; }
+  .modes::-webkit-scrollbar { display: none; }
+  .modes button { flex: 1 0 auto; padding: 8px 11px; }
+  /* Panel: a sheet above the modes, folded to its handle by default. */
+  .panel { top: auto; left: 12px; right: 12px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 156px);
+    max-height: 48vh; padding: 0 14px 12px; }
+  .sheet-handle { display: block; width: calc(100% + 28px); margin: 0 -14px 8px; padding: 12px 14px; border: 0;
+    background: none; text-align: left; font-weight: 600; cursor: pointer; border-bottom: 1px solid var(--line); }
+  .sheet-handle::after { content: ""; float: right; width: 8px; height: 8px; margin-top: 4px; border: solid var(--muted);
+    border-width: 0 2px 2px 0; transform: rotate(225deg); }
+  .panel.collapsed { overflow: hidden; padding-bottom: 0; }
+  .panel.collapsed .sheet-handle { margin-bottom: 0; border-bottom: 0; }
+  .panel.collapsed .sheet-handle::after { transform: rotate(45deg); margin-top: 0; }
+  .panel.collapsed #panel-body { display: none; }
+  /* Card: a sheet from the bottom edge. */
+  .card, .card.pinned { left: 0 !important; right: 0; top: auto !important; bottom: 0; width: auto; max-height: 72vh;
+    border-radius: 14px 14px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .card .photo img { border-radius: 14px 14px 0 0; max-height: 190px; }
+  .timeline { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
+  .timeline canvas { height: 76px; }
+  .grip { height: 56px; }
+  .play { width: 40px; height: 40px; margin-bottom: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Look switcher (web/switcher.js): a popover under the Look button, a bottom sheet on a phone. Each card shows its
+   look as it is: its panel colour, ink and font, and its twelve period colours on its own ground. */
+.look-open { display: flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; padding: 5px 11px 5px 9px;
+  background: var(--panel); color: var(--ink); font-size: 12px; font-weight: 600; line-height: 18px; cursor: pointer; }
+.look-open svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.look-open svg path { fill: currentColor; stroke: none; }
+.look-open[aria-expanded="true"] { background: var(--ink); color: var(--panel); }
+/* The north button (web/north.js): round, as tall as the Look button and in its colours. The needle's north half is
+   filled, its south half drawn; app.js turns the whole icon with the map (a transform, so no layout). */
+.north-open { display: grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0;
+  border-radius: 50%; background: var(--panel); color: var(--ink); cursor: pointer; }
+.north-open svg { width: 16px; height: 16px; }
+.north-open .needle-n { fill: currentColor; }
+.north-open .needle-s { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
+/* On a touch screen the top-right buttons take a tap a little outside what is drawn: 44 px tall targets, for the 28 px
+   north and Look buttons and About's 24 px, without changing their size or the row. Sideways they reach halfway
+   into the 6 px gap, so neighbours never overlap. The Look panel's Hills slider takes the same 44 px band (below). */
+@media (pointer: coarse) {
+  .north-open, .look-open, .search-open, .lang button { position: relative; }
+  .north-open::after, .look-open::after, .search-open::after { content: ""; position: absolute; inset: -8px -3px; }
+  .lang button::after { content: ""; position: absolute; inset: -10px 0; }
+}
+/* .corner is fixed, so it is its own stacking context: lift it over the legend and the card while the panel is open. */
+.corner:has(.look[open]) { z-index: 25; }
+/* The popover scrolls where the screen is shorter than it (a phone held sideways: 740 x 360 cut off the Ground row,
+   VIEWER-1, and a short desktop window): its top sits 128 to 165 px down, so it may reach 180 px less than the
+   screen's height. */
+.look { position: absolute; inset: calc(100% + 8px) 0 auto auto; margin: 0; width: 308px; padding: 12px; border: 0;
+  border-radius: 12px; background: var(--panel); color: var(--ink); box-shadow: 0 10px 34px rgba(30, 40, 50, .2);
+  max-height: calc(100vh - 180px); max-height: calc(100dvh - 180px); overflow-y: auto; overscroll-behavior: contain; }
+.look header { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 10px; }
+.look h2 { margin: 0; font-size: 13px; font-weight: 700; }
+.look h3 { margin: 14px 2px 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.look-close { display: none; width: 32px; height: 32px; margin: -6px -6px -6px 0; border: 0; border-radius: 50%;
+  background: var(--bg); cursor: pointer; font-size: 18px; line-height: 1; place-items: center; }
+.look-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.look-card { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 9px; border: 1px solid var(--line);
+  border-radius: 9px; background: var(--card-bg); color: var(--card-ink); font-family: var(--card-font), sans-serif;
+  text-align: left; cursor: pointer; }
+.look-card:hover { border-color: var(--muted); }
+.look-card[aria-pressed="true"] { border-color: transparent; box-shadow: 0 0 0 2px var(--accent); }
+.look-strip { display: flex; gap: 2px; height: 28px; padding: 4px; border-radius: 5px; background: var(--card-ground); }
+.look-strip i { flex: 1; border-radius: 1px; }
+.look-name { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; padding: 0 2px; }
+.look-check { display: none; position: absolute; top: -7px; right: -7px; width: 20px; height: 20px; }
+.look-check circle { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+.look-check path { fill: none; stroke: var(--panel); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.look-card[aria-pressed="true"] .look-check { display: block; }
+.look-atmos { display: flex; flex-wrap: wrap; gap: 6px; }
+.look-atmos button { border: 1px solid var(--line); border-radius: 999px; background: none; padding: 5px 12px; font-size: 12px;
+  font-weight: 600; cursor: pointer; }
+.look-atmos button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+/* The Hills slider (Plan 3, D40): its label, a native range in the look's accent and its value ("Flat", "1.5×") on one
+   24 px row, with the honesty line under it. When the terrain did not load the row is dimmed (aria-disabled), as the
+   legend's switches are. */
+.look-relief { display: flex; flex-direction: column; gap: 2px; padding: 0 2px; }
+.relief-row { display: flex; align-items: center; gap: 10px; height: 24px; font-size: 13px; }
+.relief-row label { flex: none; }
+.relief-row input[type="range"] { flex: 1; min-width: 0; height: 24px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.relief-row output { flex: none; min-width: 3.2em; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.relief-row:has(input[aria-disabled="true"]) { opacity: .45; }
+.relief-row input[aria-disabled="true"] { cursor: default; }
+/* The focus ring hugs the track, so it does not run over the line under the row (S8). On a touch screen the range is
+   the 44 px band (below), so the ring goes round the row instead, the drawn size. */
+.relief-row input[type="range"]:focus-visible { outline-offset: 0; }
+.relief-note { color: var(--muted); font-size: 12px; line-height: 1.35; }
+/* On a touch screen the slider takes a tap in a 44 px band (D36's), over its heading and its line, which take no tap:
+   the range itself is 44 px tall (its track drawn in the middle, as on a desktop), and its margins give the 20 px
+   back, so the row keeps its 24 px. Positioned, so it is hit before the line under it. */
+@media (pointer: coarse) {
+  .relief-row input[type="range"] { position: relative; height: 44px; margin: -10px 0; }
+  .relief-row { padding: 0 6px; margin: 0 -6px; }   /* room inside the ring, the row's text where it was */
+  .relief-row input[type="range"]:focus-visible { outline: none; }
+  .relief-row:has(input[type="range"]:focus-visible) { outline: 2px solid var(--accent); outline-offset: 0; border-radius: 6px; }
+}
+@media (max-width: 720px) {
+  .look { position: fixed; inset: auto 0 0 0; width: auto; max-height: 80vh; overflow-y: auto; border-radius: 16px 16px 0 0;
+    padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 18px); box-shadow: 0 -8px 30px rgba(30, 40, 50, .22); }
+  .look header { margin-bottom: 12px; }
+  .look h2 { font-size: 15px; }
+  .look-close { display: grid; }
+  .look-cards { gap: 10px; }
+  .look-card { padding: 10px 10px 11px; gap: 10px; }
+  .look-strip { height: 34px; }
+  .look-name { font-size: 15px; }
+}
+
+/* About: a reading page over the map. */
+.lang .about-open { color: var(--ink); }
+.about { border: 0; border-radius: 12px; padding: 0; width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+  box-shadow: 0 20px 60px rgba(30, 40, 50, .25); background: var(--panel); color: var(--ink); overflow-y: auto; }
+.about::backdrop { background: color-mix(in srgb, var(--bg) 70%, transparent); }
+/* The dialog scrolls, not the article: an article that scrolls would shrink beside the floating close button. */
+.about article { padding: 28px 32px 32px; }
+.about h2 { margin: 0 0 12px; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.about h3 { margin: 22px 0 6px; font-size: 15px; font-weight: 700; }
+.about p, .about li { line-height: 1.6; max-width: 64ch; }
+.about ul { padding-left: 18px; margin: 6px 0 0; }
+.about li { margin-bottom: 6px; }
+.about a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.about .credit { color: var(--muted); }
+.about .author { font-weight: 600; margin-bottom: 4px; }
+.about .author + .credit { margin-top: 0; }
+.about .notice { border-left: 3px solid var(--accent); padding-left: 12px; font-weight: 500; }
+.about-close { position: sticky; float: right; top: 10px; margin: 10px 10px 0 0; width: 32px; height: 32px; border: 0;
+  border-radius: 50%; background: var(--bg); cursor: pointer; font-size: 18px; }
+@media (max-width: 720px) { .about article { padding: 20px 18px 24px; } }
+.contribute { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12px; }
+.contribute a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.card .photo button[disabled] { opacity: .35; cursor: default; }
+.card .photo .gone { position: absolute; inset: 0; margin: 0; display: grid; place-content: center; text-align: center; gap: 4px;
+  padding: 0 40px; background: var(--bg); font-size: 12px; border-radius: 10px 10px 0 0; }
+.card .photo.failed img { visibility: hidden; height: 190px; }
+
+/* Quests (v1.1; hidden by config.features in v1). Every answer is worth three crosses. */
+.modes .quests-open { display: inline-flex; align-items: center; gap: 7px; margin-left: 2px; border-left: 1px solid var(--line); border-radius: 0 999px 999px 0; }
+.modes .quests-open svg { width: 18px; height: 6px; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; fill: none; }
+.modes .quests-open:hover { background: #f1f3f4; }
+.q-x { display: inline-flex; gap: 1px; font-weight: 800; font-size: 15px; line-height: 1; letter-spacing: -0.02em; }
+.q-x i { font-style: normal; color: #d8dcde; }
+.q-x i.on { color: var(--accent); }
+.q-level { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.q-level .q-x { font-size: 13px; }
+
+.quests { width: min(980px, calc(100vw - 32px)); }
+.quests article { padding: 24px 28px 26px; }
+.quests h2 { margin: 0; }
+.quests .q-lede { max-width: 70ch; margin: 6px 0 0; font-size: 13px; line-height: 1.5; }
+.quests .q-score { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.quests .q-score b { color: var(--accent); font-size: 18px; }
+.quests .q-grid { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.quests .q-tile { margin: 0; max-width: none; line-height: 1.35; }
+.q-tile { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 14px 14px 12px; border-radius: 10px;
+  background: var(--panel); box-shadow: inset 0 0 0 1px var(--line); }
+.q-tile.l3 { box-shadow: inset 0 0 0 2px var(--ink); }
+.q-tile h3 { margin: 2px 0 0; font-size: 15px; line-height: 1.25; letter-spacing: -0.01em; }
+.q-tile p { margin: 0; color: #4b5257; font-size: 12px; line-height: 1.4; flex: 1; }
+.q-tile footer { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; gap: 6px; }
+.q-tile .q-progress { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.q-tile.complete::after { content: "×"; position: absolute; top: 6px; right: 12px; color: var(--accent); font-weight: 800; font-size: 20px; }
+.quests .q-start { border: 0; background: var(--ink); color: var(--panel); border-radius: 999px; padding: 5px 12px; cursor: pointer; font-weight: 600; font-size: 12px; }
+.q-tile.complete .q-start { background: var(--panel); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+/* The open quest: a slip at the right, above the timeline. */
+.quest { position: fixed; z-index: 11; right: var(--gutter); bottom: calc(env(safe-area-inset-bottom, 0px) + 146px); width: 350px; max-height: calc(100vh - 244px - env(safe-area-inset-bottom, 0px)); overflow-y: auto;
+  background: var(--panel); border-radius: 12px; box-shadow: 0 10px 34px rgba(30, 40, 50, .2); font-size: 13px; }
+.quest header { cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 12px 44px 11px 16px; background: var(--ink); color: var(--panel);
+  border-radius: 12px 12px 0 0; position: sticky; top: 0; z-index: 1; }
+.quest header b { font-size: 14px; }
+.quest header .q-level { margin-left: auto; color: #b9c0c4; }
+.quest header .q-x i:not(.on) { color: #4a4f53; }
+.quest .q-close { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; border: 0; border-radius: 50%; z-index: 2;
+  background: none; color: var(--panel); cursor: pointer; font-size: 20px; line-height: 1; }
+.quest .q-steps { display: flex; align-items: center; gap: 4px; padding: 10px 16px 0; }
+.quest .q-steps i { width: 18px; height: 4px; border-radius: 2px; background: #dfe3e5; }
+.quest .q-steps i.done { background: var(--accent); }
+.quest .q-steps i.now { background: var(--ink); }
+.quest .q-steps span { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.quest .q-photo { position: relative; margin: 10px 16px 0; overflow: hidden; height: 170px; border-radius: 8px; background: var(--bg); }
+.quest .q-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.quest .q-photo .year { position: absolute; left: 8px; bottom: 8px; background: var(--ink); color: var(--panel); font-weight: 700; font-size: 12px; padding: 2px 7px; border-radius: 4px; }
+.quest .q-credit { font-size: 11px; color: var(--muted); padding: 4px 16px 0; margin: 0; }
+.quest .q-credit a, .quest .q-found a { color: inherit; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.quest .q-riddle { margin: 0; padding: 10px 16px 0; font-size: 15px; line-height: 1.5; }
+.quest .q-hints { margin: 8px 16px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.quest .q-hints li { font-size: 13px; line-height: 1.45; padding-left: 10px; border-left: 2px solid var(--accent); }
+.quest .q-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px 16px 14px; }
+.quest .q-actions button, .quest .q-options button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px;
+  padding: 6px 13px; cursor: pointer; font-weight: 600; font-size: 12px; }
+.quest .q-actions button small { color: var(--accent); font-weight: 800; }
+.quest .q-actions .primary { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.quest .q-worth { margin-left: auto; }
+.quest .q-feedback { margin: 0; padding: 8px 16px 0; font-size: 13px; color: var(--muted); min-height: 1.4em; }
+.quest .q-actions .q-feedback { padding: 0; }
+.quest .q-feedback.hot { color: var(--accent); font-weight: 600; }
+.quest .q-feedback.warm { color: #b45309; }
+.quest .q-feedback.cold { color: #3f6b8f; }
+.quest .q-feedback.miss { animation: q-shake .35s; }
+/* year */
+.quest .q-year { padding: 10px 16px 0; }
+.quest .q-year output { display: block; font-size: 44px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.quest .q-year input { width: 100%; margin: 10px 0 2px; accent-color: var(--accent); }
+.quest .q-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.quest .q-yeardiff { margin: 0 0 6px; }
+/* choice */
+.quest .q-options { display: flex; flex-direction: column; gap: 6px; padding: 12px 16px 0; }
+.quest .q-options button { text-align: left; border-radius: 8px; padding: 9px 12px; font-size: 13px; font-weight: 500; }
+.quest .q-options button:hover:not(:disabled) { border-color: var(--ink); }
+.quest .q-options button.wrong { text-decoration: line-through; color: var(--muted); }
+.quest .q-options button.right { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+/* the answer */
+.quest .q-found { position: relative; margin: 14px 16px 0; padding: 14px 12px 10px; background: #f3f4f5; border-radius: 8px; }
+.quest .q-found p { margin: 0; font-size: 13px; line-height: 1.5; }
+.quest .q-found .q-earned { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.quest .q-found .q-earned:empty { display: none; }
+.q-stamp { position: absolute; top: -12px; right: 10px; padding: 3px 8px; background: var(--panel); border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .12); animation: q-stamp .45s cubic-bezier(.2, 1.6, .4, 1); }
+.q-stamp .q-x { font-size: 20px; }
+.quest .q-then { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.quest .q-then figure { margin: 0; position: relative; }
+.quest .q-then img { width: 100%; height: 96px; object-fit: cover; border-radius: 6px; display: block; }
+.quest .q-then figcaption { position: absolute; left: 5px; bottom: 5px; background: var(--ink); color: var(--panel); font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+/* the result */
+.quest .q-result { padding: 18px 16px 4px; }
+.quest .q-total { margin: 0; font-size: 15px; color: var(--muted); }
+.quest .q-total b { font-size: 48px; font-weight: 800; letter-spacing: -0.04em; color: var(--ink); }
+.quest .q-verdict { margin: 2px 0 0; font-size: 16px; font-weight: 700; }
+.quest .q-line { margin: 10px 0 0; font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: 0.04em; word-spacing: 0.3em; }
+@keyframes q-stamp { from { transform: rotate(-20deg) scale(2); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes q-shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.quest.folded > :not(header):not(.q-close):not(.q-steps) { display: none; }
+.quest.folded .q-steps { padding-bottom: 10px; }
+@media (max-width: 720px) {
+  .quest { left: 12px; right: 12px; width: auto; bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 102px); max-height: 50vh; }
+  .quest .q-photo { height: 120px; }
+  /* On a phone the quests are a list: level and title on the left, progress and the button on the right. */
+  .quests .q-grid { grid-template-columns: 1fr; gap: 6px; }
+  .quests article { padding: 20px 16px; }
+  .quests .q-lede { font-size: 12px; }
+  .q-tile { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; row-gap: 2px; align-items: center; padding: 10px 12px; }
+  .q-tile .q-level { grid-column: 1; grid-row: 1; }
+  .q-tile h3 { grid-column: 1; grid-row: 2; margin: 0; }
+  .q-tile p { display: none; }
+  .q-tile footer { grid-column: 2; grid-row: 1 / span 2; margin: 0; gap: 10px; }
+  .q-tile.complete::after { display: none; }
+  /* During a quest the phone shows the map and the riddle only; colour hints switch modes from the riddle itself. */
+  body.questing .panel, body.questing .modes, body.questing .timeline, body.questing .buttons, body.questing .tally { display: none; }
+  body.questing .quest { top: calc(env(safe-area-inset-top, 0px) + 62px); max-height: 56vh; }
+  /* Quests leave the strip, so the four colourings fit without scrolling: a pill opposite the language switch. */
+  .modes .quests-open { position: fixed; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 66px); flex: none; margin: 0;
+    padding: 4px 11px; border: 0; border-radius: 999px; background: var(--panel); font-size: 12px; font-weight: 600; }
+}
+@media (prefers-reduced-motion: reduce) { .quest .q-feedback.miss, .q-stamp { animation: none; } }
+
+/* Search (Plan 4b, web/searchbox.js): a pill beside the modes on a desktop (app.js placeSearch sets its left edge),
+   under them on a narrow desktop, a full-screen sheet on a phone. */
+.search { position: fixed; top: calc(env(safe-area-inset-top, 0px) + var(--gutter)); left: calc(50% + 140px); z-index: 12;
+  width: 280px; transition: width .15s; }
+.search:focus-within { width: 340px; }
+.search-box { display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 6px 0 12px; border-radius: 999px;
+  background: var(--panel); box-shadow: 0 1px 0 var(--line); }
+.search-box svg { width: 14px; height: 14px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linecap: round; }
+.search-box input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; font: inherit; color: var(--ink); outline: none; }
+.search-box input::-webkit-search-cancel-button { display: none; }
+.search-box:focus-within { box-shadow: 0 0 0 2px var(--accent); }
+.search-key { font: 600 11px/1 var(--font), sans-serif; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; }
+.search:focus-within .search-key, .search.filled .search-key { display: none; }
+.search-clear { display: none; width: 26px; height: 26px; border: 0; border-radius: 50%; background: none; color: var(--muted);
+  font-size: 17px; line-height: 1; cursor: pointer; }
+.search.filled .search-clear { display: block; }
+.search-cancel { display: none; }
+.search-list { list-style: none; margin: 6px 0 0; padding: 4px; max-height: 60vh; overflow-y: auto; border-radius: 10px;
+  background: var(--panel); box-shadow: 0 10px 34px rgba(30, 40, 50, .2); }
+.search-list li { display: grid; grid-template-columns: 10px 1fr; gap: 1px 10px; padding: 7px 10px; border-radius: 7px; cursor: pointer; }
+.search-list li[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); }
+.search-list .sw { grid-row: span 2; width: 10px; height: 10px; margin-top: 4px; border-radius: 2px; background: var(--line); }
+.search-list .sw.kind-street { height: 3px; margin-top: 8px; background: var(--muted); }
+.search-list .sw.kind-district { border-radius: 50%; border: 2px solid var(--muted); background: none; }
+.search-list b { font-weight: 700; }
+.search-list .sub { font-size: 12px; color: var(--muted); }
+.search-msg { margin: 6px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--panel); font-size: 13px; line-height: 1.5;
+  box-shadow: 0 10px 34px rgba(30, 40, 50, .12); }
+.search-try { padding: 0; border: 0; background: none; font: inherit; color: var(--ink); text-decoration: underline;
+  text-decoration-color: var(--accent); text-underline-offset: 3px; cursor: pointer; }
+.search-open { display: none; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.card .picked { margin: 0; padding: 8px 16px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
+@media (max-width: 1100px) and (min-width: 721px) {
+  .search { left: 50% !important; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + var(--gutter) + 46px); }
+}
+@media (max-width: 720px) {
+  .search { display: none; inset: 0; width: auto; z-index: 40; overflow-y: auto; background: var(--bg);
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 12px; }
+  .search.open { display: block; }
+  .search:focus-within { width: auto; }
+  .search-box { height: 44px; }
+  /* 16 px or more, or iPhone Safari zooms the page when the field takes the focus, and leaves it zoomed */
+  .search-box input { font-size: 16px; }
+  .search-cancel { display: block; padding: 0 6px; border: 0; background: none; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; }
+  .search-key { display: none; }
+  .search-list, .search-msg { box-shadow: none; max-height: none; }
+  .search-open { display: grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0;
+    border-radius: 50%; background: var(--panel); color: var(--ink); cursor: pointer; }
+  .search-open svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+  .search-open[hidden] { display: none; }
+}
+
+/* About, written from the build (Plan 4b, web/about.js): section links, tables that scroll on a phone. */
+.about .lead { font-size: 16px; }
+.about-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.about-nav a { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; font-weight: 600;
+  text-decoration: none; }
+.about h3[tabindex] { scroll-margin-top: 52px; }   /* below the sticky close button (10 + 32 + 10 px) */
+.about h3[tabindex]:focus { outline: none; }
+.about .table { overflow-x: auto; margin: 8px 0; }
+.about table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+.about th, .about td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.about td:not(:first-child), .about th:not(:first-child) { text-align: right; }
+/* numbers never break; the headings and the last column's words wrap, so the accuracy table fits a desktop's dialog */
+.about td:not(:first-child):not(:last-child) { white-space: nowrap; }
+.about tr.total td { font-weight: 700; border-bottom: 0; }
+.about details { margin: 8px 0; }
+.about summary { cursor: pointer; font-weight: 600; }
+.about-close { color: var(--ink); }   /* not the browser's ButtonText, which a dark look would hide */
+.card .dating .why { margin-left: 4px; font-size: 12px; white-space: nowrap; }
+.card .wrong { margin: 0; padding: 8px 16px 12px; border-top: 1px solid var(--line); font-size: 12px; }
+.card .wrong a { color: var(--muted); }
+
+/* The corner credit (Plan 4b, web/credits.js): under the drag hint and above the timeline on a desktop; on a phone
+   under the buttons in the sky, folding into its (i) button after 5 s. */
+.credits { position: fixed; right: var(--gutter); bottom: calc(env(safe-area-inset-bottom, 0px) + 120px); z-index: 5;
+  pointer-events: none; }   /* its empty width is the map's: a drag or a tap there reaches the canvas */
+.credits > * { pointer-events: auto; }
+.credit-line { margin: 0; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: var(--muted);
+  background: color-mix(in srgb, var(--bg) 85%, transparent); }
+.credit-line a { color: inherit; text-decoration-color: var(--line); text-underline-offset: 2px; }
+.credit-open { width: 26px; height: 26px; border: 0; border-radius: 50%; background: var(--panel); color: var(--ink);
+  font: italic 700 13px/1 Georgia, serif; cursor: pointer; }
+.credits.folded .credit-line { display: none; }
+@media (max-width: 720px) {
+  .credits { bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 112px); right: 12px; left: 12px; text-align: right; }   /* app.js placeCredit sets top under the corner */
+  .credit-line { display: inline-block; }
+}
+/* The middle of the screen while the map has the keyboard (the audit's finding 1): Enter opens the building under it. */
+.crosshair { display: none; position: fixed; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px;
+  pointer-events: none; z-index: 2;
+  background: linear-gradient(var(--ink), var(--ink)) center / 2px 100% no-repeat, linear-gradient(var(--ink), var(--ink)) center / 100% 2px no-repeat;
+  filter: drop-shadow(0 0 1.5px var(--panel)); }
+#scene:focus-visible ~ .crosshair { display: block; }
+#scene:focus-visible { outline-offset: -4px; }
+.card .card-failed { color: var(--ink); font-weight: 500; }

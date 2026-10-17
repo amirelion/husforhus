@@ -1,0 +1,5 @@
+[out:json][timeout:180][bbox:59.17,17.75,59.45,18.20];
+way["railway"="subway"];
+out body;
+>;
+out skel qt;

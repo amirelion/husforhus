@@ -1,0 +1,5 @@
+[out:json][timeout:180];
+area["admin_level"="7"]["ref:scb"="0180"]->.k;
+(way["building"]["start_date"](area.k);relation["building"]["start_date"](area.k);
+ nwr["building"]["year_of_construction"](area.k);nwr["building"]["construction_date"](area.k););
+out tags center;

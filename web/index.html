@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hus för hus</title>
+<meta name="description" content="Stockholm, building by building: every building in the city, coloured by when it was built.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Hus för hus - Stockholm, building by building">
+<meta property="og:description" content="Every building in Stockholm, coloured by the year it was built, from 1100 to today.">
+<meta property="og:url" content="https://husforhus.se/">
+<meta property="og:image" content="https://husforhus.se/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_GB">
+<meta property="og:locale:alternate" content="sv_SE">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="scene-player.css">
+</head>
+<body>
+<canvas id="scene" tabindex="0" aria-label="3D map of Stockholm's buildings, coloured by when they were built. Arrow keys move, + and − zoom, Enter opens the building in the middle." data-i18n-aria="ui.canvas"></canvas>
+<!-- The middle of the screen while the map has the keyboard: Enter opens the building under it (app.js). -->
+<div class="crosshair" aria-hidden="true"></div>
+<div class="veil veil-top" aria-hidden="true"></div>
+<div class="veil veil-bottom" aria-hidden="true"></div>
+
+<header class="masthead">
+  <div>
+    <h1>Hus för hus</h1>
+    <p class="dek">Stockholm, building by building</p>
+  </div>
+</header>
+
+<!-- v1.1 controls (Context layers, Quests, EN/SV) start hidden; app.js shows them when config.features says so. -->
+<nav class="modes" aria-label="Colour the city by" data-i18n-aria="ui.modes">
+  <button data-mode="0" aria-pressed="true" data-i18n="ui.mode.period">Period</button>
+  <button data-mode="3" aria-pressed="false" hidden data-i18n="ui.mode.layers">Context layers</button>
+  <button data-mode="1" aria-pressed="false" data-i18n="ui.mode.floors">Floors</button>
+  <button class="quests-open" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7M9 1l6 6M15 1L9 7M17 1l6 6M23 1l-6 6"/></svg><span>Quests</span></button>
+</nav>
+
+<!-- Search (Plan 4b, web/searchbox.js): a pill beside the modes on a desktop, a full-screen sheet on a phone. -->
+<div class="search" role="search" hidden>
+  <div class="search-box">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6"/><path d="M10.4 10.4L14 14"/></svg>
+    <input type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-list"
+      autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"
+      placeholder="Search address, street or building" aria-label="Search the map">
+    <kbd class="search-key" aria-hidden="true">/</kbd>
+    <button type="button" class="search-clear" aria-label="Clear search">×</button>
+    <button type="button" class="search-cancel">Cancel</button>
+  </div>
+  <ul id="search-list" class="search-list" role="listbox" aria-label="Search results" hidden></ul>
+  <p class="search-msg" aria-live="polite" hidden></p>
+  <p class="search-status visually-hidden" aria-live="polite"></p>
+</div>
+
+<!-- Top right: what the map shows, then the buttons (north, Look, About); a long title (a period's name) pushes
+     the buttons down. -->
+<div class="corner">
+  <div class="tally" aria-live="polite">
+    <span id="year" class="tally-year">&nbsp;</span>
+    <span class="tally-count"><span id="count">0</span> buildings<span id="tally-note"></span></span>
+  </div>
+  <div class="buttons">
+    <button class="search-open" aria-label="Search" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6"/><path d="M10.4 10.4L14 14"/></svg></button>
+    <!-- The north button (web/north.js): the needle points north as the map turns; a press turns the map to face it. -->
+    <button class="north-open" aria-label="Face north" title="Face north (N)" aria-keyshortcuts="N"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="needle-n" d="M8 1.6 10.5 8h-5z"/><path class="needle-s" d="M5.5 8 8 14.4 10.5 8z"/></svg></button>
+    <!-- The Look switcher (web/switcher.js) fills the dialog: a popover here, a bottom sheet on a phone. -->
+    <button class="look-open" aria-haspopup="dialog" aria-expanded="false" aria-controls="look"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z"/></svg><span>Look</span></button>
+    <dialog id="look" class="look" aria-labelledby="look-title"></dialog>
+    <!-- History scenes (web/scene-player.js): its list drops below the buttons. -->
+    <button class="stories-open" aria-haspopup="true">Stories</button>
+    <div class="lang" role="group" aria-label="Language" data-i18n-aria="ui.lang">
+      <button class="about-open" aria-haspopup="dialog" data-i18n="ui.about">About</button>
+      <button data-lang="en" lang="en" aria-label="English" aria-pressed="true" hidden>EN</button><button data-lang="sv" lang="sv" aria-label="Svenska" aria-pressed="false" hidden>SV</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="about" class="about" aria-labelledby="about-title">
+  <button class="about-close" aria-label="Close" data-i18n-aria="ui.close">×</button>
+  <!-- Written from the build in the page's language by web/about.js (Plan 4b). -->
+  <article id="about-body" lang="en"></article>
+</dialog>
+
+<aside id="panel" class="panel">
+  <button class="sheet-handle" aria-expanded="true" aria-controls="panel-body">Hide legend</button>
+  <div id="panel-body"></div>
+</aside>
+
+<div id="card" class="card" hidden></div>
+<section id="quest" class="quest" hidden aria-live="polite"></section>
+<dialog id="quests" class="about quests" aria-labelledby="quests-title">
+  <button class="about-close" aria-label="Close">×</button>
+  <article id="quests-body"></article>
+</dialog>
+<p class="howto">Drag to move. Right-drag or Ctrl-drag to turn. Scroll or press + / − to zoom.</p>
+<!-- The corner credit (Plan 4b, web/credits.js): always shown on a desktop; on a phone it folds to (i) after 5 s. -->
+<div class="credits">
+  <p id="credit" class="credit-line"></p>
+  <button class="credit-open" aria-controls="credit" aria-expanded="true" data-i18n-aria="credit.open"
+    aria-label="Show the map's sources" hidden>i</button>
+</div>
+
+<footer class="timeline">
+  <button id="play" class="play" aria-label="Play the city's growth">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path id="play-icon" d="M4 2.5v11l9-5.5z"/></svg>
+  </button>
+  <!-- The two handles are sliders for the keyboard (Plan 4a): app.js places them over the histogram. -->
+  <div class="hist-wrap">
+    <canvas id="hist" aria-label="Buildings per year; drag to set the year" data-i18n-aria="ui.hist"></canvas>
+    <div class="grip grip-from" role="slider" tabindex="0" aria-orientation="horizontal"></div>
+    <div class="grip grip-to" role="slider" tabindex="0" aria-orientation="horizontal"></div>
+  </div>
+</footer>
+
+<div id="debug" class="debug" hidden><pre></pre>
+  <button data-view="home">Home view</button><button data-view="overview">20 km</button></div>
+<div id="loading" class="loading" role="status" aria-live="polite">Building the city <span id="progress" aria-hidden="true">0</span><span aria-hidden="true">%</span></div>
+<p id="ready" class="visually-hidden" role="status"></p>
+<!-- boot.js says so if app.js or one of its modules cannot be fetched, instead of hanging at 0%. -->
+<script src="boot.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+# Every dataset the pipeline uses (contract C6). Checked by pipeline/sources.py and by s99_validate.
+# licence: SPDX id, one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, ODbL-1.0.
+# modified: required for CC-BY* and ODbL; true when we reproject, clip, simplify or join the data.
+# attribution: for CC-BY*, ODbL it must contain the `product` string and the licence marker ("CC BY 4.0",
+#         "CC BY-SA 4.0" or "ODbL"), and say "modified" or "bearbetad" when `modified` is true.
+# status: confirmed, or pending-O1 until the City of Stockholm confirms the licence in writing.
+#         `s99_validate --release` fails while any source is pending-O1.
+# dataset: the name D44's credit line starts with, "Dataset: publisher, licence" (plus ", processed" / ", bearbetad"
+#         when `modified` is true), as the publisher writes it, in both languages. Shown on About.
+# credit_as (optional): {en, sv}, the source's own prescribed words, in the publisher's place in that line.
+# licence_as (optional): the licence as the source asks to be credited, its name without the version ("CC BY").
+# corner (optional, Plan 4b): the source's words in the map's corner credit, {en, sv}, and the page they link to
+#         (url; without one they open About at its sources). Sources with the same words appear once.
+
+- id: city_lod1
+  url: https://dataportalen.stockholm.se/dataportalen/Data/Stadsbyggnadskontoret/LOD1_stadsdelsnamnder_SHP.zip
+  publisher: Stockholms stad, Stadsbyggnadskontoret
+  product: SBK 3D-Byggnader (LOD1) generaliserade
+  dataset: SBK 3D-Byggnader (LOD1) generaliserade
+  credit_as: {en: "© Stockholms stad, Stadsbyggnadskontoret", sv: "© Stockholms stad, Stadsbyggnadskontoret"}
+  licence_as: CC BY   # the City's own credit (its answer to O1, 2026-10-16)
+  licence: CC-BY-4.0
+  licence_url: https://creativecommons.org/licenses/by/4.0/
+  attribution: SBK 3D-Byggnader (LOD1) generaliserade, © Stockholms stad, Stadsbyggnadskontoret, CC BY 4.0 (bearbetad / modified)
+  modified: true
+  corner: {en: "© Stockholms stad", sv: "© Stockholms stad"}
+  status: confirmed   # the City confirmed CC BY in writing, 2026-10-16; its credit: "© Stockholms stad, Stadsbyggnadskontoret, CC BY"
+
+- id: city_stadsdelar
+  url: https://dataportalen.stockholm.se/dataportalen/Data/Stadsbyggnadskontoret/Stadsdelar.zip
+  publisher: Stockholms stad, Stadsbyggnadskontoret
+  product: Stadsdelar
+  dataset: Stadsdelar
+  credit_as: {en: "© Stockholms stad, Stadsbyggnadskontoret", sv: "© Stockholms stad, Stadsbyggnadskontoret"}
+  licence_as: CC BY   # the City's own credit (its answer to O1, 2026-10-16)
+  licence: CC-BY-4.0
+  licence_url: https://creativecommons.org/licenses/by/4.0/
+  attribution: Stadsdelar, © Stockholms stad, Stadsbyggnadskontoret, CC BY 4.0 (bearbetad / modified)
+  modified: true
+  corner: {en: "© Stockholms stad", sv: "© Stockholms stad"}
+  status: confirmed   # the City confirmed CC BY in writing, 2026-10-16; its credit: "© Stockholms stad, Stadsbyggnadskontoret, CC BY"
+
+- id: city_stadskarta
+  url: https://dataportalen.stockholm.se/dataportalen/Data/Stadsbyggnadskontoret/Stadskarta_hela_Stockholm.zip
+  publisher: Stockholms stad, Stadsbyggnadskontoret
+  product: Stadskarta
+  dataset: Stadskarta
+  credit_as: {en: "© Stockholms stad, Stadsbyggnadskontoret", sv: "© Stockholms stad, Stadsbyggnadskontoret"}
+  licence_as: CC BY   # the City's own credit (its answer to O1, 2026-10-16)
+  licence: CC-BY-4.0
+  licence_url: https://creativecommons.org/licenses/by/4.0/
+  attribution: Stadskarta, © Stockholms stad, Stadsbyggnadskontoret, CC BY 4.0 (bearbetad / modified)
+  modified: true
+  status: confirmed   # 2026-10-16: the product specification says CC BY, and the City confirmed CC BY in writing
+  # for the LOD1 and Stadsdelar the same day. The contour lines (0_line and their height texts in NamnText_point; the
+  # terrain until Lantmäteriet's model, P20) are part of the same product and file, so this covers them too.
+  covers_contours: true
+  corner: {en: "© Stockholms stad", sv: "© Stockholms stad"}
+
+- id: raa_bebyggelse
+  url: https://pub.raa.se/nedladdning/datauttag/bebyggelse/kulturhistoriskt_inventerad_bebyggelse/kulturhistoriskt_inventerad_bebyggelse_stockholm.gpkg
+  publisher: Riksantikvarieämbetet
+  product: Bebyggelse, kulturhistoriskt inventerad (Bebyggelseregistret), Stockholms län
+  dataset: Bebyggelseregistret
+  licence: CC0-1.0
+  licence_url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: Riksantikvarieämbetet, Bebyggelseregistret (CC0)
+  modified: true
+  status: confirmed
+  corner: {en: "RAÄ", sv: "RAÄ"}
+
+- id: raa_old
+  url: https://pub.raa.se/nedladdning/datauttag/bebyggelse/byggnader_kulthist_inv/byggnader_sverige.gpkg
+  publisher: Riksantikvarieämbetet
+  product: OLD Bebyggelse, kulturhistoriskt inventerad (the old building register, transition period)
+  dataset: Bebyggelseregistret, äldre registret
+  licence: CC0-1.0
+  licence_url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: Riksantikvarieämbetet, Bebyggelseregistret, old register (CC0)
+  modified: true
+  status: confirmed
+  corner: {en: "RAÄ", sv: "RAÄ"}
+
+- id: wikidata
+  url: https://www.wikidata.org/
+  publisher: Wikimedia Foundation and Wikidata contributors
+  product: Wikidata
+  dataset: Wikidata
+  credit_as: {en: "Wikidata contributors", sv: "Wikidatas bidragsgivare"}
+  licence: CC0-1.0
+  licence_url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: Wikidata (CC0)
+  modified: true
+  status: confirmed
+
+- id: osm
+  url: https://www.openstreetmap.org/copyright
+  publisher: OpenStreetMap contributors
+  product: OpenStreetMap
+  dataset: OpenStreetMap
+  credit_as: {en: "© OpenStreetMap contributors", sv: "© OpenStreetMap-bidragsgivare"}
+  licence: ODbL-1.0
+  licence_url: https://opendatacommons.org/licenses/odbl/1-0/
+  attribution: © OpenStreetMap contributors, OpenStreetMap data under ODbL (modified)
+  modified: true
+  status: confirmed
+  corner:
+    en: "© OpenStreetMap contributors"
+    sv: "© OpenStreetMap-bidragsgivare"
+    url: "https://www.openstreetmap.org/copyright"
+
+- id: lm_markhojd
+  url: https://www.lantmateriet.se/sv/geodata/vara-produkter/produktlista/markhojdmodell-nedladdning/
+  publisher: Lantmäteriet
+  product: Markhöjdmodell Nedladdning
+  dataset: Markhöjdmodell Nedladdning
+  credit_as: {en: "© Lantmäteriet", sv: "© Lantmäteriet"}
+  licence: CC-BY-4.0
+  licence_url: https://creativecommons.org/licenses/by/4.0/
+  attribution: Markhöjdmodell Nedladdning, © Lantmäteriet, CC BY 4.0 (bearbetad / modified)
+  modified: true
+  status: confirmed
+  corner: {en: "© Lantmäteriet", sv: "© Lantmäteriet"}
+
+- id: wikipedia
+  url: https://www.wikipedia.org/
+  publisher: Wikipedia contributors
+  product: Wikipedia
+  dataset: Wikipedia
+  credit_as: {en: "Wikipedia contributors", sv: "Wikipedias bidragsgivare"}
+  licence: CC-BY-SA-4.0
+  licence_url: https://creativecommons.org/licenses/by-sa/4.0/
+  attribution: Wikipedia, © Wikipedia contributors, CC BY-SA 4.0 (bearbetad / modified)
+  modified: true
+  status: confirmed

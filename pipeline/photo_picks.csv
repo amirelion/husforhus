@@ -1,0 +1,463 @@
+qid,commons_file,decision
+Q537,Prins Eugens Waldemarsudde 02.jpg,"pick; which_building: shows Slottet, where the camera stood; unused for now: the item is an ensemble and a museum, not a building, so no footprint takes it until a curated entry places it on Slottet; the sculpture in front (spot-check) (docs/research/2026-10-16-which-building-photos.md)"
+Q29863,BrommaAirportTerminalEntrance KaptenKaos.jpg,"pick; small_original: 1024 px, wider than the 500 px thumbnail"
+Q54315,"The facade of Stockholms Centralstation, seen from Centralplan, Photo 2.jpg",pick
+Q54318,Stockholms östra vid Drottning Kristinas väg 2005-06-27 t1.jpg,"pick; low confidence: a small P18, the category has no other exterior; small_original: 686 px, wider than the 500 px thumbnail; credit_cleaned: the card credits the file's own Attribution or Artist (spot-check)"
+Q54321,Stockholms Södra ingång.jpg,pick
+Q59482,Rosendals palace May 2012.jpg,pick
+Q124304,Kista Science Tower.jpg,pick
+Q164289,Sankt Johannes kyrka December 2012.jpg,pick
+Q177550,Tekniska museet och Polishelikopter - 20240302 - 08.jpg,"pick; low confidence: the P18's foreground was the museum's sign, this one's title names a police helicopter too (spot-check)"
+Q178863,Sveaplan 2008.jpg,pick
+Q191583,"Main building of the Royal Swedish Academy of Sciences (Kungliga Vetenskapsakademien), Frescati, Norra Djurgården, Stockholm.jpg",pick
+Q204298,Sergels torg e Kulturhuset.jpg,"pick; artwork_in_frame: the Sergels torg obelisk stands small in the background, the building is the subject; walkers in the foreground, unrecognisable at 500 px (spot-check)"
+Q252259,Thielska galleriet April 2015.jpg,pick
+Q255031,none,"none; which_building: no photo ties to the 1967 facility, itself unverified (docs/research/2026-10-16-which-building-photos.md)"
+Q290772,none,none; none_found: no exterior found on Commons; weak P18 only: Universitetet commuter3.JPG
+Q297186,Oljekvarnen February 2012.jpg,pick
+Q298289,"Tyghuset, Skeppsholmen.JPG",pick
+Q298475,"Östermalms saluhall, 20230226.jpg",pick
+Q304362,Hovet (5810435295).jpg,pick
+Q360572,Adolf Fredriks kyrka 2011.JPG,pick
+Q403322,Högalidskyrkan December 2012.jpg,pick
+Q403404,"Axel Oxenstiernas palats, okt 2019.jpg",pick
+Q404416,Börshuset Stockholm 2022-09-20 01.jpg,pick
+Q421868,Münchenbryggeriet fasad mot Söder Mälarstrand.jpg,pick
+Q619484,"Stora Synagogan, 2012 a 08.JPG",pick
+Q652780,Kristinebergs IP.jpg,pick
+Q653773,Stockholm Konserthuset 2002.jpg,"pick; small_original: 831 px, wider than the 500 px thumbnail"
+Q681497,Observatoriet 2011.JPG,pick
+Q690002,Armémuseum 2014 01.JPG,pick
+Q717105,Arvfurstens palats 2011a.jpg,pick
+Q727078,"Stockholms Olympiastadion, 070310.JPG",pick
+Q744615,Rosenbad 2006.jpg,pick
+Q772914,"Stockholm - Riddarholmen, Wrangelska Palatset.jpg",pick
+Q783848,Tessinska palatset Stockholm.jpg,pick
+Q798666,Esselte huset 2009.jpg,pick
+Q829222,Berwaldhallen 2008.jpg,pick
+Q842858,Národní muzeum Stockholm.jpg,pick
+Q854280,Royal institute of technology Sweden 20050616.jpg,pick
+Q864536,Biologiska museet January 2013.jpg,pick
+Q891350,Stockholm - KAK.jpg,pick
+Q892231,Bondeska palatset norr 2011.jpg,pick
+Q931176,Ulvsunda slott 2008b.jpg,pick
+Q940143,Bromma kyrka april 2013.jpg,pick
+Q953058,Kungliga biblioteket Stockholm facade.jpg,pick
+Q1032561,"Skatteskrapan, Stockholm, 2007-07-17.jpg",pick
+Q1101073,Riksdagshuset i Stockholm.jpg,pick
+Q1112746,Stockholms radhus 060409.JPG,pick
+Q1140265,The Royal Dramatic Theatre in Stockholm.jpg,pick; credit_cleaned: the card credits the file's own Attribution or Artist (the research's cleaned line waits for its open question 7)
+Q1143871,Hessensteinska palatset september 2011a.jpg,pick
+Q1146587,Svenska Filminstitutet - Filmhuset - Borgvägen 1.jpg,"pick; small_original: 911 px, wider than the 500 px thumbnail"
+Q1193675,Stockholms moske okt 2012a.jpg,pick
+Q1221513,Grand Hotel June 2018 01.jpg,pick
+Q1274511,Moderna Museet (223814209).jpeg,"pick; people_small: one person at a cafe table, from the side, incidental"
+Q1280641,Hässelby slott 2013d.jpg,pick
+Q1300529,Victoria Tower.jpg,pick
+Q1342596,Engelska kyrkan 2008r.jpg,pick
+Q1371375,Etnografiska museet 2007.jpg,pick
+Q1420103,Naturhistoriska Riksmuseet Stockholm (2010).JPG,pick
+Q1477827,Sankt Jacobskyrkan.jpg,pick
+Q1509325,Södersjukhuset okt 2012d.jpg,pick
+Q1540683,Klara kyrka february 2013 01.jpg,pick
+Q1544347,Akeshov slott 2008 (6).JPG,pick
+Q1558323,Gymnastik och idrottshögskolan - entré2.jpg,pick
+Q1640397,Liljevalchs konsthall 2007 4.jpg,"pick; banner_on_facade: one exhibition banner beside the entrance, does not dominate; passers-by at the edge, incidental"
+Q1647895,The maritime museum stockholm 20050902 001.JPG,pick
+Q1660521,Karlbergs station 2017 -07.jpg,"pick; people_small: a few travellers behind the bicycles, incidental"
+Q1713506,Junibacken November 2024 01.jpg,pick
+Q1726607,Statens historiska museum 2010.JPG,"pick; banner_on_facade: one tall exhibition banner on the left third, the facade still dominates (spot-check)"
+Q1736102,Katarina kyrka January 2013 02.jpg,pick
+Q1788133,Stenbockska palatset Stockholm 4 mars 2007.jpg,"pick; artwork_in_frame: the Birger Jarl column at the right edge, the palace is the subject; small_original: 1024 px, wider than the 500 px thumbnail"
+Q1796144,"Kungliga Musikhögskolan i Stockholm, 2016 02.jpg",pick
+Q1798826,Markuskyrkan April 2013 01.jpg,pick
+Q1803730,Van der Nootska palatset.JPG,pick
+Q1890584,Blå tornet 02.jpg,pick
+Q1935333,Stockholmsmässan entre 2015a.jpg,pick
+Q1967885,Sofia kyrka January 2013.jpg,pick
+Q2036739,Hedvig Eleonora kyrka December 2012 (perspective).jpg,pick; credit_cleaned: the card credits the file's own Attribution or Artist (the research's cleaned line waits for its open question 7)
+Q2241032,"Fredrikshovs slott, södra huset.JPG",pick
+Q2269261,Citypalatset 2008.jpg,pick
+Q2378602,Stora Bryggeriet 2008a.jpg,pick
+Q2379694,Soderhallen 1.jpg,"pick; people_small: a few passers-by, small, incidental"
+Q2591057,"Spånga Kyrka, Vy.jpg",pick
+Q2701834,Tele2 Arena September 2014 14 (cropped 2).jpg,pick
+Q2814367,Riksbankshuset April 2015.jpg,pick
+Q3132782,none,"none; none_found: no exterior found on Commons; weak P18 only: Spårvägsmuseet, Stockholm, maj 2022 (skylt).jpg"
+Q3139248,Birger jarls torn dec 2011a.jpg,pick
+Q3355352,Stockholms konsthogskola 2008.jpg,pick
+Q3366189,none,none; none_found: no exterior found on Commons; weak P18 only: Hotell Rival 2009.jpg
+Q3424988,Pan Rosenhane NV.jpg,pick
+Q3425010,Stockholm Waterfront dec 2013.jpg,pick
+Q3439887,Oscarsteatern 2026.jpg,pick
+Q3497031,Maria Magdalena Kyrka.jpg,pick
+Q3497809,Cityterminalen Estocolmo.jpg,pick
+Q3648782,Söder torn december 2014.jpg,pick
+Q3652398,none,"none; which_building: no photo ties to the footprint at the point, a shared campus (docs/research/2026-10-16-which-building-photos.md)"
+Q3742593,Kristinebergs slott baksida.jpg,pick
+Q3825202,SodraTeaternStockholm.JPG,pick
+Q4135820,Birger Jarlsgatan 92.jpg,pick
+Q4176816,Kastellholmen Stockholm.jpg,pick
+Q4346239,Hallwylska palatset November 2011.jpg,pick
+Q4348177,"Engelbrektskyrkan sedd från korsningen med Engelbrekts Kyrkogata och Bragevägen, juni 2019.jpg",pick
+Q4349047,Amiralitetshuset Skeppsholmen.jpg,"pick; small_original: 852 px, wider than the 500 px thumbnail"
+Q4356477,Cirkus January 2013 01.jpg,"pick; banner_on_facade: two show banners on the corner towers (a performer's face), the facade still dominates (spot-check)"
+Q4356641,Gustaf Adolfskyrkan.JPG,pick
+Q4356776,"Eriksdalbadet, 2009c.jpg",pick
+Q4357115,Finska kyrkan - Fredriks kyrka - Stockholm - 2005-07-17.JPG,pick
+Q4357146,Medborgarhuset July 2020 03.jpg,pick
+Q4377302,"Morkullan 2, Stockholm.JPG","pick; title_has_designation: CC BY-SA 4.0, so the title never ships"
+Q4426003,Sankt Sava 2013a.JPG,pick
+Q4570702,Sabbatsbergs sjukhus 2008.jpg,pick
+Q4732964,Lill-Janshuset 2014 01.JPG,pick
+Q4991974,Rica Talk Hotel.jpg,pick
+Q4992703,Vasateatern febr 2016.jpg,"pick; people_small: one passer-by under the entrance, incidental and unrecognisable at 500 px (spot-check)"
+Q5380024,Enskilda gymnasiet.JPG,pick
+Q5420069,Exercishallen September 2013.jpg,pick
+Q5464597,Hornsgatan Folkoperan 2008.jpg,pick
+Q5464605,EU-SE-Stockholm-Folksam.JPG,pick
+Q5487617,Kungsholms kyrka entre 2012.JPG,pick
+Q6044284,Intendenturförrådet.jpg,pick
+Q6444558,Kungsholmens Gymnasium 20060805.jpg,pick
+Q6710909,Kronohäktet 2010h.jpg,pick
+Q7053225,Norra Real.jpg,pick
+Q7102802,Orionteatern Stockholm Sweden 2006-04-12.jpg,"pick; small_original: exactly 500 px, not narrower than the thumbnail; its thumbnail looked at, sharp"
+Q7253806,Prästgården Skeppsholmen.jpg,pick
+Q7401336,Sankt Görans sjukhus.jpg,"pick; small_original: 800 px, wider than the 500 px thumbnail"
+Q7431077,Spökpalatset 2010x.jpg,pick
+Q7533607,Sjökarteverket.jpg,pick
+Q7591059,Sankt Paulskyrkan från Sankt Paulsgatan.jpg,pick
+Q7623892,none,none; none_found: no exterior found on Commons; weak P18 only: Strindbergs intima teater.jpg
+Q7666363,Södra Bankohuset Skeppsbrofasad februari 2007.jpg,pick; credit_cleaned: the card credits the file's own Attribution or Artist (the research's cleaned line waits for its open question 7)
+Q7666369,Sodra Latins gymnasium.JPG,pick
+Q7691863,Teater Galeasen.jpg,pick
+Q9200752,DN-skrapan Stockholm 2005-11-06.jpg,pick
+Q10401006,Adelkrantzka.V fasaden.jpg,pick
+Q10401414,Adolf Fredriks skola.jpg,pick
+Q10403732,Carlssons skola.JPG,pick
+Q10405181,"Skansenbutiken, sept 2019a.jpg",pick
+Q10405401,Alkärrshallen 2017-09-10 10.24.45.jpg,pick
+Q10405629,Allhuset Freskati 2010f.jpg,pick
+Q10406803,Alstavik 2010.jpg,pick
+Q10411471,Andreaskyrkan November 2010.jpg,pick
+Q10416130,Apotekshuset november 2011b.jpg,pick
+Q10418460,Arrheniuslab 2010a.jpg,"pick; artwork_in_frame: a brick column sculpture small at the right, the building is the subject"
+Q10421231,Athenum för flickor.JPG,pick
+Q10424508,"Badhuskiosken, Skeppsholmen, 2017.jpg",pick
+Q10426679,"Cepheus 25, 2016c.jpg","pick; people_small: a few passers-by in the lane, small, incidental; title_has_designation: CC BY-SA 4.0, so the title never ships"
+Q10427773,Beijerska huset.jpg,pick
+Q10427890,Bellman huset 2009a.jpg,pick
+Q10430851,Blackebergs gymnasium.jpg,pick
+Q10432604,Bollnasstugan april 2009.jpg,"pick; people_small: one person sitting by the wall, small, incidental"
+Q10432932,Bonniers konsthall.JPG,pick
+Q10434716,"Skeppsbron 30, 2009.jpg",pick
+Q10434731,Brandkontoret 2011 a.jpg,pick
+Q10434757,Skeppsbron 20.jpg,pick
+Q10434994,Bredablick Skansen.jpg,pick
+Q10436023,Bromma gymnasium 2016a.jpg,pick
+Q10436027,"Bromma kyrkskola, 2012 0622.JPG",pick
+Q10436049,Bromska palatset 2012 -8.JPG,pick
+Q10436978,Brännkyrka kyrka 2012a.jpg,pick
+Q10438190,Byggnadsdepartementet.jpg,pick
+Q10438495,"Bällstalundsskolan, Bällsta 2013j.jpg",pick
+Q10438651,Båtmanskasernen.jpg,pick
+Q10438659,Bååtska palatset freemasons Blasieholmen Stockholm Sweden 20050808.JPG,pick
+Q10443031,Carl Eldh 2006a.jpg,pick
+Q10444376,Cedersdals malmg.jpg,pick
+Q10444878,Centralbadet 2010a.jpg,pick
+Q10444917,Centralvakten 2010.jpg,pick
+Q10454565,Clarion Hotel Sign juni 2012.jpg,pick
+Q10454566,Clarion Hotel 2009.jpg,pick
+Q10460912,Courtyard Marriot Hotell 2010.jpg,pick
+Q10474952,Djurgårdskyrkan 2010a.jpg,pick
+Q10478009,Dyktanken SVEA 2012 02.jpg,pick
+Q10478604,Skeppsbron 24 September 2012 02.jpg,pick
+Q10480345,Ehrenstrahlska huset 2016a.jpg,pick
+Q10480765,Ekshäradsgården Skansen Stockholm 2005-07-29.jpg,pick
+Q10484144,"Engelbrektsskolan, Valhallavägen.jpg",pick
+Q10487739,Eriksdalsskolan2010c.jpg,pick
+Q10489190,Essinge kyrka kyrkobyggnad 2013.jpg,pick
+Q10494163,Farsta gård April 2015 04.jpg,pick
+Q10494280,Långholmens Folkhögskola 2010a.jpg,pick
+Q10494807,Fersenska palatset November 2011.jpg,pick
+Q10495053,Filadelfiakyrkan stockholm framsida.JPG,pick
+Q10495733,"Skeppsbron 12-14, 2009.jpg",pick
+Q10496643,Flemingska palatset 2009b.jpg,pick
+Q10498610,"Franska skolan, Stockholm 01.jpg",pick
+Q10500094,Kornhamnstorg 53b.jpg,pick; credit_cleaned: the card credits the file's own Attribution or Artist (the research's cleaned line waits for its open question 7)
+Q10500631,Fyrkanten 2010x.jpg,pick
+Q10502398,Riddarholmen 2006i.jpg,pick
+Q10502425,Konsthogskolan 2005.jpg,pick
+Q10502472,Gamla riksarkivet.jpg,pick
+Q10505554,Zinkendammsskolan2010c.JPG,pick
+Q10508805,Grillska huset.jpg,pick
+Q10510195,Gubbhyllan 050701.JPG,"pick; small_original: 1024 px, wider than the 500 px thumbnail"
+Q10510475,Gula Villan Frescati.jpg,pick
+Q10511134,Medelhavsmuseet 2007.jpg,pick
+Q10512722,Göta Ark 2009.jpg,pick
+Q10516854,Hammarbyverket 2008.jpg,pick
+Q10517079,Handelshögskolan i Stockholm.JPG,pick
+Q10517495,Hantverkskasernen.jpg,pick
+Q10518718,"Djurgården, Östermalm, Stockholm, Sweden - panoramio (102).jpg",pick
+Q10518811,Hebbeska huset Mars 2014.jpg,pick
+Q10518812,"Skeppsbron 32, 2009a.jpg",pick
+Q10524047,Stockholm Hilton dec 2012.jpg,pick
+Q10524763,Hjorthagens kyrka Stockholm mot norr20060401.jpg,pick
+Q10524989,Hobelinska huset September 2025 01.jpg,pick
+Q10526549,Hotell Continental Stockholm.jpg,pick
+Q10526589,Hotell Malmen 2009.jpg,pick
+Q10526668,Stockholm Altstadt 03.JPG,pick
+Q10531783,Hässelby Familjehotell 2010f.jpg,pick
+Q10532252,Högdalsverket 2011b.jpg,pick
+Q10532253,Högtalsreservoaren 2011a.jpg,pick
+Q10532314,"Höglandsskolan 2013e, ingång A2.jpg",pick
+Q10532337,"Högre lärarinneseminariet, febr 2020a.jpg",pick
+Q10532448,Högvakten 2009a.jpg,pick
+Q10534724,Immanuelskyrkan Stockholm.JPG,pick
+Q10539285,Vasterlanggatan 29 mars 2007 A.JPG,pick
+Q10540420,Johan Skytteskolan.JPG,pick
+Q10541514,Juristernas hus August 2019 01.jpg,pick
+Q10541820,"Järnhandlarens hus seen from the northwest, Skansen, Stockholm.jpg",pick
+Q10542299,KA Almgrens sidenväveri november 2011.jpg,pick
+Q10543168,Kammarrättens hus dec 2011.jpg,pick
+Q10543356,Another building seen from Stockholms slott (Stockholm Palace) (24489540829).jpg,pick
+Q10543847,Karlshälls gård 2010b.jpg,pick
+Q10544303,"Katarina brandstation, juni 2019a.jpg",pick
+Q10546046,Klara skola 2010.jpg,pick
+Q10546403,Bromma klockstapel April 2013.jpg,pick
+Q10546590,Stora Lilla Knapersta 2010d.jpg,pick
+Q10547215,Kolskjulet 2009a.jpg,pick
+Q10547661,Konstakademien Stockholm.jpg,pick
+Q10549272,Kristinehov.JPG,pick
+Q10549287,Kristofferskolan02.jpg,pick
+Q10549526,Norska kyrkan 2009.jpg,pick
+Q10550236,"Kungl Posthuset, aug 2019b.jpg","pick; people_small: passers-by on the street, small, incidental"
+Q10550315,Kungsholms baptiskyrka.jpg,pick
+Q10551422,KyrkanVidBrommaplan.JPG,pick
+Q10551923,Kärrtorps gymnasium.jpg,pick
+Q10552263,"Skeppsbron 40, 2009.jpg",pick
+Q10561869,Lillienhoffska palatset 2010.jpg,pick
+Q10562438,Lindarängens flyghamn1.JPG,pick
+Q10569911,Louis De Geers palats 2010c.jpg,"pick; artwork_in_frame: a small fountain figure before the steps, the facade is the subject"
+Q10572544,Stora mans1.jpg,pick
+Q10572549,"Långbrodalsskolan huvudbyggnad, 2018b.jpg",pick
+Q10572604,Spinnhuset Långholmen 2010.jpg,pick
+Q10576087,Rödkinda barnhem 2011.jpg,pick
+Q10578517,Matteusskolan 2010a.jpg,pick
+Q10582476,Messiaskapellet 2014.JPG,pick
+Q10585155,Mikaelikyrkan Skärholmen 2012a 01.jpg,pick
+Q10586896,Mjolnargarden.jpg,pick
+Q10589503,Wasserturm Mosebacke.jpg,pick
+Q10593145,Mälarhöjdens skola högstadiebyggnaden 01.JPG,pick
+Q10593266,none,none; none_found: only a portal with sculpted figures
+Q10595132,Navigationsskolan 02.JPG,pick
+Q10600474,Storkyrkoskolan 2012.jpg,pick
+Q10602126,Nordiska musikgymansiet 02.JPG,pick
+Q10602242,"Skeppsbron 34, 2009.jpg",pick
+Q10602405,"Skeppsbron 42A, 2009.jpg",pick
+Q10602642,Södra och Norra Fundamentet.jpg,pick
+Q10602656,"Norra Ängby skola, 2013b.jpg",pick
+Q10602956,Norrtulls sjukhus 02.JPG,pick
+Q10603851,Novilla 2011b.jpg,pick
+Q10609300,"Olovslundsskolan, Bromma, 2013b.jpg",pick
+Q10611406,Orhems gard1.jpg,pick
+Q10612978,Oscarskyrkan Stockholm södervy 20060425.jpg,pick
+Q10613664,Oxenstiernska malm 2009e.jpg,"pick; which_building: the south wing, one of the surviving 1730s wings; the card stands where the Wikidata point is, on Officersstallet (RAÄ 1879), not on the 1730s wing the note moved the point to (spot-check) (docs/research/2026-10-16-which-building-photos.md)"
+Q10615467,Palmerska huset september 2011b.jpg,pick
+Q10615496,Palmstedts hus baksidan.jpg,"pick; low confidence: the P18 was a drawing, this is the rear facade (spot-check)"
+Q10621819,Paulis malmgård 2009.jpg,pick
+Q10621821,Pauliska huset September 2025 01.jpg,pick
+Q10625149,Petersenska huset 2010.jpg,pick
+Q10625167,Petissan 03.JPG,pick
+Q10631914,Pingstkyrkan i Bredäng.jpg,pick
+Q10638094,"Posthuset, Skansen.jpg",pick
+Q10650303,"Reenstiernsa malmgård, dec 2018.jpg",pick
+Q10650633,Reimersholme Anders Reimers väg Stockholm 2005-09-25.JPG,pick
+Q10654954,"Riddarhuset, Långholmen 2010.jpg",pick
+Q10654970,Riddersviks gård 2013b.jpg,pick
+Q10656963,Rosendals stall September 2013 01.jpg,pick
+Q10657114,"Kapellet vid Roslagstulls sjukhus, 2012.jpg",pick
+Q10658264,Ryningska palatset.Munktorget.jpg,pick
+Q10658480,"Skeppsbron 48, 2009.jpg",pick
+Q10658751,Råsegel.jpg,pick
+Q10658837,KTH-huset 01.JPG,pick
+Q10659377,Sankt Eriks gymnasium 01.jpg,pick
+Q10659379,St Eriks sjukhus 2009.jpg,pick
+Q10659388,St Görans gymnasium 2012d.jpg,pick
+Q10659411,Sankt Matteus kyrka March 2025 01.jpg,pick
+Q10659415,St Mikaels kyrka Stora Essingen.jpg,pick
+Q10659434,Peter Celsing Sankt Tomas Vallingby.JPG,pick
+Q10659449,"Bumanska palatset, 2014.JPG",pick
+Q10659763,Sabbatsbergs kyrka maj 2019.jpg,pick
+Q10661221,none,none; none_found: no exterior found on Commons; weak P18 only: Sandsborgskyrkogarden 2008.jpg
+Q10661339,Sankt Eriks kapell (1).jpg,pick
+Q10661354,Sankt Görans kyrka 2008.jpg,"pick; small_original: 1122 px, wider than the 500 px thumbnail"
+Q10661476,Sankt Peterskyrkan.JPG,pick
+Q10661492,St Sigfrids kyrka.jpg,pick
+Q10661514,Birgittakyrkan Nockeby 2010.jpg,pick
+Q10663147,Kaffekoppen and Chokladkoppen.jpg,"pick; people_small: a crowd along the bottom edge, faces unrecognisable at 500 px; credit_cleaned: the card credits the file's own Attribution or Artist (the research's cleaned line waits for its open question 7) (spot-check)"
+Q10663289,Schinkels malmgard 2009b.jpg,pick
+Q10665137,Seglora kyrka.JPG,pick
+Q10666168,Serafimerlasarettet 2023.jpg,pick
+Q10667066,Sheraton hotel 2009.jpg,pick
+Q10669416,Sjöfartshuset from Skeppsholmsbron september 2011.jpg,pick
+Q10669681,Mynttorget september 2011.jpg,"pick; people_small: passers-by on the square, small, incidental"
+Q10669735,Skanskvarn 2011.jpg,pick
+Q10670285,"Skansen, Stockholm (by Pudelek) 3.JPG",pick
+Q10670369,Nya skogskrematoriet 2013a 01.jpg,pick
+Q10671959,Smedslättsskolan 2013b1.jpg,pick
+Q10673013,Sofia Folkskola 2014b.jpg,pick
+Q10673801,Sophiahemmet Stockholm front 20060509.jpg,pick
+Q10674465,Sparreska palatset.östra fasaden.jpg,pick
+Q10676714,none,none; none_found: no exterior found on Commons
+Q10676718,Spånga station - från plattformen.jpg,"pick; low confidence: the P18 was a platform view, this is from the platform too (spot-check)"
+Q10677164,none,"none; none_found: no exterior found on Commons; weak P18 only: Saltsjöbanan station Slussen, 1913.jpg"
+Q10677701,Musikhögskolan Stockholm.jpg,pick
+Q10679905,Stigbergets sjukhus 2009.jpg,pick
+Q10680668,"Skeppsbron 2, 2009.jpg",pick
+Q10680674,Stockholm University Library 2019.jpg,pick
+Q10680970,Stora Blecktornet 2009.jpg,pick
+Q10681106,Sköndals kyrka 2012a.jpg,pick
+Q10681184,Stora Ängby slott 2013b.jpg,pick
+Q10681305,none,none; none_found: no exterior found on Commons
+Q10682295,"Stuckatörens hus, 2011.jpg",pick
+Q10682448,"Sturegatan 4 (Sturebadet), dec 2019a.jpg",pick
+Q10684218,Sutthoffska palatset November 2011.jpg,pick
+Q10684670,Sven Harrys konstmuseum 2011a.jpg,pick
+Q10686485,Skansen 2019 13 51 29 865000.jpeg,pick
+Q10688193,Bredäng September 2014 04.jpg,pick
+Q10688557,"Söderhöjdskyrkan, tidigare Ebenezerkyrkan 1.JPG",pick
+Q10688575,Soderledskyrkan view3.jpg,"pick; low confidence: the P18 had no named author, this is the category's best exterior (spot-check)"
+Q10689055,Södra Huset Stockholms universitet 2022-09-20 05.jpg,pick
+Q10689069,Stockholms Stadsmuseum 2009b.jpg,"pick; banner_on_facade: one film poster on the right wing, does not dominate"
+Q10692738,"Tensta Gymnasium, 2017a.jpg",pick
+Q10692743,Tenstakyrkan.jpg,pick
+Q10697331,"Skeppsbron 36, 2009.jpg",pick
+Q10701692,"Trefaldighetskyrkan, Majorsgatan.jpg",pick
+Q10703500,Mårten Triewalds malmgård 2020.jpg,pick
+Q10706140,Tullhuset 2008.jpg,pick
+Q10706819,Tvättstugan Långholmen 2010.jpg,pick
+Q10709418,Underofficershuset Riddarhuset 2010.jpg,pick
+Q10709571,Diplomatstaden 2008 Dipl 7.jpg,pick
+Q10709876,1598uppenbarelsekyrkan Hägersten.jpg,pick
+Q10711549,Blasieholmstorg 2009.jpg,pick
+Q10713450,Skeppsholmens vattentorn 2011.jpg,pick
+Q10715040,Victoria växthus.jpg,pick
+Q10715723,Vindragarlagets hus 2012a 03.jpg,pick; low confidence: a narrow lane allows only a partial view (spot-check)
+Q10716820,Strandvägen 55.JPG,"alternative; which_building: the street front, with camera coordinates and the building's years; the pick's view flag unexplained (docs/research/2026-10-16-which-building-photos.md)"
+Q10716850,Kornhamnstorg 51.jpg,pick
+Q10717747,Bobergs gasklocka 2011a.jpg,pick
+Q10717969,Västerledskyrkan 2016.jpg,pick
+Q10718246,Gymnasiehusen 2015b.jpg,pick
+Q10719769,Westmanska palatset 2014.JPG,pick
+Q10719909,Whitlockska skolan.jpg,pick
+Q10720320,Wirwach1.JPG,pick
+Q10720405,Wittrocks torn 2012.jpg,pick
+Q10720406,Skeppsbron 6 september 2011.jpg,pick
+Q10726494,Ålstensskolan 2012b.jpg,pick
+Q10726731,Arsta gard 2007.jpg,pick
+Q10727431,Orby Slott 2008.jpg,pick
+Q10728295,Östra och Västra Gymnasiehuset 2009.jpg,pick
+Q10728379,Östermalms Gymnasium 2011aa.jpg,pick
+Q10728488,Östra kanslihuset.jpg,pick
+Q13424431,Beckomberga.jpg,pick
+Q13591559,Värtaverket 2008.jpg,pick
+Q14514936,none,none; none_found: no exterior found on Commons; weak P18 only: Farsta strand 05.JPG
+Q15042147,Stockholms katolska domkyrka 03.jpg,pick
+Q15695254,Hässelby museum Stockholm 01.JPG,pick
+Q16495805,Akallaverket 2013a 02.jpg,pick
+Q16496505,Alviks torn dec 2013.jpg,pick
+Q16496996,Farmacihistoriska-museet-fasad.jpg,pick
+Q16507113,Bromma Radome.jpg,"pick; small_original: 628 px, wider than the 500 px thumbnail"
+Q16740498,Skarpnäcks herrgård 2014b.jpg,pick
+Q16912362,Lugnets skola April 2014 04.jpg,pick
+Q18289977,Värtavägen Fyrtalet 2012c.jpg,pick
+Q18290128,GIH-badet.jpg,pick
+Q18290363,"Gärdesskolan, Stockholm 01.JPG",pick
+Q18290544,Hedvig Eleonora skola.JPG,pick
+Q18290837,Högloftet Nyloftet Skansen 2013d.jpg,pick
+Q18292217,"Maria folkskola, 2012.JPG",pick
+Q18334166,Tullgårdsskolan November 2011.jpg,pick
+Q18335368,Östermalmsstationen 2016.jpg,pick
+Q18448716,Kronobageriet Stockholm Sibylle Riddar 20060524.jpg,pick
+Q18816565,Ulvsunda brandsstation 2012.jpg,pick
+Q18816597,Brännkyrka brandstation 2015 02.jpg,pick
+Q19977617,Djurgårdens besökscentrum 2014a.jpg,pick
+Q19977620,Djurgårdens brandstation 2015.jpg,pick
+Q19978080,Lövsta skola 01.JPG,pick
+Q19978145,"ABBA the Museum, winter 2014 01.JPG",pick
+Q20656072,Vastveitloftet 01.jpg,pick
+Q20977788,Mariagränd 2011a.jpg,pick
+Q22276614,Södra Ängby skola.jpg,pick
+Q23090329,Mindepartementet på Skeppsholmen (15893132676).jpg,pick; credit_cleaned: the card credits the file's own Attribution or Artist (the research's cleaned line waits for its open question 7)
+Q26253115,none,none; none_found: no exterior found on Commons
+Q26253124,Hjulsta vattentorn 2012a.jpg,pick
+Q26253125,Skansen21.jpg,pick
+Q26253130,Soldattorpet på Skansen.jpg,pick
+Q26253133,Kronbergs 02.JPG,pick
+Q26253138,Folkets hus på Skansen.jpg,pick
+Q26253172,none,none; none_found: no exterior found on Commons; weak P18 only: Husbykyrkan.jpg
+Q26253244,Kämpetorpsskolan 2015d.jpg,pick
+Q26253434,Schönfeldtska huset 2016a.jpg,"pick; people_small: passers-by in the lane, small, incidental"
+Q26253476,"Bandhagens före detta gymnasium, febr 2020b.jpg",pick
+Q26253515,none,none; none_found: no exterior found on Commons
+Q26253679,"Högdalshallen, 2016b.jpg",pick
+Q28379916,Karolinska gravkoret september 2011.jpg,pick
+Q28934492,"Katarina brandstation, april 2019 06.jpg",pick
+Q31871300,Hellgrenska palatset jan 2017.jpg,pick
+Q31871398,Lilla Blecktornet 2017b.jpg,pick
+Q31871409,Rödabergsskolan 2017a.jpg,pick
+Q31871462,"Bergsklippan 1 40, Djurgårdsstaden, 2017b.jpg","pick; title_has_designation: CC BY-SA 4.0, so the title never ships"
+Q31871475,Tensta simhall.jpg,"pick; artwork_on_facade: one picture panel on the long facade, the building is the subject"
+Q31871497,Skanskvarnsskolan 2017a.jpg,pick
+Q31891003,Årstaberg 2009b.jpg,pick
+Q31897117,Ropsten station 2026 1.jpg,"pick; low confidence: the P18 showed a staircase, this one is a whole view (spot-check)"
+Q31898258,Dödsgrävarens hus 2017.jpg,pick
+Q49099861,Geovetenskapens hus U.jpg,pick
+Q49099907,none,none; none_found: no exterior found on Commons
+Q49103261,Museum of Wrecks - Vrak - and The Viking Museum - Djurgarden Stockholm 01.jpg,pick
+Q56684640,Sverigefinska skolan 2018f.jpg,pick
+Q59490105,Hartwickska huset dec 2018b.jpg,pick
+Q59639657,Skansen Främmestadskvarnen 2013.jpg,pick
+Q60228336,Samevistet på Skansen 01.JPG,pick
+Q60292528,Skansen ölandkvarn 2013b.jpg,pick
+Q60967510,Hägerstenshamnens skola okt 2018b.jpg,pick
+Q60967706,Gebers konvalescenthem sept 2018b.jpg,pick
+Q60970859,"Prins Bertils Boulehall, 2019a.jpg",pick
+Q65195049,"Björngårdsskolan, 2019c.jpg",pick
+Q65195923,"Anna Whitlocks Gymnasium, Hantverkargatan, 2019.jpg",pick
+Q76009765,"Konsthallen Kummelholmen, Vårberg, febr 2020.jpg","pick; artwork_on_facade: murals on the low wing at the right, the tower is the subject (spot-check)"
+Q78189726,none,none; none_found: the pavilions show only in wide or historical views of the quay
+Q85625405,Bandhagens skola febr 2020a.jpg,pick
+Q85895624,Bäckahagens skola febr 2020.jpg,pick
+Q86531649,"Vårbergsskolan, 2018c.jpg",pick
+Q86720057,"Vårbergs sjukhem, febr 2020b.jpg",pick
+Q86998633,"Söderholmsskolan, Vårberg, febr 2020.jpg",pick
+Q88359524,"Sätra radiolänktorn, mars 2020b.jpg",pick
+Q88563883,"Sätra pistolskyttebana, 2020a.jpg",pick
+Q88888468,"Nya Örbyskolan, mars 2020a.jpg",pick
+Q88964411,Enskede skola mars 2020h.jpg,pick
+Q89195369,"Bredängsskolan, mars 2022e.jpg",pick
+Q89195520,none,none; none_found: no exterior found on Commons
+Q89198805,"Essingeskolan Stora Essingen, 2020e.jpg",pick
+Q89788645,Kungsholmens grundskola (Vallgossen 11) mars 2022a.jpg,"pick; title_has_designation: CC BY-SA 4.0, so the title never ships"
+Q89788698,"Rålambshovsskolan, mars 2022j.jpg",pick
+Q90200257,"Enskedefältets skola, april 2020b.jpg",pick
+Q91109465,Bobergsskolan April 2020 18.jpg,pick
+Q94434851,Hökarängens skola april 2020.jpg,pick
+Q94579388,"Skarpnäcks gamla skola, Kärrtorpsvägen, maj 2020.jpg",pick
+Q94693799,Skarpnäcks skola maj 2020c.jpg,pick
+Q94988424,"Nytorpsbadet, aug 2020c.jpg","pick; people_small: tiny figures far off, incidental"
+Q95577907,Fruängens skola maj 2020a.jpg,pick
+Q96252109,Järvabadet 19 08 35 474000.jpeg,pick
+Q106839919,"Älvsjö kyrka, maj 2021c.jpg",pick
+Q107447283,Groendal 3.jpg,pick
+Q109499863,none,"none; none_found: the item is the columbarium, its photos are crypt interiors"
+Q111739208,"Skarpnäcks värmeverk, 2018.jpg",pick
+Q113366212,"Djurgården, Östermalm, Stockholm, Sweden - panoramio (110).jpg",pick
+Q113366922,Patons malmgård och Lundins villa juli 2022.jpg,pick
+Q113635039,Zimdal 1.jpg,pick
+Q124219985,none,none; none_found: no exterior found on Commons
+Q124609324,none,none; none_found: no exterior found on Commons
+Q126957911,Forskaren April 2025 03.jpg,pick
+Q138095435,none,none; none_found: no exterior found on Commons; weak P18 only: Sankta Eugenia Stockholm.jpg

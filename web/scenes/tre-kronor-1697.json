@@ -1,0 +1,195 @@
+{
+  "id": "tre-kronor-1697",
+  "title": {
+    "en": "Tre Kronor burns, 1697",
+    "sv": "Tre Kronor brinner 1697"
+  },
+  "year": 1697,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.329,
+        "lon": 18.083,
+        "height_m": 500
+      },
+      "target": {
+        "lat": 59.325833,
+        "lon": 18.071389
+      },
+      "duration_s": 6,
+      "caption": {
+        "en": "Stockholm, 7 May 1697.",
+        "sv": "Stockholm den 7 maj 1697."
+      },
+      "sources": [
+        "sv Wikipedia Slottsbranden 1697"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.3262,
+        "lon": 18.079,
+        "height_m": 90
+      },
+      "target": {
+        "lat": 59.325833,
+        "lon": 18.071389
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "Tre Kronor, the royal castle. Its north wing had just been rebuilt in a plain new baroque style.",
+        "sv": "Tre Kronor, kungens slott. Den norra längan hade nyss byggts om i en stram ny barock."
+      },
+      "sources": [
+        "sv Wikipedia Tre Kronor (byggnad)",
+        "sv Wikipedia Stockholms slott"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.3245,
+        "lon": 18.076,
+        "height_m": 120
+      },
+      "target": {
+        "lat": 59.3256,
+        "lon": 18.0712
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "About two in the afternoon, smoke is seen in the roof space above the hall of state.",
+        "sv": "Vid tvåtiden på eftermiddagen syns rök från vinden ovanför rikssalen."
+      },
+      "sources": [
+        "sv Wikipedia Slottsbranden 1697 (hour given only there)"
+      ]
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.3275,
+        "lon": 18.08,
+        "height_m": 200
+      },
+      "target": {
+        "lat": 59.325833,
+        "lon": 18.071389
+      },
+      "duration_s": 6,
+      "caption": {
+        "en": "The fire runs quickly through the roofs and reaches every wing.",
+        "sv": "Elden sprider sig snabbt genom taken till alla längor."
+      },
+      "sources": [
+        "sv Wikipedia Slottsbranden 1697",
+        "en Wikipedia Tre Kronor (castle)"
+      ]
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.3262,
+        "lon": 18.079,
+        "height_m": 90
+      },
+      "target": {
+        "lat": 59.325833,
+        "lon": 18.071389
+      },
+      "duration_s": 12,
+      "caption": {
+        "en": "The old castle is lost, apart from the walls of the new north wing. Most of the national archive and the royal library burn with it.",
+        "sv": "Det gamla slottet går förlorat, utom murarna i den nya norra längan. Det mesta av riksarkivet och det kungliga biblioteket brinner upp."
+      },
+      "sources": [
+        "sv Wikipedia Slottsbranden 1697"
+      ]
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.327,
+        "lon": 18.078,
+        "height_m": 150
+      },
+      "target": {
+        "lat": 59.3264,
+        "lon": 18.0715
+      },
+      "duration_s": 10,
+      "caption": {
+        "en": "Within the year the architect Nicodemus Tessin the Younger has plans for a new palace. The ruins are cleared until spring 1700.",
+        "sv": "Redan samma år har arkitekten Nicodemus Tessin d.y. ritningar till ett nytt slott. Ruinerna rivs fram till våren 1700."
+      },
+      "sources": [
+        "sv Wikipedia Stockholms slott",
+        "sv Wikipedia Slottsbranden 1697"
+      ]
+    },
+    {
+      "n": 7,
+      "camera": {
+        "lat": 59.327,
+        "lon": 18.078,
+        "height_m": 150
+      },
+      "target": {
+        "lat": 59.326944,
+        "lon": 18.071667
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "Building goes on until 1709, when the war halts it. The half-finished walls stand like this until 1727.",
+        "sv": "Bygget pågår till 1709, då kriget stoppar det. De halvfärdiga murarna står så fram till 1727."
+      },
+      "sources": [
+        "sv Wikipedia Stockholms slott"
+      ]
+    },
+    {
+      "n": 8,
+      "camera": {
+        "lat": 59.3285,
+        "lon": 18.079,
+        "height_m": 250
+      },
+      "target": {
+        "lat": 59.326944,
+        "lon": 18.071667
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "Work starts again in 1727. After Tessin's death in 1728, Carl Hårleman completes the building.",
+        "sv": "Arbetet återupptas 1727. Efter Tessins död 1728 fullbordar Carl Hårleman bygget."
+      },
+      "sources": [
+        "sv Wikipedia Stockholms slott"
+      ]
+    },
+    {
+      "n": 9,
+      "camera": {
+        "lat": 59.328,
+        "lon": 18.07,
+        "height_m": 300
+      },
+      "target": {
+        "lat": 59.326,
+        "lon": 18.067
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "In 1754 the royal family moves in, after more than fifty years in the Wrangel Palace on Riddarholmen.",
+        "sv": "År 1754 flyttar kungafamiljen in, efter mer än femtio år i Wrangelska palatset på Riddarholmen."
+      },
+      "sources": [
+        "sv Wikipedia Stockholms slott",
+        "sv Wikipedia Slottsbranden 1697"
+      ]
+    }
+  ]
+}

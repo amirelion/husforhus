@@ -1,0 +1,21 @@
+{
+  "name": "hus-for-hus",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:web": "node --test web/test/*.test.mjs",
+    "test:e2e": "playwright test",
+    "dist": "uv run python scripts/build_dist.py",
+    "preview:local": "npm run dist -- --allow-dirty && wrangler dev --port 8787",
+    "deploy:preview": "npm run test:web && npm run dist && wrangler deploy --message \"commit $(git rev-parse --short HEAD)\""
+  },
+  "devDependencies": {
+    "@fontsource-variable/albert-sans": "5.3.0",
+    "@fontsource-variable/familjen-grotesk": "5.3.0",
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/schibsted-grotesk": "5.3.0",
+    "@playwright/test": "1.62.1",
+    "wrangler": "4.145.0"
+  }
+}

@@ -1,0 +1,26 @@
+# One glob per line; lines starting with ! exclude. ** matches across directories.
+pipeline/**
+web/**
+!web/data/**
+scripts/**
+!scripts/public/leaks.txt
+tests/**
+e2e/**
+.github/workflows/**
+package.json
+package-lock.json
+pyproject.toml
+uv.lock
+playwright.config.mjs
+LICENSE
+.gitignore
+.nvmrc
+wrangler.jsonc
+docs/data-sources.md
+docs/accuracy.md
+# The public docs sit at the public repo's root (export.mjs moves docs-public/X.md to X.md).
+docs-public/*.md
+# Research tables the pipeline and its tests read (the metro layer, the photo picks).
+docs/research/2026-10-16-tunnelbanan-stations.csv
+docs/research/2026-10-16-tunnelbanan-segments.csv
+docs/research/2026-10-16-landmark-photos.csv

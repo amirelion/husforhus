@@ -1,0 +1,10 @@
+# Hus för hus, s00_fetch_wikidata (2 of 2): the upward subclass graph of every P31 class the first query found,
+# as (class, direct superclass) edges. The pipeline fills the VALUES line and computes ancestors locally.
+# QLever answers in about 1.5 s; WDQS times out on it and is only the fallback.
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+SELECT DISTINCT ?a ?b WHERE {
+  VALUES ?cls { __CLASSES__ }
+  ?cls wdt:P279* ?a .
+  ?a wdt:P279 ?b .
+}

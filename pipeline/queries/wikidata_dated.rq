@@ -1,0 +1,24 @@
+# Hus för hus, s00_fetch_wikidata (1 of 2): every item with a coordinate in Stockholm Municipality's WGS84
+# bounding box that has an inception (P571) or official opening (P1619). Best-rank statements only (preferred if
+# any, else normal; never deprecated). No class paths here: building/exclusion classes are decided offline from
+# the subclass graph (query 2); a point only matters when it lands on one of our footprints.
+# One row per statement x P31 class (x P518/P1480 qualifier, rarely more than one). WDQS: about 25 s.
+SELECT ?item ?coord ?cls ?prop ?time ?precision ?calendar ?part ?circa ?ended ?sv ?en ?svwiki ?enwiki WHERE {
+  SERVICE wikibase:box {
+    ?item wdt:P625 ?coord .
+    bd:serviceParam wikibase:cornerSouthWest "Point(17.75 59.22)"^^geo:wktLiteral .
+    bd:serviceParam wikibase:cornerNorthEast "Point(18.21 59.45)"^^geo:wktLiteral .
+  }
+  VALUES (?p ?psv ?prop) { (p:P571 psv:P571 "P571") (p:P1619 psv:P1619 "P1619") }
+  ?item ?p ?st .
+  ?st a wikibase:BestRank ; ?psv ?tv .
+  ?tv wikibase:timeValue ?time ; wikibase:timePrecision ?precision ; wikibase:timeCalendarModel ?calendar .
+  OPTIONAL { ?item wdt:P31 ?cls }
+  OPTIONAL { ?st pq:P518 ?part }                            # applies to part
+  OPTIONAL { ?st pq:P1480 ?circa }                          # sourcing circumstances (circa, ...)
+  BIND(EXISTS { ?item wdt:P576 [] } AS ?ended)              # dissolved, abolished or demolished
+  OPTIONAL { ?item rdfs:label ?sv . FILTER(LANG(?sv) = "sv") }
+  OPTIONAL { ?item rdfs:label ?en . FILTER(LANG(?en) = "en") }
+  OPTIONAL { ?svwiki schema:about ?item ; schema:isPartOf <https://sv.wikipedia.org/> }
+  OPTIONAL { ?enwiki schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> }
+}

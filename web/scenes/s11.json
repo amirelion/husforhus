@@ -1,0 +1,185 @@
+{
+  "id": "s11",
+  "title": {
+    "en": "The Stockholm Exhibition, 1930",
+    "sv": "Stockholmsutställningen 1930"
+  },
+  "year": 1930,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.327,
+        "lon": 18.11,
+        "height_m": 700
+      },
+      "target": {
+        "lat": 59.332,
+        "lon": 18.112
+      },
+      "duration_s": 6,
+      "caption": {
+        "en": "Before 1930 the north shore of Djurgårdsbrunnsviken held no exhibition.",
+        "sv": "Före 1930 fanns ingen utställning på Djurgårdsbrunnsvikens norra strand."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholmsutställningen 1930",
+        "Wikidata start years for the museums"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.3315,
+        "lon": 18.099,
+        "height_m": 60
+      },
+      "target": {
+        "lat": 59.3325,
+        "lon": 18.106
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "16 May 1930: the Stockholm Exhibition opens. Gunnar Asplund is its architect.",
+        "sv": "16 maj 1930: Stockholmsutställningen öppnar. Gunnar Asplund är dess arkitekt."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholmsutställningen 1930"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.332,
+        "lon": 18.104,
+        "height_m": 35
+      },
+      "target": {
+        "lat": 59.3325,
+        "lon": 18.11
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "Some 30 halls line the street called Corson: plain volumes of glass and light.",
+        "sv": "Ett 30-tal hallar kantar gatan Corson: enkla byggnader av glas och ljus."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholmsutställningen 1930"
+      ]
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.33,
+        "lon": 18.114,
+        "height_m": 40
+      },
+      "target": {
+        "lat": 59.3325,
+        "lon": 18.1158
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "An 80-metre mast by Sigurd Lewerentz carries light signs, with the exhibition's wing on top.",
+        "sv": "En 80 meter hög mast av Sigurd Lewerentz bär ljusskyltar, med utställningens vinge överst."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholmsutställningens reklammast"
+      ]
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.328,
+        "lon": 18.112,
+        "height_m": 200
+      },
+      "target": {
+        "lat": 59.332,
+        "lon": 18.115
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "Light is part of the design, and the event helps neon break through in Sweden.",
+        "sv": "Ljuset är en del av formen, och utställningen ger neonskylten ett genombrott i Sverige."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholmsutställningen 1930 (Belysning)",
+        "reklammast"
+      ]
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.33,
+        "lon": 18.115,
+        "height_m": 500
+      },
+      "target": {
+        "lat": 59.332,
+        "lon": 18.112
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "The exhibition closes on 29 September. Its buildings are pulled down.",
+        "sv": "Utställningen stänger den 29 september. Byggnaderna rivs."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholmsutställningen 1930"
+      ]
+    },
+    {
+      "n": 7,
+      "camera": {
+        "lat": 59.33,
+        "lon": 18.07,
+        "height_m": 1500
+      },
+      "target": {
+        "lat": 59.33,
+        "lon": 18.07
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "Over the next fifteen years the new style spreads, from Norra Ängby to Hammarbyhöjden.",
+        "sv": "Under de följande femton åren sprids den nya stilen, från Norra Ängby till Hammarbyhöjden."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholmsutställningen 1930 (Kritik och konsekvenser)",
+        "pipeline/city.py period p8"
+      ]
+    }
+  ],
+  "overlays": [
+    {
+      "type": "route",
+      "coords": [
+        [
+          59.333056,
+          18.102778
+        ],
+        [
+          59.33309,
+          18.11126
+        ],
+        [
+          59.331833,
+          18.123056
+        ],
+        [
+          59.3325,
+          18.115833
+        ],
+        [
+          59.333056,
+          18.102778
+        ]
+      ],
+      "label": {
+        "en": "Exhibition grounds (approximate)",
+        "sv": "Utställningsområdet (ungefärligt)"
+      }
+    }
+  ]
+}

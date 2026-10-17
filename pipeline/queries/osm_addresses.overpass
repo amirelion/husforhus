@@ -1,0 +1,5 @@
+[out:json][timeout:180][bbox:{s},{w},{n},{e}];
+node["addr:street"]["addr:housenumber"];
+out;
+(way["addr:street"]["addr:housenumber"]; relation["addr:street"]["addr:housenumber"];);
+out tags center;

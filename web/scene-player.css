@@ -1,0 +1,86 @@
+/* The history-scene player (web/scene-player.js), laid out as prototypes/scene-player/player.css, in the look's own
+   colours (styles.css's --bg, --panel, --ink, --muted, --line, --accent). The map stays the picture: the overlay only
+   takes the pointer on its controls, with a scrim under the caption so it reads over any part of the city. */
+.sp { --sp-fade: .5s; }
+@media (prefers-reduced-motion: reduce) { .sp { --sp-fade: 0s; } }
+.sp [hidden], .sp-stories[hidden] { display: none !important; }
+
+/* While a scene plays, the viewer's own panels step aside (visibility, so their layout and state stay as they are). */
+body.scene-on .masthead, body.scene-on .modes, body.scene-on .corner, body.scene-on .panel, body.scene-on .card,
+body.scene-on .quest, body.scene-on .howto, body.scene-on .timeline { visibility: hidden; }
+
+/* The Stories button sits next to Look, in its shape; its list drops below the buttons. */
+.corner .buttons { position: relative; }
+.stories-open { border: 0; border-radius: 999px; padding: 5px 11px; background: var(--panel); color: var(--ink);
+  font: inherit; font-size: 12px; font-weight: 600; line-height: 18px; cursor: pointer; }
+.stories-open[aria-expanded="true"] { background: var(--ink); color: var(--panel); }
+.sp-stories { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: min(320px, calc(100vw - 2 * var(--gutter)));
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px; }
+.sp-stories ul { list-style: none; margin: 0; padding: 0; }
+.sp-stories li button { display: flex; justify-content: space-between; gap: 10px; width: 100%; text-align: left;
+  border: 0; border-top: 1px solid var(--line); background: none; padding: 9px 2px; font: inherit; color: inherit; cursor: pointer; }
+.sp-stories li:first-child button { border-top: 0; }
+.sp-stories li button:hover { color: var(--accent); }
+.sp-yr { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.sp button { font: inherit; color: inherit; cursor: pointer; }
+.sp :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sp-pill { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 14px; }
+.sp-pill.sp-dark { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+
+/* Warning screen: text only. */
+.sp-warning { position: fixed; inset: 0; z-index: 41; display: grid; place-items: center; background: var(--bg);
+  color: var(--ink); padding: var(--gutter); }
+.sp-warn-card { max-width: 46ch; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 22px; }
+.sp-warn-card h2 { margin: 0 0 8px; font-size: 16px; }
+.sp-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+/* Cinema mode */
+.sp-cinema { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; pointer-events: none; color: var(--ink);
+  padding: calc(env(safe-area-inset-top, 0px) + var(--gutter)) var(--gutter) calc(env(safe-area-inset-bottom, 0px) + var(--gutter)); }
+.sp-cinema::after { content: ""; position: absolute; inset: auto 0 0 0; height: 42%; z-index: -1;
+  background: linear-gradient(to top, var(--bg) 25%, transparent); opacity: .92; }
+.sp-cinema button { pointer-events: auto; }
+.sp-top { display: flex; justify-content: space-between; align-items: center; }
+.sp-lang { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--panel); }
+.sp-lang button { border: 0; background: none; padding: 5px 12px; }
+.sp-lang button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.sp-lang button:focus-visible { outline-offset: -4px; }
+.sp-lang button[aria-pressed="true"]:focus-visible { outline-color: var(--panel); }
+.sp-year { margin-top: 3vh; font-size: clamp(72px, 16vw, 200px); font-weight: 800; letter-spacing: -0.05em; line-height: .85;
+  font-variant-numeric: tabular-nums; text-shadow: 0 0 24px var(--bg), 0 0 6px var(--bg); }
+.sp-bottom { margin-top: auto; }
+.sp-caption { margin: 0; font-size: clamp(18px, 2.2vw, 26px); line-height: 1.3; max-width: 40ch; min-height: 2.6em;
+  transition: opacity var(--sp-fade); }
+.sp-fading { opacity: 0; }
+.sp-source { margin: 6px 0 12px; color: var(--muted); font-size: 12px; min-height: 1.5em; }
+.sp-progress { position: relative; height: 4px; background: var(--line); border-radius: 2px; pointer-events: auto; }
+.sp-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--ink); border-radius: 2px; }
+.sp-tick { position: absolute; top: -4px; width: 2px; height: 12px; margin-left: -1px; background: var(--muted); border: 0; padding: 0; }
+.sp-tick::after { content: ""; position: absolute; inset: -8px -7px; }   /* a tap a little wider than the tick */
+.sp-tick.done { background: var(--ink); }
+.sp .sp-tick:focus-visible { outline-offset: 3px; }
+.sp-controls { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.sp-controls > button { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.sp-controls > button.sp-play { width: 48px; height: 48px; background: var(--ink); color: var(--panel); border: 0; }
+.sp-count { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+
+/* Overlays placed over the map: the route's moving marker and the labelled points. */
+.sp-pins { position: fixed; inset: 0; z-index: 39; pointer-events: none; overflow: hidden; }
+.sp-pins > * { position: absolute; left: 0; top: 0; }
+.sp-mover { width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--panel);
+  border: 3px solid var(--accent); box-shadow: 0 1px 4px rgba(0, 0, 0, .35); }
+.sp-pin { display: flex; align-items: center; gap: 6px; margin: -5px 0 0 -5px; }
+.sp-pin-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); flex: none; }
+.sp-pin-label { font-size: 12px; font-weight: 600; background: var(--panel); color: var(--ink); padding: 2px 7px; border-radius: 4px;
+  white-space: nowrap; max-width: min(30ch, 45vw); overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity var(--sp-fade); }
+.sp-pin.sp-here .sp-pin-label { opacity: 1; }
+
+/* Phone, portrait (prototype): larger targets, a smaller caption with room for three lines, the list above the timeline. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .sp-year { margin-top: 6vh; }
+  .sp-caption { font-size: 18px; min-height: 4em; }
+  .sp-controls { flex-wrap: wrap; }
+  .sp-controls > button { width: 48px; height: 48px; }
+  .sp-stories { max-height: 60vh; overflow: auto; }
+}

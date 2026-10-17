@@ -1,0 +1,15 @@
+.venv/
+data/
+web/data/
+__pycache__/
+.env*
+temp_trash/
+node_modules/
+test-results/
+playwright-report/
+.DS_Store
+dist/
+.wrangler/
+.dist-versions.json
+# Takedown requests name the homes that asked (spec §6.3, Plan 4b): never committed
+pipeline/suppress.yml

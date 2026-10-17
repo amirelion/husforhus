@@ -1,0 +1,15 @@
+# Hus för hus, s06_wiki (2 of 2): the same items' Swedish and English labels, their sv/en Wikipedia article titles
+# and their sitelink count. WDQS: about 18 s. The titles stay internal: the card reaches an article through its
+# Wikidata item (titles are often property designations, pipeline/wiki.py).
+SELECT ?item ?sv ?en ?svt ?ent ?nsl WHERE {
+  SERVICE wikibase:box {
+    ?item wdt:P625 ?coord .
+    bd:serviceParam wikibase:cornerSouthWest "Point(17.75 59.22)"^^geo:wktLiteral .
+    bd:serviceParam wikibase:cornerNorthEast "Point(18.21 59.45)"^^geo:wktLiteral .
+  }
+  OPTIONAL { ?item wikibase:sitelinks ?nsl }
+  OPTIONAL { ?item rdfs:label ?sv . FILTER(LANG(?sv) = "sv") }
+  OPTIONAL { ?item rdfs:label ?en . FILTER(LANG(?en) = "en") }
+  OPTIONAL { ?svw schema:about ?item ; schema:isPartOf <https://sv.wikipedia.org/> ; schema:name ?svt }
+  OPTIONAL { ?enw schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?ent }
+}

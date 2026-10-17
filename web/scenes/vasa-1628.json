@@ -1,0 +1,293 @@
+{
+  "id": "vasa-1628",
+  "title": {
+    "en": "The Vasa sinks, 1628",
+    "sv": "Vasa sjunker 1628"
+  },
+  "year": 1628,
+  "sensitive": true,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.333,
+        "lon": 18.06,
+        "height_m": 900
+      },
+      "target": {
+        "lat": 59.325,
+        "lon": 18.071
+      },
+      "duration_s": 6,
+      "caption": {
+        "en": "Stockholm, 10 August 1628.",
+        "sv": "Stockholm den 10 augusti 1628."
+      },
+      "sources": [
+        "Vasa Museum"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.331,
+        "lon": 18.082,
+        "height_m": 150
+      },
+      "target": {
+        "lat": 59.3308,
+        "lon": 18.0775
+      },
+      "duration_s": 6,
+      "caption": {
+        "en": "She was built here, at the navy yard on today's Blasieholmen.",
+        "sv": "Hon byggdes här, på skeppsgården på dagens Blasieholmen."
+      },
+      "sources": [
+        "sv Wikipedia: Blasieholmen"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.327,
+        "lon": 18.08,
+        "height_m": 80
+      },
+      "target": {
+        "lat": 59.3265,
+        "lon": 18.0745
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "A Sunday afternoon. The new warship lies below the castle, ready to sail.",
+        "sv": "En söndagseftermiddag. Det nya örlogsskeppet ligger under slottet, redo att segla."
+      },
+      "sources": [
+        "Vasa Museum"
+      ]
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.3245,
+        "lon": 18.077,
+        "height_m": 60
+      },
+      "target": {
+        "lat": 59.324,
+        "lon": 18.0745
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "Against the wind, she is hauled along the waterfront on anchors.",
+        "sv": "I motvind varpas hon längs stadens strand."
+      },
+      "sources": [
+        "Vasa Museum",
+        "en Wikipedia"
+      ]
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.318,
+        "lon": 18.068,
+        "height_m": 120
+      },
+      "target": {
+        "lat": 59.321167,
+        "lon": 18.072639
+      },
+      "duration_s": 6,
+      "caption": {
+        "en": "At today's Slussen, four sails are set and a salute is fired.",
+        "sv": "Vid dagens Slussen sätts fyra segel och salut skjuts."
+      },
+      "sources": [
+        "Vasa Museum",
+        "en Wikipedia",
+        "sv Wikipedia"
+      ]
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.322,
+        "lon": 18.088,
+        "height_m": 100
+      },
+      "target": {
+        "lat": 59.3196,
+        "lon": 18.075
+      },
+      "duration_s": 8,
+      "caption": {
+        "en": "A gust under the bluffs. She heels over, then rights herself.",
+        "sv": "En kastvind under bergen. Hon kränger, och reser sig igen."
+      },
+      "sources": [
+        "Vasa Museum",
+        "en Wikipedia"
+      ]
+    },
+    {
+      "n": 7,
+      "camera": {
+        "lat": 59.322,
+        "lon": 18.095,
+        "height_m": 150
+      },
+      "target": {
+        "lat": 59.319,
+        "lon": 18.0985
+      },
+      "duration_s": 13,
+      "caption": {
+        "en": "At Tegelviken a stronger gust pushes water in through the open gunports. Within minutes she is gone. About 30 people died.",
+        "sv": "Vid Tegelviken pressar en starkare kastvind in vatten genom de öppna kanonportarna. Inom några minuter har hon sjunkit. Omkring 30 människor omkom."
+      },
+      "sources": [
+        "Vasa Museum",
+        "en Wikipedia"
+      ]
+    },
+    {
+      "n": 8,
+      "camera": {
+        "lat": 59.3255,
+        "lon": 18.087,
+        "height_m": 150
+      },
+      "target": {
+        "lat": 59.3281,
+        "lon": 18.0914
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "She lay on the seabed for 333 years, and was raised in 1961.",
+        "sv": "Hon låg på botten i 333 år och bärgades 1961."
+      },
+      "sources": [
+        "en Wikipedia",
+        "sv Wikipedia"
+      ]
+    }
+  ],
+  "overlays": [
+    {
+      "type": "route",
+      "coords": [
+        [
+          59.3308,
+          18.0775
+        ],
+        [
+          59.3265,
+          18.0745
+        ],
+        [
+          59.321167,
+          18.072639
+        ],
+        [
+          59.3196,
+          18.075
+        ],
+        [
+          59.316389,
+          18.0975
+        ],
+        [
+          59.319,
+          18.0985
+        ],
+        [
+          59.321111,
+          18.100833
+        ]
+      ],
+      "label": {
+        "en": "Vasa's route, 10 August 1628",
+        "sv": "Vasas färdväg 10 augusti 1628"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.3308,
+        18.0775
+      ],
+      "label": {
+        "en": "Skeppsgården (Stockholm shipyard) on today's Blasieholmen",
+        "sv": "Skeppsgården (Stockholm shipyard) on today's Blasieholmen"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.3265,
+        18.0745
+      ],
+      "label": {
+        "en": "Quay below the castle Tre Kronor (departure)",
+        "sv": "Quay below the castle Tre Kronor (departure)"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.321167,
+        18.072639
+      ],
+      "label": {
+        "en": "Today's Slussen (end of warping; last warp cast off)",
+        "sv": "Today's Slussen (end of warping; last warp cast off)"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.3196,
+        18.075
+      ],
+      "label": {
+        "en": "Under the Södermalm bluffs (first gust)",
+        "sv": "Under the Södermalm bluffs (first gust)"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.316389,
+        18.0975
+      ],
+      "label": {
+        "en": "Tegelviken gap (second gust)",
+        "sv": "Tegelviken gap (second gust)"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.319,
+        18.0985
+      ],
+      "label": {
+        "en": "Wreck site off Beckholmen",
+        "sv": "Wreck site off Beckholmen"
+      }
+    },
+    {
+      "type": "marker",
+      "at": [
+        59.321111,
+        18.100833
+      ],
+      "label": {
+        "en": "Beckholmen shore (survivors swam about 120 m)",
+        "sv": "Beckholmen shore (survivors swam about 120 m)"
+      }
+    }
+  ]
+}

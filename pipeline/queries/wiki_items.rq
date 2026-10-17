@@ -1,0 +1,14 @@
+# Hus för hus, s06_wiki (1 of 2): every item with a coordinate in Stockholm Municipality's WGS84 box (city.BOX_WGS84),
+# with its P31 classes, P18 images and whether it has a P576 (dissolved, abolished or demolished). Classes are decided
+# offline from the subclass graph (pipeline/queries/wikidata_classes.rq), as the year tier does. WDQS: about 8 s.
+# One query with labels and sitelinks as well timed out twice (60 s), hence two.
+SELECT ?item ?coord ?cls ?img ?ended WHERE {
+  SERVICE wikibase:box {
+    ?item wdt:P625 ?coord .
+    bd:serviceParam wikibase:cornerSouthWest "Point(17.75 59.22)"^^geo:wktLiteral .
+    bd:serviceParam wikibase:cornerNorthEast "Point(18.21 59.45)"^^geo:wktLiteral .
+  }
+  OPTIONAL { ?item wdt:P31 ?cls }
+  OPTIONAL { ?item wdt:P18 ?img }
+  BIND(EXISTS { ?item wdt:P576 [] } AS ?ended)
+}

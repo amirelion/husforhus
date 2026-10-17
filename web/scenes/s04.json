@@ -1,0 +1,134 @@
+{
+  "id": "s04",
+  "title": {
+    "en": "The great fire of 1625",
+    "sv": "Stora branden 1625"
+  },
+  "year": 1625,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.327,
+        "lon": 18.064,
+        "height_m": 600
+      },
+      "target": {
+        "lat": 59.32389,
+        "lon": 18.06886
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "The evening of 1 September 1625 in Stockholm. The wind is strong.",
+        "sv": "Kvällen den 1 september 1625 i Stockholm. Det blåser hårt."
+      },
+      "sources": [
+        "sv Wikipedia: Stora branden 1625"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.3252,
+        "lon": 18.069,
+        "height_m": 60
+      },
+      "target": {
+        "lat": 59.32483,
+        "lon": 18.07033
+      },
+      "duration_s": 6,
+      "caption": {
+        "en": "A fire breaks out in a brewhouse at the bottom of Kåkbrinken.",
+        "sv": "Det börjar brinna i ett brygghus längst ner i Kåkbrinken."
+      },
+      "sources": [
+        "sv Wikipedia: Stora branden 1625",
+        "Kåkbrinken"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.3257,
+        "lon": 18.071,
+        "height_m": 70
+      },
+      "target": {
+        "lat": 59.32483,
+        "lon": 18.07033
+      },
+      "duration_s": 7,
+      "caption": {
+        "en": "At about ten, the watch in Storkyrkan's tower sees smoke.",
+        "sv": "Vid tiotiden upptäcker vakten i Storkyrkans torn röken."
+      },
+      "sources": [
+        "sv Wikipedia: Stora branden 1625"
+      ]
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.3285,
+        "lon": 18.062,
+        "height_m": 450
+      },
+      "target": {
+        "lat": 59.32389,
+        "lon": 18.06886
+      },
+      "duration_s": 10,
+      "caption": {
+        "en": "Wind from Mälaren carries the fire through the wooden houses. Tyska kyrkan catches fire twice but is saved.",
+        "sv": "Vinden från Mälaren för elden genom trähusen. Tyska kyrkan fattar eld två gånger men räddas."
+      },
+      "sources": [
+        "sv Wikipedia: Stora branden 1625"
+      ]
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.327,
+        "lon": 18.066,
+        "height_m": 300
+      },
+      "target": {
+        "lat": 59.32389,
+        "lon": 18.06886
+      },
+      "duration_s": 11,
+      "caption": {
+        "en": "In 1626 a new, straight plan is drawn. Owners who build in stone to it get six years free of tax.",
+        "sv": "År 1626 ritas en ny, rak plan. Den som bygger i sten efter den slipper skatt i sex år."
+      },
+      "sources": [
+        "sv Wikipedia: Stora branden 1625 (June 1626 tax relief",
+        "1626 plan)"
+      ]
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.3275,
+        "lon": 18.065,
+        "height_m": 120
+      },
+      "target": {
+        "lat": 59.32561,
+        "lon": 18.06697
+      },
+      "duration_s": 9,
+      "caption": {
+        "en": "From March 1627 the new streets are staked out, today's Stora and Lilla Nygatan.",
+        "sv": "Från mars 1627 stakas de nya gatorna ut, dagens Stora och Lilla Nygatan."
+      },
+      "sources": [
+        "sv Wikipedia: Stora branden 1625",
+        "Stora Nygatan, Stockholm"
+      ]
+    }
+  ]
+}

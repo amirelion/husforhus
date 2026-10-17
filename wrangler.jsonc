@@ -1,0 +1,24 @@
+// An assets-only Cloudflare Worker (no Worker script) serving dist/, which `npm run dist` builds
+// (scripts/build_dist.py writes dist/_headers too). No account_id: wrangler takes it from `npx wrangler login`.
+// `npm run preview:local` serves the same files on http://localhost:8787.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "husforhus",
+  "compatibility_date": "2026-09-30",
+  "assets": {
+    "directory": "./dist",
+    // One page and its files: a missing file (a data file above all) is a plain 404, never index.html.
+    "not_found_handling": "none",
+    "html_handling": "auto-trailing-slash"
+  },
+  // The account's default Worker address.
+  "workers_dev": true,
+  // The production address.
+  "routes": [
+    { "pattern": "husforhus.se", "custom_domain": true },
+    { "pattern": "www.husforhus.se", "custom_domain": true }
+  ],
+  // No per-version preview URLs.
+  "preview_urls": false,
+  "send_metrics": false
+}

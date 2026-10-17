@@ -1,0 +1,5 @@
+[out:json][timeout:180][bbox:{s},{w},{n},{e}];
+way["building"]["building:levels"];
+out tags geom;
+relation["building"]["building:levels"]["type"="multipolygon"];
+out body geom;

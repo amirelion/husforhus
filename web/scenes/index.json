@@ -1,0 +1,67 @@
+{
+  "scenes": [
+    {
+      "id": "vasa-1628",
+      "title": {
+        "en": "The Vasa sinks, 1628",
+        "sv": "Vasa sjunker 1628"
+      },
+      "year": 1628,
+      "beats": 8
+    },
+    {
+      "id": "s04",
+      "title": {
+        "en": "The great fire of 1625",
+        "sv": "Stora branden 1625"
+      },
+      "year": 1625,
+      "beats": 6
+    },
+    {
+      "id": "s07-kristina-lock",
+      "title": {
+        "en": "Queen Kristina's lock, 1637–1642",
+        "sv": "Drottning Kristinas sluss 1637–1642"
+      },
+      "year": 1642,
+      "beats": 3
+    },
+    {
+      "id": "tre-kronor-1697",
+      "title": {
+        "en": "Tre Kronor burns, 1697",
+        "sv": "Tre Kronor brinner 1697"
+      },
+      "year": 1697,
+      "beats": 9
+    },
+    {
+      "id": "s10-olympics-1912",
+      "title": {
+        "en": "The Stockholm Olympics, 1912",
+        "sv": "Olympiska spelen i Stockholm 1912"
+      },
+      "year": 1912,
+      "beats": 3
+    },
+    {
+      "id": "s11",
+      "title": {
+        "en": "The Stockholm Exhibition, 1930",
+        "sv": "Stockholmsutställningen 1930"
+      },
+      "year": 1930,
+      "beats": 7
+    },
+    {
+      "id": "s12",
+      "title": {
+        "en": "The clearance of Klara, 1952–1977",
+        "sv": "Klararivningarna 1952–1977"
+      },
+      "year": 1952,
+      "beats": 8
+    }
+  ]
+}
