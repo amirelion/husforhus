@@ -64,7 +64,7 @@ TIER1 = [
     "Hammarby Sjö", "Saltsjön", "Lilla Värtan", "Djurgårdsbrunnsviken", "Ladugårdslandsviken",
 ]
 SALTSJON = (2050.0, 600.0, 0.0)               # local (x, z, angle°): open water off Fåfängan, 237 m from any shore
-FEATURES = {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": False}   # lang, search: on since 2026-10-17
+FEATURES = {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True}   # lang, search, scenes: on since 2026-10-17
 FIXTURE_BBOX = (153529.0, 6578318.0, 154556.0, 6579322.0)  # WGS84 18.062,59.320–18.080,59.329 via pyproj, rounded outward
 # HFH_FIXTURE=1 makes s01_load keep only buildings whose 2D footprint intersects FIXTURE_BBOX (519 on 2026-10-14);
 # tests/conftest.py gamla_stan_lod1 cuts with the same rule.

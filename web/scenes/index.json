@@ -55,7 +55,8 @@
         "sv": "Stockholmsutställningen 1930"
       },
       "year": 1930,
-      "beats": 7
+      "beats": 7,
+      "ready": true
     },
     {
       "id": "s12",

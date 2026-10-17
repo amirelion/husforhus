@@ -10,124 +10,570 @@
     {
       "n": 1,
       "camera": {
-        "lat": 59.327,
-        "lon": 18.064,
-        "height_m": 600
+        "lat": 59.3215,
+        "lon": 18.062,
+        "height_m": 450
       },
       "target": {
-        "lat": 59.32389,
-        "lon": 18.06886
+        "lat": 59.32375,
+        "lon": 18.06998
       },
       "duration_s": 7,
       "caption": {
-        "en": "The evening of 1 September 1625 in Stockholm. The wind is strong.",
-        "sv": "Kvällen den 1 september 1625 i Stockholm. Det blåser hårt."
+        "en": "The evening of 1 September 1625 in Stockholm. A hard wind blows off Mälaren.",
+        "sv": "Kvällen den 1 september 1625 i Stockholm. Det blåser hårt från Mälaren."
       },
       "sources": [
-        "sv Wikipedia: Stora branden 1625"
+        "sv Wikipedia: Stora branden 1625 (rev 49159348)"
       ]
     },
     {
       "n": 2,
       "camera": {
-        "lat": 59.3252,
-        "lon": 18.069,
-        "height_m": 60
+        "lat": 59.323,
+        "lon": 18.066,
+        "height_m": 110
       },
       "target": {
-        "lat": 59.32483,
-        "lon": 18.07033
+        "lat": 59.32362,
+        "lon": 18.06745
       },
       "duration_s": 6,
       "caption": {
-        "en": "A fire breaks out in a brewhouse at the bottom of Kåkbrinken.",
+        "en": "A fire starts in a brewhouse at the bottom of Kåkbrinken.",
         "sv": "Det börjar brinna i ett brygghus längst ner i Kåkbrinken."
       },
       "sources": [
-        "sv Wikipedia: Stora branden 1625",
-        "Kåkbrinken"
+        "sv Wikipedia: Stora branden 1625 (rev 49159348)",
+        "Kåkbrinken line from OpenStreetMap"
       ]
     },
     {
       "n": 3,
       "camera": {
-        "lat": 59.3257,
-        "lon": 18.071,
-        "height_m": 70
+        "lat": 59.3266,
+        "lon": 18.0716,
+        "height_m": 330
       },
       "target": {
-        "lat": 59.32483,
-        "lon": 18.07033
+        "lat": 59.32362,
+        "lon": 18.06745
       },
       "duration_s": 7,
       "caption": {
-        "en": "At about ten, the watch in Storkyrkan's tower sees smoke.",
-        "sv": "Vid tiotiden upptäcker vakten i Storkyrkans torn röken."
+        "en": "At about ten, the watchman in Storkyrkan's tower sees smoke rising from the brewhouse roof.",
+        "sv": "Vid tiotiden ser tornväktaren i Storkyrkan rök stiga från brygghusets tak."
       },
       "sources": [
-        "sv Wikipedia: Stora branden 1625"
+        "sv Wikipedia: Stora branden 1625 (rev 49159348)"
       ]
     },
     {
       "n": 4,
       "camera": {
-        "lat": 59.3285,
-        "lon": 18.062,
-        "height_m": 450
+        "lat": 59.3255,
+        "lon": 18.064,
+        "height_m": 420
       },
       "target": {
-        "lat": 59.32389,
-        "lon": 18.06886
+        "lat": 59.32385,
+        "lon": 18.0696
       },
       "duration_s": 10,
       "caption": {
-        "en": "Wind from Mälaren carries the fire through the wooden houses. Tyska kyrkan catches fire twice but is saved.",
+        "en": "The wind from Mälaren carries the fire through the wooden houses. Tyska kyrkan catches fire twice but is saved.",
         "sv": "Vinden från Mälaren för elden genom trähusen. Tyska kyrkan fattar eld två gånger men räddas."
       },
       "sources": [
-        "sv Wikipedia: Stora branden 1625"
+        "sv Wikipedia: Stora branden 1625 (rev 49159348)"
       ]
     },
     {
       "n": 5,
       "camera": {
-        "lat": 59.327,
-        "lon": 18.066,
-        "height_m": 300
+        "lat": 59.322,
+        "lon": 18.0662,
+        "height_m": 320
       },
       "target": {
-        "lat": 59.32389,
-        "lon": 18.06886
+        "lat": 59.32383,
+        "lon": 18.06984
       },
       "duration_s": 11,
       "caption": {
-        "en": "In 1626 a new, straight plan is drawn. Owners who build in stone to it get six years free of tax.",
-        "sv": "År 1626 ritas en ny, rak plan. Den som bygger i sten efter den slipper skatt i sex år."
+        "en": "In June 1626 the king promises those who lost houses six years free of tax, if they rebuild in stone to a new straight plan.",
+        "sv": "I juni 1626 lovar kungen de drabbade sex års skattefrihet, om de bygger i sten efter en ny rak plan."
       },
       "sources": [
-        "sv Wikipedia: Stora branden 1625 (June 1626 tax relief",
+        "sv Wikipedia: Stora branden 1625 (rev 49159348) (June 1626 tax relief",
         "1626 plan)"
       ]
     },
     {
       "n": 6,
       "camera": {
-        "lat": 59.3275,
-        "lon": 18.065,
-        "height_m": 120
+        "lat": 59.3233,
+        "lon": 18.0672,
+        "height_m": 140
       },
       "target": {
-        "lat": 59.32561,
-        "lon": 18.06697
+        "lat": 59.3242,
+        "lon": 18.06922
       },
       "duration_s": 9,
       "caption": {
-        "en": "From March 1627 the new streets are staked out, today's Stora and Lilla Nygatan.",
-        "sv": "Från mars 1627 stakas de nya gatorna ut, dagens Stora och Lilla Nygatan."
+        "en": "From March 1627 the new streets are staked out: today's Stora and Lilla Nygatan.",
+        "sv": "Från mars 1627 stakas de nya gatorna ut: dagens Stora och Lilla Nygatan."
       },
       "sources": [
-        "sv Wikipedia: Stora branden 1625",
-        "Stora Nygatan, Stockholm"
+        "sv Wikipedia: Stora branden 1625 (rev 49159348)",
+        "sv Wikipedia: Stora Nygatan, Stockholm"
+      ]
+    }
+  ],
+  "overlays": [
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Burnt area of 1 September 1625",
+        "sv": "Burnt area of 1 September 1625"
+      },
+      "from": 4,
+      "heights": [
+        1
+      ],
+      "confidence": "low",
+      "until": 5,
+      "rings": [
+        [
+          [
+            59.32357,
+            18.06732
+          ],
+          [
+            59.32434,
+            18.069
+          ],
+          [
+            59.32466,
+            18.0697
+          ],
+          [
+            59.32393,
+            18.07091
+          ],
+          [
+            59.32303,
+            18.07223
+          ],
+          [
+            59.32278,
+            18.07139
+          ],
+          [
+            59.3229,
+            18.07
+          ],
+          [
+            59.3232,
+            18.0685
+          ],
+          [
+            59.32345,
+            18.0674
+          ],
+          [
+            59.32357,
+            18.06732
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Pre-fire blocks between the lanes (wooden and half-timbered houses)",
+        "sv": "Pre-fire blocks between the lanes (wooden and half-timbered houses)"
+      },
+      "from": 1,
+      "heights": [
+        7,
+        7,
+        7,
+        7,
+        7
+      ],
+      "confidence": "very low",
+      "until": 3,
+      "rings": [
+        [
+          [
+            59.323805,
+            18.068521
+          ],
+          [
+            59.324374,
+            18.069884
+          ],
+          [
+            59.324541,
+            18.069616
+          ],
+          [
+            59.323972,
+            18.068253
+          ],
+          [
+            59.323805,
+            18.068521
+          ]
+        ],
+        [
+          [
+            59.323563,
+            18.068909
+          ],
+          [
+            59.324132,
+            18.070272
+          ],
+          [
+            59.324299,
+            18.070005
+          ],
+          [
+            59.32373,
+            18.068642
+          ],
+          [
+            59.323563,
+            18.068909
+          ]
+        ],
+        [
+          [
+            59.323321,
+            18.069298
+          ],
+          [
+            59.32389,
+            18.070661
+          ],
+          [
+            59.324057,
+            18.070393
+          ],
+          [
+            59.323488,
+            18.06903
+          ],
+          [
+            59.323321,
+            18.069298
+          ]
+        ],
+        [
+          [
+            59.323079,
+            18.069686
+          ],
+          [
+            59.323648,
+            18.071049
+          ],
+          [
+            59.323815,
+            18.070781
+          ],
+          [
+            59.323246,
+            18.069418
+          ],
+          [
+            59.323079,
+            18.069686
+          ]
+        ],
+        [
+          [
+            59.322859,
+            18.070039
+          ],
+          [
+            59.323428,
+            18.071402
+          ],
+          [
+            59.323595,
+            18.071134
+          ],
+          [
+            59.323026,
+            18.069771
+          ],
+          [
+            59.322859,
+            18.070039
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Stora Konungsgatan and Lilla Konungsgatan (planned, today's Stora and Lilla Nygatan)",
+        "sv": "Stora Konungsgatan and Lilla Konungsgatan (planned, today's Stora and Lilla Nygatan)"
+      },
+      "from": 5,
+      "heights": [
+        0.5,
+        0.5
+      ],
+      "confidence": "medium",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.324424,
+            18.068791
+          ],
+          [
+            59.323104,
+            18.070909
+          ],
+          [
+            59.323156,
+            18.071031
+          ],
+          [
+            59.324476,
+            18.068913
+          ],
+          [
+            59.324424,
+            18.068791
+          ]
+        ],
+        [
+          [
+            59.324117,
+            18.068055
+          ],
+          [
+            59.322841,
+            18.070102
+          ],
+          [
+            59.322881,
+            18.070198
+          ],
+          [
+            59.324157,
+            18.06815
+          ],
+          [
+            59.324117,
+            18.068055
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "New blocks of the 1626 plan",
+        "sv": "New blocks of the 1626 plan"
+      },
+      "from": 5,
+      "heights": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "confidence": "low",
+      "until": 5,
+      "rings": [
+        [
+          [
+            59.324144,
+            18.068296
+          ],
+          [
+            59.323858,
+            18.068755
+          ],
+          [
+            59.324063,
+            18.069245
+          ],
+          [
+            59.324349,
+            18.068786
+          ],
+          [
+            59.324144,
+            18.068296
+          ]
+        ],
+        [
+          [
+            59.32444,
+            18.069004
+          ],
+          [
+            59.324154,
+            18.069463
+          ],
+          [
+            59.324325,
+            18.069872
+          ],
+          [
+            59.324611,
+            18.069413
+          ],
+          [
+            59.32444,
+            18.069004
+          ]
+        ],
+        [
+          [
+            59.323792,
+            18.068861
+          ],
+          [
+            59.323506,
+            18.069319
+          ],
+          [
+            59.323711,
+            18.06981
+          ],
+          [
+            59.323997,
+            18.069351
+          ],
+          [
+            59.323792,
+            18.068861
+          ]
+        ],
+        [
+          [
+            59.324088,
+            18.069569
+          ],
+          [
+            59.323802,
+            18.070028
+          ],
+          [
+            59.323973,
+            18.070437
+          ],
+          [
+            59.324259,
+            18.069978
+          ],
+          [
+            59.324088,
+            18.069569
+          ]
+        ],
+        [
+          [
+            59.32344,
+            18.069425
+          ],
+          [
+            59.323154,
+            18.069884
+          ],
+          [
+            59.323359,
+            18.070375
+          ],
+          [
+            59.323645,
+            18.069916
+          ],
+          [
+            59.32344,
+            18.069425
+          ]
+        ],
+        [
+          [
+            59.323736,
+            18.070134
+          ],
+          [
+            59.32345,
+            18.070593
+          ],
+          [
+            59.323621,
+            18.071002
+          ],
+          [
+            59.323907,
+            18.070543
+          ],
+          [
+            59.323736,
+            18.070134
+          ]
+        ],
+        [
+          [
+            59.323132,
+            18.06992
+          ],
+          [
+            59.32289,
+            18.070308
+          ],
+          [
+            59.323095,
+            18.070798
+          ],
+          [
+            59.323337,
+            18.07041
+          ],
+          [
+            59.323132,
+            18.06992
+          ]
+        ],
+        [
+          [
+            59.323428,
+            18.070628
+          ],
+          [
+            59.323186,
+            18.071016
+          ],
+          [
+            59.323357,
+            18.071425
+          ],
+          [
+            59.323599,
+            18.071037
+          ],
+          [
+            59.323428,
+            18.070628
+          ]
+        ]
       ]
     }
   ]

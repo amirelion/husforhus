@@ -19,7 +19,8 @@ async function settle(page) {
   }, { timeout: 30_000 }).toBe(true);
 }
 
-// Scenes are off in the shipped config (features.scenes); these runs turn them on in the page's own copy of it.
+// Scenes are on in the shipped config since 2026-10-17 (features.scenes); each run sets the switch itself in the
+// page's own copy of it, so the tests hold whichever way a build ships.
 function scenesOn(page, on = true) {
   return page.addInitScript(on => {
     const fetch0 = window.fetch;
@@ -35,6 +36,7 @@ function scenesOn(page, on = true) {
 
 test('with scenes off, the Stories button is hidden and ?scene= is ignored', async ({ page }) => {
   const errors = watchErrors(page);
+  await scenesOn(page, false);
   await page.goto('/?scene=vasa-1628');
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
   await expect(page.locator('.stories-open')).toBeHidden();

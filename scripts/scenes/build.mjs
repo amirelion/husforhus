@@ -13,11 +13,11 @@ const DEFAULT_DURATION_S = 8;
 // (history-scenes.md lists s10 beat 5 / the marathon death; Vasa and Tre Kronor state deaths too).
 export const SCENES = {
   'vasa-1628': { title: { en: 'The Vasa sinks, 1628', sv: 'Vasa sjunker 1628' }, year: 1628, sensitive: true, ready: true },
-  's04': { title: { en: 'The great fire of 1625', sv: 'Stora branden 1625' }, year: 1625, sensitive: false },
+  's04': { title: { en: 'The great fire of 1625', sv: 'Stora branden 1625' }, year: 1625, sensitive: false, ready: false },   // held 2026-10-17: two beats frame nothing, the burnt blocks are not traced yet
   's07-kristina-lock': { title: { en: "Queen Kristina's lock, 1637–1642", sv: 'Drottning Kristinas sluss 1637–1642' }, year: 1642, sensitive: false },
   'tre-kronor-1697': { title: { en: 'Tre Kronor burns, 1697', sv: 'Tre Kronor brinner 1697' }, year: 1697, sensitive: false, ready: true },
   's10-olympics-1912': { title: { en: 'The Stockholm Olympics, 1912', sv: 'Olympiska spelen i Stockholm 1912' }, year: 1912, sensitive: true, ready: true },
-  's11': { title: { en: 'The Stockholm Exhibition, 1930', sv: 'Stockholmsutställningen 1930' }, year: 1930, sensitive: false },
+  's11': { title: { en: 'The Stockholm Exhibition, 1930', sv: 'Stockholmsutställningen 1930' }, year: 1930, sensitive: false, ready: true },
   's12': { title: { en: 'The clearance of Klara, 1952–1977', sv: 'Klararivningarna 1952–1977' }, year: 1952, sensitive: false },
 };
 

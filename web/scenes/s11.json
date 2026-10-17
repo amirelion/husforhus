@@ -10,34 +10,33 @@
     {
       "n": 1,
       "camera": {
-        "lat": 59.327,
-        "lon": 18.11,
-        "height_m": 700
+        "lat": 59.3258,
+        "lon": 18.1085,
+        "height_m": 650
       },
       "target": {
-        "lat": 59.332,
-        "lon": 18.112
+        "lat": 59.3323,
+        "lon": 18.113
       },
       "duration_s": 6,
       "caption": {
-        "en": "Before 1930 the north shore of Djurgårdsbrunnsviken held no exhibition.",
-        "sv": "Före 1930 fanns ingen utställning på Djurgårdsbrunnsvikens norra strand."
+        "en": "The north shore of Djurgårdsbrunnsviken. In 1930 a national exhibition of architecture and design is built here.",
+        "sv": "Djurgårdsbrunnsvikens norra strand. År 1930 byggs här en nationell utställning för arkitektur och formgivning."
       },
       "sources": [
-        "sv Wikipedia: Stockholmsutställningen 1930",
-        "Wikidata start years for the museums"
+        "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476)"
       ]
     },
     {
       "n": 2,
       "camera": {
-        "lat": 59.3315,
-        "lon": 18.099,
-        "height_m": 60
+        "lat": 59.3305,
+        "lon": 18.103,
+        "height_m": 210
       },
       "target": {
-        "lat": 59.3325,
-        "lon": 18.106
+        "lat": 59.33275,
+        "lon": 18.1039
       },
       "duration_s": 7,
       "caption": {
@@ -45,39 +44,39 @@
         "sv": "16 maj 1930: Stockholmsutställningen öppnar. Gunnar Asplund är dess arkitekt."
       },
       "sources": [
-        "sv Wikipedia: Stockholmsutställningen 1930"
+        "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476)"
       ]
     },
     {
       "n": 3,
       "camera": {
-        "lat": 59.332,
-        "lon": 18.104,
-        "height_m": 35
+        "lat": 59.3315,
+        "lon": 18.102,
+        "height_m": 200
       },
       "target": {
-        "lat": 59.3325,
-        "lon": 18.11
+        "lat": 59.33258,
+        "lon": 18.107
       },
       "duration_s": 8,
       "caption": {
-        "en": "Some 30 halls line the street called Corson: plain volumes of glass and light.",
-        "sv": "Ett 30-tal hallar kantar gatan Corson: enkla byggnader av glas och ljus."
+        "en": "Some 30 halls line the street called Corso: very plain halls, full of light and air.",
+        "sv": "Ett 30-tal hallar kantar gatan Corson: mycket enkla hallar, fyllda med ljus och luft."
       },
       "sources": [
-        "sv Wikipedia: Stockholmsutställningen 1930"
+        "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476)"
       ]
     },
     {
       "n": 4,
       "camera": {
-        "lat": 59.33,
-        "lon": 18.114,
-        "height_m": 40
+        "lat": 59.3305,
+        "lon": 18.11,
+        "height_m": 150
       },
       "target": {
-        "lat": 59.3325,
-        "lon": 18.1158
+        "lat": 59.332,
+        "lon": 18.1113
       },
       "duration_s": 9,
       "caption": {
@@ -85,72 +84,72 @@
         "sv": "En 80 meter hög mast av Sigurd Lewerentz bär ljusskyltar, med utställningens vinge överst."
       },
       "sources": [
-        "sv Wikipedia: Stockholmsutställningens reklammast"
+        "sv Wikipedia: Stockholmsutställningens reklammast (rev 36563502)"
       ]
     },
     {
       "n": 5,
       "camera": {
-        "lat": 59.328,
-        "lon": 18.112,
-        "height_m": 200
+        "lat": 59.3285,
+        "lon": 18.1135,
+        "height_m": 330
       },
       "target": {
-        "lat": 59.332,
+        "lat": 59.3318,
         "lon": 18.115
       },
       "duration_s": 7,
       "caption": {
-        "en": "Light is part of the design, and the event helps neon break through in Sweden.",
-        "sv": "Ljuset är en del av formen, och utställningen ger neonskylten ett genombrott i Sverige."
+        "en": "Light is part of the design: a footbridge of 1000 bulbs crosses the bay, and the exhibition helps neon break through in Sweden.",
+        "sv": "Ljuset är en del av formen: en gångbro med 1000 glödlampor går över viken, och utställningen ger neonskylten ett genombrott i Sverige."
       },
       "sources": [
-        "sv Wikipedia: Stockholmsutställningen 1930 (Belysning)",
-        "reklammast"
+        "sv Wikipedia: Stockholmsutställningens reklammast (rev 36563502)"
       ]
     },
     {
       "n": 6,
       "camera": {
-        "lat": 59.33,
-        "lon": 18.115,
-        "height_m": 500
+        "lat": 59.329,
+        "lon": 18.109,
+        "height_m": 330
       },
       "target": {
-        "lat": 59.332,
-        "lon": 18.112
+        "lat": 59.3325,
+        "lon": 18.113
       },
       "duration_s": 7,
       "caption": {
-        "en": "The exhibition closes on 29 September. Its buildings are pulled down.",
-        "sv": "Utställningen stänger den 29 september. Byggnaderna rivs."
+        "en": "The exhibition closes on 29 September. Almost nothing is kept: Röda stugan, its site office, still stands.",
+        "sv": "Utställningen stänger den 29 september. Nästan inget blir kvar: Röda stugan, platskontoret, står kvar."
       },
       "sources": [
-        "sv Wikipedia: Stockholmsutställningen 1930"
+        "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476)"
       ]
     },
     {
       "n": 7,
       "camera": {
-        "lat": 59.33,
+        "lat": 59.311,
         "lon": 18.07,
-        "height_m": 1500
+        "height_m": 1900
       },
       "target": {
-        "lat": 59.33,
+        "lat": 59.329,
         "lon": 18.07
       },
       "duration_s": 8,
       "caption": {
-        "en": "Over the next fifteen years the new style spreads, from Norra Ängby to Hammarbyhöjden.",
-        "sv": "Under de följande femton åren sprids den nya stilen, från Norra Ängby till Hammarbyhöjden."
+        "en": "In the 1930s the new style spreads, from Norra Ängby to Hammarbyhöjden.",
+        "sv": "Under 1930-talet sprids den nya stilen, från Norra Ängby till Hammarbyhöjden."
       },
       "sources": [
-        "sv Wikipedia: Stockholmsutställningen 1930 (Kritik och konsekvenser)",
+        "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476) (Kritik och konsekvenser)",
         "pipeline/city.py period p8"
       ]
     }
   ],
+  "ready": true,
   "overlays": [
     {
       "type": "route",
@@ -180,6 +179,1126 @@
         "en": "Exhibition grounds (approximate)",
         "sv": "Utställningsområdet (ungefärligt)"
       }
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Advertising mast (reklammasten; Sigurd Lewerentz)",
+        "sv": "Advertising mast (reklammasten; Sigurd Lewerentz)"
+      },
+      "from": 2,
+      "heights": [
+        80
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.331982,
+            18.111265
+          ],
+          [
+            59.331982,
+            18.111335
+          ],
+          [
+            59.332018,
+            18.111335
+          ],
+          [
+            59.332018,
+            18.111265
+          ],
+          [
+            59.331982,
+            18.111265
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Restaurang Paradiset (main restaurant)",
+        "sv": "Restaurang Paradiset (main restaurant)"
+      },
+      "from": 2,
+      "heights": [
+        11
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.331865,
+            18.112104
+          ],
+          [
+            59.331865,
+            18.112896
+          ],
+          [
+            59.332135,
+            18.112896
+          ],
+          [
+            59.332135,
+            18.112104
+          ],
+          [
+            59.331865,
+            18.112104
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Main entrance and commissariat (18 lit columns)",
+        "sv": "Main entrance and commissariat (18 lit columns)"
+      },
+      "from": 2,
+      "heights": [
+        10
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.332651,
+            18.103548
+          ],
+          [
+            59.332651,
+            18.104252
+          ],
+          [
+            59.332849,
+            18.104252
+          ],
+          [
+            59.332849,
+            18.103548
+          ],
+          [
+            59.332651,
+            18.103548
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Corson (street of about 30 halls)",
+        "sv": "Corson (street of about 30 halls)"
+      },
+      "from": 2,
+      "heights": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.332819,
+            18.104883
+          ],
+          [
+            59.332819,
+            18.105517
+          ],
+          [
+            59.332981,
+            18.105517
+          ],
+          [
+            59.332981,
+            18.104883
+          ],
+          [
+            59.332819,
+            18.104883
+          ]
+        ],
+        [
+          [
+            59.332178,
+            18.105183
+          ],
+          [
+            59.332178,
+            18.105817
+          ],
+          [
+            59.332322,
+            18.105817
+          ],
+          [
+            59.332322,
+            18.105183
+          ],
+          [
+            59.332178,
+            18.105183
+          ]
+        ],
+        [
+          [
+            59.332819,
+            18.105633
+          ],
+          [
+            59.332819,
+            18.106267
+          ],
+          [
+            59.332981,
+            18.106267
+          ],
+          [
+            59.332981,
+            18.105633
+          ],
+          [
+            59.332819,
+            18.105633
+          ]
+        ],
+        [
+          [
+            59.332178,
+            18.105933
+          ],
+          [
+            59.332178,
+            18.106567
+          ],
+          [
+            59.332322,
+            18.106567
+          ],
+          [
+            59.332322,
+            18.105933
+          ],
+          [
+            59.332178,
+            18.105933
+          ]
+        ],
+        [
+          [
+            59.332819,
+            18.106383
+          ],
+          [
+            59.332819,
+            18.107017
+          ],
+          [
+            59.332981,
+            18.107017
+          ],
+          [
+            59.332981,
+            18.106383
+          ],
+          [
+            59.332819,
+            18.106383
+          ]
+        ],
+        [
+          [
+            59.332178,
+            18.106683
+          ],
+          [
+            59.332178,
+            18.107317
+          ],
+          [
+            59.332322,
+            18.107317
+          ],
+          [
+            59.332322,
+            18.106683
+          ],
+          [
+            59.332178,
+            18.106683
+          ]
+        ],
+        [
+          [
+            59.332819,
+            18.107133
+          ],
+          [
+            59.332819,
+            18.107767
+          ],
+          [
+            59.332981,
+            18.107767
+          ],
+          [
+            59.332981,
+            18.107133
+          ],
+          [
+            59.332819,
+            18.107133
+          ]
+        ],
+        [
+          [
+            59.332178,
+            18.107433
+          ],
+          [
+            59.332178,
+            18.108067
+          ],
+          [
+            59.332322,
+            18.108067
+          ],
+          [
+            59.332322,
+            18.107433
+          ],
+          [
+            59.332178,
+            18.107433
+          ]
+        ],
+        [
+          [
+            59.332819,
+            18.107883
+          ],
+          [
+            59.332819,
+            18.108517
+          ],
+          [
+            59.332981,
+            18.108517
+          ],
+          [
+            59.332981,
+            18.107883
+          ],
+          [
+            59.332819,
+            18.107883
+          ]
+        ],
+        [
+          [
+            59.332178,
+            18.108183
+          ],
+          [
+            59.332178,
+            18.108817
+          ],
+          [
+            59.332322,
+            18.108817
+          ],
+          [
+            59.332322,
+            18.108183
+          ],
+          [
+            59.332178,
+            18.108183
+          ]
+        ],
+        [
+          [
+            59.332819,
+            18.108633
+          ],
+          [
+            59.332819,
+            18.109267
+          ],
+          [
+            59.332981,
+            18.109267
+          ],
+          [
+            59.332981,
+            18.108633
+          ],
+          [
+            59.332819,
+            18.108633
+          ]
+        ],
+        [
+          [
+            59.332178,
+            18.108933
+          ],
+          [
+            59.332178,
+            18.109567
+          ],
+          [
+            59.332322,
+            18.109567
+          ],
+          [
+            59.332322,
+            18.108933
+          ],
+          [
+            59.332178,
+            18.108933
+          ]
+        ],
+        [
+          [
+            59.332819,
+            18.109383
+          ],
+          [
+            59.332819,
+            18.110017
+          ],
+          [
+            59.332981,
+            18.110017
+          ],
+          [
+            59.332981,
+            18.109383
+          ],
+          [
+            59.332819,
+            18.109383
+          ]
+        ],
+        [
+          [
+            59.332178,
+            18.109683
+          ],
+          [
+            59.332178,
+            18.110317
+          ],
+          [
+            59.332322,
+            18.110317
+          ],
+          [
+            59.332322,
+            18.109683
+          ],
+          [
+            59.332178,
+            18.109683
+          ]
+        ],
+        [
+          [
+            59.332819,
+            18.110133
+          ],
+          [
+            59.332819,
+            18.110767
+          ],
+          [
+            59.332981,
+            18.110767
+          ],
+          [
+            59.332981,
+            18.110133
+          ],
+          [
+            59.332819,
+            18.110133
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Hall 33 Svea rike (Gunnar Asplund)",
+        "sv": "Hall 33 Svea rike (Gunnar Asplund)"
+      },
+      "from": 2,
+      "heights": [
+        14
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.332097,
+            18.114672
+          ],
+          [
+            59.332097,
+            18.115728
+          ],
+          [
+            59.332403,
+            18.115728
+          ],
+          [
+            59.332403,
+            18.114672
+          ],
+          [
+            59.332097,
+            18.114672
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Hyreslägenheter (rental flats hall; Sundbärg and Åhrén per Commons)",
+        "sv": "Hyreslägenheter (rental flats hall; Sundbärg and Åhrén per Commons)"
+      },
+      "from": 2,
+      "heights": [
+        12
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.331474,
+            18.11616
+          ],
+          [
+            59.331474,
+            18.11704
+          ],
+          [
+            59.331726,
+            18.11704
+          ],
+          [
+            59.331726,
+            18.11616
+          ],
+          [
+            59.331474,
+            18.11616
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Kontor (offices hall)",
+        "sv": "Kontor (offices hall)"
+      },
+      "from": 2,
+      "heights": [
+        10
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.332292,
+            18.117048
+          ],
+          [
+            59.332292,
+            18.117752
+          ],
+          [
+            59.332508,
+            18.117752
+          ],
+          [
+            59.332508,
+            18.117048
+          ],
+          [
+            59.332292,
+            18.117048
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Restaurang Puck",
+        "sv": "Restaurang Puck"
+      },
+      "from": 2,
+      "heights": [
+        7
+      ],
+      "confidence": "very low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.331678,
+            18.109289
+          ],
+          [
+            59.331678,
+            18.109711
+          ],
+          [
+            59.331822,
+            18.109711
+          ],
+          [
+            59.331822,
+            18.109289
+          ],
+          [
+            59.331678,
+            18.109289
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Planetarium",
+        "sv": "Planetarium"
+      },
+      "from": 2,
+      "heights": [
+        12
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.332828,
+            18.104459
+          ],
+          [
+            59.332828,
+            18.104741
+          ],
+          [
+            59.332972,
+            18.104741
+          ],
+          [
+            59.332972,
+            18.104459
+          ],
+          [
+            59.332828,
+            18.104459
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Housing section: villas and terraced houses (east)",
+        "sv": "Housing section: villas and terraced houses (east)"
+      },
+      "from": 2,
+      "heights": [
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.33156,
+            18.119503
+          ],
+          [
+            59.33156,
+            18.119697
+          ],
+          [
+            59.33164,
+            18.119697
+          ],
+          [
+            59.33164,
+            18.119503
+          ],
+          [
+            59.33156,
+            18.119503
+          ]
+        ],
+        [
+          [
+            59.33186,
+            18.119503
+          ],
+          [
+            59.33186,
+            18.119697
+          ],
+          [
+            59.33194,
+            18.119697
+          ],
+          [
+            59.33194,
+            18.119503
+          ],
+          [
+            59.33186,
+            18.119503
+          ]
+        ],
+        [
+          [
+            59.33216,
+            18.119503
+          ],
+          [
+            59.33216,
+            18.119697
+          ],
+          [
+            59.33224,
+            18.119697
+          ],
+          [
+            59.33224,
+            18.119503
+          ],
+          [
+            59.33216,
+            18.119503
+          ]
+        ],
+        [
+          [
+            59.33156,
+            18.119953
+          ],
+          [
+            59.33156,
+            18.120147
+          ],
+          [
+            59.33164,
+            18.120147
+          ],
+          [
+            59.33164,
+            18.119953
+          ],
+          [
+            59.33156,
+            18.119953
+          ]
+        ],
+        [
+          [
+            59.33186,
+            18.119953
+          ],
+          [
+            59.33186,
+            18.120147
+          ],
+          [
+            59.33194,
+            18.120147
+          ],
+          [
+            59.33194,
+            18.119953
+          ],
+          [
+            59.33186,
+            18.119953
+          ]
+        ],
+        [
+          [
+            59.33216,
+            18.119953
+          ],
+          [
+            59.33216,
+            18.120147
+          ],
+          [
+            59.33224,
+            18.120147
+          ],
+          [
+            59.33224,
+            18.119953
+          ],
+          [
+            59.33216,
+            18.119953
+          ]
+        ],
+        [
+          [
+            59.33156,
+            18.120403
+          ],
+          [
+            59.33156,
+            18.120597
+          ],
+          [
+            59.33164,
+            18.120597
+          ],
+          [
+            59.33164,
+            18.120403
+          ],
+          [
+            59.33156,
+            18.120403
+          ]
+        ],
+        [
+          [
+            59.33186,
+            18.120403
+          ],
+          [
+            59.33186,
+            18.120597
+          ],
+          [
+            59.33194,
+            18.120597
+          ],
+          [
+            59.33194,
+            18.120403
+          ],
+          [
+            59.33186,
+            18.120403
+          ]
+        ],
+        [
+          [
+            59.33216,
+            18.120403
+          ],
+          [
+            59.33216,
+            18.120597
+          ],
+          [
+            59.33224,
+            18.120597
+          ],
+          [
+            59.33224,
+            18.120403
+          ],
+          [
+            59.33216,
+            18.120403
+          ]
+        ],
+        [
+          [
+            59.33156,
+            18.120853
+          ],
+          [
+            59.33156,
+            18.121047
+          ],
+          [
+            59.33164,
+            18.121047
+          ],
+          [
+            59.33164,
+            18.120853
+          ],
+          [
+            59.33156,
+            18.120853
+          ]
+        ],
+        [
+          [
+            59.33186,
+            18.120853
+          ],
+          [
+            59.33186,
+            18.121047
+          ],
+          [
+            59.33194,
+            18.121047
+          ],
+          [
+            59.33194,
+            18.120853
+          ],
+          [
+            59.33186,
+            18.120853
+          ]
+        ],
+        [
+          [
+            59.33216,
+            18.120853
+          ],
+          [
+            59.33216,
+            18.121047
+          ],
+          [
+            59.33224,
+            18.121047
+          ],
+          [
+            59.33224,
+            18.120853
+          ],
+          [
+            59.33216,
+            18.120853
+          ]
+        ],
+        [
+          [
+            59.33156,
+            18.121303
+          ],
+          [
+            59.33156,
+            18.121497
+          ],
+          [
+            59.33164,
+            18.121497
+          ],
+          [
+            59.33164,
+            18.121303
+          ],
+          [
+            59.33156,
+            18.121303
+          ]
+        ],
+        [
+          [
+            59.33186,
+            18.121303
+          ],
+          [
+            59.33186,
+            18.121497
+          ],
+          [
+            59.33194,
+            18.121497
+          ],
+          [
+            59.33194,
+            18.121303
+          ],
+          [
+            59.33186,
+            18.121303
+          ]
+        ],
+        [
+          [
+            59.33216,
+            18.121303
+          ],
+          [
+            59.33216,
+            18.121497
+          ],
+          [
+            59.33224,
+            18.121497
+          ],
+          [
+            59.33224,
+            18.121303
+          ],
+          [
+            59.33216,
+            18.121303
+          ]
+        ],
+        [
+          [
+            59.33156,
+            18.121753
+          ],
+          [
+            59.33156,
+            18.121947
+          ],
+          [
+            59.33164,
+            18.121947
+          ],
+          [
+            59.33164,
+            18.121753
+          ],
+          [
+            59.33156,
+            18.121753
+          ]
+        ],
+        [
+          [
+            59.33186,
+            18.121753
+          ],
+          [
+            59.33186,
+            18.121947
+          ],
+          [
+            59.33194,
+            18.121947
+          ],
+          [
+            59.33194,
+            18.121753
+          ],
+          [
+            59.33186,
+            18.121753
+          ]
+        ],
+        [
+          [
+            59.33216,
+            18.121753
+          ],
+          [
+            59.33216,
+            18.121947
+          ],
+          [
+            59.33224,
+            18.121947
+          ],
+          [
+            59.33224,
+            18.121753
+          ],
+          [
+            59.33216,
+            18.121753
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Footbridge over Djurgårdsbrunnsviken (1000 bulbs)",
+        "sv": "Footbridge over Djurgårdsbrunnsviken (1000 bulbs)"
+      },
+      "from": 2,
+      "heights": [
+        1
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.330898,
+            18.118965
+          ],
+          [
+            59.329748,
+            18.119165
+          ],
+          [
+            59.329752,
+            18.119235
+          ],
+          [
+            59.330902,
+            18.119035
+          ],
+          [
+            59.330898,
+            18.118965
+          ]
+        ]
+      ]
     }
   ]
 }

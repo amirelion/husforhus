@@ -42,10 +42,10 @@ test('the three overlay scenes have their route or outline', () => {
   }
 });
 
-test('only the three launch stories are ready, in the index too', async () => {
+test('only the five finished stories are ready, in the index too', async () => {
   const { buildAll } = await import('./build.mjs');
   const ready = Object.entries(SCENES).filter(([, m]) => m.ready).map(([id]) => id).sort();
-  assert.deepEqual(ready, ['s10-olympics-1912', 'tre-kronor-1697', 'vasa-1628']);
+  assert.deepEqual(ready, ['s10-olympics-1912', 's11', 'tre-kronor-1697', 'vasa-1628']);
   assert.ok(buildAll);
 });
 
