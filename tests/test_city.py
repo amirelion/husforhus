@@ -23,7 +23,7 @@ def test_identity():
     assert city.TILE == 1200.0
     assert set(city.HOME) == {"x", "z", "azimuth", "elevation", "span"}
     assert city.FEATURES == {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
-                             "plaques": True}
+                             "plaques": True, "metro": True}
     assert "_default" in city.STOREY_M
     assert isinstance(city.TIER1, list)
     assert len(city.SALTSJON) == 3

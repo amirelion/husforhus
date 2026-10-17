@@ -10,6 +10,8 @@ import { shareText, shareLink, parseAt } from './share.js';
 import { withTry } from './features.js';
 import { makeT, legacy, pickLang } from './i18n.js';
 import { plaquesByGid, plaqueSection } from './plaque.js';
+import { metroOnFrom, metroHref, METRO_KEY, stationCard } from './metro.js';
+import { makeMetroLayer } from './metro-layer.js';
 import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
 import { THEMES, SHADING } from './themes.js';
 import { createLooks } from './look.js';
@@ -134,6 +136,11 @@ const plaqueList = FEATURES.layers || FEATURES.plaques ? await getJson(`${DATA}p
 const plaquesOf = plaquesByGid(plaqueList);
 let plaquesOn = !!plaqueList.length && plaquesOnFrom(location.search, (() => { try { return localStorage.getItem(PLAQUE_KEY); } catch { return null; } })());
 if (plaquesOn) history.replaceState(history.state, '', plaquesHref(location.href, true));
+// Tunnelbanan (s16_metro's metro.json, web/metro.js), with features.metro: optional, so a build without it still
+// starts. The legend's switch shows it, off by default, remembered and kept in the URL (?metro=1) like the plaques.
+const metroData = FEATURES.metro ? await getJson(`${DATA}metro.json`).catch(() => null) : null;
+let metroOn = !!metroData && metroOnFrom(location.search, (() => { try { return localStorage.getItem(METRO_KEY); } catch { return null; } })());
+if (metroOn) history.replaceState(history.state, '', metroHref(location.href, true));
 
 // ---------- Language ----------
 // English and Swedish (features.lang turns the switch on). ?lang= sets this visit only; the switch's
@@ -410,6 +417,15 @@ if (plaqueList.length) {
 // Each marker follows the relief as it changes.
 function updatePlaqueMarkers() {
   for (const s of plaqueGroup.children) s.position.set(s.userData.x, surfaceAt(s.userData.x, s.userData.z) + s.userData.h + 4, s.userData.z);
+}
+// The metro's lines and stations (web/metro-layer.js); the timeline's year drives them, at Today what is open today.
+const metroLayer = metroData ? makeMetroLayer(THREE, { metro: metroData, surfaceAt, camera, theme: () => THEME, T }) : null;
+if (metroLayer) { metroLayer.group.visible = metroOn; scene.add(metroLayer.group); }
+const todayIso = () => new Date().toISOString().slice(0, 10);
+function updateMetro(dist) {
+  if (!metroOn || !metroLayer) return;
+  const y = uniforms.uYear.value;
+  metroLayer.update(Math.floor(y), y >= config.yearMax ? todayIso() : null, dist);
 }
 let labels = [];
 // Requested after the first frame with buildings, like land and water.
@@ -1164,6 +1180,7 @@ function pick(x, y) {
   storyGroup.visible = false;
   for (const f of faints) f.visible = false;
   plaqueGroup.visible = false;
+  if (metroLayer) metroLayer.group.visible = false;
   const outlined = highlight.mesh.visible;
   highlight.mesh.visible = false;
   renderer.setRenderTarget(pickTarget);
@@ -1178,6 +1195,7 @@ function pick(x, y) {
   storyGroup.visible = true;
   for (const f of faints) f.visible = faintOn;
   plaqueGroup.visible = plaquesOn;
+  if (metroLayer) metroLayer.group.visible = metroOn;
   highlight.mesh.visible = outlined;
   for (const m of meshes) m.material = m.userData.draw;
   for (const m of terrainMeshes) m.material = m.userData.draw;
@@ -1323,6 +1341,7 @@ card.setAttribute('aria-label', T('card.label'));
 let pinnedGid = -1;
 let lastPin = [0, 0];
 let focusBack = null;     // where the keyboard focus goes when a pinned card closes
+let pinnedStation = null; // a metro station's card is pinned (pinStation)
 const failedPhotos = new Set();   // photo keys that failed to load: not asked for again on a redraw
 // A pinned card on a wide screen stays between the corner (the title, the count and its buttons) and the timeline, so
 // a tall card (a photo and an excerpt) never covers them or a timeline handle; it scrolls inside when it is taller
@@ -1338,7 +1357,7 @@ function placeCard(x, y) {
 }
 let hoverGid = -1;
 function showCard(gid, x, y) {
-  if (pinnedGid >= 0 || phone.matches) return;
+  if (pinnedGid >= 0 || pinnedStation || phone.matches) return;
   if (cardsLocked()) { card.hidden = true; return; }
   if (gid < 0) { card.hidden = true; hoverGid = -1; return; }
   if (gid !== hoverGid || card.hidden) {
@@ -1361,8 +1380,11 @@ function pinCard(gid, x, y) {
   pinnedGid = gid;
   hoverGid = -1;
   uniforms.uSelected.value = gid;
+  const wasStation = !!pinnedStation;
+  pinnedStation = null;
+  card.classList.remove('station');
   if (gid < 0) {
-    const hadFocus = was >= 0 && card.contains(document.activeElement);     // read before the card hides
+    const hadFocus = (was >= 0 || wasStation) && card.contains(document.activeElement);     // read before the card hides
     card.hidden = true;
     card.classList.remove('pinned');
     card.removeAttribute('role');
@@ -1407,6 +1429,23 @@ function pinCard(gid, x, y) {
     }
   }
 }
+// A station's small card (web/metro.js stationCard), pinned like a building's: its close button or Escape closes it.
+function pinStation(s, x, y) {
+  pinCard(-1);
+  focusBack = document.activeElement;
+  card.innerHTML = stationCard(s, T, esc);
+  card.classList.add('pinned', 'station');
+  card.setAttribute('role', 'dialog');
+  card.setAttribute('aria-labelledby', 'card-title');
+  pinnedStation = s;
+  collapsePanelOnPhone();
+  card.hidden = false;
+  const close = card.querySelector('.card-close');
+  close.onclick = () => pinCard(-1);
+  lastPin = [x, y];
+  placeCard(x, y);
+  close.focus({ preventScroll: true });
+}
 // "Share": a phone opens the system share sheet; elsewhere the link is copied and the button says so for 2 s.
 async function shareCard(gid, button) {
   const b = building(gid), text = shareText(cardOf(gid), b);
@@ -1430,17 +1469,19 @@ let pointer = null, dragging = false, downAt = null;
 canvas.addEventListener('pointermove', e => { pointer = [e.clientX, e.clientY]; });
 canvas.addEventListener('pointerdown', e => {
   dragging = true; downAt = [e.clientX, e.clientY];
-  if (pinnedGid < 0) card.hidden = true;
+  if (pinnedGid < 0 && !pinnedStation) card.hidden = true;
 });
 canvas.addEventListener('pointerup', e => {
   dragging = false;
   if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  const station = metroOn && !quest && !cardsLocked() ? metroLayer.stationAt(e.clientX, e.clientY, canvas.clientWidth, canvas.clientHeight) : null;
+  if (station) { pinStation(station, e.clientX, e.clientY); return; }
   const gid = pick(e.clientX, e.clientY);
   if (quest && !solved && qStep().kind === 'find') { questClick(gid); return; }
   if (cardsLocked()) return;
   pinCard(gid === pinnedGid ? -1 : gid, e.clientX, e.clientY);
 });
-canvas.addEventListener('pointerleave', () => { pointer = null; if (pinnedGid < 0) card.hidden = true; uniforms.uHover.value = -1; });
+canvas.addEventListener('pointerleave', () => { pointer = null; if (pinnedGid < 0 && !pinnedStation) card.hidden = true; uniforms.uHover.value = -1; });
 
 // ---------- Flying to a building ----------
 let flight = null;
@@ -1913,6 +1954,8 @@ function renderPanel() {
         esc(T('ui.photoOnly'))}</button><span class="photo-hint" id="photo-hint"${photoOnly ? '' : ' hidden'}>${esc(T('ui.photoOnly.hint'))}</span></div>
       ${plaqueList.length ? `<div class="est-row"><button class="switch" id="plaques-on" aria-pressed="${plaquesOn}" aria-describedby="plaques-hint"><span class="toggle" aria-hidden="true"></span>${
         esc(T('ui.plaques'))}</button><span class="plaques-hint" id="plaques-hint"${plaquesOn ? '' : ' hidden'}>${esc(T('ui.plaques.hint'))}</span></div>` : ''}
+      ${metroData ? `<div class="est-row"><button class="switch" id="metro-on" aria-pressed="${metroOn}"><span class="toggle" aria-hidden="true"></span>${
+        esc(T('ui.metro'))}</button></div>` : ''}
       ${estTotal ? `<div class="est-row"><button class="switch" id="hide-est" aria-pressed="${hideEst}"><span class="toggle" aria-hidden="true"></span>${
         esc(T('ui.hideEst', { n: fmt(estTotal) }))}</button></div>` : ''}
       <p class="note">${approx(T('ui.legend.note'))}</p>`;
@@ -1923,6 +1966,8 @@ function renderPanel() {
     panel.querySelector('#photo-only').onclick = () => setPhotoOnly(!photoOnly);
     const plSw = panel.querySelector('#plaques-on');
     if (plSw) plSw.onclick = () => setPlaques(!plaquesOn);
+    const mSw = panel.querySelector('#metro-on');
+    if (mSw) mSw.onclick = () => setMetro(!metroOn);
     panel.querySelectorAll('.swatch[data-i]').forEach(b => b.onclick = () => {
       const i = +b.dataset.i, m = maskTarget;
       const solo = m.every((v, j) => (j === i) === !!v);
@@ -2051,6 +2096,16 @@ async function setPhotoOnly(v) {
     }
   }
   uniforms.uPhotoOnly.value = photoOnly ? 1 : 0;
+}
+// The Tunnelbanan switch: the lines and stations, remembered and kept in the URL (web/metro.js).
+function setMetro(v) {
+  metroOn = !!v && !!metroLayer;
+  if (metroLayer) metroLayer.group.visible = metroOn;
+  if (!metroOn && pinnedStation) pinCard(-1);
+  panel.querySelector('#metro-on')?.setAttribute('aria-pressed', String(metroOn));
+  try { localStorage.setItem(METRO_KEY, metroOn ? 'on' : 'off'); } catch {}
+  history.replaceState(history.state, '', metroHref(location.href, metroOn));
+  updateMetro(camera.position.distanceTo(controls.target));
 }
 // The plaques switch: the markers and the pinned card's plaque section, remembered and kept in the URL (web/panel.js).
 function setPlaques(v) {
@@ -2559,6 +2614,7 @@ function applyLook(name) {
   uniforms.uFogColor.value.set(THEME.sky);
   uniforms.uFaintColor.value.set(THEME.ui['--ink']);
   redrawLabels();
+  metroLayer?.retheme();
   recolourLegend(); drawHist(); refreshCard();
 }
 // The period legend and the Floors ramp take the new colours in place: rebuilt, the legend would lose its scroll and
@@ -2669,7 +2725,7 @@ renderer.setAnimationLoop(now => {
   followGround(dist, dt);
   updateLods();
   uniforms.uFog.value.set(dist * 1.6, dist * 4);
-  if (frame % 6 === 0) { updateLabels(dist); updatePlaqueMarkers(); stepPick(); }
+  if (frame % 6 === 0) { updateLabels(dist); updatePlaqueMarkers(); updateMetro(dist); stepPick(); }
   highlight.step(now, THEME.ui['--accent'], meshes);
   if (playing) {
     const t = Math.min(1, playT0 + (now - playStart) / DURATION);
@@ -2709,7 +2765,7 @@ const scenePlayer = mountScenePlayer({ THREE, scene: storyGroup, faint: setFaint
     set: y => { stopPlay(); setHandle('uYearFrom', FROM_REST); setHandle('uYear', y); },
     restore: ([from, to]) => { stopPlay(); uniforms.uYearFrom.value = from; uniforms.uYear.value = to; drawHist(); } } });
 
-window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
+window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, setMetro, get metroOn() { return metroOn; }, metroLayer, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
   surfaceAt, setRelief, chooseRelief, get relief() { return relief; }, terrain: () => ({ state: terrainState, source: TERRAIN?.source, relief: uRelief.value, cutK: uCutK.value, chunks: chunkMeshes.length }),
   get timelineLabels() { return placedLabels; }, get pinned() { return pinnedGid; }, districtOf,
   get forced() { return forcedGid; }, force, scene, highlight: () => highlight.state() };

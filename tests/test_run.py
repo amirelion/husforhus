@@ -18,10 +18,11 @@ def test_steps_contract():
     # OSM addresses and the stadsdel on each footprint, for the cards; s14_search indexes the version's cards. The blue
     # plaques: s15_plaques needs s02_addresses' table and writes into the version s03_tiles made. The laser points:
     # s00_fetch_laser picks its candidates from the years, attributes and Wikidata names (so after s06_wiki), and
-    # s02_towers' parts go into s03_tiles' tiles
+    # s02_towers' parts go into s03_tiles' tiles. metro: s16_metro writes metro.json into the version s03_tiles made
     assert run.STEPS == ["s00_fetch_city", "s00_fetch_raa", "s00_fetch_raa_old", "s00_fetch_wikidata", "s00_fetch_osm",
                          "s00_fetch_dem", "s00_fetch_plaques", "s01_load", "s08_landmarks", "s02_years", "s02_attributes", "s02_addresses",
-                         "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers", "s03_tiles", "s04_base", "s07_labels", "s14_search", "s15_plaques", "s99_validate"]
+                         "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers", "s03_tiles", "s16_metro", "s04_base", "s07_labels",
+                         "s14_search", "s15_plaques", "s99_validate"]
 
 
 def test_list_prints_steps_without_importing_them(capsys):

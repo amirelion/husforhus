@@ -180,3 +180,34 @@
   modified: true
   status: confirmed
   feature: plaques
+
+# Tunnelbanan (behind city.FEATURES metro; s16_metro). The facts were checked against the research CSVs' own sources
+# (sv/en.wikipedia permalinks, Spårvägsmuseet, urbanrail.net: checking only, no text copied;
+# docs/research/2026-10-16-tunnelbanan.md §1). Wikidata's dates are changed in 11 places (§3), so "processed".
+- id: metro_stations
+  url: https://www.wikidata.org/
+  research: docs/research/2026-10-16-tunnelbanan-stations.csv   # every row: source_wikidata, source_svwiki, source_other
+  publisher: Wikimedia Foundation and Wikidata contributors
+  product: Wikidata
+  dataset: Tunnelbanestationer
+  credit_as: {en: "Wikidata", sv: "Wikidata"}
+  licence: CC0-1.0
+  licence_url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: Tunnelbanestationer, Wikidata (CC0), bearbetad (processed)
+  modified: true
+  status: confirmed
+  feature: metro
+
+- id: metro_track
+  url: https://www.openstreetmap.org/copyright
+  research: docs/research/2026-10-16-tunnelbanan-segments.csv   # the segment dates: the Stockholms tunnelbana line table
+  publisher: OpenStreetMap contributors
+  product: OpenStreetMap
+  dataset: Tunnelbanans spår
+  credit_as: {en: "© OpenStreetMap contributors", sv: "© OpenStreetMap-bidragsgivare"}
+  licence: ODbL-1.0
+  licence_url: https://opendatacommons.org/licenses/odbl/1-0/
+  attribution: Tunnelbanans spår, © OpenStreetMap contributors, OpenStreetMap data under ODbL (bearbetad / modified)
+  modified: true
+  status: confirmed
+  feature: metro

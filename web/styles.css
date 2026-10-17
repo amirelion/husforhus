@@ -691,3 +691,9 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .card .plaque .plaque-note { color: var(--muted); font-size: 11px; font-style: italic; }
 /* The top-right labels stay on one line ("Om kartan", "Berättelser" on a 375 px phone fit in one row). */
 .about-open, .stories-open, .look-open { white-space: nowrap; }
+
+/* A metro station's card (web/metro.js stationCard): its lines as small swatches in our own line colours. */
+#card .metro-lines { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+#card .metro-line { display: inline-flex; align-items: center; gap: 6px; }
+#card .metro-line i { width: 14px; height: 4px; border-radius: 2px; }
+#card .metro-formerly { color: var(--muted); }

@@ -3,6 +3,8 @@
 Fails (exit 1, with a readable list) on:
 - plaques (s15_plaques, when plaques.json is there): a plaque on no building of the version, without its credit,
   name, text or position, listed twice, or with a text that names an owner or a byggherre (spec §6.3);
+- metro (s16_metro, when metro.json is there): a date that does not parse, a segment station not in the stations
+  list, a line other than green, red or blue, or a coordinate outside the map;
 - stockholm.json naming another version than its folder;
 - any file over 20 MiB; first-load or whole-city transferred bytes over budget;
 - base: land.bin.gz or water.bin.gz missing, not decoding or without a polygon; labels.json missing or not a
@@ -85,6 +87,7 @@ unexpected key goes through `shown`, a status is quoted only if it is a plain wo
 is one (`num`), and anything else reads `[value]`; a group or era is never printed.
 """
 import argparse
+import datetime
 import gzip
 import json
 import math
@@ -129,6 +132,7 @@ TOWER_M = (5.0, 400.0)         # a laser tower part's height above its building'
 TOWER_INSIDE_M = 0.2           # ... and how far past its footprint its outline may reach (decimetre vertices)
 TOWER_OUTSIDE_M2 = 0.5
 MAX_LOCAL_M = 30_000  # the municipality spans about ±16 km around Stortorget
+METRO_LINES = {"green", "red", "blue"}  # s16_metro (pipeline/metro.py LINES)
 MIN_PRIVATE_OVERLAP = 2  # years a private row's decade must share with its period, or the pair pins the year
 YFLAGS = (codes.EXACT, codes.RANGE, codes.LONG, codes.AREA, codes.ESTIMATE, codes.PERIOD, codes.UNKNOWN)
 YSRCS = (codes.SRC_NONE, codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_AREA, codes.SRC_WIKIDATA, codes.SRC_ESTIMATE,
@@ -1354,6 +1358,69 @@ def check_plaques(out: Path, n_buildings: int) -> list[str]:
     return errors
 
 
+def check_metro(out: Path) -> list[str]:
+    """Tunnelbanan (s16_metro), when the version has it: every date parses, every segment's stations are in the
+    stations list, the lines are green, red or blue, and every coordinate is finite and inside the map."""
+    path = out / "metro.json"
+    if not path.exists():
+        return []
+    try:
+        m = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return ["metro: metro.json is not JSON"]
+    if not isinstance(m, dict) or not isinstance(m.get("segments"), list) or not isinstance(m.get("stations"), list):
+        return ["metro: metro.json needs a segments list and a stations list"]
+
+    def date_ok(v) -> bool:
+        try:
+            datetime.date.fromisoformat(v)
+            return True
+        except (TypeError, ValueError):
+            return False
+
+    def inside(x, z) -> bool:
+        return all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and abs(v) <= MAX_LOCAL_M
+                   for v in (x, z))
+
+    errors, names = [], set()
+    for i, s in enumerate(m["stations"]):
+        name = s.get("name") if isinstance(s, dict) else None
+        if not isinstance(name, str) or not name.strip():
+            errors.append(f"metro: station #{i} has no name")
+            continue
+        if name in names:
+            errors.append(f"metro: station {name} twice")
+        names.add(name)
+        if not (s.get("never") and s.get("opened") is None) and not date_ok(s.get("opened")):
+            errors.append(f"metro: station {name} has an opening date that does not parse: {s.get('opened')!r}")
+        if "closed" in s and not date_ok(s["closed"]):
+            errors.append(f"metro: station {name} has a closing date that does not parse: {s['closed']!r}")
+        if not s.get("lines") or not set(s["lines"]) <= METRO_LINES:
+            errors.append(f"metro: station {name} has lines {s.get('lines')!r}")
+        if not inside(s.get("x"), s.get("z")):
+            errors.append(f"metro: station {name} is not inside the map")
+    for i, g in enumerate(m["segments"]):
+        sid = g.get("id", f"#{i}") if isinstance(g, dict) else f"#{i}"
+        if not isinstance(g, dict):
+            errors.append(f"metro: segment {sid} is not an object")
+            continue
+        if not date_ok(g.get("opened")):
+            errors.append(f"metro: segment {sid} has an opening date that does not parse: {g.get('opened')!r}")
+        if "closed" in g and not date_ok(g["closed"]):
+            errors.append(f"metro: segment {sid} has a closing date that does not parse: {g['closed']!r}")
+        if g.get("line") not in METRO_LINES:
+            errors.append(f"metro: segment {sid} has line {g.get('line')!r}")
+        missing = [n for n in g.get("stations") or [] if n not in names]
+        if missing or len(g.get("stations") or []) < 2:
+            errors.append(f"metro: segment {sid} names stations not in the list: {missing or g.get('stations')}")
+        track = g.get("track")
+        if not isinstance(track, list) or len(track) < 2:
+            errors.append(f"metro: segment {sid} has no track")
+        elif not all(isinstance(p, list) and len(p) == 2 and inside(*p) for p in track):
+            errors.append(f"metro: segment {sid} has track outside the map")
+    return errors
+
+
 def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: list[dict] | None = None,
              takedowns: list[dict] | None = None) -> list[str]:
     out, data = Path(out), Path(data)
@@ -1401,6 +1468,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     sets = privacy_sets(data) if (data / "buildings.parquet").exists() else None
     errors += check_search(out, cfg, a, hidden, sets[1] if sets else frozenset(), data)
     errors += check_plaques(out, len(a))
+    errors += check_metro(out)
     if sets:
         errors += check_privacy(out, *sets)
     else:
