@@ -1,4 +1,4 @@
-"""Verify the curated landmark file against its cited articles (spec §3.2 s08_landmarks; Plan 4a, Task 2).
+"""Verify the curated landmark file against its cited articles.
 
 Every entry of pipeline/landmarks.py cites one Wikipedia article ("sv:Title" or "en:Title") and the strings that
 article must contain (`checks`: the years it states, a phrase). This step fetches each article's plain text through
@@ -10,7 +10,7 @@ so it is asked again after the backoff, and a later build never reads it as the 
 data/landmarks.json: the entries whose fields are well formed and whose article holds every check string, each with
 the revision it was checked against. s02_years reads that file, so an entry that fails never sets a year. Failures
 are reported and dropped, never fatal (spec); an article that cannot be fetched at all, with no cached copy, stops
-the step instead, so a network outage cannot quietly empty the curated tier. An entry's rebuild years (Task 11a) are
+the step instead, so a network outage cannot quietly empty the curated tier. An entry's rebuild years are
 held to its checks too: each must be written in one of them, so the article is checked for it like any other year.
 
 Comparison: both texts have no-break spaces turned into spaces, runs of whitespace collapsed, and every dash-like
@@ -33,8 +33,8 @@ RAW = Path("data/raw/wiki/landmarks")
 OUT = Path("data/landmarks.json")
 LANGS = ("sv", "en")
 KEYS = {"name", "qid", "lat", "lon", "year", "year_from", "year_to", "source", "checks"}
-# timeline: a positive priority puts the entry's name on the timeline (1 first; Task 10). rebuilt, cellars and point:
-# Task 11a (pipeline/landmarks.py says what each holds).
+# timeline: a positive priority puts the entry's name on the timeline (1 first). rebuilt, cellars and point:
+# (pipeline/landmarks.py says what each holds).
 OPTIONAL = {"timeline", "rebuilt", "cellars", "point"}
 REBUILD_KINDS = ("rebuilt", "raised", "extended")    # ombyggt, påbyggt, tillbyggt (web/i18n card.rebuild.*)
 POINT_KEYS = {"reason", "source"}
@@ -97,7 +97,7 @@ def problems(entry: dict) -> list[str]:
         out.append(f"unknown field {', '.join(sorted(extra))}")
     if missing:
         return out
-    if entry["qid"] == "":       # no item (Task 12): no P625 confirms the point, so it must be a hand-checked one
+    if entry["qid"] == "":       # no item: no P625 confirms the point, so it must be a hand-checked one
         if "point" not in entry:
             out.append('an entry without a Wikidata item (qid "") needs a hand-checked point')
     elif not re.fullmatch(r"Q\d+", str(entry["qid"])):
@@ -128,7 +128,7 @@ def problems(entry: dict) -> list[str]:
 
 
 def rebuild_problems(entry: dict) -> list[str]:
-    """What is wrong with an entry's `rebuilt` (Task 11a): a non-empty list of (year, kind), each year after year_to
+    """What is wrong with an entry's `rebuilt`: a non-empty list of (year, kind), each year after year_to
     and by 2026, written in one of the checks (alone or inside one, as a whole number), so the article is checked for
     it like the entry's other years; each kind one of REBUILD_KINDS; no (year, kind) twice."""
     rebuilt = entry["rebuilt"]

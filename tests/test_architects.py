@@ -1,4 +1,4 @@
-"""D35 point 2: rare architects' names on private houses (Plan 4a, Task 5)."""
+"""Rare architects' names on private houses."""
 import pytest
 
 from pipeline import architects as arch
@@ -41,7 +41,7 @@ def test_apply_rule_hides_rare_names_on_private_houses_unless_a_person_listed_th
 
 
 def test_a_name_counts_once_per_record_however_many_footprints_share_it():
-    # Task 5's review: LOD1 splits one building into several footprints, all linked to one RAÄ record. Counted per
+    # LOD1 splits one building into several footprints, all linked to one RAÄ record. Counted per
     # footprint, an owner's name on one villa in four parts would pass "more than 3" and ship.
     lists = [["Olle Owner"]] * 4
     assert arch.apply_rule(lists, [True] * 4, max_rare=3, keys=["a"] * 4)[0] == [[], [], [], []]

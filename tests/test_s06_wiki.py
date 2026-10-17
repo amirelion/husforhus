@@ -1,4 +1,4 @@
-"""s06_wiki: items to footprints, photos and excerpts, private houses left out (Plan 4a, Task 7). No network."""
+"""s06_wiki: items to footprints, photos and excerpts, private houses left out. No network."""
 import json
 
 import pandas as pd
@@ -74,8 +74,8 @@ def test_build_leaves_private_houses_out_and_keeps_titles_and_designations_inter
 
 
 def test_an_item_beside_a_private_house_on_its_property_is_left_out():
-    # the final review of Plan 4a: an item placed inside a 3.5 m outbuilding that touches an uncurated Enbostadshus
-    # on the same property shipped the house's photo and article on the outbuilding's card (D50)
+    # An item placed inside a 3.5 m outbuilding that touches an uncurated Enbostadshus
+    # on the same property shipped the house's photo and article on the outbuilding's card
     b, years, items = town()
     extra = synth.buildings(rows=[
         {"geometry": synth.square(113, 0, 6), "kategori": "Komplementbyggnad", "fastighet": "VILLAN 2"},     # gid 4
@@ -115,7 +115,7 @@ def test_a_curated_landmark_takes_its_own_item_whatever_else_stands_on_it():
 
 
 def test_a_curated_landmark_without_an_item_keeps_the_item_the_rules_choose_and_no_warning(capsys):
-    # Task 12: a Gamla stan house curated with qid "" has no item of its own to take, so its footprint keeps what the
+    # A Gamla stan house curated with qid "" has no item of its own to take, so its footprint keeps what the
     # rules place there (as before it was curated), and that is not worth a warning
     b, years, items = town()
     commons, extracts, thumbs = stubs({})
@@ -251,7 +251,7 @@ def test_main_writes_the_internal_files_and_the_review_list(tmp_path, monkeypatc
 
 
 def test_main_leaves_out_a_takedown(tmp_path, monkeypatch, capsys):
-    # Plan 4b: a building in the takedown list (pipeline/suppress.yml, here its own file) gets no item, photo or excerpt
+    # A building in the takedown list (pipeline/suppress.yml, here its own file) gets no item, photo or excerpt
     monkeypatch.chdir(tmp_path)
     b, years, items = town()
     (tmp_path / "data").mkdir()
@@ -271,7 +271,7 @@ def test_main_leaves_out_a_takedown(tmp_path, monkeypatch, capsys):
     assert "suppressed: 1 buildings" in capsys.readouterr().out
 
 
-# ---------- Task 7's review: pacing by what is sent, thumbnail retries, a real image, a missing landmark ----------
+# ---------- Pacing by what is sent, thumbnail retries, a real image, a missing landmark ----------
 
 def test_a_shifted_batch_is_sent_a_pause_after_the_last(tmp_path, monkeypatch):
     # batches are named by position: one more file shifts every later batch's query, and those go out again
@@ -328,7 +328,7 @@ def test_a_landmark_whose_item_is_missing_is_reported(capsys):
     assert "Stockholms slott's item Q750444 is not among the items" in capsys.readouterr().err
 
 
-# ---------- Task 7a: curated photo picks (D19's later change of 2026-10-16) ----------
+# ---------- Curated photo picks (added 2026-10-16) ----------
 
 def wide(sha1, width=4000, **meta):
     """A Commons page as stubs() gives it, with the original's width (imageinfo `width`, from iiprop `size`)."""
@@ -517,7 +517,7 @@ def test_main_lists_the_designation_refusals_in_the_review(tmp_path, monkeypatch
 
 
 def test_the_five_held_photos_follow_the_which_building_note():
-    # docs/research/2026-10-16-which-building-photos.md: two picks kept, one alternative, two without a photo
+    # Two picks kept, one alternative, two without a photo
     t = s06_wiki.read_picks(s06_wiki.PICKS).set_index("qid")
     assert t.commons_file["Q537"] == "Prins Eugens Waldemarsudde 02.jpg"
     assert t.commons_file["Q10613664"] == "Oxenstiernska malm 2009e.jpg"

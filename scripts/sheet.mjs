@@ -1,5 +1,5 @@
 // A comparison sheet for the owner's look reviews: screenshots side by side in a grid, each with a caption, saved as one
-// PNG (Plan 3, the M4 review; D28's four sheets were made the same way by hand). Needs Node 22+ (Playwright's
+// PNG (the M4 review; the default look's four sheets were made the same way by hand). Needs Node 22+ (Playwright's
 // browser); no server.
 //   node scripts/sheet.mjs --out data/look/m4/sheet-relief.png [--cols 2] [--title "Flat or relief"] \
 //        data/look/m4/arg-hero-desktop-reliefoff.png=Flat data/look/m4/arg-hero-desktop-reliefon.png=Relief

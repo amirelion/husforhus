@@ -1,4 +1,4 @@
-"""A synthetic town for the terrain steps (Plan 3): raw City files, buildings and attributes on a known hill.
+"""A synthetic town for the terrain steps: raw City files, buildings and attributes on a known hill.
 
 Local frame (x east, z south): the municipality is two stadsdelar over x 0..1000, z 0..800. The ground is a cone,
 h = max(1, 30 - 0.05 * distance from (250, 350)), so the east is low. Water: a sea strait along the east edge (x 850

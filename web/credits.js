@@ -1,4 +1,4 @@
-// The corner credit (Plan 4b, Task 9; spec §4.5, §6.2): the sources' own words from sources.yml `corner` (through
+// The corner credit: the sources' own words from sources.yml `corner` (through
 // stockholm.json attribution), each once, then "Sources", which opens About at its full credits. A part with a url
 // links there (© OpenStreetMap contributors to its copyright page, as the OSMF asks); the others open About too.
 // Pure, tested by node --test (web/test/credits.test.mjs).

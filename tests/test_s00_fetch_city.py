@@ -64,7 +64,7 @@ def test_extract_lod1_redecodes_names_into_ascii_dirs(tmp_path):
 
 
 def test_extract_lod1_fails_on_a_missing_district_and_extracts_nothing(tmp_path):
-    # P2: a republished zip without Södermalm would ship a city ~10k buildings short, with s99 OK
+    # A republished zip without Södermalm would ship a city ~10k buildings short, with s99 OK
     zp = tmp_path / "lod1.zip"
     _cp850_zip(zp, _lod1_members(skip="Södermalm_StadsModell_shp"))
     with pytest.raises(SystemExit, match="LOD1 districts missing from the zip: sodermalm"):

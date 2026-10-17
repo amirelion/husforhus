@@ -1,4 +1,4 @@
-"""Year rules (Task 10). Synthetic footprints near Stortorget in EPSG:3011; one test on the real city."""
+"""Year rules. Synthetic footprints near Stortorget in EPSG:3011; one test on the real city."""
 import json
 from pathlib import Path
 
@@ -34,7 +34,7 @@ TO_WGS84 = Transformer.from_crs(3011, 4326, always_xy=True)
 
 @pytest.fixture(autouse=True)
 def pinned_private_house_set(request, monkeypatch):
-    """Rule tests pin the D18 set, so they hold whatever Task 9 finalises; the real-data test uses city.py's."""
+    """Rule tests pin the private-house set, so they hold whatever city.py settles on; the real-data test uses city.py's."""
     if request.node.get_closest_marker("network") is None:
         monkeypatch.setattr(city, "PRIVATE_HOUSE_KATEGORI", {"Enbostadshus", "Kolonistuga"})
 
@@ -136,7 +136,7 @@ def test_a_year_after_2026_is_rejected():
 
 
 def test_an_undated_uuid_joined_record_keeps_the_link_but_gives_no_year():
-    # Task 11 reads the rating and architects through raa_id, so a record with no from-year must still link.
+    # The card reads the rating and architects through raa_id, so a record with no from-year must still link.
     b = buildings(("u0", "Flerbostadshus", sq(0)), ("u1", "Flerbostadshus", sq(1)), ("u2", "Enbostadshus", sq(2)))
     zone = box(X0 + 90, Y0 - 10, X0 + 130, Y0 + 20)            # dates slot 1 by area
     y, report = run(b, raa(rec("undated", sq(0), None, None, "u0"), rec("also-undated", sq(1), None, None, "u1"),
@@ -250,7 +250,7 @@ def test_landmark_in_a_courtyard_or_within_15_m_resolves_else_is_dropped():
 
 
 def test_private_house_publishes_only_its_decade_and_keeps_its_flag():
-    # Review Focus #3 (D18): RAÄ dates house 0 exactly to 1963; only "1960s" may leave this step.
+    # Review Focus #3: RAÄ dates house 0 exactly to 1963; only "1960s" may leave this step.
     b = buildings(("u0", "Enbostadshus", sq(0)), ("u1", "Enbostadshus", sq(1)), ("u2", "Enbostadshus", sq(2)),
                   ("", "Kolonistuga", sq(3)), ("u4", "Flerbostadshus", sq(4)))
     r = raa(rec("exact", sq(0), 1963, 1963, "u0"), rec("range", sq(1), 1926, 1929, "u1"),
@@ -264,7 +264,7 @@ def test_private_house_publishes_only_its_decade_and_keeps_its_flag():
     assert y.yflag.tolist() == [EXACT, RANGE, LONG, AREA, EXACT]      # yflag still says how the year is known
     assert y.ysrc.tolist() == [SRC_RAA, SRC_RAA, SRC_RAA, SRC_RAA_AREA, SRC_RAA]
     assert y.private.tolist() == [True, True, True, True, False]
-    assert y.raa_id.tolist() == ["exact", "range", "long", "", "flats"]  # for the rating; never on a card (Task 12)
+    assert y.raa_id.tolist() == ["exact", "range", "long", "", "flats"]  # for the rating; never on a card
     assert y.period.tolist() == [city.period_index(v) for v in (1963, 1929, 1884, 1938, 1963)]
 
 
@@ -290,9 +290,9 @@ def test_curated_private_house_keeps_its_exact_year():
 
 
 def test_a_rebuild_never_changes_the_year_or_the_period():
-    # Task 11a (§14 of the Gamla stan research): the map shows when the standing building was built; its rebuilds,
+    # The map shows when the standing building was built; its rebuilds,
     # raised storeys and extensions are a second line on the card, and older cellars leave the build's year as it is.
-    # A guard: s02_years reads none of these fields, so it passed before Task 11a's code too.
+    # A guard: s02_years reads none of these fields, so it passed before the rebuild fields existed too.
     b = buildings(("u0", "Allmän byggnad", sq(0, size=40)))
     r = raa(rec("wing", sq(0, size=40), 1640, 1742, "u0"))
     plain = landmark_at(X0 + 20, Y0 + 20, name="Huset", year=1690, year_from=1688, year_to=1690)
@@ -355,7 +355,7 @@ def test_load_raa_reads_both_geometry_types_for_stockholm_only(tmp_path):
 
 
 def test_load_raa_keeps_border_records_that_name_stockholm_in_a_list(tmp_path):
-    # D35's border fix (Plan 4a): RAÄ writes a building on the municipal border as 'Solna;Stockholm'
+    # The border fix: RAÄ writes a building on the municipal border as 'Solna;Stockholm'
     gpkg = tmp_path / "raa.gpkg"
     rows = [rec("plain", sq(0), 1900, 1900, "u0"), rec("border", sq(1), 1910, 1910, "u1"),
             rec("nacka", sq(2), 1920, 1920, "u2"), rec("south", sq(3), 1930, 1930, "u3"),
@@ -381,11 +381,11 @@ def fake_years(ysrc, yflag):
 @pytest.mark.parametrize(("ysrc", "yflag", "fails"), [(SRC_NONE, UNKNOWN, True), (SRC_RAA_AREA, AREA, True),
                                                       (SRC_RAA, EXACT, False)], ids=["unknown", "area-only", "raa"])
 def test_main_fails_when_no_building_gets_a_raa_year(tmp_path, monkeypatch, ysrc, yflag, fails):
-    # P2: if RAÄ renames its kommunnamn, load_raa finds nothing and every building would ship UNKNOWN
+    # If RAÄ renames its kommunnamn, load_raa finds nothing and every building would ship UNKNOWN
     gpd.GeoDataFrame({"gid": [0, 1], "uuid": ["a", "b"], "kategori": ["", ""], "fnr": [0, 0]}, geometry=[sq(0), sq(1)],
                      crs=city.CRS).to_parquet(tmp_path / "buildings.parquet")
     monkeypatch.setattr(s02_years, "load_raa", lambda *_: None)
-    # Plan 2: main also loads the Wikidata and OSM caches and the stadsdelar; they are stubbed here
+    # Main also loads the Wikidata and OSM caches and the stadsdelar; they are stubbed here
     for mod in (s02_years.years_wikidata, s02_years.years_osm):
         monkeypatch.setattr(mod, "load", lambda *_: None)
     monkeypatch.setattr(s02_years.est, "stadsdel_of", lambda *_: None)
@@ -398,7 +398,7 @@ def test_main_fails_when_no_building_gets_a_raa_year(tmp_path, monkeypatch, ysrc
             "--wikidata-classes", str(tmp_path / "classes.json"), "--osm", str(tmp_path / "osm.json"),
             "--accuracy-out", str(tmp_path / "accuracy.json"), "--review-out", str(tmp_path / "review.json"),
             "--landmarks", str(tmp_path / "landmarks.json")]
-    (tmp_path / "landmarks.json").write_text("[]")      # Plan 4a: s08_landmarks' verified list
+    (tmp_path / "landmarks.json").write_text("[]")      # s08_landmarks' verified list
     if fails:
         with pytest.raises(SystemExit, match="no building got a RAÄ year"):
             s02_years.main(args)
@@ -422,24 +422,24 @@ def test_real_stockholm_years(tmp_path: Path):
     y = pd.read_parquet(out)
     s = s02_years.summary(y)
     print(s)
-    verified = s02_years.load_landmarks()           # Plan 4a: the entries s08_landmarks verified
+    verified = s02_years.load_landmarks()           # the entries s08_landmarks verified
     assert len(verified) == len(LANDMARKS)
     assert s["curated"] == len(verified)
     assert set(y.landmark[y.landmark != ""]) == {L["name"] for L in verified}
     # Observed on the 77,743-building city (RAÄ rebuilds nightly, so the bounds leave room for drift).
     assert 21_500 <= s["raa"] <= 22_500           # observed 22,049: 22,003 by UUID + 53 by overlap - 7 curated
-    # observed 5,878; 6,263 since D35's border fix (Task 2): RAÄ's area record "Skärholmen" ("Huddinge;Stockholm")
+    # observed 5,878; 6,263 since the border fix: RAÄ's area record "Skärholmen" ("Huddinge;Stockholm")
     # now dates 386 Stockholm buildings in Skärholmen
     assert 5_500 <= s["raa_area"] <= 6_600
-    # Plan 2 (2026-10-15 measurements; the ranges leave room for the new anchors and RAÄ's nightly rebuilds)
+    # 2026-10-15 measurements (the ranges leave room for the new anchors and RAÄ's nightly rebuilds)
     assert 700 <= s["raa_old"] <= 950 or not s02_years.years_raa_old.DEST.exists()   # 818; 0 without the snapshot
     assert 100 <= s["wikidata"] <= 200            # 137
     assert 400 <= s["osm"] <= 650                 # 514
-    # Task 14b (houses only, no period on its own, 7 in 10 right, the FNR guard), measured on v20261015-m3b:
-    assert 3_800 <= s["estimate"] <= 5_200        # 4,510 (Task 14 built 5,906 and 1,182 period-only)
+    # The 2026-10-15 rule (houses only, no period on its own, 7 in 10 right, the FNR guard), measured on v20261015-m3b:
+    assert 3_800 <= s["estimate"] <= 5_200        # 4,510 (an earlier build had 5,906 and 1,182 period-only)
     assert s["period"] == 0                       # give_period is off: a rule, not a measurement
     assert 15_000 <= s["private"] <= 18_500       # 16,864: 12,204 dated houses + the estimated and newly dated ones
-    assert 42_500 <= s["unknown"] <= 45_500       # 43,935 (41,357 in Task 14's build; 49,804 before Plan 2)
+    assert 42_500 <= s["unknown"] <= 45_500       # 43,935 (41,357 in an earlier build; 49,804 before the estimates)
     assert (tmp_path / "accuracy.json").exists() and (tmp_path / "review.json").exists()
     bld = pd.read_parquet(s02_years.BUILDINGS, columns=["gid", "uuid", "kategori", "fnr"])
     assert s["buildings"] == len(bld) and set(y.gid) == set(bld.gid)
@@ -456,16 +456,16 @@ def test_real_stockholm_years(tmp_path: Path):
     assert known.year.between(1000, 2026).all()
     assert (known.year_from <= known.year).all() and (known.year <= known.year_to).all()
     assert (y.year[y.yflag == UNKNOWN] == 0).all() and not y.private[y.yflag == UNKNOWN].any()
-    p = y[y.private]                               # D18: the decade only, a knowledge flag, the real period
+    p = y[y.private]                               # Private houses: the decade only, a knowledge flag, the real period
     assert (p.year % 10 == 0).all() and (p.year_from == p.year).all() and (p.year_to == p.year + 9).all()
-    assert set(p.yflag) <= {EXACT, RANGE, LONG, AREA, ESTIMATE, PERIOD}   # Plan 2: estimated houses round too
+    assert set(p.yflag) <= {EXACT, RANGE, LONG, AREA, ESTIMATE, PERIOD}   # estimated houses round too
     assert all(city.period_index(d) <= q <= city.period_index(d + 9) for d, q in zip(p.year, p.period))
     palace = y[y.landmark == "Stockholms slott"].iloc[0]
     assert (palace.year, palace.raa_id) == (1754, "669d5919-109c-448e-bb9e-094033371c64")
     linked = set(y.raa_id) - {""}
     assert len(linked) > 20_000
     assert not linked & set(bld.uuid)              # RAÄ's own ids, never the register UUID
-    # Every footprint a RAÄ Byggnad record joins by UUID carries a link, dated or not (Task 11 reads its rating).
+    # Every footprint a RAÄ Byggnad record joins by UUID carries a link, dated or not (the card reads its rating).
     records = s02_years.load_raa()
     joined = set(records.registerbyggnad_id[records.objekttyp_namn == "Byggnad"].dropna()) - {""}
     must_link = bld.gid[bld.uuid.isin(joined)]

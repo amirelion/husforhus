@@ -27,7 +27,7 @@ test('the page shows the hint the platform picks, with Swedish for both', () => 
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(app, /document\.querySelector\('\.howto'\)\.textContent = t\(howto\(navigator\)\);/);
   assert.match(html, /<p class="howto">Drag to move\. Right-drag or Ctrl-drag to turn\. Scroll or press \+ \/ − to zoom\.<\/p>/);
-  // Plan 4b: the Swedish lines live in web/i18n, reached through web/i18n.js LEGACY
+  // The Swedish lines live in web/i18n, reached through web/i18n.js LEGACY
   const T = makeT({ en: load('en'), sv: load('sv') }, 'sv');
   assert.equal(legacy(T)(HOWTO.mac), 'Dra för att flytta. Högerdra eller ⌘-dra för att vrida. Scrolla eller tryck + / − för att zooma.');
   assert.equal(legacy(T)(HOWTO.other), 'Dra för att flytta. Högerdra eller Ctrl-dra för att vrida. Scrolla eller tryck + / − för att zooma.');

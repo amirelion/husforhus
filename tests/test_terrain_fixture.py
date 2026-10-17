@@ -1,5 +1,5 @@
 """The committed browser terrain fixture must match what pipeline/terrain.py writes today (web/test/terrain.test.mjs
-reads it; Plan 3, Task 7)."""
+reads it)."""
 import importlib.util
 import json
 from pathlib import Path

@@ -1,4 +1,4 @@
-"""Wikidata items on footprints, Commons credits and Wikipedia excerpts (Plan 4a, Task 6). No network."""
+"""Wikidata items on footprints, Commons credits and Wikipedia excerpts. No network."""
 import pytest
 from pyproj import Transformer
 
@@ -94,7 +94,7 @@ def test_credit_for_an_open_licence():
 
 
 def test_a_photo_key_names_the_thumbnail_width(monkeypatch):
-    # the final review of Plan 4a: without the width, a wider thumb_width kept serving the old files, which the site
+    # Without the width, a wider thumb_width kept serving the old files, which the site
     # serves as immutable
     monkeypatch.setitem(wiki.city.WIKI, "thumb_width", 800)
     assert wiki.credit("Kyrka.jpg", page())[0]["key"] == "abababababababab-800.jpg"
@@ -191,7 +191,7 @@ def test_cut_leaves_out_sentences_that_name_a_property_designation():
 
 
 def test_cut_leaves_out_sentences_that_name_an_owner_or_a_byggherre():
-    # spec §6.3: no owner or byggherre names in web data; About says the map never shows who owns or commissioned a
+    # No owner or byggherre names in web data; About says the map never shows who owns or commissioned a
     # building. Whoever the sentence names (a person, a firm, the state), it goes.
     text = ("Hellstrandska huset är ett bostadshus på Södermalm. Byggherre var ingenjör Hellstrand. Huset uppfördes "
             "1903 för kassör Carl Cederborg. Det ägs av AB Stadsholmen. Fasaden är av tegel.")
@@ -231,11 +231,11 @@ def test_privacy_mentions_finds_a_designation_inside_a_sentence(text, found):
 ])
 def test_privacy_mentions_finds_a_designation_written_without_its_space(text, found):
     # Commons titles of 2026-10-17 shipped "Bryggaren16", "Överkikaren2" and "Glaucus5b": the number joined to the
-    # block name, or a photo's letter after it (Task 13 and its review)
+    # block name, or a photo's letter after it
     assert privacy.mentions(text, {"styckjunkaren 7"}) is found
 
 
-# ---------- Task 6's review: initials, more owner wordings, several numbers, the file page, unknown authors ----------
+# ---------- Initials, more owner wordings, several numbers, the file page, unknown authors ----------
 
 def test_cut_does_not_split_at_initials_or_abbreviations():
     # split after "C." the owner sentence went and "A. Exempel." shipped as a sentence of its own
@@ -260,7 +260,7 @@ def test_owner_finds_more_wordings(text):
     assert privacy.owner(text), text
 
 
-# The final review of Plan 4a: "ägare" inside a compound or in the plural, "samägs", and a family that "disponerar" a
+# A review: "ägare" inside a compound or in the plural, "samägs", and a family that "disponerar" a
 # house; sentences of these shapes shipped in the build of 2026-10-17 (names here are made up)
 @pytest.mark.parametrize("text", [
     "En av fastighetsägarna var mångmiljonären X.", "Huset är uppkallat efter en av ägarna, assessorn X.",

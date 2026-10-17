@@ -1,4 +1,4 @@
-"""The search index (Plan 4b, Task 3): built from the version's own cards and s02_addresses, on the tiny city."""
+"""The search index: built from the version's own cards and s02_addresses, on the tiny city."""
 import json
 
 import pandas as pd
@@ -115,9 +115,9 @@ def test_main_needs_the_cards(tmp_path, monkeypatch):
 @pytest.mark.network
 def test_the_names_people_type_find_their_building_in_the_real_build():
     # r4-ux-copy.md §3.2: the first searches on a map that opens on the palace and City Hall. Runs on the version
-    # web/data/current.json names once Task 10 has built the city (s14_search), and says so otherwise.
+    # web/data/current.json names once the city is built (s14_search), and says so otherwise.
     if not s03_tiles.CURRENT.exists():
-        pytest.skip(f"{s03_tiles.CURRENT} is missing: build the city (Task 10)")
+        pytest.skip(f"{s03_tiles.CURRENT} is missing: build the city")
     out = s03_tiles.CURRENT.parent / json.loads(s03_tiles.CURRENT.read_text())["version"]
     if not (out / "search" / "index.json").exists():
         pytest.skip(f"{out} has no search index: run s14_search")
@@ -132,7 +132,7 @@ def test_the_names_people_type_find_their_building_in_the_real_build():
 
 
 def test_resolves_without_the_shard_and_with_a_name_that_ends_in_a_number():
-    # Task 3's review: a street whose shard is not at hand does not resolve (no KeyError), and a building whose name
+    # A street whose shard is not at hand does not resolve (no KeyError), and a building whose name
     # ends in a number is still found by its name
     index = {"streets": [["Hornsgatan", 1, [0], "h"]], "buildings": [["Kvarteret Hus 7", 0, 0, ""]],
              "districts": [], "aliases": []}

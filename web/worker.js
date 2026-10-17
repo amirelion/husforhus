@@ -17,7 +17,7 @@ export function build(t) {
     for (let p = t.partStart[b]; p < t.partStart[b + 1]; p++) {
       const roof = Math.round(t.height[p] * 10);   // decimetres
       const r0 = t.ringStart[p], r1 = t.ringStart[p + 1];
-      const shapes = []; // one roof per exterior ring: a MultiPolygon part has several (contract C4)
+      const shapes = []; // one roof per exterior ring: a MultiPolygon part has several
       // Walls
       for (let r = r0; r < r1; r++) {
         const s = t.vertStart[r], e = t.vertStart[r + 1], n = e - s;

@@ -1,4 +1,4 @@
-// web/terrain.js (Plan 3, contracts C16 and C18) on the committed synthetic fixture (tests/make_terrain_fixture.py):
+// web/terrain.js on the committed synthetic fixture (tests/make_terrain_fixture.py):
 // the decoder, the ground sampler against pipeline/terrain.py's own values, the fade, the chunk meshes, the exact cut
 // along the shore, the water at its level and the quay walls, and the worker's checks on the two files.
 import { test } from 'node:test';

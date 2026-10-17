@@ -1,4 +1,4 @@
-"""Floors, rating, architects and safe names (Task 11)."""
+"""Floors, rating, architects and safe names."""
 import zipfile
 from pathlib import Path
 
@@ -20,7 +20,7 @@ STOREY_M = {"Flerbostadshus": 4.1, "Kontorsbyggnad": 4.5, "Allmän byggnad": 5.1
 
 @pytest.fixture(autouse=True)
 def pinned_storey_heights(request, monkeypatch):
-    """Rule tests pin STOREY_M to Task 2's placeholder values (C1), so they hold whatever Task 9 finalises."""
+    """Rule tests pin STOREY_M to placeholder values, so they hold whatever city.py settles on."""
     if request.node.get_closest_marker("network") is None:
         monkeypatch.setattr(city, "STOREY_M", STOREY_M)
 
@@ -105,7 +105,7 @@ def test_upphov_edge_cases(upphov, expected):
     ("  Palmeska   huset ", "Palmeska huset"),
     ("", ""),
     (None, ""),
-    # Plan 4a: multi-word designations (P5), "kv." without a space, a dash; names that only say what kind of building
+    # Multi-word designations, "kv." without a space, a dash; names that only say what kind of building
     ("Lilla Sticklinge 1:4", ""),
     ("Norra Djurgården 1:48", ""),
     ("kv.Storken 12", ""),
@@ -120,7 +120,7 @@ def test_upphov_edge_cases(upphov, expected):
     ("Kv. Bacchus", ""),                     # a block's name (2 in RAÄ's names today): block names stay out of v1
     ("Kvarteret Svalan", ""),
     ("Kvarnen", "Kvarnen"),
-    # Plan 4b, Task 10: a name that is only a register's building codes (a state-listed building's numbers)
+    # A name that is only a register's building codes (a state-listed building's numbers)
     ("K0061.006, K0061.005, K0061.004", ""),
     ("K0061.003", ""),
     ("Kanslikasern (K0061.001)", "Kanslikasern"),
@@ -159,7 +159,7 @@ def test_output_matches_contract_c3():
     raa = pd.DataFrame({"raa_id": ["x"], "klassificering": [None], "upphov": [None], "namn": [None],
                         "alternativnamn": [None]})
     a = s02_attributes.build_attributes(b, years, raa, set())
-    # C3, extended by Plan 4a's C20: the OSM and height floors kept apart, protection, its year, the floors-row rule
+    # The attributes frame: the OSM and height floors kept apart, protection, its year, the floors-row rule
     assert list(a.columns) == ["gid", "floors", "fsrc", "rating", "architects", "name", "floors_h", "floors_osm",
                                "prot", "since", "nofloors"]
     assert [str(t) for t in a.dtypes[:4]] == ["int32", "uint8", "uint8", "uint8"]
@@ -233,7 +233,7 @@ def test_real_stockholm_attributes(tmp_path: Path):
                     "--review-out", str(tmp_path / "review.json")])
     s02_attributes.main(["--years", str(years), "--out", str(out)])
     a = pd.read_parquet(out)
-    # Plan 4a (2026-10-16 measurements): OSM levels on about a quarter of the city, protection from RAÄ
+    # 2026-10-16 measurements: OSM levels on about a quarter of the city, protection from RAÄ
     assert 18_500 <= int((a.fsrc == FLOORS_OSM).sum()) <= 21_500     # 19,136 ways (relations add a few hundred)
     assert ((a.fsrc == FLOORS_OSM) == (a.floors_osm > 0)).all()
     assert (a.floors[a.fsrc == FLOORS_HEIGHT] == a.floors_h[a.fsrc == FLOORS_HEIGHT]).all()
@@ -245,7 +245,7 @@ def test_real_stockholm_attributes(tmp_path: Path):
     assert 7_900 <= s["rating"]["Grönt"] <= 8_500       # observed 8,216
     assert 11_800 <= s["rating"]["Gult"] <= 12_600      # observed 12,216
     assert 19_000 <= s["with_architects"] <= 20_500     # observed 19,861
-    assert 480 <= s["named"] <= 620                     # 539 after Plan 4a's rules (690 before: kinds, houses)
+    assert 480 <= s["named"] <= 620                     # 539 after the 2026-10-16 rules (690 before: kinds, houses)
     pc = pd.read_parquet(s02_years.BUILDINGS, columns=["kategori"]).kategori.isin(city.PRIVATE_HOUSE_KATEGORI)
     allowed = s02_attributes.load_private_names()
     assert set(a.name[pc.to_numpy() & (a.name != "").to_numpy()]) <= allowed | {L["name"] for L in s02_years.load_landmarks()}
@@ -255,7 +255,7 @@ def test_real_stockholm_attributes(tmp_path: Path):
                    for names in a.architects[pc.to_numpy()] for n in names)
     assert 1 <= a.floors.min() and a.floors.max() <= 60  # observed max 36 (OSM)
     names = a.name[a.name != ""]
-    # Curated names are hand-checked and may be a street address ("Stora Nygatan 5", Task 12's Gamla stan houses),
+    # Curated names are hand-checked and may be a street address ("Stora Nygatan 5", the curated Gamla stan houses),
     # which has a designation's shape; the check against the city's own designations below still covers them.
     curated = {L["name"] for L in s02_years.load_landmarks()}
     assert not names[~names.isin(curated)].str.match(s02_attributes.PROPERTY_DESIGNATION).any()
@@ -284,7 +284,7 @@ def house_case():
 
 
 def test_private_houses_keep_common_names_and_reviewed_firms_only(monkeypatch):
-    # D35 point 2: "Ruth Rare" and "Byggare & Son" are on 2 buildings (gid 0 and 1), "Carl Common" on 4: with the rule
+    # "Ruth Rare" and "Byggare & Son" are on 2 buildings (gid 0 and 1), "Carl Common" on 4: with the rule
     # at 3 both rare names hide on the private house until a person has put the firm on private_firms.txt
     b, years, raa = house_case()
     report = {}
@@ -318,18 +318,18 @@ def test_load_private_names_reads_one_name_per_line(tmp_path):
     assert s02_attributes.load_private_names(p) == {"Sagatun", "Ektorpet"}
     assert s02_attributes.load_private_names(tmp_path / "none.txt") == set()
     assert s02_attributes.load_private_names() == set()     # the committed lists start empty until confirmed
-    assert s02_attributes.load_private_firms() == set()     # (Task 13 proposes, data/review-*-proposed.txt)
+    assert s02_attributes.load_private_firms() == set()     # (proposals go to data/review-*-proposed.txt)
 
 
 @pytest.mark.parametrize(("value", "year"), [(1935, 0), (1935.0, 0), (True, 0), ("0001-01-01", 0), ("2999-01-01", 0),
                                              ("1935-05-17", 1935), (pd.Timestamp("2026-01-02"), 2026)])
 def test_decision_year_reads_only_a_date_in_range(value, year):
-    # Task 4's review: pd.Timestamp(1935) is 1970 (nanoseconds); a year outside 1900..2026 is no decision year
+    # Pd.Timestamp(1935) is 1970 (nanoseconds); a year outside 1900..2026 is no decision year
     assert s02_attributes.decision_year(value) == year
 
 
 def test_main_needs_every_osm_levels_tile(tmp_path, monkeypatch):
-    # Task 4's review: one tile is not the city; a run with some tiles missing would quietly fall back to the height
+    # One tile is not the city; a run with some tiles missing would quietly fall back to the height
     monkeypatch.delenv("HFH_FIXTURE", raising=False)
     (tmp_path / "0_0.json").write_text('{"elements": []}')
     with pytest.raises(SystemExit, match=r"lacks 15 of 16 tiles \(0_1, .*\): run s00_fetch_osm first"):
@@ -337,7 +337,7 @@ def test_main_needs_every_osm_levels_tile(tmp_path, monkeypatch):
 
 
 def test_main_reads_only_the_current_grids_osm_tiles(tmp_path, monkeypatch):
-    # the final review of Plan 4a: a tile left from another grid must not set floors (osm_buildings.load's names)
+    # A tile left from another grid must not set floors (osm_buildings.load's names)
     monkeypatch.delenv("HFH_FIXTURE", raising=False)
     monkeypatch.setattr(s02_attributes, "missing_osm_tiles", lambda folder: [])
     monkeypatch.setattr(s02_attributes.pyogrio, "read_info", lambda path, layer=None: {"fields": s02_attributes.RAA_READS})
@@ -354,7 +354,7 @@ def test_main_reads_only_the_current_grids_osm_tiles(tmp_path, monkeypatch):
 
 
 def test_main_stops_when_raa_lacks_a_field_this_step_reads(tmp_path, monkeypatch):
-    # Task 4's review: pyogrio skips a missing column without a word, so a renamed skyddstyp_namn would quietly give
+    # Pyogrio skips a missing column without a word, so a renamed skyddstyp_namn would quietly give
     # every building prot 0; the step stops instead
     monkeypatch.setattr(s02_attributes, "missing_osm_tiles", lambda folder: [])
     gpkg = tmp_path / "raa.gpkg"
@@ -367,7 +367,7 @@ def test_main_stops_when_raa_lacks_a_field_this_step_reads(tmp_path, monkeypatch
 
 
 def test_the_rare_rule_counts_raa_records_not_footprints():
-    # Task 5's review: one villa in four LOD1 footprints, all linked to one RAÄ record, is one building
+    # One villa in four LOD1 footprints, all linked to one RAÄ record, is one building
     b = pd.DataFrame({"gid": [0, 1, 2, 3], "kategori": ["Enbostadshus"] * 4, "height": [7.0] * 4})
     years = pd.DataFrame({"gid": [0, 1, 2, 3], "raa_id": ["a"] * 4, "landmark": [""] * 4})
     raa = pd.DataFrame({"raa_id": ["a"], "klassificering": [None], "upphov": ['"Owner,Olle:Arkitekt"'],

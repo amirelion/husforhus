@@ -1,4 +1,4 @@
-"""The Plan 2 fetch steps (Tasks 2–4): post_query's cache, the shared retry helper, the Wikidata step with its
+"""The year-source fetch steps: post_query's cache, the shared retry helper, the Wikidata step with its
 endpoint fallback and refresh diff; Tasks 3 and 4 add the RAÄ OLD snapshot and the OSM step. Nothing touches the
 network: requests is faked."""
 import hashlib
@@ -170,7 +170,7 @@ def test_post_query_retrying_does_not_swallow_bugs(raw, monkeypatch):
 
 
 def test_an_answer_the_check_refuses_is_never_saved_and_counts_as_a_failed_attempt(raw, monkeypatch, capsys):
-    # Plan 4a: Overpass and MediaWiki answer some failures with HTTP 200 and an error in the body; cached, it would
+    # Overpass and MediaWiki answer some failures with HTTP 200 and an error in the body; cached, it would
     # stand in for the result on every later build (a district without floors, a landmark dropped)
     bad = b'{"error": {"code": "maxlag"}}'
     check = lambda body: "maxlag" if b"error" in body else None      # noqa: E731
@@ -329,7 +329,7 @@ def test_osm_tiled_query_one_file_per_tile_one_request_at_a_time(raw, monkeypatc
     s00_fetch_osm.main([])
     levels = [c[1]["data"] for c in calls[1:3]]
     assert all("building:levels" in q and "[bbox:59.22," in q for q in levels)
-    addresses = [c[1]["data"] for c in calls[3:]]                        # Plan 4b: the address tiles the same way
+    addresses = [c[1]["data"] for c in calls[3:]]                        # the address tiles the same way
     assert len(calls) == 5 and all('["addr:housenumber"]' in q and "[bbox:59.22," in q for q in addresses)
     for name in ("levels", "addresses"):
         assert sorted(p.name for p in (raw / "osm" / name).iterdir()) == ["0_0.json", "1_0.json"]
@@ -382,7 +382,7 @@ def test_a_fixture_build_fetches_only_the_tiles_that_touch_its_box(raw, monkeypa
 
 
 def test_retry_after_reads_only_ascii_digits():
-    # Task 2's review: "²".isdigit() is true but float("²") raises, which would escape the retry loop
+    # "²".isdigit() is true but float("²") raises, which would escape the retry loop
     class Busy(FakeResponse):
         def __init__(self, after):
             super().__init__(b"", 429)
@@ -392,5 +392,5 @@ def test_retry_after_reads_only_ascii_digits():
 
 
 def test_tile_query_writes_the_edges_tiles_gives_it():
-    # Task 3's review: `:g` keeps six significant digits, so 17.982345 would have been sent as 17.9823
+    # `:g` keeps six significant digits, so 17.982345 would have been sent as 17.9823
     assert s00_fetch_osm.tile_query("{s},{w},{n},{e}", (59.335, 17.982345, 59.4, 18.0)) == "59.335,17.982345,59.4,18"

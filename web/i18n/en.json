@@ -248,6 +248,7 @@
   "about.contact.none.maker": "The maker is named here before the map goes public.",
   "about.contact.none.contact": "An address for corrections and takedowns is named here before the map goes public.",
   "about.contact.data": "Data version {version} of {date}.",
+  "about.contact.code": "The code and data pipeline are open source: {repo}",
   "card.why": "Why?",
   "card.wrong": "Something wrong? Tell us",
   "card.wrong.subject": "Hus för hus: {what}",

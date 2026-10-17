@@ -1,5 +1,5 @@
 # pipeline/io.py
-"""Writers for web/data (contract C6). Output is byte-for-byte reproducible: gzip with a fixed header, sorted JSON."""
+"""Writers for web/data. Output is byte-for-byte reproducible: gzip with a fixed header, sorted JSON."""
 import datetime
 import json
 import re

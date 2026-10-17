@@ -1,4 +1,4 @@
-"""pipeline/terrain.py (Plan 3, contracts C15/C16): the grid, the water levels, the ground fix, the terrace and the
+"""pipeline/terrain.py: the grid, the water levels, the ground fix, the terrace and the
 terrain.bin layout, on small synthetic inputs."""
 import struct
 

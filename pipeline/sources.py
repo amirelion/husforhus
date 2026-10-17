@@ -1,4 +1,4 @@
-"""The dataset register, pipeline/sources.yml (contract C6), and its checks.
+"""The dataset register, pipeline/sources.yml, and its checks.
 
     uv run python -m pipeline.sources [--release] [--sources PATH]   # prints problems; exit code 1 if any
 """
@@ -18,7 +18,7 @@ NEEDS_MODIFIED = {"CC-BY-4.0", "CC-BY-SA-4.0", "ODbL-1.0"}
 LICENCE_MARKERS = {"CC-BY-4.0": "CC BY 4.0", "CC-BY-SA-4.0": "CC BY-SA 4.0", "ODbL-1.0": "ODbL"}
 MODIFIED_WORDS = ("modified", "bearbetad")
 STATUSES = ("confirmed", "pending-O1")
-# D44's credit line (Plan 4b, Task 9): "Dataset: publisher, licence", plus PROCESSED when `modified` is true. The licence
+# The standard credit line: "Dataset: publisher, licence", plus PROCESSED when `modified` is true. The licence
 # reads as CREDIT_LICENCES says, or as the source's own `licence_as`, which may only drop the version ("CC BY").
 CREDIT_LICENCES = {"CC-BY-4.0": "CC BY 4.0", "CC-BY-SA-4.0": "CC BY-SA 4.0", "CC0-1.0": "CC0", "ODbL-1.0": "ODbL"}
 PROCESSED = {"en": "processed", "sv": "bearbetad"}
@@ -34,7 +34,7 @@ def licence_names(licence: str) -> tuple[str, ...]:
 
 
 def credit(s: dict) -> dict[str, str]:
-    """D44's line for a source in each language: "Dataset: publisher, licence", the source's own words (credit_as) in
+    """The standard credit line for a source in each language: "Dataset: publisher, licence", the source's own words (credit_as) in
     the publisher's place, and ", processed" / ", bearbetad" when the map changes the data."""
     licence = s.get("licence_as") or CREDIT_LICENCES[s["licence"]]
     return {lang: f"{s['dataset']}: {(s.get('credit_as') or {}).get(lang) or s['publisher']}, {licence}"
@@ -105,8 +105,8 @@ def check_sources(sources: list[dict], *, release: bool) -> list[str]:
 
 
 def _words_errors(sid: str, field: str, words, *, url: bool) -> list[str]:
-    """An optional {en, sv} mapping, both non-empty: the corner credit (Plan 4b), with an optional http(s) url, and
-    credit_as (D44), the source's own words in the publisher's place."""
+    """An optional {en, sv} mapping, both non-empty: the corner credit, with an optional http(s) url, and
+    credit_as, the source's own words in the publisher's place."""
     if words is None:
         return []
     if not isinstance(words, dict):

@@ -1,4 +1,4 @@
-"""tests/synth.py builds inputs shaped like contract C3 and like the raw City LOD1."""
+"""tests/synth.py builds inputs shaped like the buildings frame and like the raw City LOD1."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -20,7 +20,7 @@ def test_buildings_match_c3(tmp_path):
     assert list(b.columns) == ["gid", "uuid", "oid", "grupp", "kategori", "fastighet", "height", "ground", "area",
                                "prod_year", "fnr", "geometry"]
     assert b.gid.tolist() == [0, 1, 2] and str(b.gid.dtype) == "int32" and str(b.oid.dtype) == "int64"
-    # Task 14b: an early-formed property unit by default, below city.ESTIMATE's late_unit_fnr
+    # An early-formed property unit by default, below city.ESTIMATE's late_unit_fnr
     assert str(b.fnr.dtype) == "int64" and b.fnr.tolist() == [10_100_000, 10_100_001, 10_100_002]
     assert {str(b[c].dtype) for c in ["height", "ground", "area"]} == {"float32"}
     assert b.crs.to_epsg() == 3011 and b["area"].tolist() == [100.0, 100.0, 100.0]  # b.area is shapely's
@@ -41,7 +41,7 @@ def test_years_match_c3():
     assert [str(y[c].dtype) for c in ["year", "year_from", "year_to"]] == ["int16"] * 3
     assert [str(y[c].dtype) for c in ["ysrc", "yflag", "period"]] == ["uint8"] * 3
     assert str(y.private.dtype) == "bool" and y.private.tolist() == [False] * 3
-    # a private house (D18): decade published, period from the real year (1967 is p10, 1960 would be p9)
+    # a private house: decade published, period from the real year (1967 is p10, 1960 would be p9)
     p = synth.years([7], year=1960, year_to=1969, period=city.period_index(1967), yflag=codes.EXACT,
                     ysrc=codes.SRC_RAA, private=True)
     assert p.iloc[0].tolist()[:8] == [7, 1960, 1960, 1969, codes.SRC_RAA, codes.EXACT, 9, True]

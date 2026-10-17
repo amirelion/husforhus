@@ -1,4 +1,4 @@
-// Floors mode (Plan 4a, Task 11): the look's own ramp on the map and in the legend, where the floors come from, and
+// Floors mode: the look's own ramp on the map and in the legend, where the floors come from, and
 // the ramp following a look switch.
 import { test, expect } from '@playwright/test';
 import { THEMES } from '../web/themes.js';

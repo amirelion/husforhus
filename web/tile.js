@@ -1,4 +1,4 @@
-// Binary formats shared with the pipeline (contracts C4 and C5). No three.js here, so node --test can import it.
+// Binary formats shared with the pipeline. No three.js here, so node --test can import it.
 
 export const MAGIC = 0x31484648; // 'HFH1', little-endian
 
@@ -31,7 +31,7 @@ export function parse(buf) {
 
 // The per-building lookup texture web/worker.js builds from a tile and app.js's vertex shader reads: floats per
 // building, three RGBA texels: [year, period + 16*yflag, floors, global id], [layer bits in four 16-bit words],
-// [ground (decimetres, RH 2000), 0, 0, 0] (Plan 3).
+// [ground (decimetres, RH 2000), 0, 0, 0].
 export const ATTR_FLOATS = 12;
 
 // attrs.bin: one fixed 24-byte record per gid.
@@ -54,6 +54,6 @@ export function readAttrs(view, gid, stride = ATTR_STRIDE) {
     z: view.getFloat32(o + 16, true),
     floors: view.getUint8(o + 20),
     period: view.getUint8(o + 21),
-    private: view.getUint8(o + 22),   // 1 for a private house (D18): only its decade is published
+    private: view.getUint8(o + 22),   // 1 for a private house: only its decade is published
   };
 }

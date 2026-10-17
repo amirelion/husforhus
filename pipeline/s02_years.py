@@ -1,6 +1,6 @@
-"""Construction year per building (spec §3.3; decisions D6, D18; Plan 2 completes the model).
+"""Construction year per building.
 
-The first tier that applies wins (spec §3.3 order, Plan 2's additions in place):
+The first tier that applies wins:
   curated   pipeline/landmarks.py as s08_landmarks verified it (data/landmarks.json), placed by its coordinate
   raa       a RAÄ Byggnad record joined by registerbyggnad_id == LOD1 UUID; RAÄ polygons that join no
             UUID may still date a footprint they cover by at least half
@@ -10,7 +10,7 @@ The first tier that applies wins (spec §3.3 order, Plan 2's additions in place)
   osm       an OpenStreetMap building with a start_date placed on exactly one footprint (pipeline/years_osm.py)
   estimate  the kNN estimate from dated neighbours (pipeline/estimate.py): ESTIMATE with a ±band for a house in a
             cell the table vouches for, else the building stays UNKNOWN (year 0; Ärg draws it hatched). PERIOD (the
-            period only) comes only with city.ESTIMATE's give_period lever, off since Task 14b
+            period only) comes only with city.ESTIMATE's give_period lever, off since 2026-10-15
 
 Display rule for a from–to range (yearrules.display): a span of 15 years or less shows year_to (completion),
 flagged EXACT when from == to, else RANGE; a longer span shows year_from, flagged LONG. A Wikidata or OSM tier
@@ -18,7 +18,7 @@ brings its own published year (a decade's start, a circa's stated year; years_wi
 display rule then gives only the flag. ESTIMATE rows carry year_from/year_to = year ∓ band (clamped to
 1000..2026); PERIOD rows carry the period's first and last year.
 
-Private houses (D18): a dated building whose KATEGORI is in city.PRIVATE_HOUSE_KATEGORI, unless curated, gets
+Private houses: a dated building whose KATEGORI is in city.PRIVATE_HOUSE_KATEGORI, unless curated, gets
 private = True and publishes only its decade: year = decade start, year_from = year, year_to = year + 9. yflag
 still says how the year is known, and period comes from the year before rounding, so the map keeps the house's
 period colour. When that decade and period share fewer than two years (a 1610 or a 1719), the period is taken
@@ -27,7 +27,7 @@ from the decade's middle year instead (1615: Stormaktstiden), so the pair never 
 raa_id links every footprint a RAÄ Byggnad record joins by UUID, whether or not that record has a usable year,
 so s02_attributes can read its rating and architects. The raa_old tier never sets it (its record pages will die).
 
-Outputs: data/years.parquet (contract C3), data/accuracy.json (the estimate tier's accuracy table, C10, with the
+Outputs: data/years.parquet, data/accuracy.json (the estimate tier's accuracy table, with the
 area tier's check, area years against the building-level years in the same polygons, Wikidata and OSM years the
 area outranked included, and the external check, estimate.check_external: the map's own rule, trained on curated +
 raa + raa_old alone, run on the rows only Wikidata or OSM dated as if they had no year, counted per map state and
@@ -68,7 +68,7 @@ REVIEW = Path("data/review-years.json")
 RAA_URL = "https://pub.raa.se/visa/objekt/bebyggelse/"
 RAA_FIELDS = ["namn", "alternativnamn", "objekttyp_namn", "registerbyggnad_id", "klassificering",
               "nybyggnad_tillkomstar_from", "nybyggnad_tillkomstar_tom", "andamal_huvudgrupp", "upphov",
-              "kommunnamn", "url", "skyddstyp_namn", "beslutsdatum"]   # the last two: s02_attributes (Plan 4a)
+              "kommunnamn", "url", "skyddstyp_namn", "beslutsdatum"]   # the last two: s02_attributes
 OVERLAP_MIN = 0.5              # share of a footprint an unmatched RAÄ polygon must cover
 TIE_M2 = 1.0                   # overlaps this close to the best one count as a tie
 DISAGREE_YEARS = 10            # a Wikidata or OSM year this far outside RAÄ's range goes on the review list
@@ -87,7 +87,7 @@ def raa_id_from_url(url) -> str:
 
 def in_stockholm(kommunnamn) -> np.ndarray:
     """True where a record's kommunnamn names Stockholm, alone or in a ";" list: RAÄ writes a building on the border as
-    'Solna;Stockholm' (D35's border fix: two such records on 2026-10-16)."""
+    'Solna;Stockholm' (a border fix: two such records on 2026-10-16)."""
     return np.array([isinstance(k, str) and "Stockholm" in [p.strip() for p in k.split(";")] for k in kommunnamn],
                     dtype=bool)
 
@@ -203,13 +203,13 @@ def disagree(src: pd.DataFrame, y_from, y_to, pos, years: int = DISAGREE_YEARS) 
 def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dict], *, raa_old=None, wikidata=None,
                  osm=None, stadsdel=None, estimates: bool = True, params: dict | None = None,
                  exclude: set[int] = frozenset()) -> tuple[pd.DataFrame, dict]:
-    """years.parquet rows (C3) for buildings b (gid, uuid, kategori, geometry and, for the estimate tier,
+    """years.parquet rows for buildings b (gid, uuid, kategori, geometry and, for the estimate tier,
     fastighet, height, area, prod_year, fnr; EPSG:3011), plus a report (raa_rejected, landmarks, review, accuracy).
 
     raa_old, wikidata, osm: the loaded source frames (years_*.load), or None to skip that tier. stadsdel: the
     stadsdel name per building (estimate.stadsdel_of), or None for "all outer city". estimates=False skips the
     estimate tier (the accuracy table is then empty). params: city.ESTIMATE, or a copy with other settings.
-    exclude (Plan 4b): the takedowns' gids (pipeline/suppress.py). No tier dates them, so their years never train or
+    exclude: the takedowns' gids (pipeline/suppress.py). No tier dates them, so their years never train or
     test the estimate tier or the area check: an objection stops that use too (GDPR Art. 21), not only the display.
     """
     p = city.ESTIMATE if params is None else params
@@ -281,12 +281,12 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
             landmark[k] = L["name"]
             report["landmarks"][L["name"]] = int(g)
 
-    # Plan 4b: a takedown is dated by nothing from here on (main() draws it as "Year unknown" afterwards).
+    # A takedown is dated by nothing from here on (main() draws it as "Year unknown" afterwards).
     gone = pos[[g for g in exclude if g in pos.index]].to_numpy()
     year[gone], y_from[gone], y_to[gone], ysrc[gone], yflag[gone] = 0, 0, 0, SRC_NONE, UNKNOWN
     raa_id[gone], landmark[gone] = "", ""
 
-    # The curated review list (spec §3.3): a Wikidata or OSM year more than DISAGREE_YEARS outside the winning
+    # The curated review list: a Wikidata or OSM year more than DISAGREE_YEARS outside the winning
     # RAÄ, area or curated span; century-precision Wikidata items; and every Wikidata gain, so the owner can scan them.
     review = {"wikidata_vs_raa": [], "wikidata_vs_area": [], "wikidata_vs_curated": [], "osm_vs_raa": [],
               "wikidata_century": [], "wikidata_gains": []}
@@ -316,7 +316,7 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     report["review"] = review
 
     # The estimate tier, on everything still without a year. Training and testing use the in-memory exact years
-    # (D18 rounds private houses only below) of every building-level tier, never area years (they are not
+    # (private houses are rounded to their decade only below) of every building-level tier, never area years (they are not
     # building-level anchors).
     train = (ysrc != SRC_NONE) & (ysrc != SRC_RAA_AREA)
     query = ysrc == SRC_NONE
@@ -338,16 +338,16 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
             year[rows], ysrc[rows], yflag[rows] = yh, SRC_ESTIMATE, fl
             y_from[rows] = np.where(is_est, np.maximum(FLOOR_YEAR, yh - bd), PERIOD_FROM[per])
             y_to[rows] = np.where(is_est, np.minimum(LATEST_YEAR, yh + bd), PERIOD_TO[per])
-        # The independent check (Task 14b): the map's own rule (kvarter bonus, the built table, every gate), trained
+        # The independent check: the map's own rule (kvarter bonus, the built table, every gate), trained
         # on curated + raa + raa_old alone, run on the rows only Wikidata or OSM dated (RAÄ never did) as if they had
-        # no year, and counted per map state. The years are the in-memory ones, before D18 rounds private houses.
+        # no year, and counted per map state. The years are the in-memory ones, before private houses are rounded to their decade.
         ext = np.isin(ysrc, (SRC_WIKIDATA, SRC_OSM))
         core = np.isin(ysrc, (SRC_CURATED, SRC_RAA, SRC_RAA_OLD))
         external = est.check_external(f, year, core, ext, accuracy, p, stadsdel)
-    # The area tier's accuracy (spec §3.3): area years against the building-level years inside the same polygons.
+    # The area tier's accuracy: area years against the building-level years inside the same polygons.
     # A building's level year is the winner's when a higher tier won (curated, raa, raa_old), else the Wikidata or
     # OSM year the area tier outranked (Wikidata first): written below the area tier, they never win inside a
-    # polygon. The years are unrounded (D18 rounds below); scored by est.score, like the cells and the external check.
+    # polygon. The years are unrounded (private houses are rounded below); scored by est.score, like the cells and the external check.
     level = np.where(np.isin(ysrc, (SRC_CURATED, SRC_RAA, SRC_RAA_OLD)), year, 0)
     for t in (w, o):
         if t is not None and len(t):
@@ -364,10 +364,10 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     accuracy["external"] = external
     report["accuracy"] = accuracy
 
-    # Period from the year before D18 rounding, so the map keeps each house's period colour.
+    # Period from the year before the decade rounding, so the map keeps each house's period colour.
     period = np.where(year > 0, city.period_indices(year), 0)
 
-    # D18: private houses publish only their decade, unless curated. yflag keeps saying how the year is known.
+    # Private houses publish only their decade, unless curated. yflag keeps saying how the year is known.
     private = b.kategori.isin(city.PRIVATE_HOUSE_KATEGORI).to_numpy() & (ysrc != SRC_CURATED) & (yflag != UNKNOWN)
     year[private] = year[private] // 10 * 10
     y_from[private], y_to[private] = year[private], year[private] + 9
@@ -388,7 +388,7 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
 
 
 def summary(y: pd.DataFrame) -> dict:
-    """Counts for the run log and the real-data test. byFlag is keyed by the C2 yflag value."""
+    """Counts for the run log and the real-data test. byFlag is keyed by the yflag value (codes.py)."""
     return {
         "buildings": len(y),
         "curated": int((y.ysrc == SRC_CURATED).sum()),
@@ -425,9 +425,9 @@ def main(argv: list[str] | None = None) -> None:
     a = ap.parse_args(argv or [])
     b = gpd.read_parquet(a.buildings)
     if "fnr" not in b.columns and not a.no_estimates:
-        # Task 14b: without the property-unit key the estimate tier's late-unit guard would be off without a word
+        # Without the property-unit key the estimate tier's late-unit guard would be off without a word
         raise SystemExit(f"run s01_load first ({a.buildings} has no fnr, the property-unit key the estimate tier's "
-                         f"guard needs: it was written before Task 14b); {a.out} is unchanged")
+                         f"guard needs: it was written before 2026-10-15); {a.out} is unchanged")
     b = b[[c for c in BUILDING_COLUMNS if c in b.columns]]
     for path, step in ((a.wikidata, "s00_fetch_wikidata"), (a.wikidata_classes, "s00_fetch_wikidata"),
                        (a.osm, "s00_fetch_osm")):
@@ -438,7 +438,7 @@ def main(argv: list[str] | None = None) -> None:
         raa_old = years_raa_old.load(a.raa_old)
     else:
         print(f"warning: {a.raa_old} is missing (s00_fetch_raa_old found no file): no raa_old tier", file=sys.stderr)
-    # Plan 4b: a takedown is dated by no tier, so it neither trains nor tests the estimate; it is drawn as "Year
+    # A takedown is dated by no tier, so it neither trains nor tests the estimate; it is drawn as "Year
     # unknown", and the table counts what ships (pipeline/suppress.py)
     hidden = suppress.gids_of(a.buildings, a.suppress)
     years, report = assign_years(

@@ -1,11 +1,11 @@
-"""Heights for the City's 2 m contour lines, the terrain's no-account source (Plan 3, Task 4; spike 2026-10-15).
+"""Heights for the City's 2 m contour lines, the terrain's no-account source (spike 2026-10-15).
 
 The Stadskarta's 0_line.shp holds 28,410 contour lines (GRUPP "Höjdkurva heltäckande", RH 2000) with no height; its
 NamnText_point holds 29,685 height labels in the same group (TEXT, whole metres). A line takes the most common label
 within LABEL_M of it (40% of the lines, 70% of the length). An unlabelled line takes the median of a linear TIN of
 the labelled lines sampled along it, rounded to what its KATEGORI allows: a "10 m" line is a multiple of 10, a "Jämn"
 line an even metre that is not. A line outside that TIN, or one no label and no TIN reaches, is dropped. s02_terrain
-runs the inference a second time with more known heights in that TIN (Task 12): the shores at their water levels and
+runs the inference a second time with more known heights in that TIN: the shores at their water levels and
 the buildings' measured grounds. From the labelled lines alone, an unlabelled line along a quay under a cliff took the
 cliff's height (Söder Mälarstrand 18 m, Slussen and Stadsgården 22 m, where the quays stand at about 2 m), because the
 nearest labels were up the cliff and across the water.

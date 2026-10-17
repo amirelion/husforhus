@@ -1,9 +1,9 @@
-"""Floors, Stadsmuseet rating, protection, architects and a safe display name per building (Plan 1, Plan 4a).
+"""Floors, Stadsmuseet rating, protection, architects and a safe display name per building.
 
 floors      OSM building:levels where an OSM building matches the footprint (pipeline/osm_buildings.py: IoU above
             city.FLOORS_OSM's min_iou), fsrc FLOORS_OSM; else round(height / storey height for the KATEGORI), half
             up, clamped to 1..99, fsrc FLOORS_HEIGHT. Both stay as columns of their own (floors_osm, 0 where OSM has
-            none; floors_h), so the OSM-derived values can be split off if O1 rules out ODbL for the whole (§6.1).
+            none; floors_h), so the OSM-derived values can be split off if the City's licence answer rules out ODbL for the whole.
 nofloors    True where the floors come from the height and storeys mean little: a church (RAÄ purpose group in
             city.NO_FLOORS_PURPOSE) or a KATEGORI in city.NO_FLOORS_KATEGORI; the card leaves its floors row out.
 rating      klassificering of the linked RAÄ record (years.raa_id): Blått 1, Grönt 2, Gult 3, else 0.
@@ -12,14 +12,14 @@ prot        the linked RAÄ record's legal protection (skyddstyp_namn): codes.PR
 architects  RAÄ upphov entries whose role is exactly "Arkitekt", as "First Surname", deduplicated in order.
             Byggherre (owner) and Byggmästare entries never leave this step. On a private-category house that is
             not curated, a name used on city.ARCHITECT_MAX_RARE buildings or fewer citywide is dropped unless it is
-            a firm on the reviewed list pipeline/private_firms.txt (D35 point 2, pipeline/architects.py).
+            a firm on the reviewed list pipeline/private_firms.txt (pipeline/architects.py).
 name        the curated landmark name; else RAÄ namn, then alternativnamn, unless it looks like a property
             designation ("Kv Storken 12", "Lilla Sticklinge 1:4"), is a bare stadsdel name ("Sätra") or names only
             the building's kind ("Bostadshus", city.GENERIC_NAMES); else "". A private-category house that is not
             curated keeps a name only when it is on the reviewed list pipeline/private_names.txt (a house name can
             carry its owner's).
 
-Writes data/attributes.parquet (contracts C3, C20), and for the hand checks (internal, git-ignored with data/):
+Writes data/attributes.parquet, and for the hand checks (internal, git-ignored with data/):
 data/review-architects.txt, the rare names on private houses that read as firms and are not on private_firms.txt yet
 (hidden until a person has read them), and data/review-names.txt, the private houses' names the list does not hold yet.
 """
@@ -44,7 +44,7 @@ from .s02_years import BUILDINGS, RAA_GPKG, load_raa
 from .yearrules import LATEST_YEAR
 
 YEARS = Path("data/years.parquet")
-STADSDELAR = CITY_RAW / "Stadsdelar.zip"      # data/raw/city/Stadsdelar.zip (C3 raw inputs)
+STADSDELAR = CITY_RAW / "Stadsdelar.zip"      # data/raw/city/Stadsdelar.zip (raw inputs)
 OUT = Path("data/attributes.parquet")
 PRIVATE_NAMES = Path(__file__).with_name("private_names.txt")
 PRIVATE_FIRMS = Path(__file__).with_name("private_firms.txt")
@@ -52,11 +52,11 @@ REVIEW_ARCHITECTS = Path("data/review-architects.txt")
 REVIEW_NAMES = Path("data/review-names.txt")
 
 # A property designation: "Storken 12", "Kv. Bacchus 6", "Lilla Sticklinge 1:4", "Storken-12", "kv.Storken 12": up to
-# four words, then a number or number:number (Plan 1's one-word form missed the multi-word ones, P5).
+# four words, then a number or number:number (an earlier one-word form missed the multi-word ones).
 PROPERTY_DESIGNATION = re.compile(r"^(kv\.?\s*)?[a-zåäöéü][\w.åäöéü-]*(\s+[\w.åäöéü-]+){0,3}\s*[-–]?\s*\d+(:\d+)?$",
                                   re.IGNORECASE)
 GENERIC = re.compile(city.GENERIC_NAME_RE, re.IGNORECASE)
-# A register's building code in a name ("K0061.006", a state-listed building's numbers; Plan 4b, Task 10): an internal
+# A register's building code in a name ("K0061.006", a state-listed building's numbers): an internal
 # id, never shown. Taken out with its brackets and separator; a name of codes alone becomes "".
 REGISTER_CODE = re.compile(r"\s*\(?\s*\b[A-Z]\d{4}\.\d{3}\b\s*\)?\s*[,;]?")
 EMPTY_BRACKETS = re.compile(r"\(\s*[,;]?\s*\)")
@@ -72,7 +72,7 @@ def storey_height(kategori) -> np.ndarray:
 
 
 def floors_from_storey(height, k) -> np.ndarray:
-    """The C1 floors rule: clamp(floor(height / k + 0.5), 1, 99), so a half storey rounds up. uint8."""
+    """The floors rule: clamp(floor(height / k + 0.5), 1, 99), so a half storey rounds up. uint8."""
     return np.clip(np.floor(np.asarray(height, dtype=float) / np.asarray(k, dtype=float) + 0.5), 1, 99).astype(np.uint8)
 
 
@@ -124,7 +124,7 @@ def load_private_names(path: Path = PRIVATE_NAMES) -> set[str]:
 
 
 def load_private_firms(path: Path = PRIVATE_FIRMS) -> set[str]:
-    """The reviewed firm names a private house may show however rare (D35 point 2): the same form as the names list."""
+    """The reviewed firm names a private house may show however rare: the same form as the names list."""
     return load_private_names(path)
 
 
@@ -167,12 +167,12 @@ def build_attributes(b: pd.DataFrame, years: pd.DataFrame, raa: pd.DataFrame, di
                      levels: pd.Series | None = None, private_names: set[str] = frozenset(),
                      report: dict | None = None, private_firms: set[str] = frozenset(),
                      exclude: set[int] = frozenset()) -> pd.DataFrame:
-    """attributes.parquet rows (C3, C20) from buildings (gid, kategori, height), years (gid, raa_id, landmark),
+    """attributes.parquet rows from buildings (gid, kategori, height), years (gid, raa_id, landmark),
     RAÄ records (raa_id, klassificering, upphov, namn, alternativnamn, skyddstyp_namn, beslutsdatum,
     andamal_huvudgrupp), OSM levels per gid (osm_buildings.match; None: none), the reviewed private-house names and
     the reviewed firm names. `report`, when given, receives "firms" (rare names on private houses that read as firms,
     not on the firms list: hidden until a person has read them) and "names" (private houses' names not on the list),
-    for the hand checks. `exclude` (Plan 4b): the takedowns' gids, whose architects do not count towards D35's rule, as
+    for the hand checks. `exclude`: the takedowns' gids, whose architects do not count towards the rare-architect rule, as
     they do not ship (s99 counts over the shipped cards); main() then blanks those rows (suppress.attributes)."""
     d = b[["gid", "kategori", "height"]].merge(years[["gid", "raa_id", "landmark"]], on="gid", how="left")
     d["raa_id"] = d.raa_id.fillna("")
@@ -183,11 +183,11 @@ def build_attributes(b: pd.DataFrame, years: pd.DataFrame, raa: pd.DataFrame, di
     r = rec.reindex(d.raa_id)
     names = [lm or safe_name(n, districts) or safe_name(a, districts)
              for lm, n, a in zip(d.landmark, r.namn, r.alternativnamn)]
-    # D18 and D35.2 on a private-category house that is not curated: KATEGORI decides, never the `private` flag
+    # The decade rule and the rare-architect rule on a private-category house that is not curated: KATEGORI decides, never the `private` flag
     house = d.kategori.isin(city.PRIVATE_HOUSE_KATEGORI).to_numpy() & (d.landmark == "").to_numpy()
     unlisted = sorted({n for n, h in zip(names, house) if h and n and n not in private_names})
     names = ["" if h and n not in private_names else n for n, h in zip(names, house)]
-    building = [rid or f"gid {g}" for rid, g in zip(d.raa_id, d.gid)]     # D35 counts buildings, not footprints
+    building = [rid or f"gid {g}" for rid, g in zip(d.raa_id, d.gid)]     # the rare-architect rule counts buildings, not footprints
     lists = [[] if g in exclude else parse_architects(u) for g, u in zip(d.gid, r.upphov)]
     architects, firms = arch.apply_rule(lists, house, firms=private_firms, keys=building)
     if report is not None:
@@ -255,7 +255,7 @@ def main(argv: list[str] | None = None) -> None:
     b = gpd.read_parquet(a.buildings, columns=["gid", "kategori", "height", "geometry"])
     levels = osm_buildings.match(b, osm_buildings.load(a.osm_levels, osm_tiles_needed()))
     report = {}
-    hidden = suppress.gids_of(a.buildings, a.suppress)                      # Plan 4b: takedowns
+    hidden = suppress.gids_of(a.buildings, a.suppress)                      # takedowns
     attrs = build_attributes(b, pd.read_parquet(a.years), load_raa(a.raa), load_districts(a.stadsdelar), levels,
                              load_private_names(), report, load_private_firms(), exclude=hidden)
     attrs = suppress.attributes(attrs, hidden)

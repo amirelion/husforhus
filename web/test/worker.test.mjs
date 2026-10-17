@@ -1,4 +1,4 @@
-// The worker's mesh builder (web/worker.js build), run in node on decoded tiles (contract C4).
+// The worker's mesh builder (web/worker.js build), run in node on decoded tiles.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -32,7 +32,7 @@ test('the fixture tile builds walls and roofs', () => {
   assert.equal(m.idx.length, 15 * 6 + 11 * 3);
   assert.equal(plan(m), 10000 + 40000 - 6400 + 1800);
   assert.deepEqual([...m.attr.subarray(0, 4)], [1924, 6 + 16 * 1, 3, 7]);
-  // Plan 3: three texels per building (app.js VERT reads the ground from the third), the third [ground dm, 0, 0, 0]
+  // Three texels per building (app.js VERT reads the ground from the third), the third [ground dm, 0, 0, 0]
   assert.equal(ATTR_FLOATS, 3 * 4);
   assert.equal(m.attr.length, 3 * ATTR_FLOATS);
   const at = (b, k) => m.attr[b * ATTR_FLOATS + k];

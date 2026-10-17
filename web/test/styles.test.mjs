@@ -17,7 +17,7 @@ test('styles.css closes only braces it opened', () => {
   assert.equal(depth, 0, 'every { is closed');
 });
 
-// The first paint, before app.js runs, is the default look (D28): styles.css's :root colour tokens are its `ui`
+// The first paint, before app.js runs, is the default look: styles.css's :root colour tokens are its `ui`
 // tokens, --font is its font, and the color-scheme matches its ground, so there is no flash of another look.
 test("styles.css's :root is the default look", async () => {
   const { THEMES } = await import('../themes.js');

@@ -1,10 +1,10 @@
-"""Writes the synthetic terrain fixture for the browser tests (web/test/terrain.test.mjs; Plan 3, Task 7).
+"""Writes the synthetic terrain fixture for the browser tests (web/test/terrain.test.mjs).
 
 A made-up 100 x 60 m shore, no City or Lantmäteriet data, so the output is committed:
   domain   local x 0..100, z 0..60 (x east, z south)
   water    one bay: (70, 10) (100, 10) (100, 50) (55, 50), cut off by the domain's east edge, at level 0.4 m
   heights  h = 3 + 0.05 x - 0.02 z metres (stored in decimetres), cut 0.7 m east of x = 40
-Writes terrain_v1.bin (C16), water_v1.bin (the s04 polygon format) and terrain_v1.expect.json: sample points with
+Writes terrain_v1.bin, water_v1.bin (the s04 polygon format) and terrain_v1.expect.json: sample points with
 pipeline/terrain.py's bilinear values, the land and water areas, the class counts and the shore bits, which the
 JS tests compare against (parity with the Python port).
 

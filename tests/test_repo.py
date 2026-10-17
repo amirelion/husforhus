@@ -1,4 +1,4 @@
-"""Repository hygiene: Task 1 (toolchain, reference/ move, licence, ignores)."""
+"""Repository hygiene (toolchain, reference/ move, licence, ignores)."""
 import tomllib
 from pathlib import Path
 

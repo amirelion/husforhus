@@ -1,6 +1,6 @@
-// Strings by stable id (spec §2.1): web/i18n/en.json and web/i18n/sv.json, both loaded at start (a few KB) so the
-// language can switch without a reload. Pure, tested by node --test (web/test/i18n.test.mjs). Plan 4a brought the
-// card's, the Floors legend's and the timeline's strings; Plan 4b the rest of the v1 interface (app.js's old SV_UI).
+// Strings by stable id: web/i18n/en.json and web/i18n/sv.json, both loaded at start (a few KB) so the
+// language can switch without a reload. Pure, tested by node --test (web/test/i18n.test.mjs). It holds the
+// card's, the Floors legend's and the timeline's strings and the rest of the v1 interface (app.js's old SV_UI).
 
 // "{name}" placeholders filled from vars; a placeholder with no value stays as it is, so a missing one shows.
 export const fill = (s, vars = {}) => String(s).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
@@ -31,9 +31,9 @@ export const LEGACY = {
 };
 export const legacy = T => s => (LEGACY[s] ? T(LEGACY[s]) : s);
 
-// Which language the page opens in (spec §4.5 as amended, D53): ?lang= for this visit only, else the visitor's own
+// Which language the page opens in: ?lang= for this visit only, else the visitor's own
 // choice (localStorage hfh-lang, written only by the switch), else the browser's first language that is Swedish or
-// English when fromBrowser (city.LANG_FROM_BROWSER, decision 1 of Plan 4b), else English. With the switch off
+// English when fromBrowser (city.LANG_FROM_BROWSER), else English. With the switch off
 // (features.lang false), always English.
 export function pickLang({ param = null, saved = null, languages = [], fromBrowser = true, enabled = true } = {}) {
   if (!enabled) return 'en';

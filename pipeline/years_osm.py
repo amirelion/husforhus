@@ -1,10 +1,10 @@
-"""OpenStreetMap start_date as a year source (Plan 2 tier `osm`, below Wikidata; docs/research/2026-10-15-data-hunt.md §4).
+"""OpenStreetMap start_date as a year source (the `osm` tier, below Wikidata).
 
 load(): the cached Overpass result (s00_fetch_osm) -> one row per dated OSM building with a usable date.
 parse_date(): the formats mappers use. A plain year, a date (1906-06-10) and a month (2009-04) give that year; a
 decade ("1940s") the range 1940–1949; "1865 - 1878" or "2017-2019" a range; "~1920" 1915–1925. A century ("1700s",
 "1100s"), "early 1700s", "after 1908", "1635 / 1854" and anything else gives nothing. Years outside 1000..2026 give
-nothing. stated_year(): the year the map publishes (D6, shown honestly): the stated year for "~1920", the decade
+nothing. stated_year(): the year the map publishes (shown honestly): the stated year for "~1920", the decade
 start for "1940s" (the card prints "1940s"), and RAÄ's completion-year rule only for a real span. match(): the
 element's centre inside a footprint, else the nearest within MAX_M; a footprint that receives two OSM buildings
 with different dates gets nothing. Names (ODbL) stay internal: only the year ships.

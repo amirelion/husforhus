@@ -15,14 +15,14 @@ function page(href = 'https://husforhus.se/', stored) {
 // localStorage throws in some private windows and with blocked site data.
 const broken = { getItem() { throw new Error('SecurityError'); }, setItem() { throw new Error('QuotaExceededError'); } };
 
-test('the default look is Ärg (D28)', () => {
+test('the default look is Ärg', () => {
   assert.equal(DEFAULT_LOOK, 'arg');
   assert.ok(THEMES[DEFAULT_LOOK]);
 });
 
-// Contract C1: pipeline/city.py's PERIODS colours are the default look's, so the pipeline's stockholm.json and
+// pipeline/city.py's PERIODS colours are the default look's, so the pipeline's stockholm.json and
 // the viewer's first paint agree.
-test("city.py's PERIODS colours are the default look's period colours (C1)", () => {
+test("city.py's PERIODS colours are the default look's period colours", () => {
   const py = readFileSync(new URL('../../pipeline/city.py', import.meta.url), 'utf8');
   const block = py.slice(py.indexOf('PERIODS = ['), py.indexOf(']', py.indexOf('PERIODS = [') + 12));
   const colours = [...block.matchAll(/^\s*\("p\d+",.*"(#[0-9a-f]{6})"\),$/gm)].map(m => m[1]);

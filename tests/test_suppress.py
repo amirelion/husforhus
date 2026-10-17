@@ -1,4 +1,4 @@
-"""Takedowns (Plan 4b, Task 8): pipeline/suppress.py, the steps that apply it and s99's check."""
+"""Takedowns: pipeline/suppress.py, the steps that apply it and s99's check."""
 import datetime
 import gzip
 import json
@@ -38,14 +38,14 @@ def test_resolve_by_uuid_in_any_case_or_by_oid_and_names_the_entries_that_match_
 
 
 def test_a_key_on_several_footprints_takes_them_all():
-    # Task 8 review: the register gives a few buildings (a villa among them) one UUID on two footprints
+    # The register gives a few buildings (a villa among them) one UUID on two footprints
     b = pd.DataFrame({"gid": [0, 1, 2, 3], "uuid": ["aa-1", "AA-1", "cc-3", "dd-4"], "oid": [1000, 1001, 1001, 1003]})
     assert suppress.resolve(b, [{"uuid": "aa-1"}]) == ({0, 1}, [])
     assert suppress.resolve(b, [{"oid": 1001}]) == ({1, 2}, [])
 
 
 def test_a_file_that_is_not_yaml_is_refused_without_quoting_it(tmp_path):
-    # Task 8 review: PyYAML's message quotes the lines around the mistake, and the list names homes
+    # PyYAML's message quotes the lines around the mistake, and the list names homes
     bad = write(tmp_path / "bad.yml", "- uuid: 2e389b81-secret-key\n  date: 2026-11-02\n - oid: [\n")
     with pytest.raises(ValueError, match=r"not valid YAML at line \d+, column \d+$") as e:
         suppress.load(bad)
@@ -114,7 +114,7 @@ SHIPS = "suppress: gid 0 is a takedown but ships a year or a rating"
 @pytest.mark.parametrize(("field", "value"), [("year_from", 1640), ("year_to", 1649), ("period", 2), ("ysrc", 2),
                                               ("private", 1)])
 def test_s99_finds_any_part_of_a_takedown_s_year(site, field, value):
-    # Task 8 review: "Year unknown" in yflag and year alone is not enough; a decade's ends or its period colour is a
+    # "Year unknown" in yflag and year alone is not enough; a decade's ends or its period colour is a
     # year too
     rebuild_with(site, {0})
     edit_attrs(site, lambda a: a[field].__setitem__(0, value))
@@ -155,7 +155,7 @@ def test_s99_main_checks_the_list_it_is_given(site, monkeypatch, capsys, tmp_pat
 def test_release_needs_a_maker_a_contact_and_the_open_decisions(site, monkeypatch):
     monkeypatch.setattr(s99_validate.city, "MAKER", "")
     monkeypatch.setattr(s99_validate.city, "RELEASE_WAITS_FOR",
-                        ("decision 3 (Plan 4b): addresses on private houses, city.PRIVATE_ADDRESSES",))
+                        ("decision 3: addresses on private houses, city.PRIVATE_ADDRESSES",))
     errors = check(site, release=True)
     assert ("release: city.MAKER is empty (decision 2: who made the map and the address for corrections and "
             "takedowns)") in errors
@@ -163,7 +163,7 @@ def test_release_needs_a_maker_a_contact_and_the_open_decisions(site, monkeypatc
     monkeypatch.setattr(s99_validate.city, "CONTACT", "hej@example.org")
     # an open decision: the locked preview carries it, the public site waits for the answer
     assert [e for e in check(site, release=True) if e.startswith("release:")] == [
-        "release: waiting for decision 3 (Plan 4b): addresses on private houses, city.PRIVATE_ADDRESSES "
+        "release: waiting for decision 3: addresses on private houses, city.PRIVATE_ADDRESSES "
         "(city.RELEASE_WAITS_FOR)"]
     monkeypatch.setattr(s99_validate.city, "RELEASE_WAITS_FOR", ())
     assert not [e for e in check(site, release=True) if e.startswith("release:")]

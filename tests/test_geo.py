@@ -1,5 +1,5 @@
 # tests/test_geo.py
-"""pipeline.geo: placing a point on a LOD1 footprint (Plan 2 moved it out of s02_years)."""
+"""pipeline.geo: placing a point on a LOD1 footprint (moved out of s02_years)."""
 import numpy as np
 import pytest
 import shapely

@@ -1,0 +1,28 @@
+name: Photo problem
+description: "A building's photo is wrong, or its credit or licence is. / Ett fotoproblem."
+title: "[Photo] "
+labels: [photo]
+body:
+  - type: input
+    id: building
+    attributes:
+      label: Which building
+      description: "Vilken byggnad. A link from the building's card, or its address. / En länk från byggnadens kort, eller dess adress."
+    validations:
+      required: true
+  - type: dropdown
+    id: problem
+    attributes:
+      label: What is wrong
+      description: "Vad är fel."
+      options:
+        - Wrong building / Fel byggnad
+        - Credit / Fotograf eller källangivelse
+        - Licence / Licens
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: "Detaljer. Anything that helps, such as the right photo or the right credit. / Allt som hjälper, till exempel rätt foto eller rätt angivelse."

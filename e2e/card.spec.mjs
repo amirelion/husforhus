@@ -1,4 +1,4 @@
-// The building card (Plan 4a, Task 9): text first, the photo and the excerpt with their credits, the links, nothing on
+// The building card: text first, the photo and the excerpt with their credits, the links, nothing on
 // a private house that could give its exact year, focus in and out, Swedish. Runs on whatever web/data/current.json
 // names: the fixture in CI, the whole city on a laptop.
 import { test, expect } from '@playwright/test';
@@ -14,7 +14,7 @@ function watchErrors(page) {
 // Every card of the build, read the way the page reads them (64 shards), with each building's attrs.
 const cards = page => page.evaluate(async () => {
   const { version } = await (await fetch('data/current.json')).json();
-  // the 64 shards at once: one after another, the whole city's took most of the test's 2 minutes (Task 13)
+  // the 64 shards at once: one after another, the whole city's took most of the test's 2 minutes
   const shards = await Promise.all([...Array(64).keys()].map(async k =>
     (await fetch(`data/${version}/cards/${String(k).padStart(2, '0')}.json`)).json()));
   return Object.assign({}, ...shards);
@@ -46,7 +46,7 @@ test('a pinned card shows the photo, the excerpt and the links with their credit
   const errors = watchErrors(page);
   await open(page);
   const [all, wiki] = [await cards(page), await excerpts(page)];
-  // a card with an English excerpt when the build has one, so the excerpt's credit is checked (review of Task 9)
+  // a card with an English excerpt when the build has one, so the excerpt's credit is checked
   const withPhoto = Object.keys(all).filter(g => all[g].photo && all[g].wp?.length);
   const gid = withPhoto.find(g => wiki[g]?.en) ?? withPhoto[0];
   test.skip(gid === undefined, 'this build has no card with a photo and an article');
@@ -104,7 +104,7 @@ test('a private house card shows its decade and nothing that could give the year
   const errors = watchErrors(page);
   await open(page);
   // a decade-dated private house whose card carries an architect: the architect's row shows that the card's shard has
-  // arrived, so the checks for what must be absent run on the whole card (review of Task 9)
+  // arrived, so the checks for what must be absent run on the whole card
   const all = await cards(page);
   const gid = await page.evaluate(gids => gids.find(g => { const b = window.__dbg.building(g);
     return b.private === 1 && b.yflag !== 6 && b.yflag !== 7; }) ?? -1,
@@ -116,7 +116,7 @@ test('a private house card shows its decade and nothing that could give the year
   await expect(card.locator('.card-head .y')).toHaveText(/^(≈ )?(\d{3}0s|\d{2}00–\d{2}09)$/);
   await expect(card.locator('.dating')).toContainText('private house: decade only');
   await expect(card.locator('.photo, .extract')).toHaveCount(0);
-  await expect(card.locator('.sources')).toHaveCount(0);                 // no RAÄ, Wikipedia or Wikidata link (D18, D34)
+  await expect(card.locator('.sources')).toHaveCount(0);                 // no RAÄ, Wikipedia or Wikidata link
   expect(errors).toEqual([]);
 });
 
@@ -147,14 +147,14 @@ test('the hover card is the band and how the year is known; Swedish when the lan
   expect(errors).toEqual([]);
 });
 
-test('a card names its address and stadsdel in its band (Plan 4b)', async ({ page }) => {
+test('a card names its address and stadsdel in its band', async ({ page }) => {
   const errors = watchErrors(page);
   await open(page);
   const all = await cards(page);
   const several = Object.keys(all).filter(g => all[g].addr && all[g].addrn > 1);
   test.skip(several.length === 0, 'this build has no card with several addresses');
   // the stadsdel comes from districts.bin.gz, fetched with the first card; then one of them that lies in a stadsdel
-  // (Task 2's review: a building outside every stadsdel has none, and would wait in vain)
+  // (a building outside every stadsdel has none, and would wait in vain)
   await page.evaluate(g => window.__dbg.showCard(+g, 300, 300), several[0]);
   const cardGids = Object.keys(all);
   await expect.poll(() => page.evaluate(gs => gs.some(g => window.__dbg.districtOf(+g) !== ''), cardGids)).toBe(true);
@@ -169,7 +169,7 @@ test('a card names its address and stadsdel in its band (Plan 4b)', async ({ pag
   expect(errors).toEqual([]);
 });
 
-// Task 11a: a curated card's rebuilds show as a second line under the dating line on the pinned card, never on the
+// A curated card's rebuilds show as a second line under the dating line on the pinned card, never on the
 // hover card, and older cellars change the dating line on both. No curated entry carries them yet, so the test adds
 // them to the first timeline landmark's card as its shard reaches the page (§14's example years).
 test('a curated card shows its rebuilds when pinned, never on hover, and its older cellars on both', async ({ page }) => {

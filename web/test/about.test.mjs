@@ -1,4 +1,4 @@
-// web/about.js (Plan 4b, Task 7): About written from stockholm.json in both languages, every number from the build.
+// web/about.js: About written from stockholm.json in both languages, every number from the build.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -67,8 +67,8 @@ test('About reads the build\'s numbers in English and Swedish', () => {
   assert.match(en, /It gave none of the 219 built from 1990 on a decade/);
   assert.match(en, /never to fewer than 4 years/);
   assert.match(en, /when it appears on 3 or fewer buildings/);
-  // Plan 3's terrain, as built (true height by default, the Hills slider to 2.5×, D40; the City's contour lines here),
-  // and the address rule if decision 3 (Plan 4b) is no
+  // The terrain, as built (true height by default, the Hills slider to 2.5×; the City's contour lines here),
+  // and the address rule if city.PRIVATE_ADDRESSES is False
   assert.match(en, /The ground is drawn true to scale\. The Hills slider under Look raises the hills up to 2\.5 times as high, or lays the city flat\. The heights come from the City's contour lines\./);
   assert.match(text(aboutHtml({ ...CONFIG, terrain: { source: 'contours', relief: 2, reliefMax: 2.5 } }, EN)),
     /The ground is drawn 2 times as high as it is\. The Hills slider under Look sets it from flat up to 2\.5 times\./);
@@ -94,7 +94,7 @@ test('About reads the build\'s numbers in English and Swedish', () => {
   }
 });
 
-test('the source table\'s shares are the accuracy page\'s: the kinds rounded together, then split among their sources (Task 10)', () => {
+test('the source table\'s shares are the accuracy page\'s: the kinds rounded together, then split among their sources', () => {
   // v20261017-m8's counts: each row rounded alone gives 28.3% and 8.1%; docs/accuracy.md says 28.4% and 8.0%
   const bySrc = { none: 43453, curated: 72, raa: 22039, raa_area: 6263, wikidata: 131, estimate: 4558, raa_old: 809, osm: 418 };
   const html = aboutHtml({ ...CONFIG, stats: { ...CONFIG.stats, bySrc } }, EN);
@@ -126,18 +126,23 @@ test('without a maker or a contact About says they come before going public; wit
   assert.doesNotMatch(text(named), /before the map goes public/);
 });
 
+test('Contact links to the public code in the page\'s language', () => {
+  assert.match(aboutHtml(CONFIG, EN), /The code and data pipeline are open source: <a href="https:\/\/github\.com\/amirelion\/husforhus"[^>]*>github\.com\/amirelion\/husforhus<\/a>/);
+  assert.match(aboutHtml(CONFIG, SV), /Koden och datakedjan är öppen källkod: <a href="https:\/\/github\.com\/amirelion\/husforhus"[^>]*>github\.com\/amirelion\/husforhus<\/a>/);
+});
+
 test('the sources list carries each licence link, and the ODbL notice covers the database', () => {
   const html = aboutHtml(CONFIG, EN);
   assert.match(html, /<li><a href="https:\/\/www\.openstreetmap\.org\/copyright"[^>]*>OpenStreetMap: © OpenStreetMap contributors, ODbL, processed<\/a> \(<a href="https:\/\/opendatacommons\.org\/licenses\/odbl\/1-0\/"/);
   assert.match(text(html), /published under the Open Database License \(ODbL 1\.0\) as a whole/);
 });
 
-test('the sources list credits each source in D44\'s form, in the page\'s language (Task 9)', () => {
+test('the sources list credits each source in the standard credit form, in the page\'s language', () => {
   const list = html => html.match(/<ul id="about-data">([\s\S]*?)<\/ul>/)[1];
   assert.match(list(aboutHtml(CONFIG, EN)), />OpenStreetMap: © OpenStreetMap contributors, ODbL, processed</);
   assert.match(list(aboutHtml(CONFIG, SV)), />OpenStreetMap: © OpenStreetMap-bidragsgivare, ODbL, bearbetad</);
   assert.doesNotMatch(list(aboutHtml(CONFIG, SV)), /data under ODbL \(modified\)/);
-  // a build from before the D44 lines keeps its one attribution text
+  // a build from before the standard credit lines keeps its one attribution text
   const older = { ...CONFIG, attribution: CONFIG.attribution.map(({ credit, ...a }) => a) };
   assert.match(list(aboutHtml(older, SV)), />© OpenStreetMap contributors, OpenStreetMap data under ODbL \(modified\)</);
 });

@@ -1,5 +1,4 @@
-"""Wikidata building items on footprints, their Commons photos and Wikipedia excerpts (spec §3.2 s06_wiki; Plan 4a,
-Task 6). Pure functions over the cached answers; s06_wiki fetches them and writes the outputs.
+"""Wikidata building items on footprints, their Commons photos and Wikipedia excerpts (for s06_wiki). Pure functions over the cached answers; s06_wiki fetches them and writes the outputs.
 
 Items: the two saved queries (pipeline/queries/wiki_items.rq, wiki_labels.rq) give every item with a coordinate in
 the municipality's box, its P31 classes, P18 images and whether it has a P576 (items_from), then its sv/en labels,
@@ -11,7 +10,7 @@ item per footprint for the card: one with an article first, then the one with mo
 number. (The year tier keeps its one-item rule: a footprint that two items reach is dated by neither.)
 
 Photos: credit() turns a Commons page (imageinfo with extmetadata) into the credit the card shows, or refuses it.
-Only CC BY, CC BY-SA, CC0 and public-domain files pass (D16); a file with a restriction, or a CC file whose author is
+Only CC BY, CC BY-SA, CC0 and public-domain files pass; a file with a restriction, or a CC file whose author is
 unknown (no one to credit), is refused. The author is the Artist field without its HTML (Commons' "No
 machine-readable author provided. X assumed" becomes X), or the file's own Attribution field verbatim when the
 licensor set one. CC 2.0–3.0 ask for the work's title too, so those files keep their ObjectName (Commons fills it with
@@ -24,11 +23,11 @@ holds the ones refused).
 
 Excerpts: cut() keeps an intro's first paragraph, in whole sentences up to city.WIKI's extract_chars characters; a
 first sentence longer than that is cut at a word and ends with "…". A sentence that says who owns a building or had
-it built is left out (privacy.owner; spec §6.3), and so is a parenthesis that gives the name's pronunciation in IPA
+it built is left out (privacy.owner), and so is a parenthesis that gives the name's pronunciation in IPA
 ("Storkyrkan (Swedish: [ˈstûːrˌɕʏrkan], …)", which the site's fonts cannot draw), as Wikipedia's own previews do.
-The excerpt is CC BY-SA 4.0 and ships in its own files (spec §6.1), credited with its article's revision.
+The excerpt is CC BY-SA 4.0 and ships in its own files, credited with its article's revision.
 
-Property designations (spec §6.3) never ship, and Stockholm's articles are often named after one ("Styckjunkaren 7"):
+Property designations never ship, and Stockholm's articles are often named after one ("Styckjunkaren 7"):
 so no article title or Commons file name ships at all (the card links an article through its Wikidata item and an
 excerpt's credit through its revision id; a photo's credit links the file's page by its page id), a sentence that
 names a designation of the city's buildings is left out of an excerpt (privacy.mentions), and a photo whose title
@@ -61,7 +60,7 @@ ART = re.compile(r"skulptur|sculpt|staty|statue|konstverk|artwork|work of art|re
                  r"graffiti|street art|gatukonst|public art|offentlig konst|FoP-Sweden \(artworks\)", re.IGNORECASE)
 SENTENCE = re.compile(r"(?<=[.!?])\s+(?=[A-ZÅÄÖÉ0-9\"«(])")
 # A full stop that ends an initial or an abbreviation, not a sentence ("C. A. Exempel", "Mr. X", "kv. Y"): split
-# there and the rest of a name would ship as a sentence of its own (Task 6's review).
+# there and the rest of a name would ship as a sentence of its own.
 ABBREV = re.compile(r"(?:^|[\s(])(?:[A-ZÅÄÖÉ]|[Kk]v|[Mm]rs?|[Mm]s|[Dd]r|[Ss]t|[Ss]:t|[Jj]r|[Ss]r|[Pp]rof|ca|c|nr|"
                     r"resp|jfr|kl|f\.d|bl\.a|t\.ex|d\.v\.s|o\.s\.v|m\.fl|m\.m|e\.g|i\.e|vs|no)\.$")
 # A parenthesis holding an IPA transcription in square brackets, and footnote marks such as "[1]"
@@ -136,8 +135,8 @@ def place(b, items: pd.DataFrame, max_m: float | None = None) -> pd.DataFrame:
 def beside_private(b, curated, gids, xs, ys, metres: float | None = None) -> np.ndarray:
     """Per item, True when its point (xs, ys, EPSG:3011) lies within `metres` (city.WIKI private_m) of a footprint
     in a private-house category that is not curated (`curated`: gids) and stands on the same property (FASTIGHET)
-    as the footprint the item landed on (`gids`): the item's photo or article may show the house (D50). The final
-    review of Plan 4a found one such item, inside an outbuilding that touches a villa."""
+    as the footprint the item landed on (`gids`): the item's photo or article may show the house. The final
+    review found one such item, inside an outbuilding that touches a villa."""
     metres = city.WIKI["private_m"] if metres is None else metres
     gids = np.asarray(gids, dtype=np.int64)
     out = np.zeros(len(gids), dtype=bool)
@@ -209,7 +208,7 @@ def author(meta: dict) -> str:
 
 
 def licence(meta: dict) -> tuple[str, str]:
-    """(family, short name) of a file's licence: family "cc-by", "cc-by-sa", "cc0" or "pd", or "" when D16 refuses it
+    """(family, short name) of a file's licence: family "cc-by", "cc-by-sa", "cc0" or "pd", or "" when the open-licence rule refuses it
     (NC, ND, GFDL only, anything else)."""
     code = str(meta.get("License") or "").strip().lower()
     short = plain(meta.get("LicenseShortName"))

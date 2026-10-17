@@ -20,7 +20,7 @@ def ensure_city_data(required: Iterable[Path], *, buildings: Path | None = None,
 
     required   the inputs the test reads (a task adds its own to the shared ones)
     buildings  data/buildings.parquet, when the test needs the full city: fewer than MIN_BUILDINGS rows fails
-    steps      the C7 steps that write the inputs, named in the skip message
+    steps      the steps that write the inputs, named in the skip message
     """
     missing = [p for p in required if not Path(p).exists()]
     if missing:

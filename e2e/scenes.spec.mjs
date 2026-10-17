@@ -10,7 +10,7 @@ function watchErrors(page) {
   return errors;
 }
 const across = page => page.evaluate(() => { const p = window.__dbg.camera.position; return [Math.round(p.x), Math.round(p.z)]; });
-// The ground rises after the first frame and the camera rides on it (Plan 3): wait until it stands still.
+// The ground rises after the first frame and the camera rides on it: wait until it stands still.
 async function settle(page) {
   await expect.poll(async () => {
     const a = await across(page);

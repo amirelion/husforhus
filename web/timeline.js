@@ -1,4 +1,4 @@
-// The timeline's landmark labels and its keyboard handles (spec §4.1; Plan 4a, Task 10). Pure, tested by node --test.
+// The timeline's landmark labels and its keyboard handles. Pure, tested by node --test.
 
 // Which landmark names fit on the timeline: highest priority first (stockholm.json landmarks' `timeline`, 1 first), then
 // the older year, each placed centred on its year and kept inside the canvas, and dropped when it would come closer

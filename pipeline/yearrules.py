@@ -1,4 +1,4 @@
-"""Year rules shared by every year source (Plan 2 split them out of s02_years so the source modules can use them
+"""Year rules shared by every year source (split out of s02_years so the source modules can use them
 without importing s02_years): the plausible-year bounds, the RAÄ display rule and the RAÄ record cleaner."""
 import numpy as np
 import pandas as pd
@@ -6,7 +6,7 @@ import pandas as pd
 from .codes import EXACT, LONG, RANGE
 
 FLOOR_YEAR = 1000              # nothing older is plausible in Stockholm
-LATEST_YEAR = 2026             # s99's upper bound (spec §3.2); a later year is a typo
+LATEST_YEAR = 2026             # s99's upper bound; a later year is a typo
 MIN_YEAR = 1250                # older RAÄ years are typos (a house dated 1065–1067) or site origins
 OLD_OK = {"Religionsutövning", "Försvarsväsende"}   # medieval churches and defence works may be older
 RANGE_MAX = 15                 # longest span still shown as a completion year
@@ -26,7 +26,7 @@ def clean_years(raa: pd.DataFrame) -> pd.DataFrame:
     """All rows, with integer year_from <= year_to, dated and year_ok.
 
     dated is False without a from-year; such a record gives no year (0/0) but may still link a footprint
-    (Task 11 reads its rating and architects through the link). A missing tom becomes from; an inverted
+    (the card reads its rating and architects through the link). A missing tom becomes from; an inverted
     pair is swapped. year_ok is False when not dated, outside FLOOR_YEAR..LATEST_YEAR, and below MIN_YEAR
     unless the record is religious or defence (a church may be from the 1100s; a house dated 1065 is a typo).
     """

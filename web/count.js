@@ -1,13 +1,13 @@
 import { unknownShown } from './unknown.js';
 import { YFLAG } from './codes.js';
 
-// The building count under the timeline (D20, spec §4.1: the count follows the range). Pure, so it can be tested
+// The building count under the timeline (the count follows the range). Pure, so it can be tested
 // without a browser. It counts what the vertex shader in app.js draws in colour, neither hidden nor faded:
 // - a dated building (every yflag but 7 UNKNOWN; area and estimate dates too) stands once its year <= to
 //   (uYear) and fades once its year <= from (uYearFrom), so it counts when from < year <= to;
 // - a building without a year (yflag 7, year 0) never fades. The count takes these in only at the end of the
-//   timeline (P17: never at a past year), and there only where the map draws them (web/unknown.js unknownShown,
-//   D30): left alone, at "Today" with the from-handle at rest; with the legend's switch set to show, wherever the
+//   timeline (never at a past year), and there only where the map draws them (web/unknown.js unknownShown):
+//   left alone, at "Today" with the from-handle at rest; with the legend's switch set to show, wherever the
 //   from-handle is; with it set to hide, never; and never while a period is shown alone. So "1900–Today" counts the
 //   dated buildings only, unless the visitor chose to show them;
 // - with the estimates hidden ({ est: false }) the area, estimate and period-only buildings leave the count.
@@ -19,9 +19,9 @@ export const EST_FLAGS = [YFLAG.AREA, YFLAG.ESTIMATE, YFLAG.PERIOD];
 
 // The tally the count works from, built from attrs.bin (tile.js readAttrs layout) so it counts exactly what the
 // shader draws: a private house at its decade start, where stockholm.json's histogram spreads it over the decade
-// (that spread is for drawHist only; D20's parked gap). Shaped like stockholm.json: {histogram, histogramEst,
+// (that spread is for drawHist only). Shaped like stockholm.json: {histogram, histogramEst,
 // unknown, yearMin, yearMax, periods}, with histogram = EXACT/RANGE/LONG and histogramEst = AREA/ESTIMATE/PERIOD by
-// year; yearMin and yearMax are config's, which D30's unknownShown reads.
+// year; yearMin and yearMax are config's, which unknownShown reads.
 export function tallyFromAttrs(view, n, stride, { periods, yearMin, yearMax }) {
   const histogram = {}, histogramEst = {};
   let unknown = 0;
@@ -37,7 +37,7 @@ export function tallyFromAttrs(view, n, stride, { periods, yearMin, yearMax }) {
 
 // config: stockholm.json or a tally from tallyFromAttrs (histogram, histogramEst, unknown, yearMin, yearMax,
 // periods); on(i): is period i shown; pref: the visitor's choice for the buildings without a year, 'auto', 'show' or
-// 'hide' (D30, web/unknown.js); est: are the estimates shown (the hide switch).
+// 'hide' (web/unknown.js); est: are the estimates shown (the hide switch).
 export function cityCount(config, from, to, on = () => true, pref = 'auto', { est = true } = {}) {
   let n = 0;
   for (const h of [config.histogram, est ? config.histogramEst || {} : {}]) {
@@ -50,7 +50,7 @@ export function cityCount(config, from, to, on = () => true, pref = 'auto', { es
   return n;
 }
 
-// The legend's number per period (Plan 4a): the dated buildings of each period the map draws in colour between the
+// The legend's number per period: the dated buildings of each period the map draws in colour between the
 // handles, from < year <= to, the estimated ones only while shown. At "Today" with the from-handle at rest it is the
 // period's total.
 export function periodCounts(config, from, to, { est = true } = {}) {

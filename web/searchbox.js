@@ -1,4 +1,4 @@
-// The search field (Plan 4b, Task 5; spec §4.4, §4.8): a combobox over web/search.js. On a desktop a pill beside the
+// The search field: a combobox over web/search.js. On a desktop a pill beside the
 // modes, "/" or Ctrl/⌘ + K to focus it; on a phone a button that opens a full-screen sheet. The index loads on the
 // first focus, a street's numbers when an address is typed. ↑ ↓ move through the rows, Enter picks, Esc closes the
 // list and a second Esc clears the field and gives the keyboard back to the map. Nothing typed is stored, and a pick
@@ -89,7 +89,7 @@ export function mountSearch({ root, openButton, getJson, base, T, onPick, swatch
   }
 
   // The phone's sheet covers the page: while it is open the rest of the page is inert, so Tab and a screen reader stay
-  // in the sheet (spec §4.8).
+  // in the sheet.
   let inerted = [];
   function sheet(open) {
     root.classList.toggle('open', open);
@@ -191,7 +191,7 @@ export function mountSearch({ root, openButton, getJson, base, T, onPick, swatch
       if (document.activeElement === input) run();
       else if (!msg.hidden) shown === 'hint' ? hint() : message(shown);   // a message under the unfocused pill
     },
-    // ?q= (spec §4.5): search once the index is in and pick the top row.
+    // ?q=: search once the index is in and pick the top row.
     // A visitor who starts typing before it is in keeps what they typed.
     async runQuery(q) {
       input.value = q;

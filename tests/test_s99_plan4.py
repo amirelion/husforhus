@@ -1,4 +1,4 @@
-"""s99_validate's Plan 4a rules (Task 8): the card's new fields on private houses, the D35 architect rule, photos,
+"""s99_validate's card rules: the card's new fields on private houses, the rare-architect rule, photos,
 excerpt shards, timeline landmarks and designations inside sentences. The `site` fixture comes from
 tests/test_s99_validate.py (the tiny city now has a photo, excerpts and a timeline landmark)."""
 import json
@@ -26,7 +26,7 @@ def test_clean_build_with_plan4_fields_passes(site):
 
 @pytest.mark.parametrize("field", ["qid", "wp", "photo", "en"])
 def test_nothing_that_states_the_year_on_a_private_house(site, field):
-    # D18 with D34: gid 4 is a private house; gid 5 an undated Enbostadshus (same rule, from KATEGORI)
+    # Gid 4 is a private house; gid 5 an undated Enbostadshus (same rule, from KATEGORI)
     value = {"qid": "Q1", "wp": ["sv"], "photo": PHOTO, "en": "Villa"}[field]
     edit_card(site, 4, {field: value})
     edit_card(site, 5, {field: value})
@@ -43,17 +43,17 @@ def test_a_private_house_name_must_be_on_the_reviewed_list(site, monkeypatch):
 
 
 def test_a_rare_architect_on_a_private_house_fails_and_a_reviewed_firm_or_a_common_name_passes(site, monkeypatch):
-    # D35 point 2: "Ruth Rare" on 1 card is a person's name a private house may not show; a rare firm shows only from the
+    # "Ruth Rare" on 1 card is a person's name a private house may not show; a rare firm shows only from the
     # reviewed list (a name that merely reads as a firm could be a person's); a name on 4 cards (more than
     # city.ARCHITECT_MAX_RARE) shows
     edit_card(site, 4, {"architects": ["Ruth Rare", "Byggare & Son AB", "Carl Common"]})
     for g in (2, 3, 8):
         edit_card(site, g, {"architects": ["Carl Common"]})
     assert check(site) == [f"cards: 04.json gid 4 is in a private-house category and names 2 architect(s) found on "
-                           f"{city.ARCHITECT_MAX_RARE} cards or fewer (D35)"]
+                           f"{city.ARCHITECT_MAX_RARE} cards or fewer"]
     monkeypatch.setattr(s99_validate, "load_private_firms", lambda: {"Byggare & Son AB"})
     assert check(site) == [f"cards: 04.json gid 4 is in a private-house category and names 1 architect(s) found on "
-                           f"{city.ARCHITECT_MAX_RARE} cards or fewer (D35)"]
+                           f"{city.ARCHITECT_MAX_RARE} cards or fewer"]
     edit_card(site, 2, {"architects": ["Carl Common", "Ruth Rare"]})
     edit_card(site, 3, {"architects": ["Ruth Rare", "Carl Common"]})
     edit_card(site, 8, {"architects": ["Ruth Rare", "Carl Common"]})
@@ -63,17 +63,17 @@ def test_a_rare_architect_on_a_private_house_fails_and_a_reviewed_firm_or_a_comm
 def test_a_public_domain_photo_from_sweden_passes(site):
     edit_card(site, 1, {"name": "Kungliga slottet", "qid": "Q750444", "wp": ["sv", "en"],
                         "photo": {**PHOTO, "lic": "Public domain (Sweden)"}})
-    reindex(site)                                       # Plan 4b: the card no longer has its English label
+    reindex(site)                                       # the card no longer has its English label
     assert check(site) == []
 
 
 @pytest.mark.parametrize(("change", "message"), [
-    ({"lic": "CC BY-NC-SA 4.0"}, "whose licence is not CC BY, CC BY-SA, CC0 or public domain (D16)"),
+    ({"lic": "CC BY-NC-SA 4.0"}, "whose licence is not CC BY, CC BY-SA, CC0 or public domain"),
     ({"by": " "}, "without its author"),
     ({"page": "https://commons.wikimedia.org/wiki/File:Styckjunkaren_7.jpg"}, "without its Commons page"),
     ({"lic": "CC BY-SA 3.0"}, "has a CC BY-SA 3.0 photo without its title"),
     ({"key": "fedcba9876543210-500.jpg"}, "names a photo that is not in data/photos"),
-    ({"thumb": "https://upload.wikimedia.org/x.jpg"}, "has photo fields outside C21: ['thumb']"),
+    ({"thumb": "https://upload.wikimedia.org/x.jpg"}, "has photo fields outside a card's: ['thumb']"),
 ])
 def test_a_photo_needs_its_credit_and_its_file(site, change, message):
     edit_card(site, 1, {"name": "Kungliga slottet", "qid": "Q750444", "wp": ["sv", "en"], "photo": {**PHOTO, **change}})
@@ -108,26 +108,26 @@ def test_an_excerpt_on_a_private_house_fails(site):
 
 
 def test_an_excerpt_that_names_an_owner_or_a_byggherre_fails(site):
-    # spec §6.3: no owner or byggherre names in web data (s06_wiki's cut leaves such sentences out; s99 checks it)
+    # No owner or byggherre names in web data (s06_wiki's cut leaves such sentences out; s99 checks it)
     shard = json.loads((site / "wiki" / "01.json").read_text())
     shard["items"]["1"]["sv"]["t"] = "Slottet ägs av staten och förvaltas av Statens fastighetsverk."
     shard["items"]["1"]["en"]["t"] = "The palace was built for King Frederick I."
     io.write_json(site / "wiki" / "01.json", shard)
-    assert check(site) == ["wiki: 01.json gid 1 has an excerpt that says who owns the building or had it built (spec §6.3)"] * 2
+    assert check(site) == ["wiki: 01.json gid 1 has an excerpt that says who owns the building or had it built"] * 2
 
 
 @pytest.mark.parametrize("text", ["Fastighetsägaren är AB Exempel.", "Huset samägs av X och Y.",
                                   "Villan disponeras av familjen X."])
 def test_an_excerpt_with_an_owner_in_a_compound_fails(site, text):
-    # the final review of Plan 4a: such sentences shipped in the build of 2026-10-17 and s99 passed them
+    # Such sentences shipped in the build of 2026-10-17 and s99 passed them
     shard = json.loads((site / "wiki" / "01.json").read_text())
     shard["items"]["1"]["sv"]["t"] = f"Slottet är stort. {text}"
     io.write_json(site / "wiki" / "01.json", shard)
-    assert check(site) == ["wiki: 01.json gid 1 has an excerpt that says who owns the building or had it built (spec §6.3)"]
+    assert check(site) == ["wiki: 01.json gid 1 has an excerpt that says who owns the building or had it built"]
 
 
 def test_an_item_beside_a_private_house_on_its_property_fails(site):
-    # the final review of Plan 4a (D50): gid 8's item stands 2 m from gid 9, an uncurated Enbostadshus, once both
+    # Gid 8's item stands 2 m from gid 9, an uncurated Enbostadshus, once both
     # are on one property; the photo or article may show the house
     data = site.parents[2] / "data"
     lon, lat = Transformer.from_crs(city.CRS, 4326, always_xy=True).transform(city.ORIGIN[0] + 58, city.ORIGIN[1] - 5)
@@ -140,13 +140,13 @@ def test_an_item_beside_a_private_house_on_its_property_fails(site):
     b.loc[b.gid == 8, "fastighet"] = "GRIMSTA 1:3"
     b.to_parquet(data / "buildings.parquet")
     errors = check(site)
-    assert "cards: gid 8 carries an item within 5 m of a private house on its property (D50)" in errors
+    assert "cards: gid 8 carries an item within 5 m of a private house on its property" in errors
     edit_card(site, 8, {"en": "The shed"})              # the item's English label alone is the item too
-    assert "cards: gid 8 carries an item within 5 m of a private house on its property (D50)" in check(site)
+    assert "cards: gid 8 carries an item within 5 m of a private house on its property" in check(site)
 
 
 def test_floors_credited_to_openstreetmap_are_openstreetmaps(site):
-    # the final review of Plan 4a: a repaired ground's floors were recomputed from its height while the card still
+    # A repaired ground's floors were recomputed from its height while the card still
     # said "(OpenStreetMap)"; data/attributes.parquet's floors_osm is what OpenStreetMap gives (0 for gid 0 here)
     edit_attrs(site, lambda a: a["fsrc"].__setitem__(0, codes.FLOORS_OSM))
     assert check(site) == ["attrs: 1 buildings whose floors are credited to OpenStreetMap but differ from its "
@@ -164,11 +164,11 @@ def test_a_timeline_landmark_is_a_curated_year(site):
 def test_the_timeline_never_shows_a_private_house(site):
     edit_attrs(site, lambda a: a["private"].__setitem__(1, 1))
     errors = check(site)
-    assert "landmarks: entry 0 is a private-category house (D18)" in errors
+    assert "landmarks: entry 0 is a private-category house" in errors
 
 
 def test_a_designation_inside_a_sentence_is_a_leak(site):
-    # Plan 4a: Wikipedia names buildings after their property ("Diana 1 är en …"); s06_wiki leaves such sentences out
+    # Wikipedia names buildings after their property ("Diana 1 är en …"); s06_wiki leaves such sentences out
     shard = json.loads((site / "wiki" / "01.json").read_text())
     shard["items"]["1"]["sv"]["t"] = "Huset i kvarteret Diana 1 byggdes 1754."
     io.write_json(site / "wiki" / "01.json", shard)
@@ -186,7 +186,7 @@ def test_a_wikidata_item_or_commons_page_whose_number_equals_a_property_unit_key
                          "photo": {**PHOTO, "page": "https://commons.wikimedia.org/w/index.php?curid=10123402"}})
     assert check(site) == []
     edit_card(site, 10, {"name": "Schönfeldtska huset 10123401", "qid": "Q10123401", "wp": ["sv"]})
-    reindex(site)                    # Plan 4b: search takes the card's name, and the scan finds the key there too
+    reindex(site)                    # search takes the card's name, and the scan finds the key there too
     assert check(site) == ["privacy: cards/10.json $.10.name holds a property-unit key (FNR)",
                            "privacy: search/index.json $.buildings[3][0] holds a property-unit key (FNR)"]
 
@@ -200,10 +200,10 @@ def test_a_photo_key_whose_hex_digits_equal_a_property_unit_key_is_not_a_leak(si
     assert check(site) == []
 
 
-# ---------- Task 8's review: D35 per building, the photo page exactly, excerpts' shape, the licence link ----------
+# ---------- The rare-architect rule per building, the photo page exactly, excerpts' shape, the licence link ----------
 
 def test_d35_counts_buildings_not_cards(site):
-    # four cards, one building: a rare name on one villa drawn in four LOD1 parts is still rare (Task 5's rule)
+    # four cards, one building: a rare name on one villa drawn in four LOD1 parts is still rare
     import pandas as pd
     data = site.parents[2] / "data"
     for g in (2, 3, 4, 8):
@@ -213,7 +213,7 @@ def test_d35_counts_buildings_not_cards(site):
     y.loc[y.gid.isin([2, 3, 4, 8]), "raa_id"] = "one-shared-record"
     y.to_parquet(data / "years.parquet")
     assert check(site) == [f"cards: 04.json gid 4 is in a private-house category and names 1 architect(s) found on "
-                           f"{city.ARCHITECT_MAX_RARE} cards or fewer (D35)"]
+                           f"{city.ARCHITECT_MAX_RARE} cards or fewer"]
 
 
 @pytest.mark.parametrize(("change", "message"), [
@@ -246,7 +246,7 @@ def card_of(site, gid):
 
 
 def test_a_rebuild_on_a_card_that_is_not_curated_fails(site):
-    # Task 11a: rebuild lines and older cellars are a hand-checked entry's, checked against its article; gid 0 is
+    # Rebuild lines and older cellars are a hand-checked entry's, checked against its article; gid 0 is
     # RAÄ-dated and gid 10 Wikidata-dated
     edit_card(site, 0, {**card_of(site, 0), "rebuilt": [[1700, "rebuilt"]]})
     edit_card(site, 10, {**card_of(site, 10), "cellars": True})

@@ -1,4 +1,4 @@
-"""Load the City LOD1 buildings into data/buildings.parquet (contract C3).
+"""Load the City LOD1 buildings into data/buildings.parquet.
 
 Input: data/raw/city/lod1/<district>/Byggnad.shp (13 MULTIPATCH shapefiles, EPSG:3011) and
 data/raw/city/stadsdelar/Stadsdel.shp (117 stadsdelar; their union is the municipality), both from s00_fetch_city.
@@ -17,10 +17,10 @@ FLOOR_TOL of the feature's lowest z. Cleaning runs in this order (counts are pri
   7. simplify by city.SIMPLIFY (topology preserved) and normalise the geometry;
   8. gid = rank after a stable sort by (uuid or "", oid, centroid x, centroid y).
 prod_year is the year of PROD_DATE, when the City first digitised the object (the earliest over an OID's pieces; 0
-when missing). It is an upper bound on the build year and the estimate tier's "probably new" gate (Plan 2); it
+when missing). It is an upper bound on the build year and the estimate tier's "probably new" gate; it
 never ships. fnr is the LOD1 FNR, the property-unit key (int64, the smallest over an OID's pieces; 0 when missing,
 as for the City's unregistered buildings): a high key is a property unit formed late, the estimate tier's second
-"probably new" gate (Task 14b). Like FASTIGHET it is internal and never ships (s99 checks). Outside fixture builds,
+"probably new" gate. Like FASTIGHET it is internal and never ships (s99 checks). Outside fixture builds,
 fewer than city.MIN_BUILDINGS buildings stops the run before anything is written.
 """
 import argparse
@@ -203,7 +203,7 @@ def load_boundary(path: Path = STADSDELAR):
 
 
 def clean(raw: gpd.GeoDataFrame, boundary=None, fixture: bool = False, log=print) -> gpd.GeoDataFrame:
-    """Raw LOD1 rows -> the C3 buildings frame. boundary=None skips step 5 (used by tests)."""
+    """Raw LOD1 rows -> the buildings frame. boundary=None skips step 5 (used by tests)."""
     b = footprints(raw)
     b = b[~b.geometry.isna() & ~b.geometry.is_empty].reset_index(drop=True)
     log(f"rows in: {len(raw):,} (footprints: {len(b):,})")

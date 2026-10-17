@@ -1,7 +1,7 @@
 """Tiny synthetic inputs shaped like the real ones, for unit tests that must not touch the network.
 
     from tests import synth            # the repo root is on sys.path through pytest's pythonpath = ["."]
-    b = synth.buildings(3)             # C3 data/buildings.parquet
+    b = synth.buildings(3)             # data/buildings.parquet
     y = synth.years(b.gid, year=[1650, 1931, 0], yflag=[EXACT, RANGE, UNKNOWN])
     a = synth.attributes(b.gid, floors=[5, 4, 2])
     raw = synth.lod1_raw([{"footprint": synth.square(0, 0)}, {"footprint": synth.square(30, 0), "UUID": None}])
@@ -42,7 +42,7 @@ def _column(value, n: int) -> list:
 
 
 def buildings(n: int = 3, *, rows: Sequence[dict] | None = None) -> gpd.GeoDataFrame:
-    """C3 data/buildings.parquet. Default: n Flerbostadshus, 10 m squares, 20 m apart, east of the origin,
+    """data/buildings.parquet. Default: n Flerbostadshus, 10 m squares, 20 m apart, east of the origin,
     20 m tall on ground 5 m, first digitised in 2003, on early-formed property units (fnr 10,100,000 + i, below
     city.ESTIMATE's late_unit_fnr). `rows` (length n) holds per-building overrides, including 'geometry'."""
     rows = list(rows) if rows is not None else [{} for _ in range(n)]
@@ -88,9 +88,9 @@ def villa_blocks(extra=(), base_year: int = 1946) -> tuple[gpd.GeoDataFrame, np.
 
 
 def years(gids, **columns) -> pd.DataFrame:
-    """C3 data/years.parquet. Defaults: year 0, yflag UNKNOWN, ysrc SRC_NONE, private False. year_from/year_to
+    """data/years.parquet. Defaults: year 0, yflag UNKNOWN, ysrc SRC_NONE, private False. year_from/year_to
     default to year, period to city.period_index(year). Each keyword is a scalar or one value per gid.
-    A private house (D18) is given as published: year = decade start, year_to = year + 9, private=True, and
+    A private house is given as published: year = decade start, year_to = year + 9, private=True, and
     period from the real year (pass it explicitly)."""
     gids = list(gids)
     n = len(gids)
@@ -114,7 +114,7 @@ def years(gids, **columns) -> pd.DataFrame:
 
 
 def attributes(gids, **columns) -> pd.DataFrame:
-    """C3 data/attributes.parquet. Defaults: floors 0, fsrc FLOORS_HEIGHT, rating 0, architects [], name ""."""
+    """data/attributes.parquet. Defaults: floors 0, fsrc FLOORS_HEIGHT, rating 0, architects [], name ""."""
     gids = list(gids)
     n = len(gids)
     architects = columns.pop("architects", None)

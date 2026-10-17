@@ -1,4 +1,4 @@
-// Search (Plan 4b, Task 5; spec §4.4, §4.8): the keyboard, the combobox, a pick that flies and opens the card, a street,
+// Search: the keyboard, the combobox, a pick that flies and opens the card, a street,
 // the phone sheet and ?q=. Runs on whatever web/data/current.json names (the fixture in CI, the whole city on a
 // laptop): it reads an address, a street and a named building from the build's own index.
 import { test, expect } from '@playwright/test';

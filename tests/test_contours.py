@@ -1,4 +1,4 @@
-"""pipeline/contours.py (Plan 3, Task 4): heights for the City's contour lines and the TIN source."""
+"""pipeline/contours.py: heights for the City's contour lines and the TIN source."""
 import geopandas as gpd
 import numpy as np
 import pytest
@@ -64,7 +64,7 @@ def test_unlabelled_lines_are_inferred_from_the_labelled_ones_and_rounded():
     assert np.isnan(out[3]) and src[3] == ""
 
 
-# A quay under a cliff (Task 12: Söder Mälarstrand, Slussen and Stadsgården). A strait of sea (x 10..190) between two
+# A quay under a cliff (Söder Mälarstrand, Slussen and Stadsgården). A strait of sea (x 10..190) between two
 # hills; on the west a long unlabelled line runs along the quay at the water (x = 5), the labelled lines climb the
 # cliff behind it (20, 30 and 40 m at x = -30, -40, -50), and one more unlabelled line lies between the first two. The
 # far shore has labelled lines too, so the quay line lies inside the labelled lines' hull, as in the city.

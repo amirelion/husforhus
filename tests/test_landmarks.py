@@ -1,4 +1,4 @@
-"""The curated landmark seed (Task 10)."""
+"""The curated landmark seed."""
 import re
 
 import pytest
@@ -9,7 +9,7 @@ from pipeline.fetch import UA
 from pipeline.landmarks import LANDMARKS
 
 KEYS = {"name", "qid", "lat", "lon", "year", "year_from", "year_to", "source", "checks"}
-OPTIONAL = {"timeline", "rebuilt", "cellars", "point"}     # Plan 4a: Task 10's priority, Task 11a's three
+OPTIONAL = {"timeline", "rebuilt", "cellars", "point"}     # the priority, then the rebuild, cellar and point fields
 REQUIRED = {"Riddarholmskyrkan", "Storkyrkan", "Riddarhuset", "Stockholms slott", "Stockholms stadshus",
             "Stockholms stadsbibliotek", "Kaknästornet", "Avicii Arena"}
 
@@ -21,7 +21,7 @@ def test_every_entry_is_complete_and_consistent():
         if "point" in L:      # a hand-checked point says why it is not the item's P625, and where it comes from
             assert set(L["point"]) == {"reason", "source"}, L["name"]
             assert all(isinstance(v, str) and v.strip() for v in L["point"].values()), L["name"]
-        # a Wikidata item, or "" for a building that has none (Task 12): then its point is hand-checked
+        # a Wikidata item, or "" for a building that has none: then its point is hand-checked
         assert re.fullmatch(r"Q\d+", L["qid"]) or (L["qid"] == "" and "point" in L), L["name"]
         assert re.fullmatch(r"(sv|en):.+", L["source"]), L["name"]
         assert 1000 <= L["year_from"] <= L["year"] <= L["year_to"] <= 2026, L["name"]
@@ -45,12 +45,12 @@ def test_coordinates_are_the_wikidata_p625():
         r.raise_for_status()
         entities.update(r.json()["entities"])
     for L in LANDMARKS:
-        if not L["qid"]:      # Task 12: no item, so no P625 to hold the point to (the offline test wants its `point`)
+        if not L["qid"]:      # no item, so no P625 to hold the point to (the offline test wants its `point`)
             continue
         claims = entities[L["qid"]]["claims"]
         p31 = {c["mainsnak"]["datavalue"]["value"]["id"] for c in claims.get("P31", [])}
         assert "Q4167410" not in p31, f'{L["name"]}: {L["qid"]} is a disambiguation page'
-        if "point" in L:      # Task 11a: a hand-checked point, not the P625; s02_years still places it within 15 m
+        if "point" in L:      # a hand-checked point, not the P625; s02_years still places it within 15 m
             assert L["point"]["reason"].strip() and L["point"]["source"].strip(), L["name"]
             continue
         coord = claims["P625"][0]["mainsnak"]["datavalue"]["value"]

@@ -1,4 +1,4 @@
-"""RAÄ's OLD register file as a year source (Plan 2 tier `raa_old`, right after `raa`; docs/research/2026-10-15-data-hunt.md §3).
+"""RAÄ's OLD register file as a year source (the `raa_old` tier, right after `raa`).
 
 The file (s00_fetch_raa_old) holds the old building register's Nybyggnad years for all of Sweden, CC0, published
 "during a transition period". About 818 Stockholm footprints that today's RAÄ data no longer dates get a year from

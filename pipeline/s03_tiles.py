@@ -2,7 +2,7 @@
 
 Adapted from upstream reference/amsterdam/pipeline/s03_tiles.py
 (alexbarakov/amsterdam-by-building, MIT, Copyright (c) 2026 alexbarakov): pad4, rings_of, pack_tile and the
-centre-out packs keep upstream's shape. The layout is contract C4 ('HFH1'); the outputs are contract C5.
+centre-out packs keep upstream's shape. The layout is 'HFH1' (web/tiles.js reads it).
 
 Local frame: metres from Stortorget, x east, z south (three.js, y up). Tile layout (little-endian, every
 section 4-byte aligned):
@@ -14,13 +14,13 @@ section 4-byte aligned):
   V       i16 xz[2*nV], decimetres from the tile origin
 One part per building in v1. s01_load has already simplified footprints at city.SIMPLIFY.
 
-Plan 4a (contract C21): a card also carries the English label, protection and the year it was decided, the Wikidata
+A card also carries the English label, protection and the year it was decided, the Wikidata
 item, the languages with an article, the photo's credit and whether to leave the floors row out (s02_attributes,
-s06_wiki); a curated card also its rebuilds and older cellars (Task 11a, s08_landmarks' entries); Wikipedia excerpts
-go to their own shards wiki/NN.json (CC BY-SA 4.0, spec §6.1), and photos.json lists the photos this version uses
+s06_wiki); a curated card also its rebuilds and older cellars (s08_landmarks' entries); Wikipedia excerpts
+go to their own shards wiki/NN.json (CC BY-SA 4.0), and photos.json lists the photos this version uses
 (scripts/build_dist.py ships them from web/data/photos/); photo-gids.json the sorted gids whose card has a photo
-(the legend's "Only buildings with photos" switch, web/photos.js). No private house that is not curated carries a RAÄ link, a
-Wikidata item, an article, a photo or an excerpt (D18, D34). stockholm.json gains the link templates (city.LINKS) and
+(the legend's "Only buildings with photos" switch). No private house that is not curated carries a RAÄ link, a
+Wikidata item, an article, a photo or an excerpt. stockholm.json gains the link templates (city.LINKS) and
 the timeline's landmarks.
 """
 import argparse
@@ -46,9 +46,9 @@ SOURCES = Path(__file__).with_name("sources.yml")
 CURRENT = Path("web/data/current.json")
 N_CARD_SHARDS = 64
 MAX_TILE_BUILDINGS = 65535  # the worker indexes buildings in a tile with a Uint16 attribute
-LATEST_YEAR = 2026          # C5's cap on histogram years (s99's YEAR_MAX): no bin lies after it
+LATEST_YEAR = 2026          # the cap on histogram years (s99's YEAR_MAX): no bin lies after it
 
-# One fixed 24-byte record per gid (contract C5).
+# One fixed 24-byte record per gid.
 ATTR_DTYPE = np.dtype([
     ("h_dm", "<u2"), ("fsrc", "u1"), ("yflag", "u1"),
     ("year", "<i2"), ("year_from", "<i2"), ("year_to", "<i2"),
@@ -86,7 +86,7 @@ def rings_of(geom):
 
 
 def pack_tile(origin, rows) -> bytes:
-    """One tile (contract C4). `origin` is the tile corner (x, z) in local metres. Each row is a dict with
+    """One tile. `origin` is the tile corner (x, z) in local metres. Each row is a dict with
     gid, year, yflag, period, floors, ground_dm, height (m) and geometry (EPSG:3011 Polygon/MultiPolygon)."""
     ox, oz = float(origin[0]), float(origin[1])
     gid, year, yflag, period, floors, ground, part_start = [], [], [], [], [], [], [0]
@@ -131,8 +131,8 @@ def pack_tile(origin, rows) -> bytes:
 
 
 def load(data: Path = DATA) -> pd.DataFrame:
-    """buildings ⋈ years ⋈ attributes on gid (contract C3), sorted by gid, gids exactly 0..n-1, with the ground,
-    height and floors s02_terrain settled (data/ground.parquet, contract C15)."""
+    """buildings ⋈ years ⋈ attributes on gid, sorted by gid, gids exactly 0..n-1, with the ground,
+    height and floors s02_terrain settled (data/ground.parquet)."""
     b = gpd.read_parquet(data / "buildings.parquet")
     y = pd.read_parquet(data / "years.parquet")
     a = pd.read_parquet(data / "attributes.parquet")
@@ -182,7 +182,7 @@ def load_landmarks(data: Path = DATA) -> list[dict]:
 
 def load_places(data: Path = DATA) -> dict:
     """s02_addresses' outputs: {"addresses": addresses.parquet without its withheld rows, "districts":
-    districts.parquet} (contract C26)."""
+    districts.parquet}."""
     for name in ("addresses.parquet", "districts.parquet"):
         if not (data / name).exists():
             raise SystemExit(f"{data / name} is missing: run s02_addresses")
@@ -228,7 +228,7 @@ def with_places(df: pd.DataFrame, places: dict) -> pd.DataFrame:
 
 def district_codes(df: pd.DataFrame) -> tuple[list[str], np.ndarray]:
     """(the stadsdelar's display names, sorted; one byte per gid: 1 + its stadsdel's place in that list, 0 for none):
-    districts.bin.gz and stockholm.json `districts` (contract C26)."""
+    districts.bin.gz and stockholm.json `districts`."""
     names = sorted({d for d in df.dist if d})
     code = {d: i + 1 for i, d in enumerate(names)}
     if len(names) > 255:
@@ -242,7 +242,7 @@ def no_wiki() -> dict:
 
 
 def load_accuracy(data: Path = DATA) -> dict:
-    """The estimate tier's accuracy table (contract C10), written by s02_years next to years.parquet."""
+    """The estimate tier's accuracy table, written by s02_years next to years.parquet."""
     path = data / "accuracy.json"
     if not path.exists():
         raise SystemExit(f"{path} is missing: run s02_years (it writes the accuracy table with years.parquet)")
@@ -250,7 +250,7 @@ def load_accuracy(data: Path = DATA) -> dict:
 
 
 def join(b: gpd.GeoDataFrame, y: pd.DataFrame, a: pd.DataFrame, g: pd.DataFrame | None = None) -> gpd.GeoDataFrame:
-    """g (ground.parquet: gid, ground, height, floors) replaces those three columns when given (Plan 3)."""
+    """g (ground.parquet: gid, ground, height, floors) replaces those three columns when given."""
     if g is not None:
         if len(g) != len(b):
             raise ValueError(f"row counts differ: buildings {len(b)}, ground {len(g)} (run s02_terrain again)")
@@ -264,7 +264,7 @@ def join(b: gpd.GeoDataFrame, y: pd.DataFrame, a: pd.DataFrame, g: pd.DataFrame 
         raise ValueError("gids are not exactly 0..n-1")
     bad = ~df.yflag.isin(list(FLAG_NAMES))
     if bad.any():
-        raise ValueError(f"{int(bad.sum())} rows have a yflag outside contract C2 (gid {int(df.gid[bad].iat[0])})")
+        raise ValueError(f"{int(bad.sum())} rows have a yflag outside codes.py (gid {int(df.gid[bad].iat[0])})")
     c = shapely.centroid(df.geometry.values)
     df["x"], df["z"] = city.to_local(shapely.get_x(c), shapely.get_y(c))
     return df
@@ -325,9 +325,9 @@ def attrs_array(df: pd.DataFrame) -> np.ndarray:
 
 
 def hidden(df: pd.DataFrame) -> np.ndarray:
-    """Per row, True where the card links nothing that could give the exact year (D18, D34): a row marked private, or
+    """Per row, True where the card links nothing that could give the exact year: a row marked private, or
     any non-curated building whose `kategori` is in city.PRIVATE_HOUSE_KATEGORI, dated or not. RAÄ's page, a Wikidata
-    item, an article, an excerpt or a photo page would state the year that D18 rounds to a decade."""
+    item, an article, an excerpt or a photo page would state the year that a private house shows only as its decade."""
     return df.private.to_numpy(bool) | (df.kategori.isin(city.PRIVATE_HOUSE_KATEGORI).to_numpy()
                                         & (df.ysrc.to_numpy() != codes.SRC_CURATED))
 
@@ -341,7 +341,7 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
     (qid, wname, wname_en, langs, photo), s02_attributes' (prot, since, nofloors) and with_places' (addr, addrn);
     `photos` maps a photo key to its credit (s06_wiki's photos.json). On a `hidden` row: no raa, qid, wp, photo or
     English label, and no address when city.PRIVATE_ADDRESSES is False. `landmarks` are s08_landmarks' entries: a
-    curated row (years.parquet `landmark`) takes its entry's `rebuilt`, by year, and `cellars` (Task 11a); no other
+    curated row (years.parquet `landmark`) takes its entry's `rebuilt`, by year, and `cellars`; no other
     row does."""
     photos = photos or {}
     shards = [{} for _ in range(N_CARD_SHARDS)]
@@ -383,7 +383,7 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
             card["rebuilt"] = sorted([int(y), str(k)] for y, k in entry["rebuilt"])
         if entry and entry.get("cellars") is True:
             card["cellars"] = True
-        # Plan 4b: the first address (and how many there are); a private house's too, unless decision 3 (Plan 4b)
+        # The first address (and how many there are); a private house's too, unless city.PRIVATE_ADDRESSES
         # says otherwise (city.PRIVATE_ADDRESSES)
         addr = _text(col["addr"][i])
         if addr and (city.PRIVATE_ADDRESSES or not hide[i]):
@@ -397,7 +397,7 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
 
 def wiki_shards(df: pd.DataFrame, extracts: dict) -> list[dict]:
     """64 shards keyed by gid % 64, {"licence": "CC BY-SA 4.0", "items": {gid: {lang: {t, r}}}}: the excerpts, in
-    files of their own (spec §6.1), never for a `hidden` row."""
+    files of their own, never for a `hidden` row."""
     shards = [{"licence": WIKI_LICENCE, "items": {}} for _ in range(N_CARD_SHARDS)]
     ok = dict(zip(df.gid.astype(int), ~hidden(df)))
     for g, langs in sorted(extracts.items(), key=lambda kv: int(kv[0])):
@@ -408,7 +408,7 @@ def wiki_shards(df: pd.DataFrame, extracts: dict) -> list[dict]:
 
 def timeline_landmarks(df: pd.DataFrame, landmarks: list[dict]) -> list[dict]:
     """The verified landmarks with a timeline priority, as placed (years.parquet `landmark`): name, year, gid, x, z
-    and the priority; never a private-category house (D18), sorted by year then name."""
+    and the priority; never a private-category house, sorted by year then name."""
     placed = {n: i for i, n in enumerate(df.landmark) if isinstance(n, str) and n}
     private = df.kategori.isin(city.PRIVATE_HOUSE_KATEGORI).to_numpy()
     out = []
@@ -434,7 +434,7 @@ RECORD_SRCS = (codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_OLD, codes.SRC_WI
 
 
 def about_stats(df: pd.DataFrame, cards: list[dict]) -> dict:
-    """stockholm.json `about` (Plan 4b, contract C28): the numbers web/about.js writes into About that `stats` and
+    """stockholm.json `about`: the numbers web/about.js writes into About that `stats` and
     `accuracy` do not hold already, counted over what ships (the cards), and who made the map. Counts only: no
     building, name or address."""
     from .report_accuracy import fewest_private_years
@@ -469,7 +469,7 @@ def stable_hash(gid: int) -> int:
 def histogram_years(df: pd.DataFrame) -> np.ndarray:
     """The year each building counts under in the histograms. Private houses publish only their decade start,
     so they are spread over the decade by a stable hash of the gid (no spike every ten years), capped at 2026:
-    C5's min(year + stable_hash(gid) % 10, 2026). That is an aggregate only; no per-building year is implied."""
+    min(year + stable_hash(gid) % 10, 2026). That is an aggregate only; no per-building year is implied."""
     year = df.year.to_numpy(np.int64).copy()
     private = df.private.to_numpy(bool)
     spread = np.array([stable_hash(g) % 10 for g in df.gid[private]], dtype=np.int64)
@@ -497,8 +497,8 @@ DTM_SOURCE = "lm_markhojd"   # sources.yml: Lantmäteriet's terrain model, credi
 
 def attribution(sources: list[dict], terrain_source: str = "dtm") -> list[dict]:
     """CC BY attribution needs the licence name and a link to it, next to the source. Lantmäteriet's terrain is
-    credited only when the terrain came from it (a contour build uses the Stadskarta, credited already). Plan 4b adds
-    the source's words in the map's corner credit where it has them (sources.yml corner), and D44's line, which About
+    credited only when the terrain came from it (a contour build uses the Stadskarta, credited already). It adds
+    the source's words in the map's corner credit where it has them (sources.yml corner), and the standard credit line ("Dataset: publisher, licence"), which About
     lists: `credit`, {en, sv}, "Dataset: publisher, licence" plus ", processed" / ", bearbetad" (sources.credit)."""
     return [{"id": s["id"], "text": s["attribution"], "url": s["url"], "licence": s["licence"],
              "licence_url": s["licence_url"], **({"corner": s["corner"]} if s.get("corner") else {}),
@@ -507,7 +507,7 @@ def attribution(sources: list[dict], terrain_source: str = "dtm") -> list[dict]:
 
 
 def terrain_config(record: dict) -> dict:
-    """stockholm.json's `terrain` (contract C17): the grid as s02_terrain built it and the viewer's defaults."""
+    """stockholm.json's `terrain`: the grid as s02_terrain built it and the viewer's defaults."""
     t = city.TERRAIN
     return {"file": "terrain.bin.gz", "source": record["source"], "x0": record["x0"], "z0": record["z0"],
             "cell": record["cell"], "nx": record["nx"], "nz": record["nz"], "waterZ": record["water_z"],

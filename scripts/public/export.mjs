@@ -44,7 +44,7 @@ export function parseLeaks(text) {
 }
 
 // The owner's name is allowed only on LICENSE's copyright lines, in the test that checks them, and as the maker
-// (Plan 4b's decision 2, answered 2026-10-17: About names the maker as the GDPR controller) on pipeline/city.py's
+// (decided 2026-10-17: About names the maker as the GDPR controller) on pipeline/city.py's
 // MAKER line alone; the project's own address only on its CONTACT line. Nothing else on those lines.
 function allowed(rule, file, line) {
   if (file === 'pipeline/city.py') {

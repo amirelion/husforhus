@@ -109,7 +109,7 @@ test('the page has the button, labelled by its id (ui.north) in English and Swed
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   // The tooltip names the key; the label does not (a screen reader reads aria-keyshortcuts for that).
   assert.match(html, /<button class="north-open" aria-label="Face north" title="Face north \(N\)" aria-keyshortcuts="N">/);
-  // Plan 4b: app.js's SV_UI table moved to web/i18n by id
+  // App.js's SV_UI table moved to web/i18n by id
   const en = JSON.parse(readFileSync(new URL('../i18n/en.json', import.meta.url), 'utf8'));
   const sv = JSON.parse(readFileSync(new URL('../i18n/sv.json', import.meta.url), 'utf8'));
   assert.equal(en['ui.north'], 'Face north');

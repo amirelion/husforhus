@@ -1,4 +1,4 @@
-// The corner credit (Plan 4b, Task 9; spec §4.5): visible without interaction, the sources' own words, OpenStreetMap
+// The corner credit: visible without interaction, the sources' own words, OpenStreetMap
 // linked to its copyright page, "Sources" into About; on a phone it folds to (i) after 5 s.
 import { test, expect } from '@playwright/test';
 
@@ -6,7 +6,7 @@ async function open(page) {
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
 }
-// The build's own credits: Lantmäteriet only on a build whose terrain came from its model (Plan 3).
+// The build's own credits: Lantmäteriet only on a build whose terrain came from its model.
 const attribution = page => page.evaluate(async () => {
   const { version } = await (await fetch('data/current.json')).json();
   return (await (await fetch(`data/${version}/stockholm.json`)).json()).attribution;

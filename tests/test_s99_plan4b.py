@@ -1,4 +1,4 @@
-"""s99_validate's Plan 4b rules: the card's address and district (Task 2), the search index (Task 3). The `site`
+"""s99_validate's rules for the card's address and district, the search index. The `site`
 fixture comes from tests/test_s99_validate.py (the tiny city now has addresses, districts and a search index)."""
 import json
 
@@ -104,7 +104,7 @@ def test_search_is_required_once_the_feature_is_on(site):
 
 
 def test_a_misshapen_search_index_is_reported_not_raised(site):
-    # s99 reports what is wrong with valid JSON of the wrong shape, as it does for cards (Task 3's review)
+    # s99 reports what is wrong with valid JSON of the wrong shape, as it does for cards
     index = json.loads((site / "search" / "index.json").read_text())
 
     def run(edit, shard=None):

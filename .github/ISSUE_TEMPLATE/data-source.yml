@@ -1,0 +1,33 @@
+name: New data source
+description: "Suggest an open dataset the map could use. / Föreslå en ny datakälla."
+title: "[Source] "
+labels: [data-source]
+body:
+  - type: input
+    id: dataset
+    attributes:
+      label: Dataset
+      description: "Datamängd. Its name and publisher. / Namn och utgivare."
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link
+      description: "Länk."
+    validations:
+      required: true
+  - type: input
+    id: licence
+    attributes:
+      label: Licence
+      description: "Licens. For example CC0, CC BY 4.0, ODbL. / Till exempel CC0, CC BY 4.0, ODbL."
+    validations:
+      required: true
+  - type: textarea
+    id: adds
+    attributes:
+      label: What it adds
+      description: "Vad den tillför. Which buildings or details it would improve. / Vilka byggnader eller uppgifter den skulle förbättra."
+    validations:
+      required: true

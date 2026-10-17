@@ -1,5 +1,5 @@
-"""The estimate tier of the year model (spec §3.3, D6): kNN years from dated neighbours, the accuracy table and the
-rule that decides ESTIMATE, PERIOD or UNKNOWN. Measured in docs/research/2026-10-15-estimates-prototype.md.
+"""The estimate tier of the year model: kNN years from dated neighbours, the accuracy table and the
+rule that decides ESTIMATE, PERIOD or UNKNOWN. Measured on a prototype before it shipped.
 
 Feature space (city.ESTIMATE): centroid x and y over L; w_height * ln(height); w_area * ln(area); w_compact *
 compactness; a penalty added in quadrature when the KATEGORI group differs; and, in production only, kvarter_bonus
@@ -11,7 +11,7 @@ approximation: the full add-on measured 0.1 y of gain and is not implemented). T
 training centroid.
 
 Accuracy: folds-fold cross-validation with whole kvarter held out, on every building with a building-level year.
-Every one of them trains, but only the test buildings the map could estimate are scored (Task 14b, "measure what
+Every one of them trains, but only the test buildings the map could estimate are scored ("measure what
 the map estimates"): a building in never_groups, first digitised in late_prod_year or later, or on a late-formed
 property unit (fnr above late_unit_fnr) is a neighbour for the others and never counts in a cell, a fallback row,
 the band coverage or by_true_period (gated). A cell is KATEGORI group x era of the *estimated* year x inner/outer
@@ -31,10 +31,10 @@ give_period on). Else by its cell: "estimate" gives ESTIMATE with the cell's ban
 give_period on), "unknown" gives UNKNOWN; not measurable falls back to the group x inner/outer row, PERIOD when
 that row reads "period" (with give_period on), else UNKNOWN. period_only_stadsdelar: still-unknown buildings in
 those stadsdelar get PERIOD when they pass the gates above (with give_period on); an M3 review lever, off by
-default. With Task 14b's defaults (estimate_groups {"house"}, give_period False) the rule gives houses ESTIMATE or
+default. With the defaults of 2026-10-15 (estimate_groups {"house"}, give_period False) the rule gives houses ESTIMATE or
 UNKNOWN and every other building UNKNOWN.
 
-The independent check (check_external, C10's external entry): the map's own rule (kvarter bonus, decide with the
+The independent check (check_external, the accuracy table's external entry): the map's own rule (kvarter bonus, decide with the
 built table) on buildings that only Wikidata or OpenStreetMap date, trained on the curated and RAÄ-dated buildings
 alone, counted per map state and split at SPLIT_YEAR.
 """
@@ -60,11 +60,11 @@ TRAKT = re.compile(r"^(.*?)\s+(\d+):(\d+)$")    # "SUNDBY 5:6"  -> trakt block S
 GRID_M = 250.0                                  # a building without a designation: its 250 m grid cell stands in
 PERIOD_KEYS = [q[0] for q in city.PERIODS]
 SPLIT_YEAR = 1990                               # the external check counts true years before it and from it apart
-# The keys of the table cross_validate returns: C10's accuracy table without "area", "external" and "result" (added by
-# run and s02_years). Not s99_validate.TABLE_KEYS, which is C10's whole set of 15.
+# The keys of the table cross_validate returns: the accuracy table without "area", "external" and "result" (added by
+# run and s02_years). Not s99_validate.TABLE_KEYS, which is the table's whole set of 15.
 CV_KEYS = ("method", "held_out", "folds", "near_m", "min_cell", "min_right", "max_band", "tested", "cells",
            "fallback", "band_coverage", "by_true_period")
-SPLIT_KEYS = ("n_all", "n_estimate", "right_estimate", "in_band_estimate")   # C10's external split at SPLIT_YEAR
+SPLIT_KEYS = ("n_all", "n_estimate", "right_estimate", "in_band_estimate")   # the external split at SPLIT_YEAR
 
 
 def era_of(years) -> np.ndarray:
@@ -84,7 +84,7 @@ def score(pred, truth) -> dict:
     """The accuracy numbers of estimated years `pred` against known years `truth` (equal-length arrays, at least one
     row): {"median_error": the median absolute error in years, "right_period": the share whose estimate falls in the
     true year's period (city.period_indices, which rounds first), to 3 decimals}. The one scoring rule of the table:
-    the cells and fallback rows here, and s02_years' area and external checks (Task 7), merge this dict as it is."""
+    the cells and fallback rows here, and s02_years' area and external checks, merge this dict as it is."""
     pred, truth = np.asarray(pred, dtype=float), np.asarray(truth, dtype=float)
     right = city.period_indices(pred) == city.period_indices(truth)
     return {"median_error": float(np.median(np.abs(pred - truth))), "right_period": round(float(right.mean()), 3)}
@@ -237,7 +237,7 @@ def status_of(group: str, right: float, band, p) -> str:
     """What the map does with a measurable cell (band: its band) or fallback row (band None): "estimate" for a group
     in estimate_groups at least min_right right with a band within max_band; "period" for such a group right
     enough but wider (or a fallback row) when give_period is on; else "unknown". The table's statuses say what the
-    map does (Task 14b), from the right_period it reports (3 decimals), so its numbers and statuses always agree."""
+    map does, from the right_period it reports (3 decimals), so its numbers and statuses always agree."""
     if group not in p["estimate_groups"] or right < p["min_right"]:
         return "unknown"
     if band is not None and band <= p["max_band"]:
@@ -288,8 +288,8 @@ def _by_true_period(t: pd.DataFrame, cells: list[dict]) -> list[dict]:
 
 
 def cross_validate(f: pd.DataFrame, years, dated, p=None) -> dict:
-    """The accuracy table (contract C10) from the rows marked dated, their years and the feature frame: the CV_KEYS,
-    that is C10's table without "result" (run adds it), "area" and "external" (s02_years adds both, Task 7). Every
+    """The accuracy table from the rows marked dated, their years and the feature frame: the CV_KEYS,
+    that is the accuracy table without "result" (run adds it), "area" and "external" (s02_years adds both). Every
     dated row trains; the gated ones are not scored (see the module docstring)."""
     p = city.ESTIMATE if p is None else p
     years = np.asarray(years, dtype=float)
@@ -400,19 +400,19 @@ def run(f: pd.DataFrame, years, dated, query, p=None, stadsdel=None) -> tuple[pd
 
 
 def no_external() -> dict:
-    """C10's external entry when there is nothing to check (no Wikidata or OSM row, or the estimate tier is off)."""
+    """The accuracy table's external entry when there is nothing to check (no Wikidata or OSM row, or the estimate tier is off)."""
     zero = dict.fromkeys(SPLIT_KEYS, 0)
     return {"status": "not measurable", **zero, "n_unknown": 0, "before_1990": dict(zero), "from_1990": dict(zero)}
 
 
 def check_external(f: pd.DataFrame, years, train, test, table: dict, p=None, stadsdel=None) -> dict:
-    """The independent check (C10's external entry): the map's own rule run on the `test` rows as if they had no
+    """The independent check (the accuracy table's external entry): the map's own rule run on the `test` rows as if they had no
     year, trained on the `train` rows alone: knn with the production kvarter bonus, then decide with the built
     `table` and every gate. s02_years passes the curated + raa + raa_old rows as train and the rows only Wikidata or
     OpenStreetMap date as test.
 
     Counted per map state: n_all (test rows), n_estimate (rows the map would estimate), right_estimate (of those, the
-    estimated year, rounded to a whole year before any D18 decade rounding, in the true year's period),
+    estimated year, rounded to a whole year before a private house's decade rounding, in the true year's period),
     in_band_estimate (of those, the true year within the estimated year ± the cell's band, clamped to 1000..2026 as
     s02_years clamps a non-private estimate's range; a private house publishes its decade instead, so this is the
     band the test measures, not a range the map shows), n_unknown; and the four counts split at SPLIT_YEAR into

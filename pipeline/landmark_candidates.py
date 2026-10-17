@@ -1,4 +1,4 @@
-"""The curated list's candidates, for whoever grows pipeline/landmarks.py (Plan 4a, Task 12; spec §3.2 s08_landmarks).
+"""The curated list's candidates, for whoever grows pipeline/landmarks.py.
 
     uv run python -m pipeline.landmark_candidates          # writes data/landmark-candidates.md (internal)
 

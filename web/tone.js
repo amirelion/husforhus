@@ -15,14 +15,14 @@ export function estimateTone(h, to = '#000000') {
   return hex(c.map(v => v + (l - v) * ESTIMATE_MIX[0]).map((v, i) => v + (t[i] - v) * ESTIMATE_MIX[1]));
 }
 
-// The CSS background of a "Year unknown" chip: the look's flat colour, or on a hatched look (D29) the same fine
+// The CSS background of a "Year unknown" chip: the look's flat colour, or on a hatched look the same fine
 // diagonal hatch as the map, its lines a little wider than the map's (30% against 25%) so they read at 12 px. At -45deg
 // they rise from bottom left to top right, as the map's stripes do from the home view (roofs at about 27 degrees,
 // walls seen face on at 45). The card's band uses it too.
 export const unknownFill = th => (th.unknownHatch
   ? `repeating-linear-gradient(-45deg, ${th.unknownHatch} 0 1.5px, ${th.unknown} 1.5px 5px)` : th.unknown);
 
-// Black or white text, whichever has the higher WCAG contrast on the background (Plan 4a: the luma threshold put white
+// Black or white text, whichever has the higher WCAG contrast on the background (the luma threshold put white
 // on Classic's Funkis band at 3.92:1 and on Ärg's Stenstaden at 3.81:1, where black reads at 5.35 and 5.51).
 const relLum = h => { const c = rgb(h).map(v => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
@@ -41,5 +41,5 @@ export function oklabLin([r, g, b]) {
     0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
 }
 
-// OKLab from sRGB hex. Used to check that neighbouring periods differ in lightness, not only in hue (spec §4.8).
+// OKLab from sRGB hex. Used to check that neighbouring periods differ in lightness, not only in hue.
 export const oklab = h => oklabLin(rgb(h).map(lin));

@@ -1,4 +1,4 @@
-"""Wikidata as a year source (Plan 2, Task 5): the class rules, the year rule and the one-to-one placement, on
+"""Wikidata as a year source: the class rules, the year rule and the one-to-one placement, on
 hand-written SPARQL results."""
 import json
 from pathlib import Path
@@ -103,7 +103,7 @@ def test_year_rule_precision_values_parts_and_circa(tmp_path):
         "Q9": (0, 0, "out of range"), "Q10": (0, 0, "out of range"), "Q11": (0, 0, "out of range"),
         "Q12": (1648, 1648, ""),
     }
-    # the published year (D6): a decade its start, a circa the stated year, two distinct values the display rule
+    # the published year: a decade its start, a circa the stated year, two distinct values the display rule
     # (71 years apart: the earliest, LONG), a single value itself
     assert {q: int(it.year[q]) for q in ("Q1", "Q3", "Q4", "Q8", "Q12")} == {"Q1": 1640, "Q3": 1571, "Q4": 1986, "Q8": 1920, "Q12": 1648}
 

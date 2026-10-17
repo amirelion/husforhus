@@ -6,7 +6,7 @@ import { makeT, legacy } from '../i18n.js';
 import { cityCount, tallyTitle } from '../count.js';
 import { readFileSync } from 'node:fs';
 
-// Buildings without a year (D30, revised): left alone ('auto') they are drawn at "Today" and gone whenever the map
+// Buildings without a year: left alone ('auto') they are drawn at "Today" and gone whenever the map
 // shows the past; once the visitor flips the legend's switch, 'show' or 'hide' holds at every year. A period shown
 // alone hides them either way. Real numbers: the oldest building is from 1100 (config.yearMin) with the from-handle
 // resting just before it, "Today" is 2015 (config.yearMax).
@@ -145,7 +145,7 @@ test('left alone and with nothing playing, they are drawn exactly when the title
   }
 });
 
-// The count takes them in only where the map draws them, and only at "Today" (P17: never at a past year): with the
+// The count takes them in only where the map draws them, and only at "Today" (never at a past year): with the
 // film stopped, a city of nothing but buildings without a year counts them exactly when they are drawn and the
 // to-handle is at the end. So "1900–Today" never counts 49,804 buildings the map does not show (review F1).
 test('the count takes them in exactly when they are drawn at the end of the timeline', () => {
@@ -175,7 +175,7 @@ test('the hint says they are hidden while one period is shown alone, whatever th
 });
 
 // The hint goes through t() in app.js: every text unknownHint can return needs its id in web/i18n.js LEGACY and a
-// Swedish line in web/i18n/sv.json (Plan 4b; app.js's SV_UI before).
+// Swedish line in web/i18n/sv.json (app.js's SV_UI before).
 test('every hint has a Swedish line in web/i18n', () => {
   const load = name => JSON.parse(readFileSync(new URL(`../i18n/${name}.json`, import.meta.url), 'utf8'));
   const sv = legacy(makeT({ en: load('en'), sv: load('sv') }, 'sv'));

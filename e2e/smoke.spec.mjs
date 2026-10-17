@@ -1,4 +1,4 @@
-// Smoke test for the viewer (Plan 1, Task 20). It runs on whatever web/data/current.json points at: the
+// Smoke test for the viewer. It runs on whatever web/data/current.json points at: the
 // Gamla stan + Riddarholmen fixture in CI (HFH_FIXTURE=1), the whole city on a laptop.
 import { test, expect } from '@playwright/test';
 import { THEMES } from '../web/themes.js';
@@ -19,9 +19,9 @@ const cityConfig = page => page.evaluate(async () => {
   const { version } = await (await fetch('data/current.json')).json();
   return (await fetch(`data/${version}/stockholm.json`)).json();
 });
-// Plan 3: the terrain arrives after the first frame and rises over 1.2 s (two textures, and every building lifted).
+// The terrain arrives after the first frame and rises over 1.2 s (two textures, and every building lifted).
 // A test that counts textures or aims at a building waits for it to stand; a build without terrain does not wait. A
-// terrain that failed is final: the wait ends there and fails at once, not after 60 s (Task 11's Minor).
+// terrain that failed is final: the wait ends there and fails at once, not after 60 s.
 const terrainSettled = async page => {
   if (!(await cityConfig(page)).terrain) return;
   const stands = () => page.evaluate(() => {
@@ -40,7 +40,7 @@ test('the city loads, switches to Floors, opens a card and plays', async ({ page
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
   await expect(page).toHaveTitle('Hus för hus');
 
-  // v1.1 features stay in the page, hidden by config.features; the language switch is on since Plan 4b.
+  // v1.1 features stay in the page, hidden by config.features; the language switch is on since 2026-10-17.
   await expect(page.locator('.quests-open')).toBeHidden();
   await expect(page.locator('.modes [data-mode="3"]')).toBeHidden();
   await expect(page.locator('.lang [data-lang="sv"]')).toBeVisible();
@@ -155,7 +155,7 @@ test('a period picked from the keyboard keeps the focus on its chip', async ({ p
   expect(errors).toEqual([]);
 });
 
-// Buildings without a year (D30, revised): left alone, drawn at "Today" and gone whenever the map shows the past; the
+// Buildings without a year: left alone, drawn at "Today" and gone whenever the map shows the past; the
 // legend's switch "Show" always reads what the map does, and once flipped the choice holds at every year. uShowUnknown
 // is how far they stand, 1 to 0: app.js eases it towards web/unknown.js unknownShown, and the vertex shader draws them
 // by it.
@@ -186,7 +186,7 @@ const settleAfter = (page, selector, value) => page.evaluate(([selector, value])
   requestAnimationFrame(check);
 }), [selector, value]);
 
-test('buildings without a year stand at "Today" and leave whenever the map shows the past; the switch reads the map (D30)', async ({ page }) => {
+test('buildings without a year stand at "Today" and leave whenever the map shows the past; the switch reads the map', async ({ page }) => {
   const errors = watchErrors(page);
   await page.goto('/?film=4'); // a 4-second film, to see it end
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
@@ -197,7 +197,7 @@ test('buildings without a year stand at "Today" and leave whenever the map shows
   // A screen reader hears which row it belongs to, and the hint under it: what the switch does now.
   await expect(sw).toHaveAccessibleDescription('Year unknown Shown at “Today”, hidden in the past.');
   await expect(page.locator(HINT)).toHaveText('Shown at “Today”, hidden in the past.');
-  // The hint is on the "Year unknown" row, under the switch, not in the legend's note (Task 13 review).
+  // The hint is on the "Year unknown" row, under the switch, not in the legend's note.
   expect(await page.locator(HINT).evaluate(el => el.parentElement.matches('.swatch.unknown'))).toBe(true);
   // At load they stand, and the switch says so.
   await expect(title).toHaveText('Today');
@@ -257,7 +257,7 @@ test('buildings without a year stand at "Today" and leave whenever the map shows
   await expect(sw).toHaveAttribute('aria-pressed', 'false');
   await expect(sw).toHaveAttribute('aria-disabled', 'true');
   await expect(sw).toBeDisabled(); // as assistive technology hears it
-  await expect(page.locator(HINT)).toHaveText(SOLO_HINT); // the hint says why, not the automatic rule (review R4)
+  await expect(page.locator(HINT)).toHaveText(SOLO_HINT); // the hint says why, not the automatic rule
   await sw.click({ force: true }); // a pointer can still press it
   await expect(sw).toHaveAttribute('aria-pressed', 'false');
   expect(await standing(page)).toBe(0);
@@ -266,7 +266,7 @@ test('buildings without a year stand at "Today" and leave whenever the map shows
   await expect(sw).not.toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator(HINT)).toHaveText('Shown at “Today”, hidden in the past.');
 
-  // Nothing was chosen, so nothing is stored, and at "Today" the count is every building (P17).
+  // Nothing was chosen, so nothing is stored, and at "Today" the count is every building.
   expect(await stored(page)).toBeNull();
   await expect(page.locator(HINT)).toHaveText('Shown at “Today”, hidden in the past.');
   await expect.poll(() => shownCount(page)).toBe(config.stats.buildings);
@@ -299,7 +299,7 @@ test('the switch flipped on during Play keeps buildings without a year at every 
   await expect(play).toHaveAttribute('aria-label', 'Pause');
   expect(await standing(page)).toBe(1);
   await expect(sw).toHaveAttribute('aria-pressed', 'true');
-  // Paused in the past: drawn, but not counted at a past year (P17). Pause rounds the film's year, and the count
+  // Paused in the past: drawn, but not counted at a past year. Pause rounds the film's year, and the count
   // follows it at once, before any frame redraws it (a frame redraws the count only while the film plays): paused at
   // n + 0.6, it reads n + 1's buildings, whatever the frame rate.
   const n = config.yearMax - 50;
@@ -400,7 +400,7 @@ test('the switch flipped off at "Today" hides buildings without a year there too
   expect(errors).toEqual([]);
 });
 
-// The hint in Swedish (review R4). The language switch was off in the shipped config until Plan 4b (features.lang); this
+// The hint in Swedish. The language switch was off in the shipped config until 2026-10-17 (features.lang); this
 // run still turns it on in the page's own copy of the config, so it does not depend on that.
 test('with one period shown alone the hint is Swedish too', async ({ page }) => {
   const errors = watchErrors(page);
@@ -425,7 +425,7 @@ test('with one period shown alone the hint is Swedish too', async ({ page }) => 
   expect(errors).toEqual([]);
 });
 
-// D30's first switch stored 'always' when it was on ("Show at every year"): that is 'show' now.
+// The first unknown-year switch stored 'always' when it was on ("Show at every year"): that is 'show' now.
 test('a visitor who had "Show at every year" on keeps them at every year', async ({ page }) => {
   const errors = watchErrors(page);
   await page.addInitScript(() => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('hfh-unknown', 'always'); } });
@@ -476,7 +476,7 @@ test('the title reads "Today" at load when the oldest year is off the timeline g
   expect(config.yearMin % 50).toBe(40);
   await expect(page.locator('#year')).toHaveText('Today');
   // Only stockholm.json is changed: attrs.bin and the tiles keep the oldest buildings at their own years, so the
-  // from-handle resting before the new yearMin fades them on the map, and the count, built from attrs.bin (D20,
+  // from-handle resting before the new yearMin fades them on the map, and the count, built from attrs.bin (
   // web/count.js tallyFromAttrs), leaves them out as the map does. The test reads attrs.bin itself, apart from the
   // count's own tally: every dated record (yflag, byte 3, not 7 UNKNOWN) whose year (bytes 4–5) is before the new yearMin,
   // the init script's `first` (config.yearMin here is the faked one, read through the patched fetch).
@@ -497,7 +497,7 @@ test('the title reads "Today" at load when the oldest year is off the timeline g
 });
 
 // The Look switcher (web/look.js, web/switcher.js): each look applies at once, with no reload, and is remembered;
-// ?theme= in a link beats the remembered one. A first visit, with nothing remembered, is in Ärg (D28).
+// ?theme= in a link beats the remembered one. A first visit, with nothing remembered, is in Ärg.
 test('the look switcher changes the look in place and remembers it', async ({ page }) => {
   const errors = watchErrors(page);
   await page.goto('/');
@@ -514,7 +514,7 @@ test('the look switcher changes the look in place and remembers it', async ({ pa
       p1: `#${window.__dbg.uniforms.uPalette.value[0].getHexString()}`, hatch: window.__dbg.uniforms.uHatch.value,
       chip: chip && getComputedStyle(chip).backgroundImage, ...window.__dbg.stats() };
   });
-  // "Year unknown" is hatched in Ärg only (D29): in the shader, and on the legend chip.
+  // "Year unknown" is hatched in Ärg only: in the shader, and on the legend chip.
   const hatched = (now, id) => {
     expect(now.hatch).toBe(id === 'arg' ? 1 : 0);
     if (now.chip !== null) expect(now.chip.startsWith('repeating-linear-gradient')).toBe(id === 'arg');
@@ -635,7 +635,7 @@ test('a module that fails to run shows the failure message', async ({ page }) =>
   expect(errors).toEqual([]);
 });
 
-// The first paint is Ärg (D28) before any script runs: styles.css's own tokens, font and color-scheme, so a slow
+// The first paint is Ärg before any script runs: styles.css's own tokens, font and color-scheme, so a slow
 // app.js never shows another look first. Here app.js never arrives.
 test('the page is in Ärg before app.js runs', async ({ page }) => {
   await page.route('**/app.js', route => route.abort());
@@ -654,7 +654,7 @@ test('the page is in Ärg before app.js runs', async ({ page }) => {
   expect(css.body).toBe(`rgb(${[1, 3, 5].map(i => parseInt(arg.ui['--bg'].slice(i, i + 2), 16)).join(', ')})`);
 });
 
-// Plan 2: estimated years (area, kNN, period-only) are drawn in estimate style and can be hidden by the legend's
+// Estimated years (area, kNN, period-only) are drawn in estimate style and can be hidden by the legend's
 // switch under "Year unknown", the same switch component as that row's (a button with aria-pressed, changed in place so
 // it keeps the focus; F5). The map, the count, the legend's totals and the histogram follow, the choice is remembered,
 // and it holds in the period view only. The switch stays live with a period shown alone.
@@ -687,14 +687,14 @@ test('the hide-estimates switch takes the estimated years off the map, the count
   await expect.poll(() => shownCount(page)).toBe(config.stats.buildings);
   expect(await legendSum(page)).toBe(known + est);
   // Its own row: not part of "Year unknown", its track at the legend's left edge (under the period chips), not
-  // indented under the "Show" track. The legend's note ends with the estimates sentence (no D30 hint in it).
+  // indented under the "Show" track. The legend's note ends with the estimates sentence (no unknown-year hint in it).
   const left = sel => page.locator(sel).evaluate(el => Math.round(el.getBoundingClientRect().left));
   expect(await page.locator(HIDE_EST).evaluate(el => !!el.closest('.swatch'))).toBe(false);
   expect(await left(`${HIDE_EST} .toggle`)).toBe(await left('#panel-body .swatch[data-i="0"] > i'));
   expect(await left(`${HIDE_EST} .toggle`)).toBeLessThan(await left(`${SWITCH} .toggle`));
   await expect(page.locator('#panel-body .note')).toHaveText(
     'Click a period to see it alone. Muted, darker colours are estimates (≈): the card says whether from an area or from neighbours.');
-  await expect(page.locator('#about-body')).toContainText('houses are estimated from similar dated buildings nearby');   // Plan 4b
+  await expect(page.locator('#about-body')).toContainText('houses are estimated from similar dated buildings nearby');
 
   // On the map: the tallest estimated buildings, flown to one by one, until one is picked at the middle of the screen
   // (a taller neighbour may stand in front). Hidden, it is not drawn there, so the pick pass finds something else.
@@ -773,7 +773,7 @@ test('the hide-estimates switch takes the estimated years off the map, the count
 });
 
 // An estimate's card says "≈" (in the system font: the latin subsets lack it, W7) and its band; a private house dated by
-// its period only shows the period's name, never "Year unknown" or a decade. Plan 1's data has no kNN or period-only
+// its period only shows the period's name, never "Year unknown" or a decade. The fixture data has no kNN or period-only
 // rows, so this run turns two estimated rows (area, kNN or period-only, not private) into one of each in the page's
 // own copy of attrs.bin: both stay in the estimated set and keep their year and period, so the map and the count do
 // not change. On a build with real estimates it does the same to real rows.
@@ -787,7 +787,7 @@ test('an estimate\'s card says ≈ and ±N years; a private period-only house sh
       let buf = await r.arrayBuffer();
       const u8 = new Uint8Array(buf);
       if (u8[0] === 0x1f && u8[1] === 0x8b) buf = await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
-      // contract C5: 24-byte records; yflag at 3, year 4, year_from 6, year_to 8 (i16), ysrc 10, private 22
+      // 24-byte records; yflag at 3, year 4, year_from 6, year_to 8 (i16), ysrc 10, private 22
       const v = new DataView(buf), picked = [];
       for (let o = 0; o + 24 <= buf.byteLength && picked.length < 2; o += 24) {
         if ([3, 4, 6].includes(v.getUint8(o + 3)) && !v.getUint8(o + 22)) picked.push(o / 24);
@@ -816,7 +816,7 @@ test('an estimate\'s card says ≈ and ±N years; a private period-only house sh
   await expect(card.locator('.card-head .y')).toHaveText(`≈ ${e.year}`);
   await expect(card.locator('.card-head .y .approx')).toHaveText('≈');
   await expect(card.locator('.card-head .period')).toHaveText(config.periods[e.period].label);
-  const dating = card.locator('.dating');           // Plan 4a: one unlabelled line under the band
+  const dating = card.locator('.dating');           // one unlabelled line under the band
   await expect(dating).toHaveText('≈ estimated from similar dated buildings nearby (±6 years)');
   await expect(dating.locator('.approx')).toHaveText('≈');
   expect(await dating.locator('.approx').evaluate(el => getComputedStyle(el).fontFamily)).toMatch(/^system-ui/);
@@ -828,12 +828,12 @@ test('an estimate\'s card says ≈ and ±N years; a private period-only house sh
   await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), periodGid);
   await expect(card.locator('.card-head .y')).toHaveText(config.periods[p.period].label);
   await expect(card.locator('.card-head .period')).toHaveCount(0); // named once, in the big line
-  // Plan 4b: a pinned private house's dating line ends with "Why?", a link to About's privacy rule
+  // A pinned private house's dating line ends with "Why?", a link to About's privacy rule
   await expect(card.locator('.dating')).toHaveText('Private house: period only, estimated from neighbours Why?');
   await page.keyboard.press('Escape');
 
-  // Task 14b: every kNN estimate is a private house now, published as its decade (D18). Its card says it is an
-  // estimate and how the decade is known (D6), never the band. A real one from the build, when it has estimates (the
+  // Every kNN estimate is a private house now, published as its decade. Its card says it is an
+  // estimate and how the decade is known, never the band. A real one from the build, when it has estimates (the
   // fixture city has none).
   const privEst = await page.evaluate(n => {
     for (let g = 0; g < n; g++) { const x = window.__dbg.building(g); if (x.yflag === 4 && x.ysrc === 5 && x.private) return g; }
@@ -857,7 +857,7 @@ test('an estimate\'s card says ≈ and ±N years; a private period-only house sh
   expect(errors).toEqual([]);
 });
 
-// The switch and the legend's note in Swedish. The language switch was off in the shipped config until Plan 4b
+// The switch and the legend's note in Swedish. The language switch was off in the shipped config until 2026-10-17
 // (features.lang); this run still turns it on in the page's own copy of the config, as the Swedish hint test above does.
 test('the hide-estimates switch and the legend note are Swedish too', async ({ page }) => {
   const errors = watchErrors(page);
@@ -883,7 +883,7 @@ test('the hide-estimates switch and the legend note are Swedish too', async ({ p
 });
 
 // A period shown alone belongs to the period legend: Floors lets go of it, so the map (uMask, which Floors also
-// draws by), the legend and the count agree (D20); back in the period view every period is shown.
+// draws by), the legend and the count agree; back in the period view every period is shown.
 test('entering Floors lets go of a period shown alone, so the map, the legend and the count agree', async ({ page }) => {
   const errors = watchErrors(page);
   await page.goto('/');
@@ -996,7 +996,7 @@ const closeAbove = page => page.evaluate(() => {
   camera.position.set(controls.target.x, 400, controls.target.z + 120);
   controls.update();
 });
-// Plan 3 (Task 9b): the camera's target rides on the ground (app.js followGround, a time constant of 0.1 s), while the
+// The camera's target rides on the ground (app.js followGround, a time constant of 0.1 s), while the
 // terrain rises after the first frame. A test that holds the view still waits until the target has arrived
 // (followGround stops moving it within 1 mm), so only what the test does moves it.
 const groundSettled = async page => {
@@ -1250,7 +1250,7 @@ test('the north button stops a glide: the place and the tilt stay where they wer
   await page.mouse.move(cx + 220, cy + 120, { steps: 3 });
   await page.mouse.up();
   const pan = await pressAndHold();
-  // the place: x and z (the target's height rides on the ground, Plan 3's followGround)
+  // the place: x and z (the target's height rides on the ground, followGround)
   [0, 2].forEach(i => expect(pan.later.target[i], `target[${i}]`).toBeCloseTo(pan.at.target[i], 3));
   expect(Math.abs(pan.later.az)).toBeLessThan(1e-6);
   // A quick diagonal right-drag: the map turns and tilts on (downwards, towards a view from above, away from the

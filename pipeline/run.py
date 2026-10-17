@@ -1,8 +1,8 @@
 # pipeline/run.py
-"""Run pipeline steps in their declared order (contract C7).
+"""Run pipeline steps in their declared order.
 
     uv run python -m pipeline.run                    # every step
-    uv run python -m pipeline.run s03_tiles s04_base s07_labels   # just these, in declared order (C7: never s03_tiles alone)
+    uv run python -m pipeline.run s03_tiles s04_base s07_labels   # just these, in declared order (never s03_tiles alone)
     uv run python -m pipeline.run --list
     uv run python -m pipeline.run s99_validate -- --release   # arguments after -- go to each step's main()
 """

@@ -1,4 +1,4 @@
-// The terrain (Plan 3, contracts C16 and C18): terrain.bin.gz decoded, the ground's height anywhere, the edge fade and
+// The terrain: terrain.bin.gz decoded, the ground's height anywhere, the edge fade and
 // the meshes the terrain worker builds. No three.js here apart from what the caller passes in (a triangulator), so
 // node --test can run it (web/test/terrain.test.mjs). pipeline/terrain.py is the Python side of every function here.
 //
@@ -140,7 +140,7 @@ export function fadeWidth(param, def) {
   return Number.isFinite(v) ? Math.min(Math.max(v, 0), FADE_MAX_M) : def;
 }
 
-// The edge fade (D20, spec §4.7): per node, 255 * smoothstep(0, fadeM, d), d the distance to the nearest node outside
+// The edge fade: per node, 255 * smoothstep(0, fadeM, d), d the distance to the nearest node outside
 // the domain (a node is inside when any of its four cells is). Two-pass chamfer distance, 1 and √2 cells.
 export function fadeField(T, fadeM) {
   const { nx, nz, cell, cls } = T;

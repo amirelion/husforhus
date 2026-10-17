@@ -1,4 +1,4 @@
-"""s08_landmarks: the curated landmarks checked against their cited articles (Plan 4a, Task 2)."""
+"""s08_landmarks: the curated landmarks checked against their cited articles."""
 import json
 
 import pytest
@@ -45,7 +45,7 @@ def test_problems_lists_what_is_wrong_with_an_entry():
 
 
 def test_problems_accepts_rebuilds_the_checks_hold_and_refuses_the_rest():
-    # Task 11a (§14 of the Gamla stan research): a rebuild year comes after the build, by 2026, as one of the checks or
+    # A rebuild year comes after the build, by 2026, as one of the checks or
     # inside one, so the article is checked for it like the entry's other years
     palace = {**PALACE, "checks": ("1697", "1754", "ombyggdes 1772", "1857"),
               "rebuilt": [(1772, "rebuilt"), (1857, "raised"), (1857, "extended")], "cellars": True}
@@ -78,7 +78,7 @@ def test_problems_accepts_rebuilds_the_checks_hold_and_refuses_the_rest():
 
 
 def test_problems_accepts_a_point_with_its_reason_and_source_and_refuses_the_rest():
-    # Task 11a: lat/lon are the item's P625 unless `point` says why not and where the point comes from
+    # Lat/lon are the item's P625 unless `point` says why not and where the point comes from
     point = {"reason": "P625 marks the gasholder, not the hall the year belongs to", "source": "the research row"}
     assert s08.problems({**PALACE, "point": point}) == []
     bad = "point must be {reason, source}, both non-empty text"
@@ -90,7 +90,7 @@ def test_problems_accepts_a_point_with_its_reason_and_source_and_refuses_the_res
 
 
 def test_an_entry_without_a_wikidata_item_needs_a_hand_checked_point():
-    # Task 12 (decided 2026-10-17): a Gamla stan house cited to its kvarter article has no item; qid "" says so, and
+    # Decided 2026-10-17: a Gamla stan house cited to its kvarter article has no item; qid "" says so, and
     # its point, which no P625 can confirm, must say where it comes from
     house = {**PALACE, "name": "Stora Nygatan 38", "qid": "", "source": "sv:Kvarteret Pyramus",
              "point": {"reason": "the building has no Wikidata item", "source": "the research row"}}
@@ -249,6 +249,6 @@ def test_real_articles_hold_every_check(tmp_path):
 
 
 def test_an_error_given_as_plain_text_is_still_an_error():
-    # Task 2's review: an `error` that is a string, not an object, must not crash the check or the cache reader
+    # An `error` that is a string, not an object, must not crash the check or the cache reader
     assert s08.api_error(b'{"error": "lagged"}') == "the API answered lagged"
     assert s08.api_error(b'{"error": null}') == "the API answered an error"

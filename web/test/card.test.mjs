@@ -20,16 +20,16 @@ const b = o => ({ year: 0, yearFrom: 0, yearTo: 0, yflag: YFLAG.UNKNOWN, ysrc: Y
 test('yearLine', () => {
   assert.equal(yearLine(b({ year: 1927, yflag: YFLAG.RANGE, ysrc: YSRC.RAA }), '', EN), '1927');
   assert.equal(yearLine(b({ year: 1650, yflag: YFLAG.LONG, ysrc: YSRC.RAA }), '', EN), '1650');
-  // D18: a private house shows only its decade, whatever its yflag; an estimated or area-dated one says so (D6)
+  // A private house shows only its decade, whatever its yflag; an estimated or area-dated one says so
   assert.equal(yearLine(b({ year: 1950, yflag: YFLAG.EXACT, ysrc: YSRC.RAA, private: 1 }), '', EN), '1950s');
   assert.equal(yearLine(b({ year: 1930, yflag: YFLAG.AREA, ysrc: YSRC.RAA_AREA, private: 1 }), '', EN), '≈ 1930s');
   assert.equal(yearLine(b({ year: 1938, yflag: YFLAG.AREA, ysrc: YSRC.RAA_AREA }), '', EN), '≈ 1938');
   assert.equal(yearLine(b({}), '', EN), 'Year unknown');
-  assert.equal(yearLine(b({}), '', SV), 'Okänt byggår');                         // Plan 4a: Swedish too
+  assert.equal(yearLine(b({}), '', SV), 'Okänt byggår');                         // Swedish too
   assert.equal(yearLine(b({ year: 1935, yflag: YFLAG.PERIOD }), 'Funkis', EN), 'Funkis');
   assert.equal(yearLine(b({ year: 1952, yearFrom: 1947, yearTo: 1957, yflag: YFLAG.ESTIMATE, ysrc: YSRC.ESTIMATE }), '', EN), '≈ 1952');
   assert.equal(yearLine(b({ year: 1630, yflag: YFLAG.EXACT, ysrc: YSRC.WIKIDATA }), '', EN), '1630');
-  // a source that said only the decade reads as the decade (D6); "~1920" as 1920; RAÄ's completion year as before
+  // a source that said only the decade reads as the decade; "~1920" as 1920; RAÄ's completion year as before
   assert.equal(yearLine(b({ year: 1640, yearFrom: 1640, yearTo: 1649, yflag: YFLAG.RANGE, ysrc: YSRC.WIKIDATA }), '', SV), '1640-talet');
   assert.equal(yearLine(b({ year: 1920, yearFrom: 1915, yearTo: 1925, yflag: YFLAG.RANGE, ysrc: YSRC.OSM }), '', EN), '1920');
   assert.equal(yearLine(b({ year: 1649, yearFrom: 1640, yearTo: 1649, yflag: YFLAG.RANGE, ysrc: YSRC.RAA }), '', EN), '1649');
@@ -46,7 +46,7 @@ test('every period in city.py has an English and a Swedish label, so a period-on
   }
 });
 
-// Every kind of building has a fixed dating line in both languages (Plan 4a; docs: r4 §2.3).
+// Every kind of building has a fixed dating line in both languages (docs: r4 §2.3).
 const KINDS = [
   [{ year: 1924, yearFrom: 1924, yearTo: 1924, yflag: YFLAG.EXACT, ysrc: YSRC.RAA },
     'Heritage register (RAÄ): built 1924', 'Bebyggelseregistret (RAÄ): byggt 1924'],
@@ -87,7 +87,7 @@ test('sourceLine for every kind, in English and Swedish', () => {
   assert.equal(band(b({ year: 2024, yearFrom: 2014, yearTo: 2026 })), 10);
 });
 
-// Task 11a (§14 of the Gamla stan research): a curated card's rebuilds on a second line, never with "≈"; a building
+// A curated card's rebuilds on a second line, never with "≈"; a building
 // rebuilt from new on older cellars says so in its dating line.
 test('rebuildLine and the cellar wording, in English and Swedish', () => {
   const card = { rebuilt: [[1757, 'rebuilt'], [1857, 'raised']] };
@@ -106,7 +106,7 @@ test('rebuildLine and the cellar wording, in English and Swedish', () => {
   assert.equal(sourceLine(raa, EN, { cellars: true }), 'Heritage register (RAÄ): built 1863');
 });
 
-// Every kNN estimate is a private house (houses only + D18), published as its decade: the card says it is an
+// Every kNN estimate is a private house (houses only, and a private house shows only its decade), published as its decade: the card says it is an
 // estimate and how the decade is known, then the decade rule; never the span or the band.
 const PRIVATE = [
   [YFLAG.ESTIMATE, YSRC.ESTIMATE, '≈ 1950s', '≈ 1950-talet', '≈ estimated from similar dated houses nearby · private house: decade only',
@@ -210,12 +210,12 @@ test('the excerpt shows in the page language only, and the links follow the priv
     { text: 'Wikidata', href: 'https://www.wikidata.org/wiki/Q750444' }]);
   assert.equal(cardLinks({ ...card, wp: ['sv', 'en'] }, b({}), EN, LINKS)[1].text, 'Wikipedia');
   assert.equal(cardLinks({ ...card, wp: ['en'] }, b({}), SV, LINKS)[1].text, 'Wikipedia (på engelska)');
-  // D18: a private house never links RAÄ, even if its card carried the id (s03 leaves it out; a second guard)
+  // A private house never links RAÄ, even if its card carried the id (s03 leaves it out; a second guard)
   assert.deepEqual(cardLinks({ raa: 'r-1' }, b({ private: 1 }), EN, LINKS), []);
   assert.equal(fillUrl(LINKS.wikipedia_rev, { lang: 'sv', rev: 5 }), 'https://sv.wikipedia.org/w/index.php?oldid=5');
 });
 
-test('the place line: the first address, how many more, and the stadsdel, in English and Swedish (Plan 4b)', () => {
+test('the place line: the first address, how many more, and the stadsdel, in English and Swedish', () => {
   assert.equal(placeLine({ addr: 'Hornsgatan 30', addrn: 3, dist: 'Södermalm' }, EN), 'Hornsgatan 30 (and 2 more) · Södermalm');
   assert.equal(placeLine({ addr: 'Hornsgatan 30', addrn: 3, dist: 'Södermalm' }, SV), 'Hornsgatan 30 (och 2 till) · Södermalm');
   assert.equal(placeLine({ addr: 'Slottsbacken 1', dist: 'Gamla stan' }, EN), 'Slottsbacken 1 · Gamla stan');

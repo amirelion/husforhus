@@ -1,6 +1,6 @@
-"""Property designations in free text (Plan 4a, Task 6): one rule for the steps that keep them out and for s99 that checks.
+"""Property designations in free text: one rule for the steps that keep them out and for s99 that checks.
 
-A property designation (fastighetsbeteckning, LOD1 FASTIGHET) is never shipped (spec §2.2, §6.3). Plans 1–2 caught a
+A property designation (fastighetsbeteckning, LOD1 FASTIGHET) is never shipped. Plans 1–2 caught a
 designation that is a whole value ("Storken 12" as a name). Wikipedia text and Commons titles quote them inside
 sentences: Stockholm's articles about buildings are often named after their property ("Styckjunkaren 7 är en
 kontorsfastighet …": 177 of 1,103 article titles on 2026-10-16, and 227 excerpts mention one). phrases() finds every
@@ -8,7 +8,7 @@ candidate inside a text (one to three words, the first capitalised, then a numbe
 "kv"/"kvarteret" before), and mentions() says whether one of them, normalised as s99 compares them, is a designation
 of the city's buildings.
 
-Owners and byggherrar (spec §6.3: "no owner names … or byggherre names in web data"): Wikipedia's intros say who owns
+Owners and byggherrar ("no owner names … or byggherre names in web data"): Wikipedia's intros say who owns
 a building or had it built ("ägs av AB Stadsholmen", "Byggherre var ingenjör Hellstrand", "built for the merchant …"):
 78 of the 1,103 intros of 2026-10-16 did, once cut to an excerpt. owner() finds such a sentence by its wording, in
 Swedish and English, whoever it names (a person, a firm or the state: no pattern tells a person from a firm reliably,
@@ -21,7 +21,7 @@ PHRASE = re.compile(r"(?:\b[Kk]v(?:arteret)?\.?\s*)?\b[A-ZÅÄÖÉ][\w-]*(?:\s+[
                     r"\d+(?::\d+)?[a-zA-Z]?\b")
 OWNER = re.compile(
     r"\b(?:byggherre\w*|beställare\w*|(?:sam|del)?äger\b(?!\s+rum)|"
-    # the final review of Plan 4a: "ägare" and its forms inside a compound or in the plural ("fastighetsägarna",
+    # "ägare" and its forms inside a compound or in the plural ("fastighetsägarna",
     # "aktieägare", "klubbägaren", "ägarbyten"), never "vägar", "jägare" or "bägare"; the verb in any form and with a
     # prefix ("samägs", "har ägts av", "ägas av", "helägt av"), never "sägs", "motsägs", "vägde" or "ägde rum"; "i X:s
     # ägo". A compound adjective without "av" names no one ("en privatägd utställning", "ett stiftelseägt museum")
@@ -34,17 +34,17 @@ OWNER = re.compile(
     r"såld(?:es)?\b[^.;!?]{0,40}?\btill\b|köptes\s+av|förvärvades\s+av|"
     r"built\s+for|commissioned\s+by|(?:co-?)?owned\s+by|owners?\b|bought\s+by|sold\s+to|purchased\s+by|"
     r"acquired\s+by|"
-    # Task 6's review: wordings the first list missed (initials, "åt", active and past forms, words in between)
+    # Wordings the first list missed (initials, "åt", active and past forms, words in between)
     r"(?:uppförd(?:es)?|uppfört|byggd(?:es)?|byggt|ritad(?:es)?|ritat)\b[^.;!?]{0,80}?\båt\b|"
     r"beställ(?:de|des|t|d)\b[^.;!?]{0,40}?\bav\b|på\s+uppdrag\s+av|köpte\b|"
     r"köpt(?:es)?\b[^.;!?]{0,40}?\bav\b|förvärvade\b|förvärvad(?:es)?\b[^.;!?]{0,40}?\bav\b|tillhör(?:de|t)?\b|"
     r"lät\b[^.;!?]{0,40}?\b(?:uppföra|bygga|anlägga|rita|resa)\b|"
     r"owned\b[^.;!?]{0,40}?\bby\b|owns\b|bought\b|had\b[^.;!?]{0,40}?\bbuilt\b|commissioned\b|"
     r"built\b[^.;!?]{0,60}?\bfor\b|belong(?:s|ed)?\s+to|home\s+of)", re.IGNORECASE)
-# Numbers that follow a block name's first one: "Styckjunkaren 6 och 7", "5–7", "6, 7" (Task 6's review)
-MORE = re.compile(r"\s*(,|och|and|&|[-–])\s*(\d+(?::\d+)?)[a-zA-Z]?\b")   # "6-8b" too (Task 13 review)
+# Numbers that follow a block name's first one: "Styckjunkaren 6 och 7", "5–7", "6, 7"
+MORE = re.compile(r"\s*(,|och|and|&|[-–])\s*(\d+(?::\d+)?)[a-zA-Z]?\b")   # "6-8b" too
 RANGE_MAX = 20                                        # "5–7" is 5, 6, 7; a longer span is read as its two ends
-# Task 13 and its review: Commons titles join the number to the block name ("Bryggaren16", "Bryggaren16-18",
+# Commons titles join the number to the block name ("Bryggaren16", "Bryggaren16-18",
 # "Styckjunkaren_7") or add a photo's letter after it ("Glaucus5b"); each is read as its designation
 JOINED = re.compile(r"(?<=[^\W\d_])[-_]?(?=\d)")
 SUFFIX = re.compile(r"(?<=\d)[a-z]$")

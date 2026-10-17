@@ -1,4 +1,4 @@
-// Builds the terrain's meshes off the main thread (Plan 3, C18): terrain.bin and water.bin in, typed arrays out, which
+// Builds the terrain's meshes off the main thread: terrain.bin and water.bin in, typed arrays out, which
 // app.js wraps in three.js geometries. One message in ({terrain, water, chunkCells, fadeM}), one out. The shore cells
 // and the quay walls come in groups of two by two chunks, each with its own index range, box and height bounds (hMax,
 // hMin: see web/terrain.js), so they cull; each chunk carries the same bounds.

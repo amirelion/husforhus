@@ -1,4 +1,4 @@
-"""s99_validate's terrain rules (Plan 3, Task 6): terrain.bin.gz against stockholm.json and water.bin.gz, its values,
+"""s99_validate's terrain rules: terrain.bin.gz against stockholm.json and water.bin.gz, its values,
 the 1.5 MB budget, its source against the config, data/terrain.json and the credits, the buildings left buried, the
 datum on a DTM build and the tiles' drawn grounds. The `site` fixture and helpers come from tests/test_s99_validate.py;
 its tiny terrain is tests/tinycity.py tiny_terrain()."""
@@ -57,7 +57,7 @@ def test_every_header_field_must_match_stockholm_json(site, key, value):
 
 @pytest.mark.parametrize("water_z", [0.07, 0.86, 0.5, 0.0])
 def test_the_headers_float32_water_level_matches_the_config_within_a_centimetre(site, water_z):
-    # PIPELINE-6: the header holds water_z as a float32, so 0.07 (Saltsjön's mean, D39) reads 0.07000000029802322
+    # PIPELINE-6: the header holds water_z as a float32, so 0.07 (Saltsjön's mean) reads 0.07000000029802322
     from pipeline import terrain as T
     grid = T.Grid(TERRAIN["x0"], TERRAIN["z0"], TERRAIN["cell"], TERRAIN["nx"], TERRAIN["nz"])
     h = 1.0 + np.add.outer(np.arange(grid.nz), np.arange(grid.nx)).astype(float)
@@ -89,7 +89,7 @@ STADSKARTA = dict(SOURCES[0], id="city_stadskarta", licence="CC-BY-4.0",
 
 @pytest.fixture
 def release_ready(monkeypatch):
-    """Plan 4b: every --release run also needs a maker, a contact and the answers it waits for; these tests check only
+    """Every --release run also needs a maker, a contact and the answers it waits for; these tests check only
     the terrain's rule, so they get placeholders."""
     monkeypatch.setattr(s99_validate.city, "MAKER", "Ann Maker")
     monkeypatch.setattr(s99_validate.city, "CONTACT", "hej@example.org")
@@ -98,13 +98,13 @@ def release_ready(monkeypatch):
 
 NOT_COVERED = ("terrain: a release built from the City's contour lines needs the City's answer to name them: "
                "sources.yml's city_stadskarta does not say covers_contours: true (ask the City, or build from "
-               "Lantmäteriet's model, P13)")
+               "Lantmäteriet's model)")
 
 
 @pytest.mark.parametrize(("covers", "errors"), [(False, [NOT_COVERED]), (None, [NOT_COVERED]), ("yes", [NOT_COVERED]),
                                                 (True, [])])
 def test_a_contour_release_needs_the_citys_answer_to_cover_the_contour_lines(site, covers, errors, release_ready):
-    # PRIVACY-3: the O1 that was sent names the Stadskarta's water, land, names and addresses, not the contour lines.
+    # The City's licence answer names the Stadskarta's water, land, names and addresses, not the contour lines.
     # Marking city_stadskarta confirmed is not enough for a release built from them: its covers_contours must say so.
     entry = {**STADSKARTA, "status": "confirmed", **({} if covers is None else {"covers_contours": covers})}
     assert check(site, sources=SOURCES + [entry], release=True) == errors
@@ -154,7 +154,7 @@ def test_terrain_over_its_budget_fails(site, monkeypatch):
 
 
 def test_the_terrain_limits_are_the_specs_and_the_budget_itself_passes(site, monkeypatch):
-    # spec §4.6: 1.5 MB transferred; heights -10..250 m; a drawn ground at most 200 m up
+    # 1.5 MB transferred; heights -10..250 m; a drawn ground at most 200 m up
     assert s99_validate.TERRAIN_BYTES == 1_500_000
     assert (s99_validate.TERRAIN_DM, s99_validate.MAX_GROUND_DM) == ((-100, 2500), 2000)
     size = (site / "terrain.bin.gz").stat().st_size

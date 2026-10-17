@@ -1,4 +1,4 @@
-"""Point helpers shared by the year sources (Plan 2 moved them out of s02_years, which re-exports them):
+"""Point helpers shared by the year sources (moved out of s02_years, which re-exports them):
 WGS84 -> EPSG:3011, and placing a point on a LOD1 footprint."""
 import numpy as np
 import shapely
@@ -55,7 +55,7 @@ def resolve_points(b, xs, ys, max_dist: float = LANDMARK_MAX_M) -> np.ndarray:
 def placement(b, gids, xs, ys) -> np.ndarray:
     """How each resolved point (resolve_points' gid per point) sits on its footprint: "inside" it, in a "courtyard"
     (inside the outer ring only) or "nearest" (outside, within the distance resolve_points allowed); "" for -1.
-    The review list carries it (Plan 2): nearest-only placements are the least sure."""
+    The review list carries it: nearest-only placements are the least sure."""
     geoms = b.set_index("gid").geometry
     out = np.full(len(xs), "", dtype=object)
     for i, (g, x, y) in enumerate(zip(gids, xs, ys)):

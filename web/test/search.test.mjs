@@ -1,5 +1,5 @@
-// web/search.js (Plan 4b, Task 4): parsing, ranking, house numbers, near misses and the rows' words, on a small index
-// in s14_search's shape (contract C27).
+// web/search.js: parsing, ranking, house numbers, near misses and the rows' words, on a small index
+// in s14_search's shape.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -175,7 +175,7 @@ test('the rows read right in English and Swedish', () => {
   assert.equal(rowText(v, P, SV).sub, `Stadsdel · kallas även Vasastan · ${SV.num(2900)} byggnader`);
 });
 
-// Task 4's review, each case seen on the whole city's index
+// Each case seen on the whole city's index
 test('a building matched by its Swedish name ranks before one matched only by its English label', () => {
   const p = prepare({ ...INDEX, buildings: [['Börshuset', 10, 0, 'Stockholm Stock Exchange'],
     ['Stockholms slott', 1, 0, 'Stockholm Palace']] });

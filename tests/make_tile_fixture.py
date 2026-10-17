@@ -25,7 +25,7 @@ def pipeline_on_path() -> None:
 
 
 def build() -> bytes:
-    """The fixture tile, written by the pipeline's own pack_tile (contract C4)."""
+    """The fixture tile, written by the pipeline's own pack_tile."""
     pipeline_on_path()
     from pipeline.city import ORIGIN
     from pipeline.codes import LONG, RANGE, UNKNOWN
@@ -38,7 +38,7 @@ def build() -> bytes:
     square = Polygon(world([(5, 5), (15, 5), (15, 15), (5, 15)]))
     yard = Polygon(world([(30, 30), (50, 30), (50, 50), (30, 50)]), [world([(36, 36), (44, 36), (44, 44), (36, 44)])])
     triangle = Polygon(world([(60, 10), (66, 10), (60, 16)]))
-    # Row keys as Task 12's pack_tile reads them (contract C4); it writes lay0/lay1 as zeros.
+    # Row keys as pack_tile reads them; it writes lay0/lay1 as zeros.
     rows = [
         {"gid": 7, "year": 1924, "yflag": RANGE, "period": 6, "floors": 3, "ground_dm": 77, "height": 12.5,
          "geometry": square},

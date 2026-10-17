@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ease, initialRelief, reliefNote, reliefValue, RELIEF_MAX, RELIEF_STEP } from '../relief.js';
 
-// The Hills slider (decided 2026-10-16, D40): the ground at true height by default (stockholm.json terrain.relief, 1),
+// The Hills slider (decided 2026-10-16): the ground at true height by default (stockholm.json terrain.relief, 1),
 // scaled from 0 (flat) to terrain.reliefMax (2.5) in steps of 0.5. The fallbacks when a build's config has no maximum.
 test('the slider runs from 0 to 2.5 in steps of 0.5 unless the build says otherwise', () => {
   assert.equal(RELIEF_MAX, 2.5);
@@ -43,7 +43,7 @@ test('?relief= takes off, on or a number, clamped to 0..reliefMax; nonsense fall
   }
 });
 
-// localStorage hfh-relief held 'on' or 'off' while the relief was a switch (Task 10); it now holds the number.
+// localStorage hfh-relief held 'on' or 'off' while the relief was a switch; it now holds the number.
 test('the remembered value: a number, clamped; the old switch values migrate; anything else is the default', () => {
   assert.equal(initialRelief('', '0', 1, 2.5), 0);
   assert.equal(initialRelief('', '2.5', 1, 2.5), 2.5);
@@ -71,7 +71,7 @@ test('the slider shows Flat or the factor', () => {
   assert.equal(reliefValue(1.23), '1.2×');   // a link's value between the steps, as the note rounds it
 });
 
-// The line under the slider says what the map shows now (D1, Task 10 review): flat at 0, true to scale at 1, the
+// The line under the slider says what the map shows now: flat at 0, true to scale at 1, the
 // factor otherwise (reduced under 1, exaggerated over it), and a terrain that did not load beats them all (the slider
 // is then aria-disabled). While the terrain is on its way ('flat' before it is asked for, then 'loading') the map is
 // flat whatever the slider says, so the line says the ground is loading (the final review's VIEWER-3).

@@ -4,8 +4,8 @@
     uv run python -m pipeline.report_kategori --osm levels.json     # also fit metres per storey against OSM
 
 The table shows, per KATEGORI, the count, median and p90 height, median footprint, the metres per storey k that
-city.STOREY_M gives it, the floors that k implies (C1: floors = clamp(floor(height / k + 0.5), 1, 99), the rule
-s02_attributes ships), and whether the category is a private house (city.PRIVATE_HOUSE_KATEGORI, D18).
+city.STOREY_M gives it, the floors that k implies (floors = clamp(floor(height / k + 0.5), 1, 99), the rule
+s02_attributes ships), and whether the category is a private house (city.PRIVATE_HOUSE_KATEGORI).
 
 --osm takes an Overpass JSON export with `out tags center` of buildings that carry building:levels, e.g.
     [out:json][timeout:240];area(3600398021)->.a;
@@ -35,7 +35,7 @@ def storey_k(kategori: pd.Series) -> pd.Series:
 
 
 def floors(height: pd.Series, k: pd.Series) -> np.ndarray:
-    """The C1 floors rule, delegated to s02_attributes so the report and the shipped floors cannot drift."""
+    """The floors rule, delegated to s02_attributes so the report and the shipped floors cannot drift."""
     return s02_attributes.floors_from_storey(height, k).astype(int)
 
 

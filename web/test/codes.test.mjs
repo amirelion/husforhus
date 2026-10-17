@@ -1,4 +1,4 @@
-// web/codes.js must mirror pipeline/codes.py (contract C2).
+// web/codes.js must mirror pipeline/codes.py.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -36,7 +36,7 @@ test('rating codes match', () => {
   const pyRating = Object.fromEntries([...body.matchAll(/"([^"]+)"\s*:\s*(\d+)/g)].map(m => [m[1], +m[2]]));
   assert.deepEqual(pyRating, { ...RATING });
 });
-test('protection codes match both ways (Plan 4a)', () => {
+test('protection codes match both ways', () => {
   for (const [k, v] of Object.entries(PROT)) assert.equal(consts[`PROT_${k}`], v, k);
   const body = py.match(/PROTECTION\s*=\s*\{([^}]*)\}/)[1];
   const names = [...body.matchAll(/"([^"]+)"\s*:\s*PROT_([A-Z]+)/g)].map(m => [m[1], PROT[m[2]]]);

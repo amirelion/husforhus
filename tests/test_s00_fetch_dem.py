@@ -1,4 +1,4 @@
-"""s00_fetch_dem (Plan 3, Task 3): the contour members, the credentials, the STAC search and the windowed 5 m read
+"""s00_fetch_dem: the contour members, the credentials, the STAC search and the windowed 5 m read
 of Lantmäteriet's COGs. Nothing here touches the network or a real login: the COGs are local files written by the
 test, and requests is faked."""
 import builtins

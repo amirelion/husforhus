@@ -1,4 +1,4 @@
-"""The estimate tier (Plan 2, Task 6; Task 14b's safer rule): kNN, the kvarter-held-out accuracy table and the
+"""The estimate tier (the safer rule of 2026-10-15): kNN, the kvarter-held-out accuracy table and the
 ESTIMATE/PERIOD/UNKNOWN rule, on a synthetic city of villa blocks whose years are known (tests.synth.villa_blocks)."""
 from pathlib import Path
 
@@ -15,10 +15,10 @@ from tests import synth
 from tests.synth import PITCH, STEP, villa_blocks
 
 HOUSE, FLATS = estimate.GROUP_CODE["house"], estimate.GROUP_CODE["apartments"]
-# The measured rule, whatever product default the project picks at M3 (Task 14 may set far_rule or period_only_stadsdelar
+# The measured rule, whatever product default the project picks (it may set far_rule or period_only_stadsdelar
 # in city.ESTIMATE): the synthetic expectations below do not move with it.
 P = dict(city.ESTIMATE, far_rule="unknown", period_only_stadsdelar=set())
-# The rule as Task 6 measured it, before Task 14b (min_right 0.5, period-only on): the levers still work.
+# The rule as first measured, before 2026-10-15 (min_right 0.5, period-only on): the levers still work.
 OLD = dict(P, min_right=0.5, give_period=True)
 LATE_UNIT = city.ESTIMATE["late_unit_fnr"]
 
@@ -94,7 +94,7 @@ def test_cross_validation_measures_the_house_cell():
     assert cell["right_period"] == 1.0 and cell["median_error"] == 2 and cell["within_one"] == 1.0
     assert all(c["status"] == "not measurable" and "band" not in c for c in table["cells"] if c["n"] < 30)
     fb = {(r["group"], r["inner"]): r for r in table["fallback"]}
-    # Task 14b: the fallback never gives a period on its own any more (give_period=False): it reads what the map does
+    # The fallback never gives a period on its own any more (give_period=False): it reads what the map does
     assert fb[("house", False)]["status"] == "unknown" and fb[("house", False)]["n"] == cell["n"]
     assert estimate.cross_validate(estimate.features(b), years, dated, OLD)["fallback"][0]["status"] == "period"
     assert 0.0 <= table["band_coverage"] <= 1.0
@@ -130,7 +130,7 @@ def test_the_kvarter_bonus_reranks_only_the_candidates_each_group_tree_returns()
 
 def test_cross_validation_derives_period_and_unknown_from_the_data():
     # Every block mostly 1950 (so every estimate is 1950); the other houses 40 years off, in other periods. Under the
-    # levers Task 6 measured (OLD: min_right 0.5, period-only on).
+    # levers first measured (OLD: min_right 0.5, period-only on).
     cases = [([(1950, 1950, 1990)], "period", 0.667, 0),                        # right enough, P80 error 40 y > max_band
              ([(1950, 1990, 1910)], "unknown", 0.333, 40),                      # a third right < min_right
              ([(1950, 1950, 1990), (1950, 1990, 1990)], "period", 0.5, 20)]    # exactly half right: >= min_right
@@ -142,14 +142,14 @@ def test_cross_validation_derives_period_and_unknown_from_the_data():
         assert cell["n"] >= 30 and cell["right_period"] == right and cell["band"] == 40
         assert cell["median_error"] == median_error
         assert [r["status"] for r in table["fallback"]] == ["unknown" if status == "unknown" else "period"]
-        # Task 14b's rule on the same data: no cell gives a period on its own, so every one reads "unknown"
+        # The 2026-10-15 rule on the same data: no cell gives a period on its own, so every one reads "unknown"
         new = estimate.cross_validate(f, years, dated, P)
         assert [c["status"] for c in new["cells"]] == ["unknown"] and new["cells"][0]["right_period"] == right
         assert [r["status"] for r in new["fallback"]] == ["unknown"]
 
 
 def test_a_cell_needs_seven_in_ten_right_for_an_estimate():
-    # Task 14b: min_right 0.7. Two in three houses of every tested column at 1950, the third at 1945 (Funkis, so in
+    # Min_right 0.7. Two in three houses of every tested column at 1950, the third at 1945 (Funkis, so in
     # another period but only 5 years off): every estimate is 1950, two thirds are right and the band is 5, so only
     # the share right decides. It was an estimate under 0.5 and is unknown now.
     f, years, dated = scattered((1950, 1950, 1945))
@@ -188,7 +188,7 @@ def test_decide_estimates_near_houses_and_leaves_the_rest_unknown():
     assert (out.yflag[dated] == UNKNOWN).all() and out.yhat[dated].isna().all()   # dated rows are not estimated
 
     # The period levers: with period-only on, the far one gets its period (far_rule) and the apartment block in a
-    # period-only stadsdel its period (not the far one, the cottage or the late one). Task 14b: with give_period=False
+    # period-only stadsdel its period (not the far one, the cottage or the late one). Since 2026-10-15: with give_period=False
     # (the default) neither lever can produce a PERIOD.
     sd = np.array(["TEST"] * len(b), dtype=object)
     for give, far_flags, gamla_flags in ((True, [ESTIMATE, PERIOD, UNKNOWN, UNKNOWN, UNKNOWN, ESTIMATE],
@@ -210,7 +210,7 @@ def test_a_wide_band_or_a_wrong_cell_gives_period_or_unknown():
     cell = next(c for c in table["cells"] if c["status"] == "estimate")
     cell["status"], cell["band"] = "period", 25
     assert estimate.decide(f[query], yhat, d1, table, OLD)[0].tolist() == [PERIOD]
-    assert estimate.decide(f[query], yhat, d1, table, P)[0].tolist() == [UNKNOWN]   # Task 14b: never a period alone
+    assert estimate.decide(f[query], yhat, d1, table, P)[0].tolist() == [UNKNOWN]   # never a period alone
     cell["status"] = "unknown"
     assert estimate.decide(f[query], yhat, d1, table, OLD)[0].tolist() == [UNKNOWN]
     cell["status"] = "not measurable"
@@ -221,7 +221,7 @@ def test_a_wide_band_or_a_wrong_cell_gives_period_or_unknown():
 
 
 def test_only_houses_are_estimated_and_the_other_types_are_still_measured():
-    # Task 14b rule 1: the same villa city built of small apartment blocks. Their cell is measured as well as the
+    # Rule 1: the same villa city built of small apartment blocks. Their cell is measured as well as the
     # houses' (every one right, band 5), but the map leaves the type unknown, and the table says so.
     b, years, dated, query = villa_blocks([(*inside(3), "Flerbostadshus", "KV3 10", 2003)])
     b["kategori"] = "Flerbostadshus"
@@ -237,7 +237,7 @@ def test_only_houses_are_estimated_and_the_other_types_are_still_measured():
 
 
 def test_decide_itself_estimates_only_the_estimate_groups_whatever_the_table_says():
-    # Task 14b review (M2 a): decide's own group gate, not only status_of's. A table whose apartment cell reads
+    # Decide's own group gate, not only status_of's. A table whose apartment cell reads
     # "estimate" (built with apartments allowed) still gives an apartment block nothing under the default rule, and a
     # far apartment block gets no period from far_rule even with the period levers on.
     b, years, dated, query = villa_blocks([(*inside(3), "Flerbostadshus", "KV3 10", 2003),
@@ -257,7 +257,7 @@ def test_decide_itself_estimates_only_the_estimate_groups_whatever_the_table_say
 
 
 def test_the_external_check_uses_the_production_kvarter_bonus():
-    # Task 14b review (M2 b): check_external runs knn with the kvarter bonus, as the map does. k = 3: two kvarter-1
+    # Check_external runs knn with the kvarter bonus, as the map does. k = 3: two kvarter-1
     # houses at 50 m (1950) and one in the test house's own kvarter at 80 m (1980), ten more kvarter-1 houses at 200
     # m. With the bonus the kvarter-mate wins (1980, the true year, an "estimate" cell); without it, 1950 lands in a
     # cell that reads "unknown".
@@ -276,7 +276,7 @@ def test_the_external_check_uses_the_production_kvarter_bonus():
 
 
 def test_the_external_check_is_measured_by_its_estimates_not_by_its_rows():
-    # Task 14b review (M2 d): the status comes from n_estimate. The ring's 20 test houses all sit more than 100 m from
+    # The status comes from n_estimate. The ring's 20 test houses all sit more than 100 m from
     # the training houses, so none is estimated: 20 rows (over min_cell 5) but 0 estimates reads "not measurable".
     train = frame(ring(30.0), kvarter=1)
     far = frame(ring(400.0), kvarter=2)
@@ -293,7 +293,7 @@ def test_the_external_check_is_measured_by_its_estimates_not_by_its_rows():
 
 
 def test_a_house_on_a_late_formed_property_unit_is_not_estimated():
-    # Task 14b rule 4 (the FNR guard): a key above late_unit_fnr is a property unit formed late, mostly new
+    # Rule 4 (the FNR guard): a key above late_unit_fnr is a property unit formed late, mostly new
     # development, so the house stays unknown; at the cut, or with no key (0), it is estimated.
     b, years, dated, query = villa_blocks([(*inside(3), "Enbostadshus", "KV3 10", 2003, LATE_UNIT + 1),
                                            (*inside(3, 1.5), "Enbostadshus", "KV3 11", 2003, LATE_UNIT),
@@ -306,7 +306,7 @@ def test_a_house_on_a_late_formed_property_unit_is_not_estimated():
 
 
 def test_the_table_scores_only_buildings_the_map_could_estimate_but_all_of_them_train():
-    # Task 14b rule 5. Seven blocks' houses are scored (3 or 6 each, 42 in all; the folds hold whole blocks out).
+    # Rule 5. Seven blocks' houses are scored (3 or 6 each, 42 in all; the folds hold whole blocks out).
     # Block 1 first digitised in 2010 and block 6 on late-formed units (6 scored each) still train but are not scored:
     # 30 left. Block 2's key is exactly at the cut, so it is still scored.
     b, years, dated, query = villa_blocks([(*inside(1), "Enbostadshus", "KV1 10", 2003)])

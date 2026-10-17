@@ -1,5 +1,5 @@
 # tests/test_fetch.py
-"""pipeline.fetch (contract C6): manifest-recording downloads and ZIP members over HTTP range requests."""
+"""pipeline.fetch: manifest-recording downloads and ZIP members over HTTP range requests."""
 import hashlib
 import io
 import json
@@ -195,7 +195,7 @@ def test_download_with_own_manifest(server, tmp_path):
 
 
 def test_record_keeps_a_derived_file_under_its_path_with_the_time_it_was_made(tmp_path):
-    # Plan 3 (s00_fetch_dem): a file a step made itself, recorded beside the downloads
+    # s00_fetch_dem: a file a step made itself, recorded beside the downloads
     manifest = tmp_path / "raw" / "MANIFEST.json"
     dest = tmp_path / "raw" / "dem" / "dtm5.tif"
     dest.parent.mkdir(parents=True)
@@ -235,3 +235,7 @@ def test_range_reader_refuses_a_full_response(monkeypatch):
     monkeypatch.setattr(fetch.requests, "get", lambda url, **kw: FakeResponse(200, b"whole file"))
     with pytest.raises(OSError, match="expected 206"):
         fetch.http_range_reader("https://example.org/a.zip")(0, 4)
+
+
+def test_user_agent_names_the_public_repo():
+    assert fetch.UA["User-Agent"] == "HusForHus/1.0 (+https://github.com/amirelion/husforhus)"

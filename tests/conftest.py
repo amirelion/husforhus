@@ -21,7 +21,7 @@ LOD1_URL = "https://dataportalen.stockholm.se/dataportalen/Data/Stadsbyggnadskon
 
 @pytest.fixture(autouse=True)
 def _no_real_takedowns(tmp_path_factory, monkeypatch):
-    """Plan 4b: pipeline/suppress.yml (git-ignored) may hold real takedowns on a maintainer's machine; no test reads it.
+    """Pipeline/suppress.yml (git-ignored) may hold real takedowns on a maintainer's machine; no test reads it.
     A test that wants takedowns writes its own file and passes it."""
     from pipeline import suppress
 

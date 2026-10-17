@@ -1,5 +1,5 @@
 # pipeline/fetch.py
-"""Downloads with a manifest, and single members out of remote ZIP files via HTTP range requests (contract C6).
+"""Downloads with a manifest, and single members out of remote ZIP files via HTTP range requests.
 
 Every file we fetch is recorded in data/raw/MANIFEST.json, keyed by its path relative to data/raw:
     {url, etag, last_modified, sha256, bytes, retrieved}   (+ member, for a file taken out of a remote zip)
@@ -20,7 +20,7 @@ from typing import Callable
 import requests
 
 RAW = Path("data/raw")
-UA = {"User-Agent": "HusForHus/1.0 (+https://github.com/amirelion/stockholm-by-building)"}
+UA = {"User-Agent": "HusForHus/1.0 (+https://github.com/amirelion/husforhus)"}
 TIMEOUT = (30, 300)  # connect, read (seconds)
 CHUNK = 1 << 20
 EOCD_SEARCH = 66 * 1024  # the end-of-central-directory record sits in the last 22 + 65,535 bytes
@@ -141,7 +141,7 @@ def download(url: str, dest: Path, *, auth=None, manifest: Path | None = None) -
 
 class BadAnswer(requests.RequestException):
     """An answer that came back with HTTP 200 but says the query failed: Overpass's "runtime error" remark, a
-    MediaWiki error such as maxlag (Plan 4a). post_query never saves or records it, so a later build does not read it
+    MediaWiki error such as maxlag. post_query never saves or records it, so a later build does not read it
     as the result; post_query_retrying counts it as a failed attempt like a network error."""
 
 
@@ -152,7 +152,7 @@ def _query_hash(data: dict) -> str:
 def query_cached(data: dict, dest: Path, *, manifest: Path | None = None) -> bool:
     """True when post_query would answer from the cache: dest matches its MANIFEST entry (size, sha256) and the entry
     was made by this very query. A caller that paces its requests asks this, not whether dest exists: a query that
-    changed (a batch shifted by one more file) is sent again although its file is there (Task 7's review)."""
+    changed (a batch shifted by one more file) is sent again although its file is there."""
     dest, manifest = Path(dest), _manifest_path(manifest)
     old = read_manifest(manifest).get(_key(dest, manifest))
     return bool(old and old.get("query_sha256") == _query_hash(data) and dest.exists()
@@ -214,7 +214,7 @@ def post_query_retrying(endpoints: list[str], data: dict, dest: Path, *, retries
     rate-limits), and the weekly CI job runs the fetch steps on a cold cache. So:
       - each endpoint in `endpoints` is tried `retries` times, `backoff_s` seconds apart (via `sleep`, which a step
         passes from its own module-level name so tests can stub the wait), before the next endpoint is tried;
-        `backoff_s` may also give one wait per retry, the last one repeating (Plan 4a: Overpass waits 30, 60, 120 s),
+        `backoff_s` may also give one wait per retry, the last one repeating (Overpass waits 30, 60, 120 s),
         and a 429 or 503 answer's Retry-After is waited instead when it is longer;
       - only network failures count (requests.RequestException: connection errors, timeouts, cut streams, HTTP
         4xx/5xx, and BadAnswer, an error answer that `check` caught); anything else, such as post_query's ValueError

@@ -1,4 +1,4 @@
-// web/i18n: both languages hold the same ids, no empty string, the same placeholders (Plan 4a; spec §2.1).
+// web/i18n: both languages hold the same ids, no empty string, the same placeholders.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -28,7 +28,7 @@ test('T fills placeholders, falls back to English and then to the id, and format
   assert.equal(fill('{a} and {b}', { a: 1 }), '1 and {b}');      // a missing value shows, never "undefined"
 });
 
-test('every English text the pure modules hand over has an id whose English is that text (Plan 4b)', () => {
+test('every English text the pure modules hand over has an id whose English is that text', () => {
   for (const [text, id] of Object.entries(LEGACY)) {
     assert.equal(EN[id], text, id);
     assert.ok(SV[id] && SV[id] !== text, id);
@@ -47,7 +47,7 @@ test('the page opens in ?lang=, else the saved choice, else a Swedish or English
   assert.equal(pickLang({ languages: ['de-DE', 'sv'] }), 'sv');                        // the first Swedish or English
   assert.equal(pickLang({ languages: ['nb-NO', 'en-US', 'sv'] }), 'en');
   assert.equal(pickLang({ languages: ['svx'] }), 'en');
-  assert.equal(pickLang({ languages: ['sv-SE'], fromBrowser: false }), 'en');        // decision 1 (Plan 4b), if the answer is no
+  assert.equal(pickLang({ languages: ['sv-SE'], fromBrowser: false }), 'en');        // the browser-language choice off
   assert.equal(pickLang({ param: 'sv', languages: ['sv-SE'], enabled: false }), 'en'); // the switch off: English
   assert.equal(pickLang(), 'en');
 });

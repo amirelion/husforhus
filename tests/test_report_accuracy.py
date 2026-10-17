@@ -1,4 +1,4 @@
-"""docs/accuracy.md from the accuracy table (Plan 2, Task 10; rewritten for the public in Task 14b): the committed page
+"""docs/accuracy.md from the accuracy table: the committed page
 explains the table in plain words and is aggregate-only; the names go to the internal page data/review-years.md."""
 import json
 import re
@@ -64,7 +64,7 @@ def test_the_page_opens_with_a_plain_summary_whose_shares_add_up():
     assert "Only houses (villa, row, chain) are estimated" in short
     for limit in ("mostly older", "apartment blocks", "property units formed late", "2008"):
         assert limit in short, limit
-    # Task 14b review (I2): every estimate is a private house, so the map shows its decade, and the summary says so
+    # Every estimate is a private house, so the map shows its decade, and the summary says so
     assert 'shown as an estimated decade ("≈ 1950s"), because every estimated house is a private house, which shows ' \
            "only its decade" in short
     # ... and gives one accuracy figure with its n (M1 f): the cells the map uses, from by_true_period's counts
@@ -87,7 +87,7 @@ def test_the_sources_are_named_in_words_and_their_shares_add_up_to_100():
     for name in ("RAÄ's building register", "RAÄ's older register file", "Wikidata", "OpenStreetMap",
                  "A hand-checked list of landmarks", "No source: the year stays unknown"):
         assert name in table, name
-    # Only the default look (Ärg, D29) hatches "Year unknown" (web/test/themes.test.mjs); the others draw it flat
+    # Only the default look (Ärg) hatches "Year unknown" (web/test/themes.test.mjs); the others draw it flat
     assert '| No source: the year stays unknown, shown as "Year unknown" |' in table
     assert ('stay unknown** and are shown as "Year unknown" (pale and hatched in the default look).'
             in section(md, "In short"))
@@ -99,7 +99,7 @@ def test_the_sources_are_named_in_words_and_their_shares_add_up_to_100():
 
 
 def test_the_summary_and_the_table_give_one_share_for_one_count():
-    # the final review of Plan 4a: the build of 2026-10-17 showed its 6,263 area-dated buildings as 8.0% in the
+    # The build of 2026-10-17 showed its 6,263 area-dated buildings as 8.0% in the
     # summary (four groups rounded together) and 8.1% in the table (eight sources rounded together)
     by_src = {"none": 43_453, "curated": 72, "raa": 22_039, "raa_area": 6_263, "wikidata": 131, "estimate": 4_558,
               "raa_old": 809, "osm": 418}
@@ -111,7 +111,7 @@ def test_the_summary_and_the_table_give_one_share_for_one_count():
     assert kinds[1] == rows["raa_area"] and kinds[2] == rows["estimate"] and kinds[3] == rows["none"]
     record = sum(float(rows[k][:-1]) for k in ("curated", "raa", "raa_old", "wikidata", "osm"))
     assert round(record, 1) == 30.2 and round(sum(float(x[:-1]) for x in table), 1) == 100.0
-    with pytest.raises(ValueError, match="C8"):
+    with pytest.raises(ValueError, match="ysrc counts disagree"):
         report_accuracy.kind_shares({**by_flag, "area": 6_262, "unknown": 43_454}, by_src)
 
 
@@ -203,7 +203,7 @@ def test_gamla_stan_and_the_hand_check_list_with_all_six_sizes():
 
 
 def test_the_page_is_aggregate_only():
-    # Aggregate-only (§6.3, D18; the repository goes public): no name, no Wikidata or OSM id, no gid, no per-building
+    # Aggregate-only (the repository goes public): no name, no Wikidata or OSM id, no gid, no per-building
     # year, no property-unit key (FNR) or anything shaped like one (eight digits, with or without separators). The tiny
     # city's gid 9 is a private house; a names page would say 1912, the map says the 1910s.
     md = page()

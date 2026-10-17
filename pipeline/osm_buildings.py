@@ -1,4 +1,4 @@
-"""OpenStreetMap buildings with building:levels, matched to LOD1 footprints (spec §3.2 s02_attributes; Plan 4a, Task 3).
+"""OpenStreetMap buildings with building:levels, matched to LOD1 footprints.
 
 load(): the tiles s00_fetch_osm cached (data/raw/osm/levels/*.json, Overpass JSON with `out geom`): every building way
 and multipolygon relation that carries building:levels, as one polygon each in EPSG:3011, deduplicated across tiles
@@ -9,8 +9,8 @@ roof:levels are not used (measured: roof levels make agreement with the height r
 
 match(): a footprint takes the levels of the OSM building whose intersection with it over their union (IoU) is
 largest, when that is above city.FLOORS_OSM's min_iou (0.5): the same building drawn twice, not a neighbour. The
-OSM-derived floors stay a column of their own in data/attributes.parquet (floors_osm), so that if O1 rules out
-licensing the whole database under the ODbL they can be split off (spec §6.1). ODbL: © OpenStreetMap contributors.
+OSM-derived floors stay a column of their own in data/attributes.parquet (floors_osm), so that if the City's licence answer rules out
+licensing the whole database under the ODbL they can be split off. ODbL: © OpenStreetMap contributors.
 """
 import json
 import math
@@ -85,7 +85,7 @@ def _polygon(element: dict):
 def load(folder: Path = LEVELS, names: list[str] | None = None) -> pd.DataFrame:
     """osm_id ("way/1", "relation/2"), levels, geometry (EPSG:3011): one row per building with usable levels. With
     `names`, only those tiles ("<col>_<row>", the current grid's): a tile left from another grid is never read (the
-    final review of Plan 4a)."""
+    final review)."""
     seen, rows = set(), []
     paths = sorted(Path(folder).glob("*.json")) if names is None else [Path(folder) / f"{k}.json" for k in sorted(names)]
     for path in (p for p in paths if p.exists()):

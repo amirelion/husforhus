@@ -1,5 +1,5 @@
-"""s99_validate's Plan 2 rules (Task 9): the ysrc pairing, year_from bounds, the period of a dated year, the
-histogram sum, the accuracy table's shape and tiles against attrs (P4). The `site` fixture and helpers come from
+"""s99_validate's year-model rules: the ysrc pairing, year_from bounds, the period of a dated year, the
+histogram sum, the accuracy table's shape and tiles against attrs. The `site` fixture and helpers come from
 tests/test_s99_validate.py (the tiny city now has an estimate, a private period-only house and a Wikidata year)."""
 import gzip
 import json
@@ -24,7 +24,7 @@ def test_clean_build_with_plan2_rows_passes(site):
     (0, codes.SRC_RAA_AREA, codes.EXACT, "yflag does not pair with their ysrc"),      # an exact area year
     (6, codes.SRC_RAA, codes.AREA, "yflag does not pair with their ysrc"),            # an area year from a record
     (7, codes.SRC_RAA, codes.UNKNOWN, "yflag does not pair with their ysrc"),         # unknown with a source
-    (3, 9, codes.RANGE, "ysrc outside contract C2"),
+    (3, 9, codes.RANGE, "ysrc outside codes.py"),
 ])
 def test_ysrc_must_pair_with_yflag(site, gid, ysrc, yflag, message):
     edit_attrs(site, lambda a: (a["ysrc"].__setitem__(gid, ysrc), a["yflag"].__setitem__(gid, yflag)))
@@ -42,7 +42,7 @@ def test_a_dated_non_private_row_must_carry_its_years_period(site):
     edit_attrs(site, lambda a: a["period"].__setitem__(8, 9))
     assert check(site) == ["attrs: 1 buildings dated and not private whose period is not their year's (gids 8)"]
     # Ruling F14: the private house gid 4 (decade 1960, real year 1968, p10) is clean above only because the rule
-    # exempts private rows, which take the period from the real year (D18): its period is not its decade's
+    # exempts private rows, which take the period from the real year: its period is not its decade's
     a = np.frombuffer(gzip.decompress((site / "attrs.bin.gz").read_bytes()), dtype=s03_tiles.ATTR_DTYPE)
     assert a["private"][4] == 1 and a["period"][4] != city.period_index(int(a["year"][4]))
 
@@ -87,13 +87,13 @@ def test_the_accuracy_table_carries_only_contract_c10_keys(site):
     cfg["accuracy"]["diagnostics"] = {"8": 1952}                      # a per-building leak into web data
     cfg["accuracy"]["cells"][0]["stadsdel"] = "Farsta"
     io.write_json(site / "stockholm.json", cfg)
-    assert check(site) == ["accuracy: stockholm.json accuracy has keys outside contract C10: ['diagnostics']",
-                           "accuracy: cells[0] has keys outside contract C10: ['stadsdel']"]
+    assert check(site) == ["accuracy: stockholm.json accuracy has keys outside the accuracy table's: ['diagnostics']",
+                           "accuracy: cells[0] has keys outside the accuracy table's: ['stadsdel']"]
 
 
 def test_the_fallback_rows_and_the_area_and_external_entries_carry_only_contract_c10_keys(site):
     # Ruling F15: the key pin covers the fallback rows and the area and external entries too, and an error never
-    # prints a planted value (Plan 1's rule: a key shows only if it looks like an identifier, else `[key #i]`; a
+    # prints a planted value (the rule: a key shows only if it looks like an identifier, else `[key #i]`; a
     # status shows only if it is a plain word)
     planted = "Södermalm Norra"                                       # a stadsdel name, as key or as value
     cfg = json.loads((site / "stockholm.json").read_text())
@@ -106,10 +106,10 @@ def test_the_fallback_rows_and_the_area_and_external_entries_carry_only_contract
     io.write_json(site / "stockholm.json", cfg)
     errors = check(site)
     assert errors == ["accuracy: cells[0] has status [value]",
-                      "accuracy: fallback[0] has keys outside contract C10: ['[key #0]', 'gid']",
+                      "accuracy: fallback[0] has keys outside the accuracy table's: ['[key #0]', 'gid']",
                       "accuracy: fallback[1] is not an object",
-                      "accuracy: area has keys outside contract C10: ['[key #0]']",
-                      "accuracy: external has keys outside contract C10: ['diagnostics']"]
+                      "accuracy: area has keys outside the accuracy table's: ['[key #0]']",
+                      "accuracy: external has keys outside the accuracy table's: ['diagnostics']"]
     assert not any(planted in e or "1234" in e or "5678" in e for e in errors)
 
 
@@ -153,7 +153,7 @@ def test_the_table_must_carry_every_contract_c10_key(site):
         for key in ("band_coverage", "min_cell", "area", "external", "result", "tested"):
             del acc[key]
     edit_accuracy(site, strip)
-    assert check(site) == ["accuracy: stockholm.json accuracy lacks keys required by contract C10: "
+    assert check(site) == ["accuracy: stockholm.json accuracy lacks keys the accuracy table requires: "
                            "['area', 'band_coverage', 'external', 'min_cell', 'result', 'tested']"]
 
 
@@ -183,9 +183,9 @@ def test_a_small_cell_or_fallback_row_carries_no_number_at_all(site, number):
     edit_accuracy(site, add)
     errors = check(site)
     assert errors[0] == "accuracy: cells[1] has 5 test buildings (under 30) but is not 'not measurable'"
-    if number == "band":                          # a fallback row has no band: its key is outside C10 as well
+    if number == "band":                          # a fallback row has no band: its key is outside the accuracy table's as well
         assert errors[1:] == ["accuracy: fallback[1] has 5 test buildings (under 30) but is not 'not measurable'",
-                              "accuracy: fallback[1] has keys outside contract C10: ['band']"]
+                              "accuracy: fallback[1] has keys outside the accuracy table's: ['band']"]
     else:
         assert errors[1:] == ["accuracy: fallback[1] has 5 test buildings (under 30) but is not 'not measurable'"]
 
@@ -248,7 +248,7 @@ def test_a_table_with_no_measurable_cell_passes_and_a_large_cell_may_not_read_no
 
 
 def test_the_external_check_carries_its_counts_per_map_state_and_the_1990_split(site):
-    # Task 14b: C10's external entry is the map's own rule run on the Wikidata/OSM-only buildings: whole-number
+    # The accuracy table's external entry is the map's own rule run on the Wikidata/OSM-only buildings: whole-number
     # counts, the same four split at 1990, and "measured" only with at least min_cell "≈ year" buildings (else the
     # page prints the counts, never a percentage). A key, a split key or a value that could be a name is an error.
     def plant(acc):
@@ -262,7 +262,7 @@ def test_the_external_check_carries_its_counts_per_map_state_and_the_1990_split(
                       "accuracy: external n_unknown is not a whole number",
                       "accuracy: external.before_1990 lacks one of ['in_band_estimate', 'n_all', 'n_estimate', "
                       "'right_estimate']",
-                      "accuracy: external.before_1990 has keys outside contract C10: ['gid']",
+                      "accuracy: external.before_1990 has keys outside the accuracy table's: ['gid']",
                       "accuracy: external.from_1990 is not an object",
                       "accuracy: external has 40 '≈ year' buildings but reads 'not measurable'"]
     assert not any("Södermalm" in e for e in errors)
@@ -276,7 +276,7 @@ def test_the_external_check_carries_its_counts_per_map_state_and_the_1990_split(
 
 
 def test_an_estimate_cell_must_be_one_the_estimator_could_give(site):
-    # Task 14b review (M4, the estimate half): a cell reads "estimate" only for a type in city.ESTIMATE's
+    # A cell reads "estimate" only for a type in city.ESTIMATE's
     # estimate_groups, at least min_right right, with a band within max_band; another build's table, or a hand edit,
     # could otherwise ship and the page would print it. The cells' group is never printed.
     def plant(acc):
@@ -290,7 +290,7 @@ def test_an_estimate_cell_must_be_one_the_estimator_could_give(site):
 
 
 def test_the_table_by_true_period_has_one_well_formed_row_per_period(site):
-    # Task 14b: the cross-validation counted by the period of the true year (the page shows where it is weak):
+    # The cross-validation counted by the period of the true year (the page shows where it is weak):
     # whole-number counts, a period key from city.PERIODS, no other key.
     def plant(acc):
         rows = acc["by_true_period"]
@@ -303,7 +303,7 @@ def test_the_table_by_true_period_has_one_well_formed_row_per_period(site):
     errors = check(site)
     assert errors == ["accuracy: by_true_period[0] has a period outside city.PERIODS",
                       "accuracy: by_true_period[1] right is not a whole number",
-                      "accuracy: by_true_period[2] has keys outside contract C10: ['gid']",
+                      "accuracy: by_true_period[2] has keys outside the accuracy table's: ['gid']",
                       "accuracy: by_true_period[3] lacks one of ['n', 'n_estimate', 'period', 'right', "
                       "'right_estimate']",
                       "accuracy: by_true_period[12] is not an object"]
@@ -311,7 +311,7 @@ def test_the_table_by_true_period_has_one_well_formed_row_per_period(site):
 
 
 def test_a_tile_whose_year_disagrees_with_attrs_fails(site):
-    # P4: the shader draws the tile's year, the count works from attrs; they must agree per gid
+    # The shader draws the tile's year, the count works from attrs; they must agree per gid
     cfg = json.loads((site / "stockholm.json").read_text())
     t = cfg["tiles"][0]
     blob = bytearray(gzip.decompress((site / t["pack"]).read_bytes()))
@@ -331,7 +331,7 @@ def test_known_and_estimated_flags_split_the_histograms():
 
 
 # Final review PIPELINE-1: a measurable cell or fallback row carries its numbers, and no number or count is impossible
-# (a hand-edited or stale table ships inside stockholm.json; Plan 4's About page would print "18 (120%)").
+# (a hand-edited or stale table ships inside stockholm.json; About would print "18 (120%)").
 
 @pytest.mark.parametrize("number", sorted(s99_validate.CELL_NUMBERS))
 def test_a_measurable_cell_or_fallback_row_must_carry_its_numbers(site, number):

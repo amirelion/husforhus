@@ -3,12 +3,12 @@
 // a desktop, a bottom sheet on a phone (styles.css). A tap switches at once and the panel stays open, so the looks
 // can be compared; Escape, the close button, a click outside or the focus leaving closes it. Tab or the arrow keys
 // move between the cards, Enter or Space picks one. The atmosphere row appears once there is an atmosphere
-// besides 'none'. The Ground row's Hills slider (Plan 3, D40) scales the relief; it has the arrow keys while focused.
+// besides 'none'. The Ground row's Hills slider scales the relief; it has the arrow keys while focused.
 import { THEMES } from './themes.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-// button: the Look button; panel: an empty <dialog>; looks: createLooks(); t: app.js's string table. relief (Plan 3,
+// button: the Look button; panel: an empty <dialog>; looks: createLooks(); t: app.js's string table. relief (
 // optional): {available, value, max, step, disabled, choose(v), label(v), note()}, the Hills slider, a row under the
 // looks once available, from 0 (flat) to max, with its value (label: "Flat", "1×") and its honesty line (what the map
 // shows now); disabled (the terrain did not load) dims it and a move snaps back, changing nothing.

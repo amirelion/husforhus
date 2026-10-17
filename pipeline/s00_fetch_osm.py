@@ -1,15 +1,15 @@
-"""Fetch the OpenStreetMap data the build uses (Plan 2, Plan 4a; spec §3.1 s00_fetch_osm). ODbL.
+"""Fetch the OpenStreetMap data the build uses. ODbL.
 
-Dated buildings (Plan 2): one Overpass query, pipeline/queries/osm_dated.overpass: buildings in Stockholms kommun
+Dated buildings: one Overpass query, pipeline/queries/osm_dated.overpass: buildings in Stockholms kommun
 (area ref:scb 0180) with start_date, year_of_construction or construction_date, as tags plus a centre point (about
 1,400 elements), to data/raw/osm/dated.json.
 
-Tiled queries (Plan 4a): each query in TILED runs once per tile of city.BOX_WGS84 split into city.OSM_TILES (4 x 4
+Tiled queries: each query in TILED runs once per tile of city.BOX_WGS84 split into city.OSM_TILES (4 x 4
 tiles of about 6.5 km), one request at a time, PAUSE_S apart, into data/raw/osm/<name>/<col>_<row>.json. The public
 Overpass servers answer one large request for the whole city slowly and unreliably (a 502, then 52 s, on
 2026-10-16), and a tile that fails keeps its cached copy without costing the others. `levels`
 (osm_levels.overpass): building ways and multipolygon relations with building:levels, with their geometry, for
-Floors (pipeline/osm_buildings.py; about 18 MB for the city); `addresses` (osm_addresses.overpass, Plan 4b): every
+Floors (pipeline/osm_buildings.py; about 18 MB for the city); `addresses` (osm_addresses.overpass): every
 node, way and relation with addr:street and addr:housenumber, nodes with their position and the others with their
 centre, for the card and search (pipeline/addresses.py; about 77,000 elements, about 15 MB). An element crossing a tile
 edge comes back in both tiles; the readers deduplicate.

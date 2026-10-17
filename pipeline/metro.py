@@ -1,7 +1,7 @@
-"""Tunnelbanan as a dated layer (roadmap item 16, D35 point 1): stations and segments from the research CSVs, plus
+"""Tunnelbanan as a dated layer: stations and segments from the research CSVs, plus
 OSM running track cut into the dated segments.
 
-Inputs (docs/research/2026-10-16-tunnelbanan*): the stations CSV (100 open stations, Kymlinge which never opened, and
+Inputs: the stations CSV (100 open stations, Kymlinge which never opened, and
 6 provisional or moved predecessors) and the segments CSV (32 openings, 1950-10-01 to 1994-08-15). Play shows each
 station from its `opening_date` (the inauguration, note §3) at today's point; the provisional rows are kept apart, as
 data for the card text only (note §9 no. 4).

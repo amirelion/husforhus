@@ -1,4 +1,4 @@
-"""OpenStreetMap addresses on LOD1 footprints (Plan 4b; spec §4.4 as amended by D52: OSM is the only address source).
+"""OpenStreetMap addresses on LOD1 footprints (OSM is the only address source).
 
 load(): addr:street + addr:housenumber from the tiles s00_fetch_osm cached (data/raw/osm/addresses/*.json, Overpass
 JSON: nodes with their position, ways and relations with their centre), one row per element, deduplicated across
@@ -8,7 +8,7 @@ and anything else ("1 tr", "Gård") gives nothing. assign(): an address belongs 
 smallest, when footprints overlap), else to the nearest footprint within max_m (city.SEARCH addr_max_m, 10 m), else
 to none. without_designations(): an address whose text is, or contains, a property designation of the city's buildings
 is left out, as s99 would refuse it ("Skansbacken 1" is a street address and also a kvarter's property: 12 of 75,545 on
-2026-10-16; pipeline/privacy.py). ODbL: © OpenStreetMap contributors; inside the ODbL-as-a-whole building database (D17).
+2026-10-16; pipeline/privacy.py). ODbL: © OpenStreetMap contributors; inside the ODbL-as-a-whole building database.
 """
 import json
 import re
@@ -115,7 +115,7 @@ def sharing(on: pd.DataFrame, gids: set[int], also: set[str] = frozenset()) -> n
     """Per row, True where its street and number (letter case aside) also sit on one of `gids`, or are in `also`
     (near(): the addresses beside them). An address belongs to a house, not to the footprint its node landed on: an
     entrance node beside the house can lie nearest its garage or a neighbour, so a house's addresses are withheld
-    wherever they landed (Plan 4b final review, F1)."""
+    wherever they landed."""
     if (not gids and not also) or on.empty:
         return np.zeros(len(on), dtype=bool)
     k = pd.Series(key(on.street, on.number))

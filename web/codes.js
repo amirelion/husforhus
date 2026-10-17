@@ -1,4 +1,4 @@
-// Year, source, floors and rating codes: a mirror of pipeline/codes.py (contract C2). web/test/codes.test.mjs
+// Year, source, floors and rating codes: a mirror of pipeline/codes.py. web/test/codes.test.mjs
 // fails when the two drift apart. yflag 5 is retired (it was DECADE): a private house keeps the yflag that says
 // how its year is known and carries its own `private` flag in attrs.bin (tile.js readAttrs).
 export const YFLAG = Object.freeze({ EXACT: 0, RANGE: 1, LONG: 2, AREA: 3, ESTIMATE: 4, PERIOD: 6, UNKNOWN: 7 });

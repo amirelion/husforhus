@@ -5,7 +5,7 @@ import { THEMES } from './themes.js';
 
 // localStorage key for the viewer's last choice.
 export const LOOK_KEY = 'hfh-look';
-// Ärg (D28). styles.css's :root tokens and pipeline/city.py's PERIODS colours are this look's (contract C1), so the
+// Ärg. styles.css's :root tokens and pipeline/city.py's PERIODS colours are this look's, so the
 // first paint, before this module runs, is already in it.
 export const DEFAULT_LOOK = 'arg';
 

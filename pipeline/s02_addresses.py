@@ -1,4 +1,4 @@
-"""Each footprint's OpenStreetMap addresses and its stadsdel (Plan 4b, Task 2; spec §4.4 as amended by D52).
+"""Each footprint's OpenStreetMap addresses and its stadsdel.
 
 Reads data/buildings.parquet, s00_fetch_osm's address tiles (data/raw/osm/addresses/) and Stadsdelar.zip; writes
 data/addresses.parquet (gid, street, number, withheld: one row per address on a footprint, pipeline/addresses.py; never
@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> None:
     b = gpd.read_parquet(a.buildings, columns=["gid", "fastighet", "geometry"])
     points = addresses.load(a.tiles, needed)
     on, districts, dropped = build(b, points, a.stadsdelar)
-    taken = suppress.gids_of(a.buildings, a.suppress)                     # Plan 4b: a takedown's addresses go
+    taken = suppress.gids_of(a.buildings, a.suppress)                     # a takedown's addresses go
     on = suppress.addresses(on, taken, addresses.near(points, b, taken))
     a.out.parent.mkdir(parents=True, exist_ok=True)
     on.to_parquet(a.out, index=False)

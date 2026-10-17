@@ -1,5 +1,5 @@
 # tests/test_city.py
-"""pipeline.city (contract C1) and the periods re-export."""
+"""pipeline.city and the periods re-export."""
 import re
 from pathlib import Path
 
@@ -18,7 +18,7 @@ def test_identity():
     assert city.KOMMUN == "0180"
     assert city.WIKIDATA == "Q506250"
     assert city.N_PACKS == 8 and city.SIMPLIFY == 0.25
-    # D24 fixed 1200 m. scripts/compare-tiles.sh rewrites TILE for its side builds and restores it in an EXIT trap;
+    # 1200 m, measured 2026-10-15. scripts/compare-tiles.sh rewrites TILE for its side builds and restores it in an EXIT trap;
     # if that trap never runs, this fails instead of the next full build quietly using 1500 m.
     assert city.TILE == 1200.0
     assert set(city.HOME) == {"x", "z", "azimuth", "elevation", "span"}
@@ -53,7 +53,7 @@ def test_period_indices_matches_the_scalar_form():
 
 
 def test_plan2_constants():
-    # the estimate tier's tables (contract C9)
+    # the estimate tier's tables
     assert len(city.INNER_STADSDELAR) == 21 and "GAMLA STAN" in city.INNER_STADSDELAR
     assert all(n == n.upper() for n in city.INNER_STADSDELAR)
     assert len(city.KATEGORI_GROUPS) == 20 and set(city.KATEGORI_GROUPS.values()) == set(city.GROUP_LABELS)
@@ -71,7 +71,7 @@ def test_plan2_constants():
                                   "far_rule", "period_only_stadsdelar"}
     assert city.ESTIMATE["near_m"] == 100.0 and city.ESTIMATE["min_cell"] == 30 and city.ESTIMATE["max_band"] == 15
     assert city.ESTIMATE["far_rule"] == "unknown" and city.ESTIMATE["period_only_stadsdelar"] == set()
-    # Task 14b (the independent check, 2026-10-15): estimate only what the check can vouch for
+    # Decided 2026-10-15 after the independent check: estimate only what the check can vouch for
     assert city.ESTIMATE["estimate_groups"] == {"house"} and city.ESTIMATE["give_period"] is False
     assert city.ESTIMATE["min_right"] == 0.7 and city.ESTIMATE["late_unit_fnr"] == 10_400_000
     assert city.ESTIMATE["estimate_groups"] <= set(city.GROUP_LABELS)
@@ -106,7 +106,7 @@ def test_fixture_bbox_covers_gamla_stan():
 
 
 def test_plan3_terrain_constants():
-    # the terrain's settings (contract C14); relief, fade_m and terrace are product defaults the owner confirms at M4
+    # the terrain's settings; relief, fade_m and terrace are product defaults the owner confirms at M4
     t = city.TERRAIN
     assert set(t) == {"cell", "sub", "burn", "water_z", "sea_max", "bridge_m", "lake_offset", "fix_m", "terrace_up",
                       "terrace_max_cut", "buried_max", "ground_min", "datum_max", "relief", "relief_max", "fade_m",
@@ -114,14 +114,14 @@ def test_plan3_terrain_constants():
     assert (t["cell"], t["sub"], t["burn"], t["water_z"]) == (20.0, 4, 2, 0.0)
     assert city.TILE % t["cell"] == 0 and t["chunk"] % city.TILE == 0     # nodes and chunks line up with the tiles
     assert set(t["lake_offset"]) == set(t["fix_m"]) == {"dtm", "contours"}
-    # Decided 2026-10-16 (D40): the ground at true height by default, and a Hills slider from 0 (flat) to 2.5
+    # Decided 2026-10-16: the ground at true height by default, and a Hills slider from 0 (flat) to 2.5
     assert (t["relief"], t["fade_m"], t["terrace"]) == (1.0, 400.0, "full")
     assert 0 < t["relief"] <= t["relief_max"] == 2.5
-    assert 0 < t["terrace_max_cut"] <= 25.5           # the cut ships as u8 decimetres (C16)
+    assert 0 < t["terrace_max_cut"] <= 25.5           # the cut ships as u8 decimetres
 
 
 def test_plan4a_constants():
-    # contract C20: the box the Wikidata queries use, link templates for the viewer, Floors from OSM, the card's rules
+    # The box the Wikidata queries use, link templates for the viewer, Floors from OSM, the card's rules
     assert city.BOX_WGS84 == (17.75, 59.22, 18.21, 59.45)
     rq = (Path(city.__file__).with_name("queries") / "wikidata_dated.rq").read_text(encoding="utf-8")
     lon0, lat0, lon1, lat1 = city.BOX_WGS84
@@ -136,14 +136,14 @@ def test_plan4a_constants():
     generic = re.compile(city.GENERIC_NAME_RE, re.IGNORECASE)
     assert all(generic.match(n) for n in ("Norra flygeln", "_", "X", "Kv. Bacchus", "Kv Svalan", "Kvarteret Svalan"))
     assert not any(generic.match(n) for n in ("Kvarnen", "Kvarnholmen", "Svalan"))     # only a block's own name
-    assert city.ARCHITECT_MAX_RARE == 3                       # D35 point 2
+    assert city.ARCHITECT_MAX_RARE == 3                       # the rare-architect rule
     assert city.WIKI["thumb_width"] in (250, 330, 500, 960)    # a width Wikimedia serves as standard
     assert city.WIKI["max_m"] == 30.0 and city.WIKI["langs"] == ("sv", "en") and city.WIKI["extract_chars"] == 500
     assert isinstance(city.PHOTO_DENY, set)
 
 
 def test_plan4b_constants():
-    # contract C25: the stadsdelar as people write them, their everyday names, the neighbours, search, About
+    # The stadsdelar as people write them, their everyday names, the neighbours, search, About
     assert len(city.DISTRICT_NAMES) == 117
     for key, name in city.DISTRICT_NAMES.items():
         assert key == key.upper() and name != name.upper()
@@ -161,7 +161,7 @@ def test_plan4b_constants():
     assert city.SEARCH["max_per_kind"] <= city.SEARCH["max_rows"] and city.SEARCH["min_chars"] >= 2
     assert all(isinstance(e, str) and e for e in city.SEARCH["examples"])
     assert city.SNAPSHOT == "2023-01"
-    # Plan 4b's decisions, answered 2026-10-17
+    # The launch decisions of 2026-10-17
     assert city.LANG_FROM_BROWSER is True                   # 1: a browser set to Swedish opens in Swedish
     assert len(city.MAKER.split()) == 2                     # 2: the maker, named on About as the GDPR controller
     assert city.CONTACT.endswith("@husforhus.se") and " " not in city.CONTACT   # ... and the project's own address

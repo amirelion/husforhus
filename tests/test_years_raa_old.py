@@ -1,4 +1,4 @@
-"""RAÄ's OLD register file as a year source (Plan 2, Task 3): Stockholm's Nybyggnad records joined by UUID."""
+"""RAÄ's OLD register file as a year source: Stockholm's Nybyggnad records joined by UUID."""
 from pathlib import Path
 
 import geopandas as gpd

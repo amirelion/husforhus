@@ -1,6 +1,6 @@
-"""The search index (Plan 4b, Task 3; spec §3.2 s14_search, §4.4 as amended by D52): what web/search.js looks up.
+"""The search index: what web/search.js looks up.
 
-Writes into the version folder (contract C27):
+Writes into the version folder:
 - search/index.json, loaded on the search field's first focus: the settings (city.SEARCH), the examples that resolve
   in this build, the stadsdelar (display name, buildings, bounds in the local frame), the everyday district names
   (city.DISTRICT_ALIASES), the neighbouring municipalities (city.OUTSIDE), the streets with an address on a footprint
@@ -15,10 +15,10 @@ Writes into the version folder (contract C27):
   a-z and 0-9).
 
 Names come only from the version's own cards (cards/NN.json), so search shows no name a card does not, and a
-private house's name only as its card does (D18, D34, the reviewed list); an alias only finds a building that a card
+private house's name only as its card does (the reviewed list); an alias only finds a building that a card
 already names, and shows that name. Addresses come from s02_addresses
 (OpenStreetMap, ODbL); a non-curated private-category house's are left out only when city.PRIVATE_ADDRESSES is False
-(decision 3, Plan 4b). Folded names are not stored: the browser folds them on load with the same rules.
+. Folded names are not stored: the browser folds them on load with the same rules.
 
     uv run python -m pipeline.run s03_tiles s04_base s07_labels s14_search s99_validate -- --version v20261016
 

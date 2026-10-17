@@ -46,7 +46,7 @@ def test_private_houses_bin_inside_their_decade():
     assert (s03_tiles.stable_hash(4) % 10, s03_tiles.stable_hash(6) % 10) == (7, 0)
     df = pd.DataFrame({"gid": [4, 6, 4], "year": [1960, 1930, 2020], "yflag": [codes.EXACT] * 3,
                        "period": [9, 7, 11], "private": [True, True, True]})
-    # C5: a private house bins at min(year + stable_hash(gid) % 10, 2026), never after s99's latest year
+    # A private house bins at min(year + stable_hash(gid) % 10, 2026), never after s99's latest year
     assert s03_tiles.LATEST_YEAR == 2026
     assert s03_tiles.histogram_years(df).tolist() == [1967, 1930, 2026]  # 2020 + 7 is capped
     df["private"] = False
@@ -90,10 +90,10 @@ def test_attrs_hold_one_record_per_gid(tmp_path):
                                   codes.SRC_NONE, codes.SRC_RAA_AREA, codes.SRC_NONE, codes.SRC_ESTIMATE,
                                   codes.SRC_ESTIMATE, codes.SRC_WIKIDATA]
     assert a["private"].tolist() == [0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0]
-    # Plan 2: the estimate's ±5 band ships as year_from/year_to; the private period-only house ships its decade
+    # The estimate's ±5 band ships as year_from/year_to; the private period-only house ships its decade
     assert (a["year"][8], a["year_from"][8], a["year_to"][8]) == (1952, 1947, 1957)
     assert (a["year"][9], a["year_from"][9], a["year_to"][9], a["period"][9]) == (1930, 1930, 1939, city.period_index(1936))
-    # D18: the private house RAÄ dates to 1968 ships as the 1960s, but keeps its period colour (p10, not p9)
+    # The private house RAÄ dates to 1968 ships as the 1960s, but keeps its period colour (p10, not p9)
     assert (a["year"][4], a["year_from"][4], a["year_to"][4]) == (1960, 1960, 1969)
     assert a["period"][4] == city.period_index(1968) != city.period_index(1960)
     assert a["rating"].tolist() == [1, 1, 2, 0, 0, 0, 0, 3, 0, 0, 0]
@@ -108,11 +108,11 @@ def test_cards_hold_only_safe_fields(tmp_path):
     for p in shards:
         cards.update(json.loads(p.read_text()))
     photo = {k: v for k, v in WIKI["photos"][PHOTO_KEY].items()}
-    # Plan 4b: the first address and how many there are (the stadsdel ships in districts.bin.gz, below)
+    # The first address and how many there are (the stadsdel ships in districts.bin.gz, below)
     assert cards == {
         "0": {"name": "Tyska kyrkan", "architects": ["Nicodemus Tessin d.y."],
               "raa": "00b0d09f-630d-44fb-ad4e-df8117fdc62b", "prot": 3, "nofloors": True},
-        # Plan 4a: the RAÄ name wins over the Wikidata label; the English label shows since it differs; Task 11a: the
+        # The RAÄ name wins over the Wikidata label; the English label shows since it differs; the
         # curated palace's rebuilds and cellars from its verified entry
         "1": {"name": "Kungliga slottet", "en": "Stockholm Palace", "prot": 1, "since": 1935, "qid": "Q750444",
               "wp": ["sv", "en"], "photo": photo, "rebuilt": [[1772, "rebuilt"], [1857, "raised"]], "cellars": True,
@@ -130,12 +130,12 @@ def test_cards_hold_only_safe_fields(tmp_path):
         assert shard["licence"] == "CC BY-SA 4.0"          # the excerpts' own licence travels with them (§6.1)
         wiki.update(shard["items"])
     assert wiki == WIKI["extracts"]
-    # gid 4 is a private house: years.parquet links its RAÄ record, but RAÄ's page shows the exact year (D18); its
-    # address shows while decision 3 (Plan 4b) says so (city.PRIVATE_ADDRESSES)
+    # gid 4 is a private house: years.parquet links its RAÄ record, but RAÄ's page shows the exact year; its
+    # address shows while city.PRIVATE_ADDRESSES allows it
     assert json.loads((tmp_path / "cards" / "04.json").read_text()) == {"4": {"addr": "Grimstagatan 5"}}
-    # gid 5 is an undated Enbostadshus with a raa_id: not private, but its category never links RAÄ either (D18)
+    # gid 5 is an undated Enbostadshus with a raa_id: not private, but its category never links RAÄ either
     assert json.loads((tmp_path / "cards" / "05.json").read_text()) == {}
-    # Plan 4b: one byte per gid, 1 + the stadsdel's place in stockholm.json `districts`
+    # One byte per gid, 1 + the stadsdel's place in stockholm.json `districts`
     cfg = json.loads((tmp_path / "stockholm.json").read_text())
     assert cfg["districts"] == ["Gamla stan", "Grimsta", "Ladugårdsgärdet", "Riddarholmen", "Södermalm"]
     codes_ = gzip.decompress((tmp_path / "districts.bin.gz").read_bytes())
@@ -157,7 +157,7 @@ def test_places_give_the_first_address_its_count_and_the_district(monkeypatch):
 
 
 def test_a_private_house_keeps_its_address_unless_decision_3_says_no(monkeypatch):
-    # gid 2: an undated villa (not `private`, its KATEGORI hides it); gid 3: a curated villa (Task 2's review)
+    # gid 2: an undated villa (not `private`, its KATEGORI hides it); gid 3: a curated villa
     df = pd.DataFrame({"gid": [0, 1, 2, 3], "name": ["", "", "", ""], "architects": [[], [], [], []],
                        "raa_id": [""] * 4, "private": [True, False, False, False],
                        "kategori": ["Enbostadshus", "Flerbostadshus", "Enbostadshus", "Enbostadshus"],
@@ -180,7 +180,7 @@ def test_district_codes_fit_a_byte():
 
 
 def test_no_raa_link_in_the_private_house_categories_unless_curated():
-    # D18: no card links RAÄ for a building whose kategori is in city.PRIVATE_HOUSE_KATEGORI, dated or not,
+    # No card links RAÄ for a building whose kategori is in city.PRIVATE_HOUSE_KATEGORI, dated or not,
     # unless it is curated. Other categories keep their link.
     df = pd.DataFrame({
         "gid": [0, 1, 2, 3, 4],
@@ -197,7 +197,7 @@ def test_no_raa_link_in_the_private_house_categories_unless_curated():
 
 
 def test_nothing_that_states_the_year_reaches_a_private_house_card():
-    # Plan 4a (D18 with D34): neither a Wikidata item, an article, a photo, an English label, a Wikidata name nor an
+    # Neither a Wikidata item, an article, a photo, an English label, a Wikidata name nor an
     # excerpt on a non-curated private-category house, dated or not, even if s06_wiki had sent one
     df = pd.DataFrame({
         "gid": [0, 1, 2], "name": ["", "", ""], "architects": [[], [], []], "raa_id": ["", "", ""],
@@ -214,7 +214,7 @@ def test_nothing_that_states_the_year_reaches_a_private_house_card():
 
 
 def test_rebuilds_and_cellars_reach_only_a_curated_card():
-    # Task 11a: a verified entry's rebuilds (by year) and its older cellars go on the card of the building it dates;
+    # A verified entry's rebuilds (by year) and its older cellars go on the card of the building it dates;
     # a name that is not curated there (gid 1), an entry without them (gid 2) and an unplaced one (D) give nothing
     df = pd.DataFrame({
         "gid": [0, 1, 2, 3], "name": ["", "", "", ""], "architects": [[], [], [], []], "raa_id": ["", "", "", ""],
@@ -248,7 +248,7 @@ def test_config_follows_contract_c5(tmp_path):
                         "yearMin", "yearMax", "histogram", "histogramEst", "unknown", "attrStride", "tiles",
                         "packs", "stats", "features", "attribution", "accuracy", "terrain", "links", "landmarks",
                         "districts", "langFromBrowser", "about", "accuracyLabels"}
-    # Plan 4b: About's own numbers, counted over what ships, and who made the map (decision 2, Plan 4b)
+    # About's own numbers, counted over what ships, and who made the map
     assert cfg["about"] == {"privateCategory": 4, "privateDated": 3, "ratings": [2, 1, 1], "protected": 2,
                             "withArchitect": 2, "addressed": 4, "gamla": {"n": 5, "dated": 3},
                             "fewestPrivateYears": 4, "lateYear": 2008, "nearM": 100, "rareArchitect": 3,
@@ -266,7 +266,7 @@ def test_config_follows_contract_c5(tmp_path):
     assert cfg["origin"] == list(city.ORIGIN) and cfg["tileSize"] == city.TILE and cfg["attrStride"] == 24
     assert cfg["periods"][0] == {"key": "p1", "label": "Medieval & early Vasa",
                                  "label_sv": "Medeltid och äldre vasatid", "from": 1000, "to": 1610,
-                                 "color": "#8ed3d0"}  # Ärg p1, the default look (D28, C1)
+                                 "color": "#8ed3d0"}  # Ärg p1, the default look
     assert len(cfg["periods"]) == len(city.PERIODS)
     assert set(cfg["tiles"][0]) == {"file", "tx", "tz", "n", "bytes", "dist", "pack", "offset", "length"}
 
@@ -291,14 +291,14 @@ def test_config_follows_contract_c5(tmp_path):
         "photos": 1, "extracts": {"sv": 2, "en": 1},
     }
     assert cfg["accuracy"] == ACCURACY
-    # Plan 3 (C17): the grid as s02_terrain built it, and the viewer's defaults from city.TERRAIN
+    # The grid as s02_terrain built it, and the viewer's defaults from city.TERRAIN
     assert cfg["terrain"] == {"file": "terrain.bin.gz", "source": "contours", "x0": -40.0, "z0": -40.0, "cell": 20.0,
                               "nx": 6, "nz": 5, "waterZ": 0.0, "datum": -0.1, "fixed": 0, "relief": 1.0,
                               "reliefMax": 2.5, "fadeM": 400.0, "terrace": "full", "chunk": 2400.0}
     assert cfg["attribution"] == [{"id": "test-src", "text": "Test data (CC0)", "url": "https://example.org/data",
                                    "licence": "CC0-1.0",
                                    "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-                                   "credit": {"en": "Test data: Test, CC0", "sv": "Test data: Test, CC0"}}]   # D44
+                                   "credit": {"en": "Test data: Test, CC0", "sv": "Test data: Test, CC0"}}]   # the standard credit line
     assert json.loads((tmp_path / "layers.json").read_text()) == []
 
 
@@ -308,7 +308,7 @@ def test_two_runs_write_identical_bytes(tmp_path):
     files = sorted(p.relative_to(tmp_path / "a") for p in (tmp_path / "a").rglob("*") if p.is_file())
     n_packs = len(json.loads((tmp_path / "a" / "stockholm.json").read_text())["packs"])
     # packs, attrs, 64 card shards, 64 excerpt shards, photos.json, layers.json, stockholm.json
-    assert len(files) == n_packs + 1 + 64 + 64 + 5                 # Plan 4b: districts.bin.gz; photo-gids.json
+    assert len(files) == n_packs + 1 + 64 + 64 + 5                 # districts.bin.gz, photo-gids.json
     for f in files:
         assert (tmp_path / "a" / f).read_bytes() == (tmp_path / "b" / f).read_bytes(), f
 
@@ -328,7 +328,7 @@ def test_main_writes_version_dir_and_current_json(tmp_path, monkeypatch):
 
 
 def test_ground_parquet_replaces_ground_height_and_floors():
-    # Plan 3: s02_terrain settles each building's ground on the terrain (a MARK_Z on a 1 km sheet line is replaced,
+    # S02_terrain settles each building's ground on the terrain (a MARK_Z on a 1 km sheet line is replaced,
     # its height and floors follow); s03 ships those, not buildings.parquet's
     b, y, a = tiny_city()
     g = ground_rows(b, a)
@@ -409,8 +409,8 @@ def test_attribution_carries_the_corner_credit_where_a_source_has_one():
 
 
 def test_attribution_credits_each_source_in_the_d44_form():
-    # D44 (2026-10-16): "Dataset: publisher, licence", plus ", processed" / ", bearbetad" where the map changes the
-    # data (CC0 included); a source's own words stand in the publisher's place; the City's lines are its own (O1)
+    # The standard credit line (2026-10-16): "Dataset: publisher, licence", plus ", processed" / ", bearbetad" where the map changes the
+    # data (CC0 included); a source's own words stand in the publisher's place; the City's lines are its own
     lines = {a["id"]: (a["credit"]["en"], a["credit"]["sv"])
              for a in s03_tiles.attribution(load_sources(), terrain_source="dtm")}
     both = lambda line: (f"{line}, processed", f"{line}, bearbetad")   # noqa: E731

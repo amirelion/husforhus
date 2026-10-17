@@ -40,7 +40,7 @@ def test_c3_columns_and_dtypes():
                                "prod_year", "fnr", "geometry"]
     assert str(b["gid"].dtype) == "int32" and str(b["oid"].dtype) == "int64" and str(b["prod_year"].dtype) == "int16"
     assert b["prod_year"].tolist() == [2023, 2023]      # synth.lod1_raw's PROD_DATE "20230117"
-    # Task 14b: the property-unit key (LOD1 FNR, internal), 0 for the unregistered building that has none
+    # The property-unit key (LOD1 FNR, internal), 0 for the unregistered building that has none
     assert str(b["fnr"].dtype) == "int64" and b["fnr"].tolist() == [0, 10_000_000]
     assert all(str(b[c].dtype) == "float32" for c in ("height", "ground", "area"))
     assert b.crs.to_epsg() == city.CRS
@@ -289,7 +289,7 @@ def main_args(tmp_path) -> list[str]:
 
 
 def test_main_fails_below_the_city_floor_without_writing(tmp_path, monkeypatch):
-    # P2: a partial LOD1 (a district missing, a filter gone wrong) must not become data/buildings.parquet
+    # A partial LOD1 (a district missing, a filter gone wrong) must not become data/buildings.parquet
     monkeypatch.delenv("HFH_FIXTURE", raising=False)
     with pytest.raises(SystemExit, match="1 buildings after cleaning, fewer than the city's 70,000"):
         s01.main(main_args(tmp_path))

@@ -1,4 +1,4 @@
-"""Plan 2's year tiers inside s02_years (Task 7): the order, the new sources, the estimate tier, D18 for
+"""The year tiers inside s02_years: the order, the new sources, the estimate tier, the decade rule for
 estimates, the narrow-decade rule and the review list. Synthetic footprints like tests/test_s02_years.py."""
 import json
 
@@ -16,7 +16,7 @@ from tests.test_s02_years import X0, Y0, buildings, landmark_at, no_raa, raa, re
 
 # The measured rule, whatever product default the project picks at M3 (tests/test_estimate.py says the same).
 P = dict(city.ESTIMATE, far_rule="unknown", period_only_stadsdelar=set())
-# Task 14b's independent check with nothing to check (no Wikidata or OSM row, or estimates off): contract C10's shape.
+# The independent check with nothing to check (no Wikidata or OSM row, or estimates off): the accuracy table's shape.
 SPLIT0 = {"n_all": 0, "n_estimate": 0, "right_estimate": 0, "in_band_estimate": 0}
 NO_EXTERNAL = {"status": "not measurable", "n_all": 0, "n_estimate": 0, "right_estimate": 0, "in_band_estimate": 0,
                "n_unknown": 0, "before_1990": SPLIT0, "from_1990": SPLIT0}
@@ -101,7 +101,7 @@ def main_args(tmp_path, monkeypatch):
         monkeypatch.setattr(s02_years.est, "stadsdel_of", lambda *_: np.array(["FARSTA"] * len(b), dtype=object))
         for name in ("dated.json", "classes.json", "osm.json"):
             (tmp_path / name).write_text("{}")
-        (tmp_path / "landmarks.json").write_text("[]")      # Plan 4a: s08_landmarks' verified list, empty here
+        (tmp_path / "landmarks.json").write_text("[]")      # s08_landmarks' verified list, empty here
 
         def args(tag=""):
             return ["--buildings", str(tmp_path / "buildings.parquet"), "--raa-old", str(tmp_path / "missing.gpkg"),
@@ -138,7 +138,7 @@ def test_tier_order_follows_the_spec():
 
 
 def test_wikidata_and_osm_publish_the_stated_year_and_spans_follow_the_display_rule():
-    # D6, shown honestly: a Wikidata decade publishes 1640 (the card prints "1640s", the timeline draws it at 1640),
+    # Shown honestly: a Wikidata decade publishes 1640 (the card prints "1640s", the timeline draws it at 1640),
     # an OSM "~1920" the year the mapper wrote; only a real span takes RAÄ's completion-year rule. The yflag still
     # comes from the span (a decade is RANGE), so year_from <= year <= year_to holds for s99.
     b = buildings(("u0", "Flerbostadshus", sq(0)), ("u1", "Flerbostadshus", sq(1)), ("u2", "Flerbostadshus", sq(2)),
@@ -153,7 +153,7 @@ def test_wikidata_and_osm_publish_the_stated_year_and_spans_follow_the_display_r
 
 
 def test_a_private_house_dated_by_wikidata_or_osm_publishes_its_decade_only():
-    # D18 in Plan 2: the Wikipedia-article exception is not implemented yet; every non-curated private house rounds.
+    # The decade rule: the Wikipedia-article exception is not implemented yet; every non-curated private house rounds.
     b = buildings(("u0", "Enbostadshus", sq(0)), ("u1", "Enbostadshus", sq(1)), ("u2", "Enbostadshus", sq(2)))
     y, _ = run(b, no_raa(), wikidata=wikidata(("Q0", 0, 1912, 1912, True)), osm=osm(("way/1", 1, 1967, 1967)),
                raa_old=raa_old(("u2", 1955, 1955)))
@@ -273,7 +273,7 @@ EXTERNAL_SOURCES = {"osm": (osm_block, SRC_OSM), "wikidata": (wikidata_block, SR
 
 @pytest.mark.parametrize("source", sorted(EXTERNAL_SOURCES))
 def test_the_external_check_runs_the_maps_rule_on_the_wikidata_and_osm_rows_alone(source):
-    # The independent check, Task 14b: trained on curated + raa + raa_old alone, the map's own rule (kvarter bonus,
+    # The independent check: trained on curated + raa + raa_old alone, the map's own rule (kvarter bonus,
     # the cells, every gate) run on the rows Wikidata or OSM dated, as if they had no year, and counted per map state.
     # Block 4's nine houses are dated by OSM (or Wikidata) instead of RAÄ: six are within 100 m of a RAÄ-dated house
     # and become "≈ year" (right period, true year within the ±5 band), the middle column (105 m away) stays unknown.
@@ -312,7 +312,7 @@ def test_the_external_check_shows_the_blind_spot_and_the_guard(source):
 
 
 def test_the_area_check_scores_area_years_against_the_building_years_in_the_polygon():
-    # spec §3.3: the area tier's accuracy. One Område 1900–1910 (area year 1910) over slots 0..3 and building 5:
+    # The area tier's accuracy. One Område 1900–1910 (area year 1910) over slots 0..3 and building 5:
     # slot 0 RAÄ 1905; slot 1 a private house RAÄ dates to 1917 (published as the 1910s, scored on 1917); slot 2
     # Wikidata 1930 and OSM 1909 and slot 3 OSM 1911, both outranked by the area but still building-level years
     # (Wikidata before OSM); building 5 the area alone. Errors 5, 7, 20 and 1; 1930 lies in another period. Slot 4,
@@ -338,7 +338,7 @@ def test_the_area_check_scores_area_years_against_the_building_years_in_the_poly
 
 
 def test_area_years_never_train_the_estimator():
-    # Final review PIPELINE-3 (D31: the kNN trains on building-level years only): blocks 8 and 9 lose their RAÄ
+    # Final review PIPELINE-3 (the kNN trains on building-level years only): blocks 8 and 9 lose their RAÄ
     # records, then a dated Område covers them. Their 18 area years must not join the training pool: tested, the
     # cells and the estimate of the house in block 3 are those of the run without the Område.
     b, years, _, _ = villa_blocks([(*inside(3), "Enbostadshus", "KV3 10", 2003)])
@@ -356,7 +356,7 @@ def test_area_years_never_train_the_estimator():
 
 
 def test_a_non_private_estimate_and_a_period_row_carry_their_ranges():
-    # A city of small apartment blocks, with the levers Task 14b turned off by default (apartments estimated, a
+    # A city of small apartment blocks, with the levers turned off by default on 2026-10-15 (apartments estimated, a
     # period on its own when the band is too wide), so the row shapes stay pinned.
     b, years, _, _ = villa_blocks([(*inside(3), "Flerbostadshus", "KV3 10", 2003)])
     b.loc[b.kategori == "Enbostadshus", "kategori"] = "Flerbostadshus"     # a city of small apartment blocks
@@ -384,7 +384,7 @@ def test_an_estimate_at_the_latest_year_keeps_its_band_inside_the_bounds():
     b, years, _, _ = villa_blocks([(*inside(9), "Flerbostadshus", "KV9 10", 2003)], base_year=2008)
     b.loc[b.kategori == "Enbostadshus", "kategori"] = "Flerbostadshus"
     recs = raa_recs(b, years)
-    lever = dict(P, estimate_groups={"apartments"}, give_period=True)      # Task 14b's defaults would leave it unknown
+    lever = dict(P, estimate_groups={"apartments"}, give_period=True)      # the defaults would leave it unknown
     y, _ = s02_years.assign_years(b, raa(*recs), [], params=lever)
     row = y.set_index("gid").loc[90]
     assert (row.yflag, row.ysrc) == (ESTIMATE, SRC_ESTIMATE)
@@ -451,9 +451,9 @@ def test_main_writes_years_accuracy_and_review_and_guards_the_raa_link(tmp_path,
 
 
 def test_main_reads_the_property_unit_key_and_stops_without_it(tmp_path, monkeypatch, main_args):
-    # Task 14b review (M2 c, M3): main loads fnr with the other building columns (s02_years.BUILDING_COLUMNS), so the
+    # Main loads fnr with the other building columns (s02_years.BUILDING_COLUMNS), so the
     # guard holds through the real entry point: the house on a late-formed unit stays unknown, its neighbour block's
-    # house is estimated. A buildings.parquet written before Task 14b (no fnr) would switch the guard off without a
+    # house is estimated. A buildings.parquet written before 2026-10-15 (no fnr) would switch the guard off without a
     # word, so main stops and names the step to run.
     late = city.ESTIMATE["late_unit_fnr"] + 1
     _, args = main_args([(*inside(3), "Enbostadshus", "KV3 10", 2003, late), (*inside(7), "Enbostadshus", "KV7 10", 2003)])
@@ -470,7 +470,7 @@ def test_main_reads_the_property_unit_key_and_stops_without_it(tmp_path, monkeyp
 
 def test_two_main_runs_write_identical_years_and_accuracy(tmp_path, main_args):
     # The golden check for s02_years (Global Constraints, Output files): the kNN, the folds, the review list and the
-    # table are deterministic. Task 14 Step 2 repeats it across processes under two PYTHONHASHSEED values.
+    # table are deterministic. A real-data check repeats it across processes under two PYTHONHASHSEED values.
     _, args = main_args([(*inside(3), "Enbostadshus", "KV3 10", 2003), (*inside(7), "Enbostadshus", "KV7 10", 2003)])
 
     def run_once(tag):
@@ -486,7 +486,7 @@ def test_two_main_runs_write_identical_years_and_accuracy(tmp_path, main_args):
 
 
 def test_a_takedown_neither_trains_nor_tests_the_estimate():
-    # Plan 4b (GDPR Art. 21: an objection stops the use, not only the display): a dated villa taken down is no anchor
+    # A takedown (GDPR Art. 21: an objection stops the use, not only the display): a dated villa taken down is no anchor
     # for its neighbours' estimates and no test house; the run equals the one where RAÄ never dated it
     b, years, _, _ = villa_blocks([(*inside(3), "Enbostadshus", "KV3 10", 2003)])
     gone = int(b.gid[b.fastighet == "KV3 1"].iloc[0])                     # a dated villa beside the estimated house
@@ -500,7 +500,7 @@ def test_a_takedown_neither_trains_nor_tests_the_estimate():
 
 
 def test_main_draws_a_takedown_as_unknown_and_counts_what_ships(tmp_path, main_args, capsys):
-    # Plan 4b: the estimated house (the last row) is taken down: "Year unknown", and the accuracy table's result and
+    # The estimated house (the last row) is taken down: "Year unknown", and the accuracy table's result and
     # tested follow, so s99 still finds the table describing the build
     _, args = main_args([(*inside(3), "Enbostadshus", "KV3 10", 2003)])
     uuid = gpd.read_parquet(tmp_path / "buildings.parquet").uuid.iloc[-1]

@@ -7,7 +7,7 @@ x, z in local metres (x east, z south). angleDeg is measured from +x towards +z 
 (app.js: "ang is measured towards +z, Y turns towards -z"). len is the length of the stretch the name may
 cover, width the street's width; both in metres.
 
-Sources (spec §3.2):
+Sources:
 - TextKurvad_line, GRUPP 'Gatunamn' only (its few water names are garbled): the curved text baseline.
   Centre = midpoint lifted BASELINE_UP × size off the baseline; angle = tangent at the midpoint; len = chord.
 - NamnText_point, GRUPP 'Gatunamn', 'Sjö', 'Vattendrag': a straight text anchor. TEXT_ANGLE is degrees

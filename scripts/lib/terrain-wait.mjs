@@ -1,4 +1,4 @@
-// The terrain wait shared by scripts/look.mjs and scripts/measure.mjs (Plan 3, Task 11 review, fix round 1). No
+// The terrain wait shared by scripts/look.mjs and scripts/measure.mjs (fix round 1). No
 // Playwright import: a script passes its page in, so look.mjs's checks still run where node_modules is not installed.
 
 // What window.__dbg says about the terrain (web/app.js: terrain() and relief): its source (null in a build without

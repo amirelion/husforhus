@@ -51,7 +51,7 @@ for (const [name, th] of Object.entries(THEMES)) {
     assert.equal(th.floors.length, 4, 'floors');
     th.floors.forEach(c => assert.match(c, HEX, 'floors'));
   });
-  // Plan 4a: the Floors ramp per look. Buildings stand on land and rise against the sky: no stop may sink into either
+  // The Floors ramp per look. Buildings stand on land and rise against the sky: no stop may sink into either
   // (the one shared ramp's darkest colour was ΔE 4.4 from Blå timmen's land, so the tallest buildings vanished there),
   // and the stops step in lightness, one way, so the ramp reads as more and fewer floors.
   test(`${name}: the Floors ramp stays clear of land and sky and steps in lightness`, () => {
@@ -73,7 +73,7 @@ for (const [name, th] of Object.entries(THEMES)) {
   });
 }
 
-// D29: Ärg draws "Year unknown" pale with a fine diagonal hatch (unknownHatch, the hatch line's colour); the other
+// Ärg draws "Year unknown" pale with a fine diagonal hatch (unknownHatch, the hatch line's colour); the other
 // looks draw it flat.
 test('Ärg hatches "Year unknown"; the other looks do not', () => {
   for (const [name, th] of Object.entries(THEMES)) {
@@ -81,7 +81,7 @@ test('Ärg hatches "Year unknown"; the other looks do not', () => {
   }
 });
 
-// Plan 3: the ground as app.js TERRAIN_FRAG draws it, from the constants it is drawn with (themes.js SHADING), in sRGB
+// The ground as app.js TERRAIN_FRAG draws it, from the constants it is drawn with (themes.js SHADING), in sRGB
 // as the map draws it (no colour management; the screen clips at white, as hex() does). A slope is land × clamp(1 +
 // reliefShade · (n·sun − sun.y), 1 − dark · reliefShade, 1 + light · reliefShade): checked at both ends. A wall is
 // quay × (wallMin + wallLit · max(n·sun, 0)) with a level normal, so n·sun runs over ± the sun's level part (0.833):
@@ -142,7 +142,7 @@ for (const name of ['arg', 'kalk', 'blatimme']) {
     for (const kind of VISION) {
       assert.ok(dE(th.land, th.water, kind) >= 8, `${kind}: land / water`);
       if (th.unknownHatch) {
-        // A pale "unknown" can look like a light period colour to a colour-blind viewer (D29), so the hatch is what
+        // A pale "unknown" can look like a light period colour to a colour-blind viewer, so the hatch is what
         // tells it apart: the hatch line must stand out from the ground it is drawn on, and the pale ground from land.
         // Where the hatch fades out (stripes under about 3 px apart, or past about 3 km; app.js FRAG) only its mean
         // tone is left, and Ärg's p1/p2 are then ΔE 2.0–4.6 from it to red- and green-blind viewers.
@@ -157,7 +157,7 @@ for (const name of ['arg', 'kalk', 'blatimme']) {
   // Spec §3.3: estimate-style buildings must look clearly different from the range fade. The fade is the
   // shader's mix(c, uMaquette, 0.8); the estimate tone is estimateTone(c, estimateTo). Both are checked against the
   // period colour too (an estimate must read as different from a known year) and estimates against each other.
-  // "Year unknown" is told apart by D29's hatch, not by colour.
+  // "Year unknown" is told apart by its hatch, not by colour.
   test(`${name}: estimates stay apart from their period colour (ΔE ≥ 4.5), the range fade (≥ 4.5) and each other (≥ 3)`, () => {
     const fade = c => hex(rgb(c).map((v, i) => v + (rgb(th.maquette)[i] - v) * 0.8));
     const ests = th.periods.map(c => estimateTone(c, th.estimateTo));
@@ -179,7 +179,7 @@ for (const name of ['arg', 'kalk', 'blatimme']) {
 }
 
 // The card's header band: its text is inkOn's black or white, faded by any opacity styles.css gives a header rule.
-// The final review of Plan 4a measured the English label (.85) and the period (.8) at 3.6–4.1:1 on some bands; the
+// A review measured the English label (.85) and the period (.8) at 3.6–4.1:1 on some bands; the
 // 13 px text needs 4.5:1 (WCAG AA), so every band of every look, the estimate tone included, is checked here.
 const CSS = readFileSync(new URL('../styles.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const headOpacity = Math.min(1, ...[...CSS.matchAll(/([^{}]*\.card-head[^{}]*)\{([^}]*)\}/g)]

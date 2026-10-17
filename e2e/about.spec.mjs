@@ -1,4 +1,4 @@
-// About (Plan 4b, Task 7): written from the build, in the page's language, with links into its sections.
+// About: written from the build, in the page's language, with links into its sections.
 import { test, expect } from '@playwright/test';
 
 async function open(page, query = '') {
@@ -18,7 +18,7 @@ test('About says the build\'s own numbers and follows the language switch', asyn
   await expect(about).toBeVisible();
   await expect(about.locator('.lead').first()).toContainText(`(${cfg.stats.buildings.toLocaleString('en')} of them)`);
   await expect(about.locator('#about-years')).toHaveText('Where the years come from');
-  await expect(about.locator('#about-data li').first()).toContainText(cfg.attribution[0].credit.en);   // D44's line
+  await expect(about.locator('#about-data li').first()).toContainText(cfg.attribution[0].credit.en);   // the standard credit line
   await expect(about.locator('#about-contact ~ p').last()).toContainText(`Data version ${cfg.version}`);
   await about.locator('.about-close').click();
   await page.locator('.lang [data-lang="sv"]').click();

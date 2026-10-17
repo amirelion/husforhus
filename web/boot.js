@@ -17,7 +17,7 @@ addEventListener('error', e => {
     ? 'Kunde inte ladda stadens data. Ladda om sidan för att försöka igen.'
     : 'Could not load the city data. Reload the page to try again.';
 }, true);
-// The page's language before any module has loaded (Plan 4b): web/i18n.js pickLang's order, ?lang=, the visitor's
+// The page's language before any module has loaded: web/i18n.js pickLang's order, ?lang=, the visitor's
 // saved choice, then the browser's first Swedish or English language.
 function swedish() {
   try {

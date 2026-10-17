@@ -1,4 +1,4 @@
-"""OpenStreetMap start_date as a year source (Plan 2, Task 4): the date formats, the loader and the placement."""
+"""OpenStreetMap start_date as a year source: the date formats, the loader and the placement."""
 import json
 from pathlib import Path
 
@@ -50,7 +50,7 @@ def test_load_keeps_dated_buildings_only(tmp_path):
     assert got.osm_id.tolist() == ["way/1", "way/2", "node/6", "way/7", "way/8"]
     assert got.name.tolist() == ["PUB", "", "", "", ""]
     assert got.year_from.tolist() == [1916, 1950, 2010, 1915, 1865] and got.year_to.tolist() == [1916, 1959, 2010, 1925, 1878]
-    # D6, shown honestly: a decade publishes its start (the card prints "1950s"), "~1920" the year the mapper wrote,
+    # Shown honestly: a decade publishes its start (the card prints "1950s"), "~1920" the year the mapper wrote,
     # a real span the completion year (13 years: RAÄ's rule), never the end of a decade or of a circa range
     assert got.year.tolist() == [1916, 1950, 2010, 1920, 1878]
     assert abs(got.x[0] - city.ORIGIN[0]) < 0.01 and abs(got.y[0] - city.ORIGIN[1]) < 0.01

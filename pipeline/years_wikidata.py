@@ -1,4 +1,4 @@
-"""Wikidata as a year source (spec §3.3 tier 4; docs/research/2026-10-15-wikidata-years.md).
+"""Wikidata as a year source (the year model's fourth tier).
 
 load(): the cached results of s00_fetch_wikidata -> one row per item that is a building (P31/P279* Q41176) and not
 an organisation, museum, art museum, art gallery or destroyed building, has no P576 and is not directly typed as a
@@ -7,7 +7,7 @@ work of art, with one year rule applied to its best-rank P571 (else P1619) state
   - precision 9 or finer (year, month, day): the calendar year; several distinct values give from = earliest and
     to = latest;
   - precision 8 (decade): from = the decade start, to = start + 9 (RANGE; year = the decade start, so the card
-    prints "1640s" and the timeline draws the house at 1640, D6);
+    prints "1640s" and the timeline draws the house at 1640);
   - precision 7 or coarser (a century): dropped, with the reason "century" for the review list;
   - "circa" (P1480 = Q5727902): year = the stated year, from/to = that year -/+ CIRCA;
   - a year below 1000 or after 2026: dropped ("out of range").

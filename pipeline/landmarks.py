@@ -1,10 +1,10 @@
 """Curated landmark seed: buildings whose year we state ourselves, each cited to a Wikipedia article.
 
-The curated tier outranks RAÄ (spec §3.3): RAÄ dates Stockholms slott to 1170–1199, the origin of
+The curated tier outranks RAÄ: RAÄ dates Stockholms slott to 1170–1199, the origin of
 the site, while the palace standing today was completed in 1754.
 
 Each entry:
-  name       display name, and the timeline label when `timeline` is set (Swedish in both languages, D3)
+  name       display name, and the timeline label when `timeline` is set (Swedish in both languages)
   qid        Wikidata item of the building itself, or "" when the building has none (a Gamla stan house cited to its
              kvarter article): then `point` is required, and the footprint keeps the item the rules place on it
   lat, lon   WGS84, copied from the item's P625 (coordinate location), unless `point` says why and where from
@@ -14,7 +14,7 @@ Each entry:
   source     "<lang>:<article title>" on sv or en Wikipedia that states those years
   checks     strings that article must contain (s08_landmarks verifies them before s02_years reads the entry)
   timeline   optional: a priority (1 first) that puts the name on the timeline at `year`. Only an entry whose year
-             the article states exactly gets one (never "c. 1292"), and never a private house (D18).
+             the article states exactly gets one (never "c. 1292"), and never a private house.
   rebuilt    optional: [(year, kind), ...], the card's second line (§14 of the Gamla stan research): kind "rebuilt"
              (rebuilt or altered as a whole; "ombyggt"), "raised" (storeys added; "påbyggt") or "extended" (a wing or
              an addition built on; "tillbyggt"). Each year comes after year_to, by 2026, and is written in one of the

@@ -18,7 +18,7 @@ const T0 = Math.floor(config.yearMin / 50) * 50; // the left end of the timeline
 
 test('with the from-handle at its start, "Today" counts every building', () => {
   assert.equal(cityCount(config, start, config.yearMax), buildings);
-  // T0 = 1850 fades the 1850 buildings, and a from-handle there has moved, so the ones without a year leave (D30)
+  // T0 = 1850 fades the 1850 buildings, and a from-handle there has moved, so the ones without a year leave
   assert.equal(cityCount(config, T0, config.yearMax), buildings - 2 - 7);
 });
 
@@ -33,14 +33,14 @@ test('a mid range counts the dated buildings in it, area and estimate dates incl
   assert.equal(cityCount(config, 1900, 1950), 4 + 2 + 5);
 });
 
-test('buildings without a year count only where the map draws them: not with the from-handle moved (D30)', () => {
+test('buildings without a year count only where the map draws them: not with the from-handle moved', () => {
   // "1900–Today": the from-handle moved hides them (web/unknown.js), so only the dated buildings count
   assert.equal(cityCount(config, 1900, config.yearMax), 4 + 5 + 6 + 2 + 1);
   assert.equal(cityCount(config, 2019, config.yearMax), 6 + 1);
   assert.equal(cityCount(config, start + 0.4, config.yearMax), buildings); // rounded as the title rounds it: at rest
 });
 
-test('with the legend\'s switch set to "show" they count at "Today" wherever the from-handle is, and still not in the past (P17)', () => {
+test('with the legend\'s switch set to "show" they count at "Today" wherever the from-handle is, and still not in the past', () => {
   const all = () => true;
   assert.equal(cityCount(config, start, config.yearMax, all, 'show'), buildings);
   assert.equal(cityCount(config, 1900, config.yearMax, all, 'show'), 4 + 5 + 6 + 2 + 1 + 7);
@@ -75,7 +75,7 @@ test('with the estimates hidden, area and estimate dates leave the count; the re
   assert.equal(cityCount(config, start, config.yearMax, () => true, 'auto', { est: false }), buildings - 4);
   assert.equal(cityCount(config, 1900, 1950, () => true, 'auto', { est: false }), 4 + 5);
   assert.equal(cityCount(config, start, config.yearMax, () => true, 'auto', { est: true }), buildings);
-  // the hide option and D30's choice for the buildings without a year work side by side
+  // the hide option and the choice for the buildings without a year work side by side
   assert.equal(cityCount(config, start, config.yearMax, () => true, 'hide', { est: false }), buildings - 4 - 7);
   assert.equal(cityCount(config, 1900, config.yearMax, () => true, 'show', { est: false }), 4 + 5 + 6 + 7);
 });
@@ -100,7 +100,7 @@ test('tallyFromAttrs splits known, estimated and unknown by year and period, at 
   assert.deepEqual(tally.histogram, { 1850: [1, 0, 0], 1900: [0, 2, 0], 1960: [0, 0, 1] });
   assert.deepEqual(tally.histogramEst, { 1930: [0, 1, 0], 1952: [0, 0, 1], 1950: [0, 0, 1] });
   assert.equal(tally.unknown, 2);
-  // shaped like stockholm.json, yearMin included: D30's unknownShown reads it (web/unknown.js)
+  // shaped like stockholm.json, yearMin included: unknownShown reads it (web/unknown.js)
   assert.equal(tally.yearMin, 1850);
   assert.equal(tally.yearMax, 2020);
   assert.equal(tally.periods, three);
@@ -109,9 +109,9 @@ test('tallyFromAttrs splits known, estimated and unknown by year and period, at 
   assert.equal(cityCount(tally, 1849, 2020), 9);
   assert.equal(cityCount(tally, 1849, 2019), 7);
   assert.equal(cityCount(tally, 1849, 2020, () => true, 'auto', { est: false }), 6);
-  assert.equal(cityCount(tally, 1900, 2020), 4); // the from-handle moved: the unknown ones leave (D30)
+  assert.equal(cityCount(tally, 1900, 2020), 4); // the from-handle moved: the unknown ones leave
   // a private house RAÄ dates to 1968 ships as 1960 and is drawn at 1960: the tally counts it from 1960, where the
-  // spread histogram would count it from 1967 (D20's parked gap, closed here)
+  // spread histogram would count it from 1967 (a gap left open earlier, closed here)
   const house = attrsOf([[1960, YFLAG.EXACT, 2]]);
   assert.equal(cityCount(tallyFromAttrs(house, 1, 24, span3), 1959, 1965), 1);
   assert.equal(cityCount(tallyFromAttrs(house, 1, 24, span3), 1960, 1965), 0);
@@ -222,7 +222,7 @@ test('the words go through the string table', () => {
     '1994–i dag');
 });
 
-// Plan 4a: the legend's numbers follow the range, as the title and the count do (D26, D20).
+// The legend's numbers follow the range, as the title and the count do.
 test('periodCounts counts each period between the handles, estimates only while shown', () => {
   const cfg = { periods: [{}, {}, {}], histogram: { 1650: [2, 0, 0], 1900: [0, 3, 0], 1990: [0, 0, 4] },
     histogramEst: { 1905: [0, 5, 0] }, unknown: 7, yearMin: 1650, yearMax: 1990 };

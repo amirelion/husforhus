@@ -1,5 +1,5 @@
-// The language (Plan 4b, Task 6; spec §4.5 as amended by D53): the switch turns the whole page without a reload and is
-// remembered; ?lang= sets one visit only; a Swedish browser opens in English until decision 1 (Plan 4b) turns
+// The language: the switch turns the whole page without a reload and is
+// remembered; ?lang= sets one visit only; a Swedish browser opens in English until city.LANG_FROM_BROWSER turns
 // langFromBrowser on, then in Swedish; the no-WebGL message speaks the page's language too.
 // Runs on whatever web/data/current.json names.
 import { test, expect } from '@playwright/test';
@@ -59,7 +59,7 @@ test('?lang= sets one visit and is not saved; the switch drops it from the addre
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
-// Task 6 review: a failed start keeps its message when the language switches (it used to become the loading line),
+// A failed start keeps its message when the language switches (it used to become the loading line),
 // and a saved Swedish shows the loading line in Swedish before the config is in.
 test('a failure after the start keeps its message, in the language the switch picks', async ({ page }) => {
   await page.route('**/pack0.bin.gz', r => r.abort());           // a file the map cannot run without (audit 3)
@@ -83,7 +83,7 @@ test('a saved Swedish shows the loading line in Swedish while the config is on i
   await expectSwedish(page);
 });
 
-// Decision 1 (Plan 4b) as it may be set (city.LANG_FROM_BROWSER; stockholm.json langFromBrowser): the build's own flag
+// The browser-language choice as it may be set (city.LANG_FROM_BROWSER; stockholm.json langFromBrowser): the build's own flag
 // is kept as it is, and these tests turn it on in the config the page receives.
 const fromBrowser = page => page.route('**/stockholm.json', async route => {
   const response = await route.fetch();
@@ -93,7 +93,7 @@ const fromBrowser = page => page.route('**/stockholm.json', async route => {
 test.describe('a Swedish browser', () => {
   test.use({ locale: 'sv-SE' });
 
-  test('opens the map in English while decision 1 (Plan 4b) is open (D3), in Swedish once it is yes', async ({ page }) => {
+  test('opens the map in English while the browser-language choice is off, in Swedish once it is on', async ({ page }) => {
     const errors = watchErrors(page);
     const cfg = await page.request.get('/data/current.json').then(r => r.json())
       .then(({ version }) => page.request.get(`/data/${version}/stockholm.json`)).then(r => r.json());
@@ -108,7 +108,7 @@ test.describe('a Swedish browser', () => {
     expect(errors).toEqual([]);
   });
 
-  test('a build without the langFromBrowser key opens in English (D3)', async ({ page }) => {
+  test('a build without the langFromBrowser key opens in English', async ({ page }) => {
     await page.route('**/stockholm.json', async route => {
       const response = await route.fetch();
       const { langFromBrowser, ...rest } = await response.json();

@@ -9,7 +9,7 @@
 #         when `modified` is true), as the publisher writes it, in both languages. Shown on About.
 # credit_as (optional): {en, sv}, the source's own prescribed words, in the publisher's place in that line.
 # licence_as (optional): the licence as the source asks to be credited, its name without the version ("CC BY").
-# corner (optional, Plan 4b): the source's words in the map's corner credit, {en, sv}, and the page they link to
+# corner (optional): the source's words in the map's corner credit, {en, sv}, and the page they link to
 #         (url; without one they open About at its sources). Sources with the same words appear once.
 
 - id: city_lod1

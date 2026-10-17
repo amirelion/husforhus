@@ -1,5 +1,5 @@
 # tests/test_run.py
-"""pipeline.run (contract C7)."""
+"""pipeline.run."""
 import subprocess
 import sys
 import types
@@ -13,8 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_steps_contract():
-    # Plan 4a: s08_landmarks verifies the curated list before s02_years reads it (spec order, not number order);
-    # s06_wiki needs the years (curated private houses) and feeds s03_tiles' cards. Plan 4b: s02_addresses puts the
+    # S08_landmarks verifies the curated list before s02_years reads it (spec order, not number order);
+    # s06_wiki needs the years (curated private houses) and feeds s03_tiles' cards. s02_addresses puts the
     # OSM addresses and the stadsdel on each footprint, for the cards; s14_search indexes the version's cards
     assert run.STEPS == ["s00_fetch_city", "s00_fetch_raa", "s00_fetch_raa_old", "s00_fetch_wikidata", "s00_fetch_osm",
                          "s00_fetch_dem", "s01_load", "s08_landmarks", "s02_years", "s02_attributes", "s02_addresses",

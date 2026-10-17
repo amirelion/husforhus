@@ -63,7 +63,7 @@ test('the lifted buildings and their skirts stay inside the tile\'s box and sphe
     // the highest roof on the highest ground reaches the box's top at the most relief
     assert.ok(g.boundingBox.max.y >= m.gMax * reliefMax + m.top);
   }
-  // the Hills slider's every step up to its top, 2.5 (D40): the box made for 2.5 holds each of them
+  // the Hills slider's every step up to its top, 2.5: the box made for 2.5 holds each of them
   const g = liftBounds(geometry(m), m, { reliefMax: 2.5 });
   for (const r of [0, 0.5, 1, 1.5, 2, 2.5]) assert.deepEqual(outside(m, g, r), [], `slider at ${r}`);
 });

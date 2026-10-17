@@ -1,4 +1,4 @@
-"""Compatibility re-export: the periods live in pipeline.city (contract C1).
+"""Compatibility re-export: the periods live in pipeline.city.
 
 Note the tuple shape changed from upstream's (key, label, from, to, colour) to
 (key, label_en, label_sv, from, to, colour).

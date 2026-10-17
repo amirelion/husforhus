@@ -1,6 +1,6 @@
-"""Python port of the worker's tile parser (contract C4), for tests and s99_validate.
+"""Python port of the worker's tile parser, for tests and s99_validate.
 
-Mirrors `parse()` in web/tile.js (Task 16; upstream kept it in web/worker.js): every section starts on a 4-byte boundary.
+Mirrors `parse()` in web/tile.js (upstream kept it in web/worker.js): every section starts on a 4-byte boundary.
 """
 import struct
 

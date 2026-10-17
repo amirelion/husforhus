@@ -248,6 +248,7 @@
   "about.contact.none.maker": "Den som gjort kartan namnges här innan kartan blir offentlig.",
   "about.contact.none.contact": "En adress för rättelser och borttagning namnges här innan kartan blir offentlig.",
   "about.contact.data": "Dataversion {version} från {date}.",
+  "about.contact.code": "Koden och datakedjan är öppen källkod: {repo}",
   "card.why": "Varför?",
   "card.wrong": "Något som inte stämmer? Hör av dig",
   "card.wrong.subject": "Hus för hus: {what}",

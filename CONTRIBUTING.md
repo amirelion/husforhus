@@ -10,6 +10,10 @@ npm run test:web
 HFH_FIXTURE=1 uv run python -m pipeline.run   # quick build of a small area
 ```
 
+## Opening an issue
+
+[Open an issue](https://github.com/amirelion/husforhus/issues/new/choose) with one of the forms: **Wrong year or detail**, **Photo problem**, **New data source** or **Translation**. Each asks for what we need to act on it. Something about a private home goes to the contact in the site's About panel ([husforhus.se/#about/contact](https://husforhus.se/#about/contact)), not to a public issue.
+
 ## Proposing a correction
 
 First find where the wrong value comes from. A building's card names the source of its year (see [How the years work](HOW-YEARS-WORK.md)). Then:
@@ -19,7 +23,7 @@ First find where the wrong value comes from. A building's card names the source 
 Most years come from open registers: RAÄ's building register, Wikidata and OpenStreetMap. The best fix is upstream, where everyone benefits, and the map picks it up on its next build:
 
 - **Wikidata** or **OpenStreetMap**: edit the item or the building directly, citing your source.
-- **RAÄ's register** or **the City's buildings**: these are maintained by their publishers. Open an issue here with the building, what is wrong and your source, and we can pass it on or work around it.
+- **RAÄ's register** or **the City's buildings**: these are maintained by their publishers. Open a **Wrong year or detail** issue with the building, what is wrong and your source, and we can pass it on or work around it.
 
 ### A notable building has the wrong year
 
@@ -33,11 +37,11 @@ Open an issue or a pull request adding the building to the curated landmark list
 
 ### Something else looks wrong
 
-A height, a floor count, a misplaced photo, a label: open an issue with the building (a link from the map, or its address), what you see and what you expected. Screenshots help.
+A height, a floor count, a label: open a **Wrong year or detail** issue (a photo: a **Photo problem** issue) with the building (a link from the map, or its address), what you see and what you expected. Screenshots help.
 
 ### Privacy
 
-If a card shows something about a private home that it should not, don't open a public issue: use the contact in the site's About panel, as described in [Privacy](PRIVACY.md). The same contact takes requests to take a building's details off the map. Names of houses and of rarely seen architects ship only from lists a person has checked (`pipeline/private_names.txt`, `pipeline/private_firms.txt`); please don't add to those lists without a source.
+If a card shows something about a private home that it should not, don't open a public issue: write to the contact in the site's About panel ([husforhus.se/#about/contact](https://husforhus.se/#about/contact)), as described in [Privacy](PRIVACY.md), and describe where it is without repeating the personal detail. The same contact takes requests to take a building's details off the map. Names of houses and of rarely seen architects ship only from lists a person has checked (`pipeline/private_names.txt`, `pipeline/private_firms.txt`); please don't add to those lists without a source.
 
 ## Adding building details
 
@@ -74,7 +78,7 @@ Useful help:
 
 **Licence rules.** Maps and views must be in the public domain; data must be CC BY or CC0. Cite everything: the publisher, the title and a link.
 
-Open an issue describing what you have, with its source and licence.
+Open a **New data source** issue describing what you have, with its link and licence.
 
 ## Translations and code
 

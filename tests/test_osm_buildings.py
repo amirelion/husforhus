@@ -1,4 +1,4 @@
-"""OSM building:levels and their match to footprints (Plan 4a, Task 3). No network: Overpass answers are written here."""
+"""OSM building:levels and their match to footprints. No network: Overpass answers are written here."""
 import json
 
 import pytest
@@ -50,7 +50,7 @@ def test_load_dedupes_across_tiles_and_assembles_a_relation_from_split_ways(tmp_
 
 
 def test_load_reads_only_the_tiles_it_is_given(tmp_path):
-    # the final review of Plan 4a: tiles left from a larger grid ("0_3" of 4 x 4 after a 3 x 3) were read too, and a
+    # Tiles left from a larger grid ("0_3" of 4 x 4 after a 3 x 3) were read too, and a
     # stale copy of a building beat a fresh one in sorted file order
     write(tmp_path, "0_3.json", [way(1, synth.square(0, 0, 20), levels="9"), way(5, synth.square(300, 0))])
     write(tmp_path, "1_0.json", [way(1, synth.square(0, 0, 20), levels="4")])
@@ -92,7 +92,7 @@ def test_bowtie_outline_is_repaired_not_dropped(tmp_path):
 
 
 def test_a_clipped_copy_never_hides_the_whole_one_from_the_next_tile(tmp_path):
-    # Task 3's review: `out geom` under a bounding box can give null points for the nodes outside it. Such a copy is
+    # `out geom` under a bounding box can give null points for the nodes outside it. Such a copy is
     # no outline (no crash), and the element is not marked as seen, so a whole copy from another tile still counts.
     a = synth.square(0, 0, 20)
     clipped = way(1, a)

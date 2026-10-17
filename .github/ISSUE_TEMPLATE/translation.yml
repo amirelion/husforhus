@@ -1,0 +1,30 @@
+name: Translation
+description: "A wrong, awkward or missing text in English or Swedish. / Översättning."
+title: "[Translation] "
+labels: [translation]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: "Var. The page, panel or card, or the text as it appears. / Sidan, panelen eller kortet, eller texten som den visas."
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      description: "Språk."
+      options:
+        - English / Engelska
+        - Swedish / Svenska
+        - Both / Båda
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested text
+      description: "Föreslagen text. What it should say, and why if it isn't obvious. / Vad det borde stå, och varför om det inte är uppenbart."
+    validations:
+      required: true

@@ -51,20 +51,20 @@ def test_ci_workflows():
 
 
 def test_e2e_job():
-    """Task 20: the viewer end to end on the fixture, in network.yml (weekly and on demand), with the golden check."""
+    """The viewer end to end on the fixture, in network.yml (weekly and on demand), with the golden check."""
     net, _ = load("network.yml")
     job = net["jobs"]["e2e"]
     steps = job["steps"]
     assert job["runs-on"] == "ubuntu-latest" and "if" not in job  # the workflow's triggers decide when it runs
     uses = {s["uses"].split("@")[0]: s.get("with", {}) for s in steps if "uses" in s}
     network = {s["uses"].split("@")[0]: s.get("with", {}) for s in net["jobs"]["network"]["steps"] if "uses" in s}
-    assert uses["astral-sh/setup-uv"]["version"] == network["astral-sh/setup-uv"]["version"]  # Task 5's uv pin
+    assert uses["astral-sh/setup-uv"]["version"] == network["astral-sh/setup-uv"]["version"]  # the uv pin
     assert uses["actions/setup-node"]["node-version-file"] == ".nvmrc"
     assert uses["actions/cache"] == {"path": "data/raw", "key": "raw-${{ hashFiles('pipeline/sources.yml') }}"}
     runs = [s.get("run", "") for s in steps]
     assert "uv run python -m pipeline.run" in [r.strip() for r in runs]  # every step in STEPS, on the fixture
     golden = next(r for r in runs if "diff -r" in r)
-    # Plan 4b: the search index is rebuilt and compared too (s14_search reads the version's own cards)
+    # The search index is rebuilt and compared too (s14_search reads the version's own cards)
     assert "uv run python -m pipeline.run s03_tiles s04_base s07_labels s14_search -- --version" in golden
     assert sum(s.get("env", {}).get("HFH_FIXTURE") == "1" for s in steps) == 2  # the pipeline and the golden check
     for command in ["uv sync --locked", "npm ci", "npx playwright install --with-deps chromium", "npm run test:e2e"]:

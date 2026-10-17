@@ -30,7 +30,7 @@ import { mountScenePlayer } from './scene-player.js';
 THREE.ColorManagement.enabled = false;
 
 // Looks (web/themes.js), chosen in web/look.js: ?theme=arg|kalk|blatimme|paper, else the viewer's last choice, else
-// Ärg (D28). THEME is the look on now (THEME.unknown: buildings with no year yet, a neutral grey apart from the maquette).
+// Ärg. THEME is the look on now (THEME.unknown: buildings with no year yet, a neutral grey apart from the maquette).
 // applyLook (see Looks below) re-applies a switch to everything drawn in the look's colours. The page's own colours
 // and font are set here already, before the city loads, so the loading line is drawn in the look.
 const looks = createLooks();
@@ -49,11 +49,11 @@ applyPageLook(looks.current);
 const GROUP_COLORS = ['#ec0000', '#1f4e8c', '#d99a12', '#2e8b57', '#7b3fa0', '#00909a', '#8c5a2b', '#d6336c'];
 const MAX_GROUPS = GROUP_COLORS.length;
 const ATTR_W = 256;
-// The "Year unknown" hatch (D29): stripes HATCH_M metres apart, measured across them, each line HATCH_W of that.
+// The "Year unknown" hatch: stripes HATCH_M metres apart, measured across them, each line HATCH_W of that.
 // Seen from further away they go to twice that apart, then fade into their mean tone (FRAG).
 const HATCH_M = 4, HATCH_W = 0.25;
 const WORKERS = Math.min(4, navigator.hardwareConcurrency || 2);
-const MODE = { period: 0, floors: 1, layers: 3 }; // 2 was Energy, removed (D5)
+const MODE = { period: 0, floors: 1, layers: 3 }; // 2 was Energy, removed
 
 // Data lives in web/data/<version>/ (pipeline/s03_tiles.py); data/current.json names the version.
 const CITY = 'stockholm';
@@ -70,8 +70,8 @@ let LANG = pickLang({ param: QUERY.get('lang'), saved: savedLang(), languages: n
 let T = null;
 const FAILED = { en: 'Could not load the city data. Reload the page to try again.',
   sv: 'Kunde inte ladda stadens data. Ladda om sidan för att försöka igen.' };
-// The loading line in Swedish from the first moment (Task 6 review): ?lang=, a saved choice, or a Swedish browser
-// (decision 1 of Plan 4b, answered yes on 2026-10-17: city.LANG_FROM_BROWSER).
+// The loading line in Swedish from the first moment: ?lang=, a saved choice, or a Swedish browser
+// (decided 2026-10-17: city.LANG_FROM_BROWSER).
 {
   const early = pickLang({ param: QUERY.get('lang'), saved: savedLang(), languages: navigator.languages || [navigator.language] });
   const ld = document.getElementById('loading');
@@ -79,7 +79,7 @@ const FAILED = { en: 'Could not load the city data. Reload the page to try again
 }
 let failedId = null;   // the message a failed start shows, redrawn by a language switch (applyStaticText)
 // t(text): the English text the pure modules hand over (count.js, unknown.js, howto.js, the switcher), by its id
-// (web/i18n.js LEGACY); the v1.1 quests and layers keep their English (spec §2.1).
+// (web/i18n.js LEGACY); the v1.1 quests and layers keep their English.
 const t = s => (T ? legacy(T)(s) : s);
 function loadFailed(e, id = 'ui.failed') {
   console.error(e);
@@ -98,7 +98,7 @@ const optional = what => e => console.warn(`${what} did not load; the map goes o
 const halt = (e, id) => { loadFailed(e, id); return new Promise(() => {}); };
 // The Look button works from the start, while the city loads and after a failed start: until the scene is up a
 // switch changes the page's own colours (applyPageLook); then applyLook (see Looks below) takes over.
-// The Hills slider sits in the Look panel (Plan 3, D40); it appears once the city's terrain is known
+// The Hills slider sits in the Look panel; it appears once the city's terrain is known
 // (applyStaticText), and is disabled if the terrain does not load. Its value reads "Flat" or the factor, and its line
 // says what the map shows now (web/relief.js reliefValue, reliefNote). Read only once available (after the config).
 const reliefUi = { available: false, step: RELIEF_STEP, get value() { return relief; }, get max() { return reliefMax; },
@@ -111,13 +111,13 @@ const { version } = await getJson('data/current.json', { cache: 'no-cache' }).ca
 const DATA = `data/${version}/`;
 // Load order: config and the hot attributes, then pack0 (see Tiles). The other packs follow the first tile;
 // land, water and labels follow the first frame with buildings.
-// The strings (web/i18n, Plan 4a): both languages, a few KB, so the language switches without a reload.
+// The strings (web/i18n): both languages, a few KB, so the language switches without a reload.
 const [config, attrBuf, I18N_EN, I18N_SV] = await Promise.all([getJson(`${DATA}${CITY}.json`),
   fetchGz(`${DATA}attrs.bin.gz`), getJson('i18n/en.json'), getJson('i18n/sv.json')]).catch(halt);
 const I18N = { en: I18N_EN, sv: I18N_SV };
 const attrs = new DataView(attrBuf);
 // The count's own tally, built once from attrs.bin: the years the shader draws, a private house at its decade start
-// (web/count.js tallyFromAttrs, D20). stockholm.json's spread histograms stay for drawHist.
+// (web/count.js tallyFromAttrs). stockholm.json's spread histograms stay for drawHist.
 const attrTally = tallyFromAttrs(attrs, config.stats.buildings, config.attrStride,
   { periods: config.periods, yearMin: config.yearMin, yearMax: config.yearMax });
 // Features for v1.1 (Quests, Context layers, the language switch) stay in the code, switched off by
@@ -126,9 +126,9 @@ const FEATURES = config.features || {};
 const layers = FEATURES.layers ? await getJson(`${DATA}layers.json`).catch(halt) : [];
 
 // ---------- Language ----------
-// English and Swedish (D3; Plan 4b turns the switch on, features.lang). ?lang= sets this visit only; the switch's
-// choice is remembered (hfh-lang); otherwise English (D3), or the browser's language when it is Swedish once
-// decision 1 (Plan 4b) says so (config.langFromBrowser, off until then; web/i18n.js pickLang). The messages of a start
+// English and Swedish (features.lang turns the switch on). ?lang= sets this visit only; the switch's
+// choice is remembered (hfh-lang); otherwise English, or the browser's language when it is Swedish once
+// the build says so (config.langFromBrowser, off until then; web/i18n.js pickLang). The messages of a start
 // that fails before the config is in follow the browser (above). Data may carry `<field>_sv` next to each English
 // text (tr). T(id, vars): web/i18n's string in LANG; setLang renews it.
 LANG = pickLang({ param: QUERY.get('lang'), saved: savedLang(), languages: navigator.languages || [navigator.language],
@@ -141,7 +141,7 @@ document.querySelector('.modes [data-mode="3"]').hidden = !FEATURES.layers;
 document.querySelectorAll('.lang [data-lang]').forEach(b => { b.hidden = !FEATURES.lang; });
 const periods = config.periods.map((p, i) => ({ ...p, color: THEME.periods[i] || p.color }));
 const estColors = periods.map(p => estimateTone(p.color, THEME.estimateTo));
-// The hide-estimates switch (spec §3.3): area, estimate and period-only buildings leave the map, the count, the
+// The hide-estimates switch: area, estimate and period-only buildings leave the map, the count, the
 // legend's totals and the histogram while the city is coloured by period. Remembered per device.
 const EST_KEY = 'hfh-estimates';
 let hideEst = false;
@@ -150,12 +150,12 @@ try { hideEst = localStorage.getItem(EST_KEY) === 'hidden'; } catch {}
 // URL (?photos=1, web/panel.js). photoGids (photo-gids.json, s03_tiles) loads on first use.
 let photoOnly = photoOnlyFrom(location.search);
 let photoGids = null;
-// Terrain (Plan 3). What the map draws is uRelief * t - uCutK * cut (true metres t and the terrace cut, web/terrain.js),
+// Terrain. What the map draws is uRelief * t - uCutK * cut (true metres t and the terrace cut, web/terrain.js),
 // in every shader and in surfaceAt, the CPU's copy: flat until the terrain is in.
 const uRelief = { value: 0 }, uCutK = { value: 0 };
 let ground = makeGround(null);
 const surfaceAt = (x, z) => ground.surfaceAt(x, z, uRelief.value, uCutK.value);
-// stockholm.json's terrain block (C17) and the Hills slider (web/relief.js), plus the M4 review's comparison levers,
+// stockholm.json's terrain block and the Hills slider (web/relief.js), plus the M4 review's comparison levers,
 // none offered to visitors: ?terrace=full|true|none (how much of the terrace cut to use), ?fade=<metres> (the edge
 // fade's width) and ?edgebuildings=1 (buildings fade at the edge too).
 const TERRAIN = config.terrain || null;
@@ -167,7 +167,7 @@ let relief = initialRelief(location.search, (() => { try { return localStorage.g
 let terrainState = 'flat';  // 'flat' (none yet, or none in this build), 'loading', 'ready' or 'failed' (still flat)
 const TERRACE = ['full', 'true', 'none'].includes(PARAMS.get('terrace')) ? PARAMS.get('terrace') : TERRAIN?.terrace || 'full';
 const FADE_M = fadeWidth(PARAMS.get('fade'), TERRAIN?.fadeM ?? 400);
-// ?labels=top: names drawn over everything, as spec §4.1 worded it (Decision 6's comparison)
+// ?labels=top: names drawn over everything, as first specified (for comparison)
 const LABELS_ON_TOP = PARAMS.get('labels') === 'top';
 reliefUi.available = !!TERRAIN;
 // The level of the water under a point (true metres; 0 until the terrain is in): where a water name lies.
@@ -176,7 +176,7 @@ let waterAt = () => 0;
 // ---------- Scene ----------
 const canvas = document.getElementById('scene');
 let renderer;
-// No WebGL: say so in the page's language (spec §4.8), not that the data failed.
+// No WebGL: say so in the page's language, not that the data failed.
 try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); } catch (e) { await halt(e, 'ui.nowebgl'); }
 // A lost context (a GPU reset, a phone short of memory) leaves a blank map: say so, and that a reload draws it again.
 canvas.addEventListener('webglcontextlost', e => loadFailed(e, 'ui.contextlost'));
@@ -207,10 +207,10 @@ controls.maxPolarAngle = Math.PI * 0.47;
 controls.minDistance = 60;
 controls.maxDistance = 30000;
 // Arrow keys move the map (Shift/Ctrl/Cmd with them turns it), but not while a text field, a slider (input matches
-// every type: the Look panel's Hills slider, a range, moves with them; the timeline's handles, role="slider", Plan 4a)
+// every type: the Look panel's Hills slider, a range, moves with them; the timeline's handles, role="slider")
 // or a dialog (the pinned card too) has the keys. The N key (see Facing north) waits the same way.
 const MAP_KEYS = { ...controls.keys };
-// A code no key has (Plan 4b): '' would match the empty code a phone's soft keyboard sends, and pan the map while
+// A code no key has: '' would match the empty code a phone's soft keyboard sends, and pan the map while
 // someone types in the search field.
 const NO_KEYS = { LEFT: 'NoKey', UP: 'NoKey', RIGHT: 'NoKey', BOTTOM: 'NoKey' };
 controls.keyPanSpeed = 40;
@@ -219,7 +219,7 @@ const typingIn = el => el instanceof Element && Boolean(el.closest('input, texta
 // Runs before the controls' own listener on window (capture phase), so each key press picks the key map to use.
 addEventListener('keydown', e => { controls.keys = typingIn(e.target) ? NO_KEYS : MAP_KEYS; }, true);
 
-// The hero view (D14, city.HOME). A portrait screen sees a narrower slice, so the camera steps back until the
+// The hero view (city.HOME). A portrait screen sees a narrower slice, so the camera steps back until the
 // same width fits, up to 2.2 times as far.
 function goHome(h = config.home) {
   const az = THREE.MathUtils.degToRad(h.azimuth), el = THREE.MathUtils.degToRad(h.elevation);
@@ -318,12 +318,12 @@ function textureFor(L) {
 // name's lifted height (labelY), and three.js culls it like everything else.
 const labelPlane = new THREE.PlaneGeometry(1, 1, 16, 2);
 labelPlane.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1);
-// Names lie on the ground (Plan 3): the vertex shader sets each vertex's height from the terrain (hEff, like everything
+// Names lie on the ground: the vertex shader sets each vertex's height from the terrain (hEff, like everything
 // else) plus 0.6 m, or a water name's on its water's level plus 0.4 m (uOnWater, uLevel: a canal's banks are carried
 // two nodes into it), then moves it towards the camera along its own ray by how far the drawn ground may stand above
 // hEff there (the cell's twist, doubled for the name's own straight spans, and LOD_TOL at the relief), so the pixel
 // stays where it is but the name never sinks into a slope; a water name, flat at its level, moves 0.5 m. Hills and
-// buildings in front still hide them (depth test on). ?labels=top turns the depth test off, as spec §4.1 worded it,
+// buildings in front still hide them (depth test on). ?labels=top turns the depth test off, as first specified,
 // for the M4 comparison.
 const TERRAIN_UNIFORMS = ['uTerrain', 'uGridO', 'uGridN', 'uCell', 'uRelief', 'uCutK'];
 function labelMaterial(map, onWater) {
@@ -461,19 +461,19 @@ const uniforms = {
   uUnknown: { value: col(THEME.unknown) },
   uEstimateTo: { value: col(THEME.estimateTo) },   // estimates mix towards this; hover towards uHoverTo (web/themes.js)
   uHoverTo: { value: col(THEME.hoverTo) },
-  uShowUnknown: { value: 1 },                      // how far buildings without a year stand, 1 to 0 (D30, stepUnknown)
+  uShowUnknown: { value: 1 },                      // how far buildings without a year stand, 1 to 0 (stepUnknown)
   uHideEst: { value: hideEst ? 1 : 0 },            // 1 while the legend's switch hides the estimated years
   uPhotoOnly: { value: 0 },                        // 1 while the legend's photo switch fades buildings without one
-  uHatch: { value: THEME.unknownHatch ? 1 : 0 },   // 1 on a look that hatches "Year unknown" (D29), in uHatchInk
+  uHatch: { value: THEME.unknownHatch ? 1 : 0 },   // 1 on a look that hatches "Year unknown", in uHatchInk
   uHatchInk: { value: col(THEME.unknownHatch || THEME.unknown) },
-  uFloors: { value: THEME.floors.map(col) },       // the look's Floors ramp (web/themes.js, Plan 4a)
+  uFloors: { value: THEME.floors.map(col) },       // the look's Floors ramp (web/themes.js)
   uHover: { value: -1 },
   uSelected: { value: -1 },
-  uForce: { value: -1 },                           // the building picked from search: drawn whatever hides it (Plan 4b)
+  uForce: { value: -1 },                           // the building picked from search: drawn whatever hides it
   uBlind: { value: 0 },
   uFogColor: { value: col(THEME.sky) },
   uFog: { value: new THREE.Vector2(9000, 26000) },
-  // Terrain (Plan 3): one texture of (true metres, terrace cut) per grid node, read with texelFetch, and the edge fade;
+  // Terrain: one texture of (true metres, terrace cut) per grid node, read with texelFetch, and the edge fade;
   // 1 x 1 placeholders until loadTerrain replaces them. uSun is the one sun buildings and ground share (themes.js
   // SHADING, which the looks' colour checks use too).
   uRelief, uCutK,
@@ -515,7 +515,7 @@ const TERRAIN_GLSL = /* glsl */`
     return max(max(a, b), max(c, d)) - min(min(a, b), min(c, d));
   }
 `;
-// The edge fade (D20): 1 inside, 0 at the municipality's edge, linear between nodes. Needs GRID_GLSL.
+// The edge fade: 1 inside, 0 at the municipality's edge, linear between nodes. Needs GRID_GLSL.
 const FADE_GLSL = /* glsl */`
   uniform sampler2D uFade;
   float fadeAt(vec2 w) { return texture(uFade, ((w - uGridO) / uCell + 0.5) / uGridN).r; }
@@ -539,7 +539,7 @@ const VERT = /* glsl */`
   out float vRel;        // metres above the building's own base (its foot and hatch use this, not world height)
   flat out float vGid;   // flat: the pick pass reads it as an exact integer, never interpolated
   flat out vec3 vHatchInk;
-  flat out float vHatch; // 1: the fragment shader hatches this building in vHatchInk ("Year unknown", D29)
+  flat out float vHatch; // 1: the fragment shader hatches this building in vHatchInk ("Year unknown")
 
   // 1 floor to 40 and more on a log scale, through the look's four colours (uFloors; the legend draws the same).
   vec3 floorsRamp(float f) {
@@ -559,7 +559,7 @@ const VERT = /* glsl */`
     ivec2 tc = ivec2(${ATTR_FLOATS / 4} * (i % ${ATTR_W}), i / ${ATTR_W});
     vec4 a = texelFetch(uAttr, tc, 0);
     vec4 lay = texelFetch(uAttr, tc + ivec2(1, 0), 0);
-    float groundDm = texelFetch(uAttr, tc + ivec2(2, 0), 0).x;   // web/worker.js: the building's ground (Plan 3)
+    float groundDm = texelFetch(uAttr, tc + ivec2(2, 0), 0).x;   // web/worker.js: the building's ground
     float year = a.x;
     int pf = int(a.y + 0.5);
     int period = pf % 16;
@@ -570,7 +570,7 @@ const VERT = /* glsl */`
     float seed = fract(sin(a.w * 12.9898) * 43758.5453);
     // Estimated years (3 AREA, 4 ESTIMATE, 6 PERIOD; web/count.js EST_FLAGS) are drawn in estimate style below.
     bool est = yflag == 3 || yflag == 4 || yflag == 6;
-    // Buildings without a year stand at "Today" and leave when the map shows the past (D30), or when one period is
+    // Buildings without a year stand at "Today" and leave when the map shows the past, or when one period is
     // shown alone. uShowUnknown (stepUnknown) is how far they stand, 1 to 0; each one rises out of the ground or
     // sinks into it in turn, by its seed, with the same stagger and overshoot as a context layer's (uLayerAt below).
     float vis = uMode < 1.5 ? (yflag == 7 ? clamp(uShowUnknown * 1.6 - seed * 0.6, 0.0, 1.0) : uMask[period]) : 1.0;
@@ -579,7 +579,7 @@ const VERT = /* glsl */`
     if (uMode < 0.5 && est && uHideEst > 0.5) vis = 0.0;
     float g = clamp((uYear - year + 1.0) / uRise, 0.0, 1.0);
     g = g * g * (3.0 - 2.0 * g);
-    // The building picked from search stands whatever the timeline, a period shown alone or a switch says (Plan 4b).
+    // The building picked from search stands whatever the timeline, a period shown alone or a switch says.
     if (abs(a.w - uForce) < 0.5) { vis = 1.0; g = 1.0; }
     if (g <= 0.003 || vis <= 0.003) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
 
@@ -638,7 +638,7 @@ const VERT = /* glsl */`
     }
     vColor = c;
     vHatchInk = h;
-    // On the terrain (Plan 3): the building stands on its own ground, lifted by ground * uRelief. Its wall bottoms
+    // On the terrain: the building stands on its own ground, lifted by ground * uRelief. Its wall bottoms
     // (position.y 0) reach down to the terrain under each corner and 2 m further, plus half of how much the ground
     // varies over that corner's cell (the skirt), so a slope never shows a gap under the uphill or downhill wall, even
     // where the ground dips between two corners; the skirt flies in with the building. Positions are decimetres.
@@ -684,8 +684,8 @@ const FRAG = /* glsl */`
       // n faces the camera (screen-space derivatives), so on every wall seen from outside it is the outward normal.
       vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
       float d = length(vWorld - cameraPosition);
-      // "Year unknown" on a hatched look (D29): diagonal stripes fixed in the world (metres), ${HATCH_M} m apart. Roofs
-      // take them from x - z (diagonal on screen from the hero view, D14); walls from the distance along the wall plus
+      // "Year unknown" on a hatched look: diagonal stripes fixed in the world (metres), ${HATCH_M} m apart. Roofs
+      // take them from x - z (diagonal on screen from the hero view); walls from the distance along the wall plus
       // the height, so they slant the same way on every wall seen face on. Where those stripes would come closer than
       // about 5 px, every other one goes and the rest widen (${2 * HATCH_M} m apart, the same share of ink). As those
       // come from 6 to 3 px apart (lines 1.5 to 0.75 px wide), or the building from 2.6 to 3.6 km away, the hatch fades
@@ -700,7 +700,7 @@ const FRAG = /* glsl */`
       float fade = smoothstep(3.0, 6.0, 2.0 / fw) * (1.0 - smoothstep(2600.0, 3600.0, d));
       vec3 base = mix(vColor, vHatchInk, vHatch * mix(${HATCH_W.toFixed(6)}, line, fade));
       // Low afternoon sun from the south-west (uSun, shared with the ground), a soft sky from above. The foot darkens
-      // the first 12 m above the building's own base, and the skirt under it (Plan 3).
+      // the first 12 m above the building's own base, and the skirt under it.
       float sun = max(dot(n, uSun), 0.0);
       float light = n.y > 0.9 ? 1.04 : ${glf(SHADING.wallMin)} + ${glf(SHADING.wallLit)} * sun;
       float foot = mix(0.82, 1.0, clamp(vRel / 12.0, 0.0, 1.0));
@@ -797,8 +797,8 @@ for (const w of pool) {
   next();
 }
 
-// ---------- Terrain (Plan 3) ----------
-// terrain.bin.gz (pipeline/s04_base.py, contract C16) and water.bin go to web/terrain-worker.js after the first frame.
+// ---------- Terrain ----------
+// terrain.bin.gz (pipeline/s04_base.py) and water.bin go to web/terrain-worker.js after the first frame.
 // It returns the land in chunks of terrain.chunk metres (each at 20 m, or beyond LOD_FAR at 40 m where that stays
 // within web/terrain.js LOD_TOL of the 20 m grid), the exact cut along the shores and the municipality's edge and the
 // quay walls (both in groups of two by two chunks, so they cull), and the water at its levels. Everything takes its
@@ -870,7 +870,7 @@ const WATER_VERT = /* glsl */`
 // Ground in the look's land colour, shaded by the shared sun so that flat ground is exactly that colour (uShade, per
 // look); walls shaded like a slope where the bank is low (most shores are natural) and lit like the buildings' walls in
 // the look's quay colour where they stand over 3 m; water flat. The constants are themes.js SHADING, which the looks'
-// colour checks (web/test/themes.test.mjs) use too. All fade into the sky at the municipality's edge (D20)
+// colour checks (web/test/themes.test.mjs) use too. All fade into the sky at the municipality's edge
 // and into the fog like the buildings. In the pick pass they write id 0 (nothing) with depth, so a hill hides what is
 // behind it.
 const TERRAIN_FRAG = /* glsl */`
@@ -1056,7 +1056,7 @@ function updateLods() {
 // near of 5 m flickered at 20 km).
 // The north turn (stepNorth) runs before the controls and keeps the camera's height; the ride then moves target and
 // camera together, so the turn keeps its azimuth. On hills the floor may lift the camera during a north turn (the
-// floor wins over D36's "keeps the tilt"), but the turn still ends exactly north.
+// floor wins over the north button's "keeps the tilt"), but the turn still ends exactly north.
 // The ride closes the gap with a time constant of RIDE_S whatever the frame rate (dt, seconds since the last frame),
 // all of it at once for a viewer who asks for less motion, and stops within 1 mm. A camera the floor lifts is aimed at
 // the target again before the frame is drawn. The far plane stays at 60 km until the terrain is in: the flat land and
@@ -1118,12 +1118,12 @@ const contextLayers = layers;
 // The card shows residents in their own section, so they are left out of its list of layers.
 const groupsByBit = layers.filter(L => L !== residentsLayer).flatMap(L => L.groups.map(g => ({ ...g, layer: L })));
 
-// The hot attributes: one fixed record per gid (contract C5, decoded by tile.js).
+// The hot attributes: one fixed record per gid (decoded by tile.js).
 const building = gid => ({ ...readAttrs(attrs, gid, config.attrStride), groups: [] });
 
 // ---------- Building card ----------
 // Hover shows a light card that follows the pointer: the band with the year and how it is known. A click pins it, and
-// the pinned card adds the photo, the facts, the excerpt and the links (spec §4.3; text first, so it looks finished
+// the pinned card adds the photo, the facts, the excerpt and the links (text first, so it looks finished
 // without a photo). Names, architects, links and photo credits come from 64 lazy shards, cards/NN.json with
 // NN = gid % 64; Wikipedia excerpts from wiki/NN.json (CC BY-SA 4.0, their own files), fetched only for a pinned card;
 // photos from data/photos/<key> (s06_wiki), loaded only when a card that has one is pinned.
@@ -1133,7 +1133,7 @@ const link = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopen
 // and the legend's note use it.
 const approx = s => esc(s).replace(/≈/g, '<span class="approx">≈</span>');
 // One lazy family of shards (cards/ or wiki/): a shard that fails is forgotten, so the next card asks again, and the
-// card shows what it has meanwhile (spec §4.1: optional fetches fail soft). `failed(gid)`: its shard's last fetch
+// card shows what it has meanwhile (optional fetches fail soft). `failed(gid)`: its shard's last fetch
 // failed, so the card says so instead of reading as a building with no details (the audit's finding 6).
 function shardCache(dir, pick) {
   const cache = {}, failedAt = new Set();
@@ -1152,7 +1152,7 @@ function shardCache(dir, pick) {
   return of;
 }
 const cardOf = shardCache('cards', (d, gid) => d?.[gid]);
-// Each building's stadsdel (Plan 4b): districts.bin.gz, one byte per gid naming config.districts (0: none), fetched
+// Each building's stadsdel: districts.bin.gz, one byte per gid naming config.districts (0: none), fetched
 // with the first card and kept; a failed fetch is asked again by the next card.
 let districtBytes = null, districtAsked = false;
 function districtOf(gid) {
@@ -1179,9 +1179,9 @@ function cardHtml(gid, pinned) {
   // read "Year unknown" (every period city.py ships has both labels, web/test/card.test.mjs; the years are a guard).
   const label = tr(p, 'label') || `${p.from}–${p.to}`;
   // The band is drawn as the map draws the building: its period colour, the estimate tone for an area, estimated or
-  // period-only year (Plan 4a), and "Year unknown" like the legend chip (D29).
+  // period-only year, and "Year unknown" like the legend chip.
   const band = unknown ? THEME.unknown : isEstimate(b) ? estColors[b.period] : p.color;
-  const place = placeLine({ ...more, dist: districtOf(gid) }, T);   // Plan 4b: the first address and the stadsdel
+  const place = placeLine({ ...more, dist: districtOf(gid) }, T);   // the first address and the stadsdel
   const head = `
     <header class="card-head" style="--band:${unknown ? unknownFill(THEME) : band};--band-ink:${inkOn(band)}">
       ${more.name ? `<h3 id="card-title">${esc(more.name)}</h3>` : ''}
@@ -1190,16 +1190,16 @@ function cardHtml(gid, pinned) {
       <div class="when"><span class="y" ${more.name ? '' : 'id="card-title"'}>${approx(yearLine(b, label, T))}</span>
         ${unknown || b.yflag === YFLAG.PERIOD ? '' : `<span class="period">${esc(label)}</span>`}</div>
     </header>`;
-  const why = pinned && whyAnchor(b);   // Plan 4b: the pinned card links About's explanation of its year
+  const why = pinned && whyAnchor(b);   // the pinned card links About's explanation of its year
   // A shard that failed: say so, in place of "No open record dates this building yet", which it cannot tell
   const failed = pinned && cardOf.failed(gid);
   const dating = failed && unknown ? `<p class="dating card-failed">${esc(T('card.failed'))}</p>`
     : `<p class="dating">${approx(sourceLine(b, T, more))}${why ? ` <a class="why" href="#about/${why}">${esc(T('card.why'))}</a>` : ''}</p>${
       failed ? `<p class="dating card-failed">${esc(T('card.failed'))}</p>` : ''}`;
   if (!pinned) return `${head}${dating}<p class="hint">${esc(T('card.hint'))}</p>`;
-  // A curated building's rebuilds, raised storeys and extensions, on a second line under the dating line (Task 11a);
+  // A curated building's rebuilds, raised storeys and extensions, on a second line under the dating line;
   // never on the hover card. Its class is its own (an e2e's `.dating` stays one line); its rules are the dating
-  // line's, inline, with no top padding so it reads as that line's second (Task 11 put its rules inline too).
+  // line's, inline, with no top padding so it reads as that line's second (its rules are inline too).
   const rebuilt = rebuildLine(more, T);
   const rebuiltStyle = 'margin:0;padding:0 16px 8px;color:var(--muted);font-size:12px;line-height:1.45';
   const rebuiltHtml = rebuilt ? `<p class="rebuilt" style="${rebuiltStyle}">${esc(rebuilt)}</p>` : '';
@@ -1226,10 +1226,10 @@ function cardHtml(gid, pinned) {
         wikipedia: link(fillUrl(config.links.wikipedia_rev, { lang: ex.lang, rev: ex.rev }), 'Wikipedia'),
         licence: link('https://creativecommons.org/licenses/by-sa/4.0/', 'CC BY-SA 4.0') })}</p></section>`;
   // The RAÄ record, a Wikidata item or an article would give a private house's exact years, so its card links none
-  // (D18, D34). s03 already leaves them out of the card of every non-curated building in PRIVATE_HOUSE_KATEGORI;
+  //. s03 already leaves them out of the card of every non-curated building in PRIVATE_HOUSE_KATEGORI;
   // cardLinks is a second guard for the RAÄ link.
   const links = cardLinks(more, b, T, config.links);
-  const wrong = wrongHref(config.about?.contact, more, gid, T, config.version);   // Plan 4b: once the map has an address
+  const wrong = wrongHref(config.about?.contact, more, gid, T, config.version);   // once the map has an address
   const picked = gid === forcedGid && hiddenByMap(b) ? `<p class="picked">${esc(T('card.picked'))}</p>` : '';
   return `
     <button class="card-close" aria-label="${esc(T('card.close'))}">×</button>
@@ -1358,7 +1358,7 @@ function flyTo(x, z, done, distance = 520, up = 0) {
   if (dir.y < up) dir.setY(0).setLength(Math.sqrt(1 - up * up)).setY(up);
   const target = new THREE.Vector3(x, surfaceAt(x, z), z);
   const toP = target.clone().add(dir.multiplyScalar(distance));
-  if (calm.matches) {             // reduced motion: no sweep, the camera is there at once (spec §4.8)
+  if (calm.matches) {             // reduced motion: no sweep, the camera is there at once
     flight = null;
     controls.target.copy(target);
     camera.position.copy(toP);
@@ -1369,7 +1369,7 @@ function flyTo(x, z, done, distance = 520, up = 0) {
     fromP: camera.position.clone(), toP, done };
 }
 
-// ---------- Search (Plan 4b) ----------
+// ---------- Search ----------
 // The field and its list are web/searchbox.js over web/search.js; the index (search/index.json) loads on the first
 // focus. A pick flies there: an address or a building opens its card, drawn even where the map's settings would hide
 // it (uForce) and with a note saying so; a street fits its buildings in view; a stadsdel its bounds. Nothing about a
@@ -1773,7 +1773,7 @@ setCollapsed(initialCollapsed({ stored: storedLegend, phone: phone.matches, wide
 const estTotals = periods.map(() => 0);
 for (const v of Object.values(config.histogramEst || {})) v.forEach((n, i) => estTotals[i] += n);
 const estTotal = estTotals.reduce((a, b) => a + b, 0);
-// Plan 4a: the legend's numbers follow the range, as the title and the count do (web/count.js periodCounts); at
+// The legend's numbers follow the range, as the title and the count do (web/count.js periodCounts); at
 // "Today" with the from-handle at rest they are the periods' totals.
 const legendCounts = () => periodCounts(attrTally, uniforms.uYearFrom.value, uniforms.uYear.value, { est: estShown() });
 function syncLegendCounts() {
@@ -1834,7 +1834,7 @@ function renderPanel() {
     });
     if (focused !== undefined) panel.querySelector(`.swatch[data-i="${focused}"]`)?.focus();
   } else if (mode === MODE.floors) {
-    // Plan 4a: the look's own ramp (web/themes.js floors), and where the floors come from, in the page's language
+    // The look's own ramp (web/themes.js floors), and where the floors come from, in the page's language
     panel.innerHTML = `<h2>${esc(T('floors.title'))}</h2>
       <div class="ramp" style="background:${floorsGradient()}"></div>
       <div class="ramp-scale" style="position:relative;height:1.4em">${floorsScale()}</div>
@@ -1918,8 +1918,8 @@ function layerDetail(L) {
     <a href="${L.source.url}" target="_blank" rel="noopener">${esc(tr(L.source, 'label'))}</a></div>`;
 }
 
-// The hide-estimates switch (spec §3.3): the shader, the count, the legend's totals and the histogram follow, and the
-// choice is remembered. Like D30's switch it changes in place, not by rebuilding the legend, so it keeps the keyboard
+// The hide-estimates switch: the shader, the count, the legend's totals and the histogram follow, and the
+// choice is remembered. Like the unknown-year switch it changes in place, not by rebuilding the legend, so it keeps the keyboard
 // focus. It stays live with a period shown alone: that period's estimates leave too.
 function setHideEst(v) {
   hideEst = !!v;
@@ -1967,7 +1967,7 @@ function setLayer(L) {
 document.querySelectorAll('.modes button[data-mode]').forEach(b => b.onclick = () => {
   uniforms.uMode.value = +b.dataset.mode;
   // Only the period legend can show a period alone: any other mode lets go of it, so the map (uMask also applies in
-  // Floors), the legend and the count agree (D20).
+  // Floors), the legend and the count agree.
   if (uniforms.uMode.value !== MODE.period) maskTarget = periods.map(() => 1);
   document.querySelectorAll('.modes button[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b));
   const bits = Array(MAX_GROUPS).fill(-1);
@@ -2001,7 +2001,7 @@ function layerGroupsShown() {
   return activeLayer.groups.map((g, i) => ({ ...g, color: GROUP_COLORS[i] })).filter(g => groupOn[g.bit] !== false);
 }
 
-// The count follows the range (D20): what the map draws in colour between the two handles (web/count.js).
+// The count follows the range: what the map draws in colour between the two handles (web/count.js).
 function visibleCount() {
   const Y = uniforms.uYear.value, Yf = uniforms.uYearFrom.value;
   const shown = layerGroupsShown();
@@ -2079,9 +2079,9 @@ function drawHist() {
   document.getElementById('tally-note').textContent = tally.note && ` · ${tally.note}`;
 }
 
-// Landmark labels (Plan 4a, spec §4.1): the curated buildings with an exact, article-checked year (stockholm.json
+// Landmark labels: the curated buildings with an exact, article-checked year (stockholm.json
 // `landmarks`, s03_tiles), the ones that fit drawn at their years in the strip above the bars (web/timeline.js); a click
-// on one flies to the building and opens its card. Swedish names in both languages (D3).
+// on one flies to the building and opens its card. Swedish names in both languages.
 let placedLabels = [];
 const LABEL_FONT = () => `600 10px ${FONT}, sans-serif`;
 function drawLandmarks(w) {
@@ -2227,17 +2227,17 @@ function stopPlay() {
 }
 playBtn.onclick = () => playing ? stopPlay() : startPlay();
 
-// ---------- Buildings without a year (D30) ----------
+// ---------- Buildings without a year ----------
 // Left alone they stand at "Today" and leave whenever the map shows the past: during Play, with the timeline dragged
 // back, or with the from-handle moved (web/unknown.js unknownShown). The legend's "Year unknown" row has a switch,
 // "Show", that always reads what the map does now: on while they stand, off while they are gone. Flipped, it turns
 // off what is on and on what is off, and that choice ('show' or 'hide') then holds at every year and is remembered
-// on the device (D30, revised). With a period shown alone they are hidden like every other period, and the switch
+// on the device. With a period shown alone they are hidden like every other period, and the switch
 // reads off and is disabled. stepUnknown eases uShowUnknown towards what unknownShown says every frame, and the
 // vertex shader sinks them into the ground and raises them again like a context layer: out in half a second, so the
 // film starts on an empty city, back in the layer's own 0.88 s. A period picked alone takes them away and brings them
 // back at once, as it does the other periods; so does a viewer who asks for less motion. The count takes them in
-// where they are drawn, and only at "Today" (web/count.js, P17), so a flip redraws it.
+// where they are drawn, and only at "Today" (web/count.js), so a flip redraws it.
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
 const store = () => localStorage;
 let unknownPref = readPref(store);
@@ -2353,13 +2353,13 @@ function applyStaticText() {
   document.documentElement.lang = LANG;
   document.querySelector('.dek').textContent = config.subtitle?.[LANG] || config.subtitle?.en || '';
   document.querySelector('meta[name="description"]')?.setAttribute('content', T('ui.description'));
-  // Plan 4b: every static text and label by its id (data-i18n, data-i18n-aria in index.html)
+  // Every static text and label by its id (data-i18n, data-i18n-aria in index.html)
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', T(el.dataset.i18nAria)));
   northBtn.setAttribute('aria-label', T('ui.north'));
   northBtn.title = `${T('ui.north')} (N)`;
   renderAbout();
-  document.getElementById('credit').innerHTML = cornerHtml(config.attribution, T);   // Plan 4b: the corner credit
+  document.getElementById('credit').innerHTML = cornerHtml(config.attribution, T);   // the corner credit
   document.querySelector('.quests-open span').textContent = t('Quests');
   document.querySelector('.tally-count').childNodes[1].textContent = ' ' + T('ui.buildings');
   document.querySelector('.howto').textContent = t(howto(navigator));
@@ -2377,8 +2377,8 @@ function applyStaticText() {
   document.getElementById('search-list').setAttribute('aria-label', T('search.list'));
   placeSearch();
 }
-// About (Plan 4b, web/about.js): written from stockholm.json in the page's language, with the sources (each licence
-// linked: CC BY attribution needs both, C5 attribution). #about or #about/<section> opens it there, so the card's
+// About (web/about.js): written from stockholm.json in the page's language, with the sources (each licence
+// linked: CC BY attribution needs both, stockholm.json attribution). #about or #about/<section> opens it there, so the card's
 // "Why?" links and the corner credit can point into it; its own section links scroll without changing the address.
 const about = document.getElementById('about');
 const aboutBody = document.getElementById('about-body');
@@ -2409,7 +2409,7 @@ function setLang(l) {
   LANG = l;
   T = makeT(I18N, LANG);
   try { localStorage.setItem('hfh-lang', l); } catch {}
-  // The switch never writes ?lang= (a shared link opens in each reader's own language, D53); a ?lang= that came with
+  // The switch never writes ?lang= (a shared link opens in each reader's own language); a ?lang= that came with
   // the link goes, so a reload keeps the visitor's choice.
   const u = new URL(location.href);
   if (u.searchParams.has('lang')) { u.searchParams.delete('lang'); history.replaceState(null, '', u); }
@@ -2470,7 +2470,7 @@ applyLook(looks.current);
 resize();
 document.fonts?.ready.then(() => { drawHist(); placeSearch(); });
 aboutFromHash();
-// The corner credit (spec §4.5): always shown on a desktop; on a phone it folds into its (i) button 5 s after the city
+// The corner credit: always shown on a desktop; on a phone it folds into its (i) button 5 s after the city
 // is on screen (counted from the loading line's end, so a slow load does not fold it unseen), and the button opens it
 // again for good. Its links into About work through the hash (#about/sources). On a phone it sits under the corner,
 // however tall a wrapped period name or a larger text makes it; a phone turned wide shows it whole, as a desktop does.
@@ -2497,12 +2497,12 @@ creditOpen.onclick = () => {
   foldCredit(false);
   credits.querySelector('#credit a')?.focus();   // the button goes; focus stays in the credit, not on the page
 };
-// ?q= (spec §4.5): search once on load and pick the top row (picking never writes ?q= back).
+// ?q=: search once on load and pick the top row (picking never writes ?q= back).
 const askedQ = new URLSearchParams(location.search).get('q');
 if (searchBox && askedQ) searchBox.runQuery(askedQ).catch(() => {});
 
 // ---------- Debug ----------
-// ?debug=1 shows renderer statistics (spec §4.6); scripts/measure.mjs reads the same numbers from __dbg.stats().
+// ?debug=1 shows renderer statistics; scripts/measure.mjs reads the same numbers from __dbg.stats().
 const frameMs = [];
 let lastFrameAt = 0;
 function stats() {

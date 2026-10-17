@@ -1,4 +1,4 @@
-// web/credits.js (Plan 4b, Task 9): the corner credit from sources.yml's corner words.
+// web/credits.js: the corner credit from sources.yml's corner words.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

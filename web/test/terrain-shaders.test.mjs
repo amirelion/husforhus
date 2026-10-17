@@ -1,4 +1,4 @@
-// The shader and box lines that put the map on its terrain (Plan 3), pinned by their source in the style of
+// The shader and box lines that put the map on its terrain, pinned by their source in the style of
 // pick.test.mjs: a headless browser cannot judge a wall's foot or a name's height, and a box that ignores the lift only
 // shows at some screen edges. e2e/terrain.spec.mjs checks the picture end to end.
 import { test } from 'node:test';
@@ -12,7 +12,7 @@ const glsl = {};
 for (const [, name, body] of src.matchAll(/const (\w+) = \/\* glsl \*\/`([\s\S]*?)`;/g)) glsl[name] = body;
 
 test('buildings stand on their ground: the lift, skirts down the slope, a base-relative foot and hatch, lifted boxes', () => {
-  // the lift comes last, after D30's sinking, a layer's rise and the fly-in, so a building sinks into its own ground
+  // the lift comes last, after the unknown-year sinking, a layer's rise and the fly-in, so a building sinks into its own ground
   // and flies in with its skirt; the skirt only with the relief on; vRel keeps the fly-in's offset at the wall's foot
   assert.match(glsl.VERT, lines(
     'float lift = groundDm * uRelief;',
@@ -28,7 +28,7 @@ test('buildings stand on their ground: the lift, skirts down the slope, a base-r
   ));
   const writes = [...glsl.VERT.matchAll(/(?<![\w.])p(?:\.[xyz]+)?\s*[-+*\/]?=(?!=)[^;]*;/g)].map(m => m[0]);
   assert.deepEqual(writes.slice(-2), ['p.y += skirt;', 'p.y += lift;']);
-  assert.ok(writes.filter(w => w.startsWith('p.y *=')).length >= 2, 'D30 and the layers scale p.y before the lift');
+  assert.ok(writes.filter(w => w.startsWith('p.y *=')).length >= 2, 'the unknown-year sinking and the layers scale p.y before the lift');
   assert.match(src, /float foot = mix\(0\.82, 1\.0, clamp\(vRel \/ 12\.0, 0\.0, 1\.0\)\);/);
   assert.match(src, /float s = mix\(dot\(vWorld\.xz, along\) \+ vRel, vWorld\.x - vWorld\.z, roof\)/);
   // the box itself: web/bounds.js, checked against the lifted fixture tile in bounds.test.mjs
@@ -107,7 +107,7 @@ test('the ground and the walls are shaded with themes.js SHADING, the constants 
   ));
   assert.doesNotMatch(glsl.TERRAIN_FRAG, /\b0\.(6|3|66|34)\b/);
   assert.match(src, /uSun: \{ value: new THREE\.Vector3\(\.\.\.SHADING\.sun\)\.normalize\(\) \}/);
-  // the buildings' walls take the same wallMin + wallLit as the quay walls (Task 10's parked Minor)
+  // the buildings' walls take the same wallMin + wallLit as the quay walls
   assert.match(src, lines('float light = n.y > 0.9 ? 1.04 : ${glf(SHADING.wallMin)} + ${glf(SHADING.wallLit)} * sun;'));
   assert.doesNotMatch(src, /0\.66 \+ 0\.34 \* sun/);
   // and the looks' own values, with no fallback: every look has them (themes.test.mjs)
@@ -179,6 +179,6 @@ test('?fade= and the terrain worker go through web/terrain.js\'s checked helpers
     "terrainState = 'failed';",
     "console.warn('The terrain did not load; the map stays flat.', e);",
     "showFlat().catch(optional('The land'));",
-    'switcher.markRelief();',   // last (Task 10's parked Minor): the slider is disabled and says so (e2e)
+    'switcher.markRelief();',   // last: the slider is disabled and says so (e2e)
   ));
 });

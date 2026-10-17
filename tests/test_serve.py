@@ -1,4 +1,4 @@
-"""scripts/serve.py: the dev server for web/ says Cache-Control: no-store on every response (Task 20), and queues a
+"""scripts/serve.py: the dev server for web/ says Cache-Control: no-store on every response, and queues a
 burst of connections instead of resetting them."""
 import functools
 import http.client
@@ -52,7 +52,7 @@ def test_handler_sends_no_store():
         port = httpd.server_address[1]
         status, cache, body = get(port, "/index.html")
         assert status == 200 and cache == "no-store" and b"<title>Hus f" in body
-        status, cache, body = get(port, "/fonts/inter/OFL.txt")  # a self-hosted font folder (Task 19)
+        status, cache, body = get(port, "/fonts/inter/OFL.txt")  # a self-hosted font folder
         assert status == 200 and cache == "no-store" and body
         status, cache, _ = get(port, "/no-such-file")
         assert status == 404 and cache == "no-store"

@@ -1,5 +1,5 @@
-"""scripts/build_dist.py: dist/ for Cloudflare (D8) holds the app, only the data version current.json names, and a
-_headers file; the release gate (s99_validate) decides between a preview build and a public one (D20)."""
+"""scripts/build_dist.py: dist/ for Cloudflare holds the app, only the data version current.json names, and a
+_headers file; the release gate (s99_validate) decides between a preview build and a public one."""
 import importlib.util
 import json
 import re
@@ -181,7 +181,7 @@ def test_preview_build_is_noindex_and_says_so(bd, web, tmp_path, capsys):
     out = build(bd, web, tmp_path)
     assert (VERSION, False) in bd.gate_calls
     printed = capsys.readouterr().out
-    assert "PREVIEW ONLY" in printed and "Cloudflare Access" in printed
+    assert "PREVIEW ONLY" in printed and "not for the public site" in printed
     assert "city_lod1" in printed  # why it is not releasable yet
     r = rules((out / "_headers").read_text())
     assert headers_for(r, "/")["X-Robots-Tag"] == ["noindex"]
@@ -387,7 +387,7 @@ def test_package_scripts_and_ignores():
 
 
 def test_the_photos_the_version_uses_ship_and_no_others(bd, web, tmp_path):
-    # Plan 4a: s06_wiki copies photos to web/data/photos/ by key; s03_tiles lists the ones a version uses
+    # S06_wiki copies photos to web/data/photos/ by key; s03_tiles lists the ones a version uses
     keys = ["0123456789abcdef-500.jpg", "fedcba9876543210-500.png"]
     write(web / "data" / VERSION / "photos.json", json.dumps(keys))
     for k in [*keys, "aaaaaaaaaaaaaaaa-500.jpg"]:

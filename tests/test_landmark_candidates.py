@@ -1,4 +1,4 @@
-"""The landmark candidates list (Plan 4a, Task 12)."""
+"""The landmark candidates list."""
 import pandas as pd
 
 from pipeline import landmark_candidates as lc

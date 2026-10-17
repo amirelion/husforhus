@@ -45,10 +45,10 @@ def test_land_and_water_split_the_municipality():
     pond = box(E0 + 100, N0 + 100, E0 + 104, N0 + 102)    # 8 m²: dropped
     land, water = s04_base.land_and_water([strait, pond], town)
     # land is the domain minus that same water: they share every edge, no gap and no overlap. Clipping first and
-    # simplifying land and water apart (Plan 1's recipe) leaves about 930 m² of gaps and overlaps and 22 m² of overlap
+    # simplifying land and water apart (the first recipe) leaves about 930 m² of gaps and overlaps and 22 m² of overlap
     assert shapely.union_all(land + water).symmetric_difference(town).area < 1e-3
     assert sum(shapely.intersection(lp, wp).area for lp in land for wp in water) < 1e-6
-    # simplified before the clip, the water follows the domain's curved edge exactly (Plan 1's recipe left 42 m² of
+    # simplified before the clip, the water follows the domain's curved edge exactly (the first recipe left 42 m² of
     # it outside the town)
     assert water[0].difference(town).area < 1e-3
     # the sines span whole wavelengths, so the strait keeps about 200,000 m² and the land about 800,000 m²
@@ -69,7 +69,7 @@ def test_main_writes_land_and_water_into_the_current_version(tmp_path, monkeypat
     monkeypatch.chdir(tmp_path)
     (tmp_path / "web" / "data").mkdir(parents=True)
     (tmp_path / "web" / "data" / "current.json").write_text('{"version":"v20990101"}')
-    # s02_terrain's outputs for this town: a flat grid at 2 m, the strait at the sea's level (Plan 3)
+    # s02_terrain's outputs for this town: a flat grid at 2 m, the strait at the sea's level
     land_p, water_p = s04_base.land_and_water([box(E0 + 400, N0, E0 + 600, N0 + 1000)], box(E0, N0, E0 + 1000, N0 + 1000))
     grid = terrain.grid_for(terrain.to_local(box(E0, N0, E0 + 1000, N0 + 1000)).bounds, 20.0)
     np.savez(tmp_path / "data" / "terrain.npz", h=np.full((grid.nz, grid.nx), 2.0, np.float32),

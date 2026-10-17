@@ -1,6 +1,6 @@
-"""D35 point 2 (P18): rare architects' names stay off private houses (Plan 4a, Task 5).
+"""Rare architects' names stay off private houses.
 
-On a private house (KATEGORI in city.PRIVATE_HOUSE_KATEGORI, not curated: the same test as D18's RAÄ link, never the
+On a private house (KATEGORI in city.PRIVATE_HOUSE_KATEGORI, not curated: the same test as the decade rule's RAÄ link, never the
 `private` flag, which only dated houses carry) an architect's name is shown only when it appears on more than
 city.ARCHITECT_MAX_RARE buildings citywide. A name that rare on a villa is often the owner's, a private person.
 Well-known architects appear on many buildings, so their names stay. A rare firm, office or cooperative name shows
@@ -12,7 +12,7 @@ is_firm() proposes the names to read, from the name alone: a company form (AB, H
 konsult, ingenjör, grupp, studio, förening, stiftelse, nämnd, verket…), a partnership ("Höjer & Ljungqvist") or a
 whole name that is an acronym. A comma list of people ("S Ancker, B Gate, S Lindegren") is no candidate. On
 2026-10-16 the rule hides 482 personal names on 565 houses, and the 55 rare names that read as firms wait in
-data/review-architects.txt until a person has read them (Task 13); until then they are hidden too.
+data/review-architects.txt until a person has read them; until then they are hidden too.
 """
 import re
 from collections import Counter

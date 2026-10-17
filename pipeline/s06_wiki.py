@@ -1,4 +1,4 @@
-"""Wikidata items, Commons photos and Wikipedia excerpts for the building card (spec §3.2 s06_wiki; Plan 4a, Task 7).
+"""Wikidata items, Commons photos and Wikipedia excerpts for the building card.
 
 Fetches, each cached under data/raw/ with a MANIFEST entry (fetch.post_query: a build reads the cache, --refresh asks
 again), one request at a time and PAUSE_S apart, the MediaWiki ones with maxlag=5; an error answer (maxlag,
@@ -14,13 +14,13 @@ ratelimited, an answer that is not JSON) comes with HTTP 200, so it is retried a
      per request, data/raw/wiki/occupants_NNN.json), then its classes' subclass graph (occupant_classes.json); the
      public institutions (pipeline/occupants.py) go to data/occupants.json ({building qid: [{qid, sv, en, alt}]}),
      which s14_search adds to the search index for the buildings that have a card.
-The photo: an item in the curated pick table pipeline/photo_picks.csv (qid, commons_file, decision; D19's later change of
-2026-10-16, derived from docs/research/2026-10-16-landmark-photos.csv) takes its pick instead of its Wikidata image
+The photo: an item in the curated pick table pipeline/photo_picks.csv (qid, commons_file, decision; added
+2026-10-16 from a hand review of the landmark photos) takes its pick instead of its Wikidata image
 (P18), "none" no photo at all; any other item keeps its first P18. A pick goes through the same checks as a P18 file
-(wiki.credit: D16's licences and author, city.PHOTO_DENY, the designation rule for CC 2.0–3.0 titles; the thumbnail)
+(wiki.credit: the open licences and author, city.PHOTO_DENY, the designation rule for CC 2.0–3.0 titles; the thumbnail)
 and must be at least city.WIKI's thumb_width wide; one that fails gives no photo, never the P18 it replaced.
 Only footprints that are not private houses are looked up: an uncurated house in city.PRIVATE_HOUSE_KATEGORI gets no
-Wikidata or Wikipedia content at all (D18 with D34: a Wikidata item, an article or a photo page states the exact year
+Wikidata or Wikipedia content at all (a private house shows only the decade: a Wikidata item, an article or a photo page states the exact year
 the card withholds); a curated one does. A curated landmark's card takes its own, hand-checked Wikidata item
 (landmarks.py `qid`), whatever the class rules or the items around it say: the palace's footprint also holds the Royal
 Chapel's item, which has an article too.
@@ -235,7 +235,7 @@ def picks_of(t: pd.DataFrame) -> dict[str, str]:
 
 def select(b: gpd.GeoDataFrame, years: pd.DataFrame, items: pd.DataFrame, anc: dict,
            landmarks: list[dict] = ()) -> pd.DataFrame:
-    """The best building item per footprint, private houses left out unless curated (D18, D34); a curated landmark's
+    """The best building item per footprint, private houses left out unless curated; a curated landmark's
     footprint (years.parquet `landmark`) takes its own item, placement "curated"."""
     best = wiki.best(wiki.place(b, wiki.building_items(items, anc)))
     qid_of = {L["name"]: L["qid"] for L in landmarks if L["qid"]}     # an entry without an item keeps the rules' one
@@ -294,7 +294,7 @@ def build(b, years, districts, items, anc, *, commons, extracts, thumbs, landmar
                 designated.append((name, best.qid[g]))
             continue
         if g in picked and int(page["imageinfo"][0].get("width") or 0) < city.WIKI["thumb_width"]:
-            refuse(g, "narrow")                      # D19: a file under the thumbnail's width only through another pick
+            refuse(g, "narrow")                      # a file under the thumbnail's width only through another pick
             continue
         if wiki.art_flag(page):
             flagged.append(name)
@@ -324,7 +324,7 @@ def build(b, years, districts, items, anc, *, commons, extracts, thumbs, landmar
         "photo": [photo_of.get(g, "") for g in best.index],
         "placement": best.placement.to_numpy(),
         "items": best["items"].to_numpy().astype("int32"),
-        # internal only (the landmark candidates list, Task 12): the article titles and the item's own label and point
+        # internal only (the landmark candidates list): the article titles and the item's own label and point
         "wp_sv": best.wp_sv.to_numpy(), "wp_en": best.wp_en.to_numpy(), "label": best.sv.to_numpy(),
         "lon": best.lon.to_numpy(dtype=float), "lat": best.lat.to_numpy(dtype=float),
     })
@@ -354,7 +354,7 @@ def main(argv: list[str] | None = None) -> None:
                 commons=lambda files: fetch_commons(files, args.refresh),
                 extracts=lambda titles, lang: fetch_extracts(titles, lang, args.refresh),
                 thumbs=fetch_thumbs, landmarks=load_landmarks(args.landmarks), picks=picks_of(picks))
-    hidden = suppress.gids_of(args.buildings, args.suppress)       # Plan 4b: a takedown's item, photo and excerpt go
+    hidden = suppress.gids_of(args.buildings, args.suppress)       # a takedown's item, photo and excerpt go
     out["table"], out["extracts"] = suppress.rows(out["table"], hidden), suppress.keyed(out["extracts"], hidden)
     TABLE.parent.mkdir(parents=True, exist_ok=True)
     out["table"].to_parquet(TABLE, index=False)
@@ -365,7 +365,7 @@ def main(argv: list[str] | None = None) -> None:
                       + "".join(f"art: {n}\n" for n in out["flagged"])
                       + "# photos placed only as the nearest footprint (check it shows this building)\n"
                       + "".join(f"nearest: {n}\n" for n in out["nearest"])
-                      + "# curated picks decided by D19's rules (pipeline/photo_picks.csv: qid, file, decision)\n"
+                      + "# curated picks decided by hand (pipeline/photo_picks.csv: qid, file, decision)\n"
                       + "".join(f"pick: {q} {f}: {d}\n" for q, f, d in zip(picks.qid, picks.commons_file, picks.decision)
                                 if d != "pick")
                       + "# picks to look at on the preview (low confidence, or a decision that was not clear-cut)\n"

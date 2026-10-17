@@ -1,5 +1,5 @@
 # tests/test_io.py
-"""pipeline.io (contract C6): deterministic gzip and JSON writers, versioned output folders."""
+"""pipeline.io: deterministic gzip and JSON writers, versioned output folders."""
 import datetime
 import gzip
 import json
@@ -61,7 +61,7 @@ def test_version_dir(tmp_path, monkeypatch):
     today = io.version_dir()
     assert re.fullmatch(r"v\d{8}", today.name) and today.is_dir()
     assert today.name == datetime.date.today().strftime("v%Y%m%d")
-    assert io.version_dir("v20261014-t1200").name == "v20261014-t1200"  # a side build (Task 18's tile comparison)
+    assert io.version_dir("v20261014-t1200").name == "v20261014-t1200"  # a side build (a tile comparison)
     for bad in ["2026-10-14", "v2026101", "v20261014-", "v20261014-T1200", "v20261014_t1200"]:
         with pytest.raises(ValueError):
             io.version_dir(bad)

@@ -1,4 +1,4 @@
-"""The terrain grid and each building's ground (spec §4.1 "Terrain (D9)", §3.2; Plan 3, contract C15).
+"""The terrain grid and each building's ground.
 
 Source: Lantmäteriet's 1 m terrain model read down to 5 m (data/raw/dem/dtm5.tif, s00_fetch_dem with the owner's
 login), else the City's 2 m contour lines (pipeline/contours.py; no login). `--source` forces one.
@@ -26,7 +26,7 @@ login), else the City's 2 m contour lines (pipeline/contours.py; no login). `--s
    their height above their base somewhere along the outline, at relief_max (s99 holds it to buried_max, and checks the
    record's relief_max against the slider's). `floating` counts what the cut costs: the buildings whose base stands more
    than FLOAT_M above the cut ground at their outline's highest point (a higher building sharing a cell with a lower
-   one stands over the notch; for the project's terrace decision, D41).
+   one stands over the notch; for the project's terrace decision).
 
 Writes data/terrain.npz (grid arrays), data/terrain.json (what s03_tiles copies into stockholm.json, with the hashes of
 the buildings.parquet and attributes.parquet it was built from) and data/ground.parquet (gid, ground, height, floors,
@@ -53,7 +53,7 @@ DTM = Path("data/raw/dem/dtm5.tif")
 CONTOUR_MARGIN_M = 500.0   # contour lines this far outside the domain's box still shape its edge
 RING_M = 20.0            # a lake's shore is sampled on the line this far outside it
 GROUND_TERRAIN = 1       # ground.parquet ground_src: 0 the LOD1's MARK_Z, 1 the terrain (a fixed outlier)
-# The LOD1's sheet-line errors (Task 12 review): every ground m4 had to fix lay on a 1 km map-sheet edge, its MARK_Z
+# The LOD1's sheet-line errors: every ground m4 had to fix lay on a 1 km map-sheet edge, its MARK_Z
 # up to 30 m too low. One that passes the hybrid's fix_m test still pulls a contour TIN down, and a TIN pulled down
 # lets a worse one pass (gid 28062, a villa on a 40 m hill, at 9.5 m). A building whose outline lies within
 # SHEET_NEAR_M of a sheet edge and whose MARK_Z is more than SHEET_LOW_M under the median MARK_Z of the others within
@@ -185,7 +185,7 @@ def ground_table(b: gpd.GeoDataFrame, attrs: pd.DataFrame, tmin: np.ndarray, kin
     ground, height, fixed = terrain.fix_grounds(b.ground.to_numpy(), b.height.to_numpy(), tmin, fix)
     floors = floors_of(b, attrs)
     # only the height rule's floors follow the repaired height: OpenStreetMap's stand, as the card credits them (the
-    # final review of Plan 4a)
+    # final review)
     if "fsrc" in attrs:
         fixed_h = fixed & (attrs.set_index("gid").fsrc.reindex(b.gid).to_numpy() != FLOORS_OSM)
     else:
@@ -292,7 +292,7 @@ def build(raw: Path, b: gpd.GeoDataFrame, attrs: pd.DataFrame, *, kind: str, fix
         # The unlabelled lines again (pipeline/contours.py), now with known heights beside the labels in the inference:
         # every shore at its level, and every building ground the first TIN does not call an outlier (the hybrid's
         # test, below). From the labels alone a line along a quay under a cliff took the cliff's height (Söder
-        # Mälarstrand 18 m, Slussen and Stadsgården 22 m, Task 12); the shores alone pulled the lines on the plateau
+        # Mälarstrand 18 m, Slussen and Stadsgården 22 m); the shores alone pulled the lines on the plateau
         # behind the cliff down instead (26-30 m to 8-16 m beside buildings at 33-47 m). Judged on buildings held out
         # of it, the inference with both is off by 1.1 m (median) where the labels alone are off by 1.8 m.
         # never the LOD1's sheet-line errors (sheet_line_lows), here or in the hybrid below

@@ -6,16 +6,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// scripts/look.mjs renders the M3 review set (Task 14 review, M2): a bad --looks, --views or --estimates value must stop
+// scripts/look.mjs renders the M3 review set: a bad --looks, --views or --estimates value must stop
 // it with a clear message and a usage exit code before Playwright loads and before the out folder is created, never
 // render the wrong set under the right file names. It runs from a copy of the script, web/themes.js and web/relief.js
-// (the Hills slider's range, D40) in a temp folder with no node_modules above it, as CI's offline job runs (no npm ci;
-// Task 14b review, I1), so a static Playwright import would fail these tests. The URL points at a closed port. Each
+// (the Hills slider's range) in a temp folder with no node_modules above it, as CI's offline job runs (no npm ci;
+// a review found), so a static Playwright import would fail these tests. The URL points at a closed port. Each
 // run removes its temp folder.
 const SCRIPT = fileURLToPath(new URL('../../scripts/look.mjs', import.meta.url));
 const THEMES = fileURLToPath(new URL('../themes.js', import.meta.url));
 const RELIEF = fileURLToPath(new URL('../relief.js', import.meta.url));
-// scripts/lib (the terrain wait, Plan 3) holds no Playwright import, so the temp copies carry it along.
+// scripts/lib (the terrain wait) holds no Playwright import, so the temp copies carry it along.
 const LIB = fileURLToPath(new URL('../../scripts/lib', import.meta.url));
 
 // The environment of a script's run: the caller's, without its HFH_PORT unless the test sets one.
@@ -81,7 +81,7 @@ test('look.mjs refuses an option given without its value', () => {
   assert.match(r.stderr, /look\.mjs: --views needs a value/);
 });
 
-// Task 11's parked Minor: a name every object has (constructor, __proto__, toString) is no look, view, device or
+// A name every object has (constructor, __proto__, toString) is no look, view, device or
 // variant setting: refused with the usage exit code, never taken for one.
 test('look.mjs refuses an inherited name as a look, view, device or variant setting', () => {
   for (const [args, message] of [
@@ -106,7 +106,7 @@ test('look.mjs refuses an unknown device', () => {
   assert.equal(r.outCreated, false);
 });
 
-// scripts/sheet.mjs (Plan 3) lays screenshots side by side for the M4 review: a bad call stops before Playwright loads
+// scripts/sheet.mjs lays screenshots side by side for the M4 review: a bad call stops before Playwright loads
 // and before the out folder exists. Like look(), it runs from a temp copy with no node_modules above it, as in CI.
 const SHEET = fileURLToPath(new URL('../../scripts/sheet.mjs', import.meta.url));
 
@@ -139,7 +139,7 @@ test('sheet.mjs needs --out with a value, at least one screenshot, and files tha
 });
 
 // scripts/look.mjs and scripts/measure.mjs read HFH_PORT as playwright.config.mjs does (Number(HFH_PORT) || 8653) and
-// never aim at 8642, the owner's preview of the main checkout (Plan 3, Task 2's parked Minor): HFH_PORT=8642 or a --url on
+// never aim at 8642, the owner's preview of the main checkout: HFH_PORT=8642 or a --url on
 // 8642 stops them with exit code 2 and Playwright's message, before Playwright loads. measure.mjs runs from a temp copy
 // with no node_modules above it, like look().
 const MEASURE = fileURLToPath(new URL('../../scripts/measure.mjs', import.meta.url));
@@ -180,7 +180,7 @@ test('look.mjs and measure.mjs never aim at 8642, from HFH_PORT or --url', () =>
   assert.doesNotMatch(r.stderr, /TypeError/);
 });
 
-// Task 11 review, fix round 1: --variants takes only the settings web/app.js reads, with values it accepts, so a typo
+// --variants takes only the settings web/app.js reads, with values it accepts, so a typo
 // never renders the default map under a variant's file name. A bad one stops the run before Playwright loads.
 test('look.mjs refuses a variant setting it does not know, or a value web/app.js would not take', () => {
   for (const [variants, message] of [
@@ -246,7 +246,7 @@ test('compare-tiles.sh aims measure.mjs at HFH_PORT (default 8653), never at 864
 // once, never after the 60 s a terrain still loading gets.
 const terrainLib = () => import('../../scripts/lib/terrain-wait.mjs');
 function fakeDbg(t, relief) { globalThis.window = { __dbg: { terrain: () => t, relief } }; }
-// window.__dbg.relief: the relief asked for, a number (0 is flat; the Hills slider, D40)
+// window.__dbg.relief: the relief asked for, a number (0 is flat; the Hills slider)
 const ON = 2.5, OFF = 0;
 
 test('terrainStatus: the wait is done when the terrain stands at the relief asked for, has none, or has failed', async () => {

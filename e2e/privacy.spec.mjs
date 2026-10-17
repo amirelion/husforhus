@@ -1,5 +1,5 @@
-// The card's privacy lines (Plan 4b, Task 8): "Why?" opens About where the card's year is explained, and "Something
-// wrong?" writes to the project once the map has an address (decision 2, Plan 4b). Runs on whatever current.json names.
+// The card's privacy lines: "Why?" opens About where the card's year is explained, and "Something
+// wrong?" writes to the project once the map has an address. Runs on whatever current.json names.
 import { test, expect } from '@playwright/test';
 
 async function open(page) {

@@ -1,4 +1,4 @@
-// The relief (Plan 3) and its Hills slider (decided 2026-10-16, D40): how high the ground is drawn, from 0 (flat) to
+// The relief and its Hills slider (decided 2026-10-16): how high the ground is drawn, from 0 (flat) to
 // the build's maximum (stockholm.json terrain.reliefMax, 2.5), 1 being the true heights and the default
 // (terrain.relief). Pure, so it can be tested without a browser; app.js eases uRelief towards it and the Look panel
 // (web/switcher.js) shows the slider with its value and its honesty line.
@@ -36,7 +36,7 @@ export function reliefValue(scale, lang = 'en') {
   return k === 0 ? (lang === 'sv' ? 'Platt' : 'Flat') : `${num(k, lang)}×`;
 }
 
-// The line under the slider says what the map shows now (D1: every claim honest): drawn flat at 0, true to scale at
+// The line under the slider says what the map shows now (every claim honest): drawn flat at 0, true to scale at
 // 1, the heights reduced under 1 and exaggerated over it, or not loaded at all (state 'failed', app.js terrainState;
 // the slider is then disabled). While the terrain is on its way ('flat' until it is asked for, then 'loading') the
 // map is flat whatever the slider says, so the line says the ground is loading (the final review's VIEWER-3; the

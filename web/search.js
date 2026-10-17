@@ -1,5 +1,5 @@
-// Search (Plan 4b, Task 4; spec §4.4): what a query finds in search/index.json and the address shards
-// (pipeline/s14_search.py, contract C27), ranked, and the words each row and state shows. Pure, so node --test checks
+// Search: what a query finds in search/index.json and the address shards
+// (pipeline/s14_search.py), ranked, and the words each row and state shows. Pure, so node --test checks
 // it (web/test/search.test.mjs); app.js draws the list and flies to a pick.
 import { fold } from './fold.js';
 

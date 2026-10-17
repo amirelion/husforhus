@@ -1,7 +1,7 @@
-"""Takedowns (Plan 4b, Task 8; spec §6.3): buildings whose details a person asked us to take off the map.
+"""Takedowns: buildings whose details a person asked us to take off the map.
 
 pipeline/suppress.yml is git-ignored: the list itself says which homes asked, so it never enters the repository (a
-public one, once O1 is answered). pipeline/suppress.example.yml shows the form. Each entry names one building by the
+public one, once the City's licence question is answered). pipeline/suppress.example.yml shows the form. Each entry names one building by the
 City's register UUID or its LOD1 OID (both stay inside the pipeline and survive a gid renumbering), with the date the
 request came in:
 
@@ -112,7 +112,7 @@ def years(y: pd.DataFrame, gids: set[int]) -> pd.DataFrame:
 def accuracy(acc: dict, before: pd.DataFrame, after: pd.DataFrame) -> dict:
     """The accuracy table recounted for what ships, as s99 ties it to stats.byFlag: tested (the building-level years)
     and result (estimate, period; a suppressed estimate counts as unknown). Takedowns neither train nor test the
-    estimate (s02_years clears their years first and assign_years excludes them, D55); this function only moves an
+    estimate (s02_years clears their years first and assign_years excludes them); this function only moves an
     estimated takedown from "estimate" to "unknown" in the result counts."""
     known = (codes.EXACT, codes.RANGE, codes.LONG)
     est = (codes.ESTIMATE, codes.PERIOD)

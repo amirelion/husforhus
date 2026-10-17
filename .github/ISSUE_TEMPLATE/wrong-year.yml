@@ -1,0 +1,26 @@
+name: Wrong year or detail
+description: "A building shows the wrong year, height, architect or other detail. / En byggnad visar fel år eller uppgift."
+title: "[Data] "
+labels: [data]
+body:
+  - type: input
+    id: building
+    attributes:
+      label: Building
+      description: "Byggnad. A link from the building's card, or its address. / En länk från byggnadens kort, eller dess adress."
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What is wrong
+      description: "Vad är fel. What the map shows and what you expected. / Vad kartan visar och vad du väntade dig."
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source for the right value
+      description: "Källa för rätt värde. A link or reference (book, register, archive). / En länk eller referens (bok, register, arkiv)."
+    validations:
+      required: true

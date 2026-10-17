@@ -1,4 +1,4 @@
-// The terrain end to end (Plan 3): lifted buildings picked where they stand, a hill hiding what stands behind it in the
+// The terrain end to end: lifted buildings picked where they stand, a hill hiding what stands behind it in the
 // pick pass, the flat fallback, the draw-call budget, the Hills slider and its memory, the camera on the ground,
 // reduced motion and the names' depth test. Runs on whatever web/data/current.json points at (the fixture in CI, the
 // city locally).
@@ -26,7 +26,7 @@ function watchLand(page) {
   return land;
 }
 // Loaded, the terrain in and risen to the slider's relief (window.__dbg.relief, the number asked for; 0 is flat). A
-// terrain that failed is final: the wait ends there and the test fails at once, not after 60 s (Task 11's Minor).
+// terrain that failed is final: the wait ends there and the test fails at once, not after 60 s.
 async function risen(page) {
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
   const stands = async () => {
@@ -233,7 +233,7 @@ test('a terrain file that fails leaves the flat map, with a warning and no failu
 
 // The two give-up tests below place their checks from the moment the page asked (its 30 s timer starts then), read
 // from a stamp the page sets in the page's own (fake) time: Playwright's clock keeps running in real time, and on the
-// whole city the software frames between the ask and a check take a second or more of it (Task 12), so a fixed
+// whole city the software frames between the ask and a check take a second or more of it, so a fixed
 // fast-forward from "now" could pass 30 s. The early check is made 28 s after the ask, and proven to be before 30 s.
 async function stampTerrainAsk(page, what) {
   await page.addInitScript(what => {
@@ -366,7 +366,7 @@ const sliderUi = page => page.evaluate(() => {
     document.getElementById('relief-note').textContent];
 });
 
-// The Hills slider (decided 2026-10-16, D40), in the Look panel's Ground row: the ground at true height by default,
+// The Hills slider (decided 2026-10-16), in the Look panel's Ground row: the ground at true height by default,
 // scaled from flat (0) to the build's top (2.5) in steps of 0.5, with its value and a line saying what the map shows.
 // It follows the relief however it changes, and moves with the keyboard while the map keeps its own arrow keys off it.
 // At 0 the ground is flat and the camera's target back at sea level; the value is remembered on the device (the next
@@ -435,7 +435,7 @@ test('the ground rises after the first frame; the Hills slider scales it, from t
   ]);
   await expect(slider).toBeFocused();
   // a language change redraws the panel and keeps the focus on the slider, with its Swedish name and strings (S4; the
-  // language buttons are hidden until Plan 4, so the hidden button is pressed from the page)
+  // language buttons are hidden in some builds, so the hidden button is pressed from the page)
   await page.evaluate(() => document.querySelector('.lang [data-lang="sv"]').click());
   await expect(slider).toBeFocused();
   await expect(slider).toHaveAccessibleName('Höjder');
@@ -486,7 +486,7 @@ test('a link\'s ?relief= sets the Hills slider until it is moved, which drops it
   expect(errors).toEqual([]);
 });
 
-// The relief switch before the slider (Task 10) remembered 'off' or 'on': off stays flat, on is now the default (1x).
+// The relief switch before the slider remembered 'off' or 'on': off stays flat, on is now the default (1x).
 test('a device that remembered the old relief switch keeps flat for off and gets the default for on', async ({ page }) => {
   const errors = watchErrors(page);
   await page.addInitScript(() => {   // before the first load only, so the reload below reads what the test sets
@@ -509,7 +509,7 @@ test('a device that remembered the old relief switch keeps flat for off and gets
   expect(errors).toEqual([]);
 });
 
-// On a touch screen the Hills slider takes a tap a little outside what is drawn, as the corner buttons do (D36): a
+// On a touch screen the Hills slider takes a tap a little outside what is drawn, as the corner buttons do: a
 // 44 px band, over the heading above it and the line under it (which take no tap); its row keeps its 24 px.
 test('on a touch screen the Hills slider takes a tap in a 44 px band, its row at the same drawn size', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
@@ -593,7 +593,7 @@ test('in a short desktop window the Look popover ends on the screen and scrolls 
   await context.close();
 });
 
-// A build without terrain (stockholm.json with no terrain block, as before Plan 3 or a city without heights): the flat
+// A build without terrain (stockholm.json with no terrain block, as in older builds or a city without heights): the flat
 // land and water, no Ground row, the far plane at 60 km and the state 'flat', with no error (ALIGNMENT-3).
 test('a build without terrain draws the flat map with no Ground row', async ({ page }) => {
   const errors = watchErrors(page);
@@ -625,7 +625,7 @@ test('a build without terrain draws the flat map with no Ground row', async ({ p
 // of it, (b) its ring keeps it 20 m over a cliff that rises beside it, (c) the ride moves target and camera together
 // when the relief changes, so the tilt and the distance stay. Every frame drawn meanwhile looks at the target, the
 // frames a lift happens in included. The scenes need steep ground: a rise of over 50 m within 190 m and within 30 m.
-// They were written when 2.5x was the default; at today's 1x (D40) the fixture's steepest rises are 48.5 m and 28 m
+// They were written when 2.5x was the default; at today's 1x the fixture's steepest rises are 48.5 m and 28 m
 // (scene (a) then fails; the whole city's are 88 m and 61 m), so the test asks for the slider's top, 2.5x (121 m and
 // 70 m on the fixture), and (c) lays it flat from there.
 test('the camera rides on the ground: flights land on it, the floor and its ring keep it clear, aimed at the target', async ({ page }) => {

@@ -1,5 +1,5 @@
-// Text for the building card (spec §4.3). Pure functions over a building from readAttrs and its card shard entry
-// (`card`: s03_tiles' C21 fields), tested by node --test. Every string comes from web/i18n through T (web/i18n.js
+// Text for the building card. Pure functions over a building from readAttrs and its card shard entry
+// (`card`: s03_tiles' card fields), tested by node --test. Every string comes from web/i18n through T (web/i18n.js
 // makeT), so the card reads the same in English and Swedish; T.lang picks the decade's form and T.num the number format.
 import { YFLAG, YSRC, FSRC, PROT } from './codes.js';
 
@@ -26,15 +26,15 @@ export function yearLine(b, periodLabel, T) {
   if (b.yflag === YFLAG.UNKNOWN) return T('card.unknown');
   // Period only, private house or not: the estimate's band is wider than a decade, so a decade would claim too much.
   if (b.yflag === YFLAG.PERIOD) return periodLabel || T('card.unknown');
-  // D18: a private house shows only its decade, whatever its yflag; an estimated or area-dated one says "≈" (D6).
+  // A private house shows only its decade, whatever its yflag; an estimated or area-dated one says "≈".
   if (b.private) return (b.yflag === YFLAG.ESTIMATE || b.yflag === YFLAG.AREA ? '≈ ' : '') + decade(b.year, T.lang);
   if (decadeOnly(b)) return decade(b.year, T.lang);
   return b.yflag === YFLAG.AREA || b.yflag === YFLAG.ESTIMATE ? `≈ ${b.year}` : String(b.year);
 }
 
-// How the year is known: one unlabelled line under the band. A private house never shows more than its decade (D18):
+// How the year is known: one unlabelled line under the band. A private house never shows more than its decade:
 // its line names the source, then the decade rule, never a span or a band. A curated building rebuilt from new on
-// older cellars says so (`card.cellars`, Task 11a); the year stays the standing building's.
+// older cellars says so (`card.cellars`); the year stays the standing building's.
 export function sourceLine(b, T, card = {}) {
   if (b.yflag === YFLAG.UNKNOWN) return T('card.src.unknown');
   if (b.yflag === YFLAG.PERIOD) return b.private ? T('card.private.period') : T('card.src.period');
@@ -56,7 +56,7 @@ export function sourceLine(b, T, card = {}) {
   return T(b.yflag === YFLAG.LONG ? `card.src.${key}.long` : `card.src.${key}`, { span: span(b.yearFrom, b.yearTo) });
 }
 
-// Where the building is (Plan 4b): its first address, how many more it has, and its stadsdel, "Hornsgatan 30 (and 2
+// Where the building is: its first address, how many more it has, and its stadsdel, "Hornsgatan 30 (and 2
 // more) · Södermalm"; '' when the card has neither. Addresses come from OpenStreetMap (s02_addresses), so a building
 // without one shows only its stadsdel.
 export function placeLine(card, T) {
@@ -64,7 +64,7 @@ export function placeLine(card, T) {
   return [addr, card?.dist || ''].filter(Boolean).join(' · ');
 }
 
-// A curated card's second line (§14 of the Gamla stan research, Task 11a): "Rebuilt 1757 · raised 1857", never with
+// A curated card's second line (§14 of the Gamla stan research): "Rebuilt 1757 · raised 1857", never with
 // "≈"; '' without rebuilds. A rebuild never sets the year or the colour. A kind the strings do not hold is left out.
 const REBUILD_KINDS = ['rebuilt', 'raised', 'extended'];
 export function rebuildLine(card, T) {
@@ -97,7 +97,7 @@ export function protLine(card, T) {
 // A URL from one of stockholm.json's link templates (city.LINKS), every value encoded.
 export const fillUrl = (tpl, vars) => String(tpl).replace(/\{(\w+)\}/g, (m, k) => encodeURIComponent(vars[k] ?? ''));
 
-// The photo's credit as parts the card links (spec §4.3, D16): who took it, the work's title where the licence asks for
+// The photo's credit as parts the card links: who took it, the work's title where the licence asks for
 // it (CC 2.0–3.0), the licence (linked to its text) and Wikimedia Commons (linked to the file's page).
 export function photoCredit(photo, T) {
   const by = photo.by && photo.by !== 'unknown' ? photo.by : T('card.photo.unknown');
@@ -117,7 +117,7 @@ export function extractFor(wiki, lang) {
   return e && e.t ? { lang, text: e.t, rev: e.r } : null;
 }
 
-// The "Read more" links: the RAÄ record (never for a private house, D18; s03_tiles already leaves `raa` out), the
+// The "Read more" links: the RAÄ record (never for a private house; s03_tiles already leaves `raa` out), the
 // Wikipedia article in the page's language, else in the other one, saying so, and the Wikidata item.
 export function cardLinks(card, b, T, links) {
   const out = [];
@@ -132,15 +132,15 @@ export function cardLinks(card, b, T, links) {
   return out;
 }
 
-// Where About explains this card's year (Plan 4b): a private house's decade rule (#about/privacy), or why no open
+// Where About explains this card's year: a private house's decade rule (#about/privacy), or why no open
 // record dates it (#about/years); null for every other card.
 export function whyAnchor(b) {
   if (b.private) return 'privacy';
   return b.yflag === YFLAG.UNKNOWN ? 'years' : null;
 }
 
-// "Something wrong? Tell us" (Plan 4b, spec §6.3): a mailto to the project's address (stockholm.json about.contact,
-// decision 2, Plan 4b), the building named in the subject and its gid and the data version in the body, so the
+// "Something wrong? Tell us": a mailto to the project's address (stockholm.json about.contact,
+// decided 2026-10-17), the building named in the subject and its gid and the data version in the body, so the
 // maintainer finds it in that version's data (gids can change between versions); '' while the map has no address.
 export function wrongHref(contact, card, gid, T, version = '') {
   if (!contact) return '';

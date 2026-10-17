@@ -24,7 +24,8 @@ function write(root, file, text) {
 test('allow-list selects and excludes', () => {
   const m = parseAllowlist(allowText);
   for (const f of ['pipeline/run.py', 'web/index.html', 'web/js/a/b.mjs', 'scripts/serve.py',
-    'scripts/public/export.mjs', '.github/workflows/ci.yml', 'LICENSE', 'docs/accuracy.md', 'docs/data-sources.md',
+    'scripts/public/export.mjs', '.github/workflows/ci.yml', '.github/ISSUE_TEMPLATE/config.yml',
+    '.github/ISSUE_TEMPLATE/wrong-year.yml', 'LICENSE', 'docs/accuracy.md', 'docs/data-sources.md',
     'docs-public/README.md', '.gitignore', '.nvmrc', 'wrangler.jsonc'])
     assert.ok(m(f), f);
   for (const f of ['web/data/x.json', 'web/data/a/b.pmtiles', 'scripts/public/leaks.txt', 'docs/deploy.md',
@@ -64,7 +65,7 @@ test('copyright check in tests/test_repo.py allowed; URL logins are not emails',
   ]);
 });
 
-// Plan 4b's decision 2 (answered 2026-10-17): About names the maker as the GDPR controller and gives the project's own
+// Decided 2026-10-17: About names the maker as the GDPR controller and gives the project's own
 // address. Both come from one constant each in pipeline/city.py, the only lines allowed to hold them.
 test('the maker and the contact are allowed on their own constants in pipeline/city.py, nowhere else', () => {
   const root = tmp();

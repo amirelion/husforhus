@@ -3,12 +3,12 @@
 Adapted from upstream reference/amsterdam/pipeline/s04_water.py (alexbarakov/amsterdam-by-building, MIT).
 water = Vatten_area; land = the domain (the union of the 117 stadsdelar, or the fixture box with HFH_FIXTURE=1)
 minus that same water, so land and water share every edge. Water levels: one for the sea and Mälaren, its own for
-each lake (data/terrain.npz, s02_terrain; spec §3.2 as Plan 3 reads it).
+each lake (data/terrain.npz, s02_terrain).
 
 water.bin.gz / land.bin.gz (gzip of, little-endian):
   u32 nPoly, nRing, nVert; u32 ringStart[nPoly+1]; u32 vertStart[nRing+1]; f32 xz[2*nVert]
 The first ring of each polygon is its exterior, the rest are holes. xz are local metres (x east, z south).
-terrain.bin.gz (contract C16, pipeline/terrain.py): the grid from data/terrain.npz, the cells' classes, the land of
+terrain.bin.gz (pipeline/terrain.py): the grid from data/terrain.npz, the cells' classes, the land of
 the edge cells and which water edges are shores.
 """
 import argparse
@@ -61,7 +61,7 @@ def polygons(geom) -> list:
 
 
 def land_and_water(water_geoms, city_geom) -> tuple[list, list]:
-    """Upstream recipe, with one change (Plan 3): make_valid, union, close 0.5 m gaps, simplify 1 m, then clip to
+    """Upstream recipe, with one change: make_valid, union, close 0.5 m gaps, simplify 1 m, then clip to
     the domain and drop pieces under 30 m². Simplifying before the clip keeps the domain's own edge exact, and land is
     the domain minus that same water, so land and water share every edge (no slivers or overlaps along the shores, and
     the terrain's shore walls meet the water exactly). All three are snapped to PRECISION, which also closes the
@@ -118,7 +118,7 @@ def load_terrain(data: Path = DATA) -> tuple[dict, dict]:
 
 
 def terrain_bytes(arrays: dict, record: dict, land, water, dom) -> bytes:
-    """terrain.bin (C16) for the land and water polygons s04 ships (EPSG:3011) and s02_terrain's grid."""
+    """terrain.bin for the land and water polygons s04 ships (EPSG:3011) and s02_terrain's grid."""
     grid = terrain.Grid(record["x0"], record["z0"], record["cell"], record["nx"], record["nz"])
     if len(arrays["levels"]) != len(water) or abs(sum(p.area for p in water) - record["water_area"]) > 1.0:
         raise SystemExit("data/terrain.npz was built from other water polygons: run s02_terrain again")

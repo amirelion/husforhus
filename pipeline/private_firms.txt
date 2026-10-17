@@ -1,5 +1,5 @@
 # Firm, office and cooperative names a private house (KATEGORI Enbostadshus or Kolonistuga, not curated) may show as
-# its architect although they appear on city.ARCHITECT_MAX_RARE buildings or fewer (Plan 4a, D35 point 2). One name
+# its architect although they appear on city.ARCHITECT_MAX_RARE buildings or fewer, decided 2026-10-16. One name
 # per line, exactly as the card writes it. A name goes here only after a person has read it and confirmed it
 # names a firm, not a person: "… Arkitektkontor AB", "Byggnadsfirma …". When in doubt, leave it out.
 # s02_attributes writes the candidates still waiting to data/review-architects.txt (internal).

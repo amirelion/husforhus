@@ -1,5 +1,4 @@
-"""Render the year model's accuracy page and the M3 review material (Plan 2, Task 10; rewritten for the public in
-Task 14b).
+"""Render the year model's accuracy page and the M3 review material.
 
     uv run python -m pipeline.report_accuracy [--out docs/accuracy.md] [--names-out data/review-years.md]
 
@@ -14,7 +13,7 @@ many estimated houses have no property-unit key, so the late-unit check passes t
 data/buildings.parquet). It is aggregate-only: no building name, Wikidata or OSM id, gid, UUID, property designation or
 property-unit key (FNR), no per-building year, and no stadsdel name but Gamla stan (the repository goes public at
 M11; about 35 Wikidata labels look like addresses or designations; a private house's exact year never leaves data/,
-D18). The Wikidata gains by name go to data/review-years.md, internal (data/ is git-ignored), for the owner's M3 review.
+the decade rule for private houses). The Wikidata gains by name go to data/review-years.md, internal (data/ is git-ignored), for the owner's M3 review.
 """
 import argparse
 import json
@@ -82,18 +81,18 @@ def shares(counts: list[int], decimals: int = 1) -> list[str]:
     return ["–"] * len(counts) if units is None else [f"{v / 10 ** decimals:.{decimals}f}%" for v in units]
 
 
-# The summary's four kinds as the table's sources (contract C8 pairs each yflag with its ysrc)
+# The summary's four kinds as the table's sources (codes.py pairs each yflag with its ysrc)
 KIND_SOURCES = [("curated", "raa", "raa_old", "wikidata", "osm"), ("raa_area",), ("estimate",), ("none",)]
 
 
 def kind_shares(by_flag: dict, by_src: dict) -> tuple[list[str], list[str]]:
     """(the four kinds' shares, the sources' shares): the kinds rounded together, then each kind's share split among
-    its sources, so a kind and its sources never disagree (the final review of Plan 4a found one count at 8.0% and
+    its sources, so a kind and its sources never disagree (a review found one count at 8.0% and
     8.1%) and the summary, the figure people quote, is the closest rounding."""
     src = [by_src[key] for key, _ in SOURCES]
     kind_counts = list(kinds(by_flag))
     if [sum(by_src[k] for k in ks) for ks in KIND_SOURCES] != kind_counts:
-        raise ValueError("the yflag counts and the ysrc counts disagree (C8): rebuild the years")
+        raise ValueError("the yflag counts and the ysrc counts disagree: rebuild the years")
     units = share_units(kind_counts)
     if units is None:
         return ["–"] * 4, ["–"] * len(src)
@@ -165,7 +164,7 @@ def no_key(y: pd.DataFrame, units: pd.DataFrame | None, late: int, noun: str = "
 
 
 def decade_only(p: dict) -> bool:
-    """True when every type the map estimates is a private-house category (D18): then every estimate is published as
+    """True when every type the map estimates is a private-house category: then every estimate is published as
     its decade, "≈ 1950s" on the card, and the band is what the test measures, never what the map shows."""
     private = {city.KATEGORI_GROUPS.get(k, "unspecified") for k in city.PRIVATE_HOUSE_KATEGORI}
     return bool(p["estimate_groups"]) and set(p["estimate_groups"]) <= private
@@ -234,7 +233,7 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
     n_used, right_used = sum(r["n_estimate"] for r in by_period), sum(r["right_estimate"] for r in by_period)
     ext = acc.get("external", {})
     # Why the other types are not estimated: apartment blocks for the blind spot; the rest too, when every one of their
-    # measured cells is under min_right in the test itself (Task 14b review, M1 b).
+    # measured cells is under min_right in the test itself (M1 b).
     rest = [c for c in cells if c["group"] not in p["estimate_groups"] | {"apartments"} and c["status"] != "not measurable"]
     rest_wrong = bool(rest) and max(c["right_period"] for c in rest) < acc["min_right"]
     figure = (f"in the test, {100 * right_used / n_used:.0f}% of the test {noun} in the cells the map uses were "
@@ -473,7 +472,7 @@ def main(argv: list[str] | None = None) -> None:
         b = gpd.read_parquet(a.buildings, columns=["gid", "geometry"])
         sd = stadsdel_of(b, a.stadsdelar)
         gamla = y[y.gid.isin(b.gid[sd == GAMLA_STAN])]
-    if a.buildings.exists() and {"fnr", "prod_year"} <= set(pq.read_schema(a.buildings).names):   # fnr: Task 14b on
+    if a.buildings.exists() and {"fnr", "prod_year"} <= set(pq.read_schema(a.buildings).names):   # fnr: since 2026-10-15
         units = pd.read_parquet(a.buildings, columns=["gid", "fnr", "prod_year"])
     date = a.date or pd.Timestamp.today().strftime("%Y-%m-%d")
     version = a.version or (json.loads(CURRENT.read_text(encoding="utf-8"))["version"] if CURRENT.exists() else "unversioned")

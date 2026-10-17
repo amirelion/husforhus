@@ -43,7 +43,7 @@ await page.goto(url.href);
 let waiting = 'city', terrain;
 try {
   await page.locator('#loading').waitFor({ state: 'hidden', timeout: 120_000 });
-  // Plan 3: the terrain arrives after the first frame and rises; measure once it stands (or the build has none).
+  // The terrain arrives after the first frame and rises; measure once it stands (or the build has none).
   waiting = 'terrain';
   terrain = await waitForTerrain(page, [opt('--label', ''), phone ? 'phone' : 'desktop'].filter(Boolean).join(' '));
 } catch (e) {

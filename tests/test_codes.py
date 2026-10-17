@@ -1,5 +1,5 @@
 # tests/test_codes.py
-"""pipeline.codes (contract C2)."""
+"""pipeline.codes."""
 from pipeline import codes
 
 
@@ -12,7 +12,7 @@ def test_yflag_codes():
 def test_ysrc():
     assert (codes.SRC_NONE, codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_AREA, codes.SRC_WIKIDATA,
             codes.SRC_ESTIMATE) == (0, 1, 2, 3, 4, 5)
-    assert (codes.SRC_RAA_OLD, codes.SRC_OSM) == (6, 7)   # Plan 2 (C8): the old register and OpenStreetMap tiers
+    assert (codes.SRC_RAA_OLD, codes.SRC_OSM) == (6, 7)   # the old register and OpenStreetMap tiers
 
 
 def test_fsrc_and_rating():
@@ -21,7 +21,7 @@ def test_fsrc_and_rating():
 
 
 def test_protection_codes():
-    # Plan 4a (C20): RAÄ's skyddstyp as the card's "Protected" row; an identified value with no legal force is none
+    # RAÄ's skyddstyp as the card's "Protected" row; an identified value with no legal force is none
     assert (codes.PROT_NONE, codes.PROT_STATE, codes.PROT_LISTED, codes.PROT_CHURCH) == (0, 1, 2, 3)
     assert codes.PROTECTION == {"Statligt byggnadsminne": 1, "Byggnadsminne": 2, "Kyrkligt kulturminne": 3}
     assert "Identifierat kulturvärde" not in codes.PROTECTION

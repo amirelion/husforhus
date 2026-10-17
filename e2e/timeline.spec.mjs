@@ -1,4 +1,4 @@
-// The timeline (Plan 4a, Task 10): the handles as keyboard sliders that never move the map, the legend's numbers
+// The timeline: the handles as keyboard sliders that never move the map, the legend's numbers
 // following the range, and the landmark labels that fly to their building.
 import { test, expect } from '@playwright/test';
 
@@ -27,7 +27,7 @@ test('the handles are sliders: keys move the years, read them out, and never mov
   // each handle's bounds stop a year short of the other's (the to-handle from the oldest building on)
   await expect(to).toHaveAttribute('aria-valuemin', String(cfg.yearMin));
   await expect(from).toHaveAttribute('aria-valuemax', String(cfg.yearMax - 1));
-  // The ground rises after the first frame and the camera rides on it (Plan 3): wait until it stands still.
+  // The ground rises after the first frame and the camera rides on it: wait until it stands still.
   await expect.poll(async () => {
     const a = await camera(page);
     await page.waitForTimeout(300);
@@ -91,8 +91,8 @@ test('a landmark label on the timeline flies to its building and opens its card'
   expect(errors).toEqual([]);
 });
 
-test('with reduced motion the fly-to sets the camera at once (spec §4.8)', async ({ page }) => {
-  // the final review of Plan 4a: a landmark label's flight always swept the camera for 1.4 s
+test('with reduced motion the fly-to sets the camera at once', async ({ page }) => {
+  // A landmark label's flight always swept the camera for 1.4 s
   const errors = watchErrors(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');

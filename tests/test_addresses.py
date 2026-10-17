@@ -1,4 +1,4 @@
-"""OSM addresses on footprints, and each footprint's stadsdel (Plan 4b, Task 2). No network: Overpass answers are
+"""OSM addresses on footprints, and each footprint's stadsdel. No network: Overpass answers are
 written here."""
 import json
 
@@ -62,7 +62,7 @@ def test_load_dedupes_across_tiles_and_takes_nodes_ways_and_relations(tmp_path):
         ["relation/3", "Götgatan", "7"]]
     assert abs(got.x.iat[0] - (X0 + 5)) < 0.01 and abs(got.y.iat[0] - (Y0 + 5)) < 0.01
     assert addresses.load(tmp_path / "none").empty
-    # with `names`, only the current grid's tiles: one left from another grid is never read (ruling 7, Plan 4b)
+    # with `names`, only the current grid's tiles: one left from another grid is never read
     write(tmp_path, "9_9.json", [node(6, 5, 5, street="Götgatan", number="1")])
     assert addresses.load(tmp_path, ["1_0", "0_1"]).osm.tolist() == ["node/1"]
 
@@ -76,7 +76,7 @@ def test_assign_inside_the_smallest_else_nearest_within_ten_metres():
     assert addresses.assign(pts, b).tolist() == [8, 7, 9, -1, -1]       # 8 m off is in, 20 m off is not
     assert addresses.assign(pts, b, max_m=25).tolist() == [8, 7, 9, 9, -1]
     assert addresses.assign(pts.iloc[:0], b).tolist() == []
-    # the smallest wins whatever the gids' order (Task 2's review): here it has the lowest gid
+    # the smallest wins whatever the gids' order: here it has the lowest gid
     assert addresses.assign(pts.iloc[:1], b.assign(gid=[9, 1, 5])).tolist() == [1]
     assert addresses.assign(pts.iloc[:1], b.assign(gid=[1, 9, 5])).tolist() == [9]
 
@@ -126,7 +126,7 @@ def test_main_stops_without_tiles(tmp_path):
 
 
 def test_main_stops_when_a_tile_is_missing(tmp_path, monkeypatch):
-    # one tile is not the city: a run with some missing would quietly lose the addresses there (ruling 7, Plan 4b)
+    # one tile is not the city: a run with some missing would quietly lose the addresses there
     monkeypatch.delenv("HFH_FIXTURE", raising=False)
     write(tmp_path, "0_0.json", [])
     with pytest.raises(SystemExit, match=r"lacks 15 of 16 tiles \(0_1, .*\): run s00_fetch_osm first"):
@@ -134,7 +134,7 @@ def test_main_stops_when_a_tile_is_missing(tmp_path, monkeypatch):
 
 
 def test_main_leaves_out_a_takedown_s_addresses(tmp_path, monkeypatch, capsys):
-    # Plan 4b: the takedown list (here its own file) removes a building's addresses; its stadsdel stays
+    # The takedown list (here its own file) removes a building's addresses; its stadsdel stays
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("HFH_FIXTURE", raising=False)
     monkeypatch.setattr(city, "OSM_TILES", (1, 1))                 # one tile, 0_0, is the whole grid here

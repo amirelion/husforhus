@@ -13,7 +13,7 @@ test('the pick id travels as a flat varying', () => {
   assert.doesNotMatch(src, /^\s*(out|in) float vGid;/m);
 });
 
-// Plan 3: the ground is drawn in the pick pass as nothing (id 0, which decodes to -1) but with depth, so a hill hides
+// The ground is drawn in the pick pass as nothing (id 0, which decodes to -1) but with depth, so a hill hides
 // what stands behind it; e2e/terrain.spec.mjs finds such a building and picks it.
 test('the ground draws as id 0 in the pick pass', () => {
   const src = readFileSync(new URL('../app.js', import.meta.url), 'utf8');

@@ -1,4 +1,4 @@
-// About (Plan 4b, Task 7; spec §4.5): written from the build, in the page's language, so its numbers cannot drift from
+// About: written from the build, in the page's language, so its numbers cannot drift from
 // the data. Every number comes from stockholm.json (stats, accuracy, about, attribution: aboutTokens); every sentence
 // from web/i18n by id. Pure, tested by node --test (web/test/about.test.mjs); app.js puts aboutHtml into the dialog and
 // opens it at a section for a link to #about/<section>.
@@ -8,6 +8,7 @@ const RECORD = ['curated', 'raa', 'raa_old', 'wikidata', 'osm'];
 const SOURCE_ROWS = ['curated', 'raa', 'raa_old', 'raa_area', 'wikidata', 'osm', 'estimate', 'none'];
 const AMSTERDAM = 'https://github.com/alexbarakov/amsterdam-by-building';
 const PARIS = 'https://paris.bogachev.fr/';
+const REPO = 'https://github.com/amirelion/husforhus';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const link = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
@@ -25,7 +26,7 @@ function apportion(counts, units) {
   return floor;
 }
 
-// Each source's share in tenths of a percent, as the accuracy page rounds them (report_accuracy.kind_shares, Task 10):
+// Each source's share in tenths of a percent, as the accuracy page rounds them (report_accuracy.kind_shares):
 // the kinds rounded together to 1000, then each kind's tenths split among its sources, so About and the page agree.
 function sourceTenths(src) {
   const kinds = apportion(KIND_SOURCES.map(ks => sum(ks.map(k => src[k] || 0))), 1000), at = {};
@@ -71,8 +72,8 @@ export function aboutTokens(config, T) {
     check_new: num(ext.from_1990?.n_all || 0), area_n: num(area.n || 0), area_right: pct(area.right_period || 0, T.lang, 0),
     snapshot, gamla_n: num(a.gamla?.n || 0), gamla_dated: num(a.gamla?.dated || 0), floors_osm: num(s.floorsOsm || 0),
     rare: esc(a.rareArchitect ?? ''), maker: esc(a.maker || ''), contact: a.contact ? link(`mailto:${a.contact}`, a.contact) : '',
-    version: esc(config.version || ''), date: v ? `${v[1]}-${v[2]}-${v[3]}` : '',
-    // Plan 3's terrain (stockholm.json `terrain`, D40): the default relief, the Hills slider's top, where the heights
+    repo: link(REPO, 'github.com/amirelion/husforhus'), version: esc(config.version || ''), date: v ? `${v[1]}-${v[2]}-${v[3]}` : '',
+    // The terrain (stockholm.json `terrain`): the default relief, the Hills slider's top, where the heights
     // come from. T.num formats them in the page's language, so Swedish writes a decimal comma ("2,5"), English a point
     // ("2.5"); a whole number has no decimals ("2", not "2.0" or "2,0").
     relief: scaleNum(config.terrain?.relief ?? 1, T),
@@ -81,7 +82,7 @@ export function aboutTokens(config, T) {
   };
 }
 
-// A relief factor in the page's language: 2.5 → "2.5" / "2,5", 2 → "2" (D40's slider moves in steps of 0.5).
+// A relief factor in the page's language: 2.5 → "2.5" / "2,5", 2 → "2" (the slider moves in steps of 0.5).
 const scaleNum = (x, T) => T.num(x, Number.isInteger(x) ? 0 : 1);
 
 function cellTable(cells, config, T, withGroup) {
@@ -110,12 +111,12 @@ export function aboutHtml(config, T, howto = '') {
     <td>${pct(tenths[r] / 1000, T.lang)}</td></tr>`).join('');
   // every other cell: the house cells the map does not estimate (late houses, the old town) and the other types
   const shown = houseCells(acc), others = (acc.cells || []).filter(c => !shown.includes(c));
-  // a build from before Plan 4b's `about` block: its sentences go rather than read "0 of the 0" or "before ,"
+  // a build from before the `about` block: its sentences go rather than read "0 of the 0" or "before ,"
   const has = !!config.about;   // (and without accuracyLabels the other table, whose group names it holds)
   // the independent check is "too small to confirm" only while the accuracy page says it is not measured
   const check = ext => ext.status === 'measured' ? 'about.acc.check.measured' : 'about.acc.check';
   const ext = acc.external || {};
-  // each source in D44's form, "Dataset: publisher, licence" (plus "processed"), in the page's language (Task 9); a
+  // each source in the standard credit form, "Dataset: publisher, licence" (plus "processed"), in the page's language; a
   // build from before those lines keeps its one attribution text
   const sources = (config.attribution || []).map(x => {
     const line = x.credit?.[T.lang] || x.text;
@@ -175,6 +176,7 @@ export function aboutHtml(config, T, howto = '') {
     ${!a.maker && !a.contact ? P('about.contact.none') : ''}
     ${a.maker && !a.contact ? P('about.contact.none.contact') : ''}
     ${!a.maker && a.contact ? P('about.contact.none.maker') : ''}
+    ${P('about.contact.code')}
     ${P('about.contact.data')}`;
 }
 

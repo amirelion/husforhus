@@ -1,4 +1,4 @@
-"""Terrain inputs (Plan 3, Task 3): the City's 2 m contour lines, and Lantmäteriet's 1 m terrain model when the owner's
+"""Terrain inputs: the City's 2 m contour lines, and Lantmäteriet's 1 m terrain model when the owner's
 login is available.
 
 1. Contours, always (no account): members 0_line.{shp,shx,dbf,prj,cpg} of the City's Stadskarta zip (sources.yml
@@ -6,7 +6,7 @@ login is available.
    heights are the "Höjdkurva heltäckande" labels s00_fetch_city already fetches (NamnText_point).
 2. Markhöjdmodell Nedladdning (CC BY 4.0, sources.yml lm_markhojd), only when LM_USER and LM_PASSWORD are in the
    process's environment (the owner's free Geotorget account and order of the product). The step never reads a .env file
-   itself: the owner hands the login to this one process with `uv run --env-file .env ...` (Plan 3, Tasks 1 and 12), so
+   itself: the owner hands the login to this one process with `uv run --env-file .env ...` (Tasks 1 and 12), so
    no other run, an agent's included, can pick it up. The STAC catalogue lists the 1 m tiles anonymously (searched
    over the municipality's box plus MARGIN_M); every tile it lists must be an https URL on lantmateriet.se or one of
    its subdomains, or the step stops before reading any, and a redirect from there is followed without the login
@@ -25,7 +25,7 @@ login is available.
    data/raw/dem/dtm5.tif if there is one, else from the contours, and the later steps run. The warning never quotes
    the login.
 Without credentials the step says so and succeeds: s02_terrain builds from the contours, and CI never needs a login.
-Agents never run this step with credentials; the owner runs it in their own terminal (Plan 3, Task 1).
+Agents never run this step with credentials; the owner runs it in their own terminal.
 """
 import argparse
 import os
@@ -65,7 +65,7 @@ class NoOverviews(Exception):
 
 def credentials(env: dict | None = None) -> tuple[str, str] | None:
     """(user, password) from LM_USER/LM_PASSWORD in the process's environment; None when either is missing. Never a
-    file: the owner's `uv run --env-file` puts the login in this one process (Plan 3, Task 1)."""
+    file: the owner's `uv run --env-file` puts the login in this one process."""
     env = os.environ if env is None else env
     user, password = env.get("LM_USER"), env.get("LM_PASSWORD")
     return (user, password) if user and password else None

@@ -36,13 +36,13 @@ test('estimateTone mixes towards black by default and towards a given colour oth
 });
 
 // -45deg: the stripes rise from bottom left to top right, as the map's do from the home view.
-test('unknownFill: a hatched look gets diagonal stripes of its hatch colour, the others a flat colour (D29)', () => {
+test('unknownFill: a hatched look gets diagonal stripes of its hatch colour, the others a flat colour', () => {
   assert.equal(unknownFill({ unknown: '#c9c6c0', unknownHatch: '#aca8a1' }),
     'repeating-linear-gradient(-45deg, #aca8a1 0 1.5px, #c9c6c0 1.5px 5px)');
   assert.equal(unknownFill({ unknown: '#caced3' }), '#caced3');
 });
 
-// Plan 4a: the card's band takes the period colour, or the estimate tone for an estimated year; its text (the year, the
+// The card's band takes the period colour, or the estimate tone for an estimated year; its text (the year, the
 // period, the name) must read on it in every look: black or white, whichever contrasts more, and at least 4.5:1.
 test('the card band text reads at WCAG AA on every period colour and estimate tone', () => {
   const lin = v => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);

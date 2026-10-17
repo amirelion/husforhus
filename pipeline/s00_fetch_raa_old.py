@@ -1,4 +1,4 @@
-"""Snapshot RAÄ's OLD building-register file (CC0), docs/research/2026-10-15-data-hunt.md §3.
+"""Snapshot RAÄ's OLD building-register file (CC0).
 
 catalog.raa.se entry 207, "OLD Bebyggelse, kulturhistoriskt inventerad": one GeoPackage for all of Sweden
 (about 76 MB, 99,329 points, layer byggnader_sverige_point) with the old register's Nybyggnad years, published only

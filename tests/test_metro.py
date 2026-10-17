@@ -1,4 +1,4 @@
-"""Tunnelbanan layer (roadmap item 16, D35 point 1): the research CSVs as a dated layer, and the track cut."""
+"""Tunnelbanan layer: the research CSVs as a dated layer, and the track cut."""
 import math
 
 import pytest

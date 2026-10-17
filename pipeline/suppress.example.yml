@@ -1,4 +1,4 @@
-# Takedowns (spec §6.3, Plan 4b): copy to pipeline/suppress.yml, which git ignores (the list says which homes asked).
+# Takedowns: copy to pipeline/suppress.yml, which git ignores (the list says which homes asked).
 # One entry per request, naming the building by the City's register UUID (data/buildings.parquet `uuid`) or its LOD1
 # OID (`oid`), with the date the request came in. Rebuild from s02_years and deploy as soon as you can, within the
 # time the GDPR sets; s99_validate fails on an entry that matches no building. See docs/privacy.md, "Takedowns".

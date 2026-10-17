@@ -1,5 +1,5 @@
 // Looks: ?theme=arg|kalk|blatimme|paper, or the Look switcher (web/look.js, web/switcher.js). Ärg is the default
-// (D28, web/look.js DEFAULT_LOOK): city.py's PERIODS colours and styles.css's :root tokens are its (contract C1).
+// (web/look.js DEFAULT_LOOK): city.py's PERIODS colours and styles.css's :root tokens are its.
 // `name` is the look's name in the switcher; app.js's string table translates it where it needs translating.
 // app.js applies the scene colours, label colours, font and period palette, and copies `ui` onto the CSS custom
 // properties in styles.css. Every palette steps in lightness between neighbouring periods (OKLab ΔL ≥ 4); the
@@ -8,17 +8,17 @@
 // losing saturation (web/tone.js estimateTone and the vertex shader): black in every look, so an estimate reads darker
 // and duller than its period and never like the pale range fade. hoverTo is the hover mix: black on light grounds,
 // white on the dark one. `unknown` is the colour of buildings with no year yet. A look with `unknownHatch` draws them with a fine
-// diagonal hatch in that colour (D29): on the map (app.js FRAG), on the legend chip and a card's band (web/tone.js
-// unknownFill). Terrain (Plan 3): land is the ground's colour where it is flat; reliefShade is how much the sun shades
+// diagonal hatch in that colour: on the map (app.js FRAG), on the legend chip and a card's band (web/tone.js
+// unknownFill). Terrain: land is the ground's colour where it is flat; reliefShade is how much the sun shades
 // a slope (see SHADING; kept low where water is pale, so shaded land never nears the water's colour); quay is the
 // colour of the walls where land meets water, stone wherever they stand over 3 m. `floors` is the
-// Floors mode's ramp (Plan 4a): four colours from 1 floor to 40 and more on a log scale, for the shader and the legend
+// Floors mode's ramp: four colours from 1 floor to 40 and more on a log scale, for the shader and the legend
 // alike; each stays clear of the look's land and sky, and they step in lightness, lighter to darker on a light ground
 // and the reverse on the dark one (web/test/themes.test.mjs).
 export const THEMES = {
   // Ärg (patina): building age read like copper roofs ageing. Verdigris for the old city, darkening through the
   // 19th century, then warm copper for the modern city; ink-dark Baltic water makes the islands read at a glance.
-  // "Year unknown" is a pale warm neutral with a darker hatch (D29), so the city reads as a light model with the
+  // "Year unknown" is a pale warm neutral with a darker hatch, so the city reads as a light model with the
   // dated buildings in colour. Pale alone it looks like p1/p2 to red- and green-blind viewers (ΔE 2.5–3.5; 2.0–4.6
   // for the hatch's mean tone, which far buildings take); the hatch line (ΔE 9.4 from it in every vision) tells it
   // apart, and shows from the home view on. It is ΔE 10.4 from land, 7.3 from the maquette.
@@ -56,7 +56,7 @@ export const THEMES = {
     ui: { '--bg': '#121d30', '--ink': '#eef2f7', '--muted': '#9fb0c6', '--panel': '#1a2740', '--line': '#2b3a55', '--accent': '#ffc861' },
     periods: ['#861118', '#992502', '#a24203', '#ad5800', '#b86d02', '#c28209', '#c79916', '#c3b244', '#aacf79', '#8ae6c7', '#bfe8ff', '#f9f2d8'],
   },
-  // Upstream's white model under a pale sky, for comparison; city.py's palette until Ärg became the default (D28;
+  // Upstream's white model under a pale sky, for comparison; city.py's palette until Ärg became the default (2026-10-15;
   // its p11 #4a2b7a keeps the lightness step).
   paper: {
     name: 'Classic',

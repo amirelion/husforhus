@@ -4,11 +4,11 @@ Fails (exit 1, with a readable list) on:
 - stockholm.json naming another version than its folder;
 - any file over 20 MiB; first-load or whole-city transferred bytes over budget;
 - base: land.bin.gz or water.bin.gz missing, not decoding or without a polygon; labels.json missing or not a
-  list with at least one label (C7: s03_tiles never ships alone, and the viewer cannot load such a folder);
-- terrain (Plan 3, C16/C17): terrain.bin.gz missing, not decoding, or disagreeing with stockholm.json's terrain
+  list with at least one label (s03_tiles never ships alone, and the viewer cannot load such a folder);
+- terrain: terrain.bin.gz missing, not decoding, or disagreeing with stockholm.json's terrain
   block (origin, cell, size, water level within WATER_Z_TOL: the header holds it as a float32) or with water.bin.gz (one level per water polygon, one shore bit per water
   vertex); a height outside -10..250 m or a level outside the heights' range; more transferred bytes than the terrain
-  budget (spec §4.6, 1.5 MB); with the DTM as its source, building grounds that sit more than TERRAIN["datum_max"]
+  budget (1.5 MB); with the DTM as its source, building grounds that sit more than TERRAIN["datum_max"]
   off the terrain under their outlines (median; a wrong vertical datum, RH 00 for RH 2000, moves it by 0.52 m); a
   tile drawing a building under the water's floor (water_z + ground_min) or more than 200 m up; the file's source,
   data/terrain.json (missing, or its source, datum or fixed count) and the credits (lm_markhojd exactly when the source
@@ -16,18 +16,18 @@ Fails (exit 1, with a readable list) on:
   relief_max, not a whole number or over TERRAIN["buried_max"] (10), or counted at another relief than the slider's top
   (stockholm.json reliefMax); with --release, a terrain from the City's contour lines while sources.yml's
   city_stadskarta does not say covers_contours: true;
-- attrs: a yflag outside contract C2 (5 is retired), year 0 without yflag UNKNOWN (or the reverse), a year
+- attrs: a yflag outside codes.py (5 is retired), year 0 without yflag UNKNOWN (or the reverse), a year
   outside 1000..2026, a dated year outside its own year_from..year_to, a dated year_from before 1000, a year_to
   after 2026 (a private house's decade end excepted), height not in (0, 200] m, more than 60 floors, NaN or
   out-of-bounds coordinates, a period outside the period table, a dated non-private row whose period is not its
-  year's (private rows take the period from the real year, so only they may differ), a ysrc outside C2 or one
-  that does not pair with the yflag (C8: UNKNOWN <-> none, AREA <-> raa_area, ESTIMATE/PERIOD <-> estimate, the
-  rest <-> an exact, range or long year), a private house not published as exactly a decade (D18: no exact year
+  year's (private rows take the period from the real year, so only they may differ), a ysrc outside codes.py or one
+  that does not pair with the yflag (codes.py: UNKNOWN <-> none, AREA <-> raa_area, ESTIMATE/PERIOD <-> estimate, the
+  rest <-> an exact, range or long year), a private house not published as exactly a decade (a private house shows only the decade: no exact year
   for private houses), a private house whose decade and period share fewer than 2 years (the pair would give the
-  year away), or a dated, non-curated building in a private-house category that is not marked private (D18
+  year away), or a dated, non-curated building in a private-house category that is not marked private (the decade rule
   checked from KATEGORI, not from the flag it is meant to verify);
-- histograms: histogram + histogramEst + unknown not adding up to stats.buildings (C5);
-- accuracy: the table missing from stockholm.json, a C10 key missing or outside the contract (on the table, a
+- histograms: histogram + histogramEst + unknown not adding up to stats.buildings;
+- accuracy: the table missing from stockholm.json, an accuracy-table key missing or outside the contract (on the table, a
   cell, a fallback row, a by_true_period row, or the area and external entries and the external entry's 1990
   split), a cell without its group/era/inner/n/status (a fallback row without group/inner/n/status), a status
   outside estimate/period/unknown/not measurable (an area or external one outside not measurable/measured), a
@@ -44,26 +44,26 @@ Fails (exit 1, with a readable list) on:
   max_band that are not city.ESTIMATE's, or a table that does not describe this build (result's ESTIMATE and
   PERIOD counts against stats.byFlag, tested against the building-level years);
 - tiles: gids not exactly 0..n-1 once each; and, last, on a build with no other finding, a tile's year, yflag or
-  period disagreeing with attrs for a gid (P4);
+  period disagreeing with attrs for a gid;
 - data: data/buildings.parquet not holding exactly this version's gids 0..n-1 (after a fixture build it holds
   519 rows; the KATEGORI and privacy checks below read it by gid, so they would quietly check almost nothing);
 - sources missing required fields (with --release: any source still pending-O1);
-- privacy: a City/register UUID, a normalised FASTIGHET (a whole value, a part between punctuation, or, since Plan 4a,
+- privacy: a City/register UUID, a normalised FASTIGHET (a whole value, a part between punctuation, or, since 2026-10-16,
   a phrase inside a sentence: privacy.phrases) or a property-unit key (LOD1 FNR, data/buildings.parquet `fnr`: a digit
   run in a string, a whole number, or a field named fnr) found in any decompressed JSON/text file;
-- cards: any field other than C21's, or on a private house or any other non-curated building whose KATEGORI is in
-  city.PRIVATE_HOUSE_KATEGORI, dated or not (D18, D34): a RAÄ link, a Wikidata item, an article, a photo or an English
+- cards: any field other than a card's, or on a private house or any other non-curated building whose KATEGORI is in
+  city.PRIVATE_HOUSE_KATEGORI, dated or not: a RAÄ link, a Wikidata item, an article, a photo or an English
   label, a name that is not on the reviewed list (pipeline/private_names.txt), or an architect's name that appears on
-  city.ARCHITECT_MAX_RARE cards or fewer citywide and is not a reviewed firm (pipeline/private_firms.txt; D35 point
-  2); a photo whose licence is not CC BY, CC BY-SA, CC0 or public domain (D16), without an author or a Commons page,
+  city.ARCHITECT_MAX_RARE cards or fewer citywide and is not a reviewed firm (pipeline/private_firms.txt; the rare-architect rule, point
+  2); a photo whose licence is not CC BY, CC BY-SA, CC0 or public domain, without an author or a Commons page,
   without its title under CC 2.0–3.0, missing from web/data/photos/ or over city.WIKI's photo_bytes, or not listed in
-  photos.json, which build_dist ships from (Plan 4a); rebuilds or older cellars on a card that is not curated, a
-  rebuild of another kind, out of order, or not after the card's own year (Task 11a);
-- excerpts (wiki/NN.json, Plan 4a): a shard without its CC BY-SA 4.0 licence, a key that is not a gid of its own
+  photos.json, which build_dist ships from; rebuilds or older cellars on a card that is not curated, a
+  rebuild of another kind, out of order, or not after the card's own year;
+- excerpts (wiki/NN.json): a shard without its CC BY-SA 4.0 licence, a key that is not a gid of its own
   shard, an excerpt on a building whose card may not link an article, one without text or revision, in a language
-  the card's `wp` does not list, or one that says who owns the building or had it built (privacy.owner, spec §6.3);
+  the card's `wp` does not list, or one that says who owns the building or had it built (privacy.owner);
 - landmarks: a timeline landmark that is not the curated year of a building outside the private-house categories;
-- Plan 4b: a card address on a private-category house while city.PRIVATE_ADDRESSES is False; districts.bin.gz not one
+- a card address on a private-category house while city.PRIVATE_ADDRESSES is False; districts.bin.gz not one
   byte per gid within stockholm.json `districts`; search/index.json missing while features.search is on, a building
   entry naming what its card does not, another name (city.BUILDING_ALIASES) pointing at a building whose card does not
   carry its target, a street without its numbers, a street and number that together read as a property designation,
@@ -108,7 +108,7 @@ DATA = Path("data")
 MAX_FILE_BYTES = 20 * 1024 * 1024
 FIRST_LOAD_BYTES = 2_500_000
 WHOLE_CITY_BYTES = 8_000_000
-TERRAIN_BYTES = 1_500_000      # spec §4.6
+TERRAIN_BYTES = 1_500_000      # the terrain's download budget
 TERRAIN_DM = (-100, 2500)      # a terrain height outside -10..250 m is a broken grid, not Stockholm
 WATER_Z_TOL = 0.01             # metres: the header's float32 water level against stockholm.json's
 CONTOUR_SOURCE = "city_stadskarta"   # sources.yml: the City's Stadskarta, whose 0_line layer is the contour terrain
@@ -121,11 +121,11 @@ MIN_PRIVATE_OVERLAP = 2  # years a private row's decade must share with its peri
 YFLAGS = (codes.EXACT, codes.RANGE, codes.LONG, codes.AREA, codes.ESTIMATE, codes.PERIOD, codes.UNKNOWN)
 YSRCS = (codes.SRC_NONE, codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_AREA, codes.SRC_WIKIDATA, codes.SRC_ESTIMATE,
          codes.SRC_RAA_OLD, codes.SRC_OSM)
-# C8 pairing: the yflags a source may carry.
+# The codes.py pairing: the yflags a source may carry.
 PAIRS = {codes.SRC_NONE: (codes.UNKNOWN,), codes.SRC_RAA_AREA: (codes.AREA,),
          codes.SRC_ESTIMATE: (codes.ESTIMATE, codes.PERIOD)}
 DATED_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
-# Contract C10: the accuracy table's keys, a cell's keys and the statuses.
+# The accuracy table's keys, a cell's keys and the statuses.
 TABLE_KEYS = {"method", "held_out", "folds", "near_m", "min_cell", "min_right", "max_band", "tested", "cells", "fallback",
               "band_coverage", "by_true_period", "area", "external", "result"}
 ACCURACY_STATUSES = {"estimate", "period", "unknown", "not measurable"}
@@ -133,14 +133,14 @@ SIDE_STATUSES = {"not measurable", "measured"}            # the area and externa
 CELL_KEYS = {"group", "era", "inner", "n", "status"}
 CELL_NUMBERS = {"median_error", "right_period", "within_one", "band"}
 FALLBACK_KEYS = {"group", "inner", "n", "status", "median_error", "right_period", "within_one"}   # Ruling F15
-# The area check (n, status and score()'s numbers) and, since Task 14b, the external check: the map's own rule on the
+# The area check (n, status and score()'s numbers) and, since 2026-10-15, the external check: the map's own rule on the
 # Wikidata/OSM-only buildings, counted per map state (estimate.check_external) and split at 1990 (SPLIT_KEYS each).
 EXTERNAL_COUNTS = ("n_all", "n_estimate", "right_estimate", "in_band_estimate", "n_unknown")
 SPLIT_KEYS = {"n_all", "n_estimate", "right_estimate", "in_band_estimate"}
 EXTERNAL_SPLITS = ("before_1990", "from_1990")
 SIDE_KEYS = {"area": {"n", "status", "median_error", "right_period"},
              "external": {"status", *EXTERNAL_COUNTS, *EXTERNAL_SPLITS}}
-BY_PERIOD_KEYS = {"period", "n", "right", "n_estimate", "right_estimate"}   # by_true_period's rows (Task 14b)
+BY_PERIOD_KEYS = {"period", "n", "right", "n_estimate", "right_estimate"}   # by_true_period's rows
 ROW_KEYS = {"group", "inner", "n", "status"}                       # what a fallback row must carry (cells: CELL_KEYS)
 ERA_LABELS = tuple(e[0] for e in city.ERAS)                        # the strings a cell's group and era may take
 PERIOD_KEYS = tuple(q[0] for q in city.PERIODS)                    # the strings a by_true_period row's period may take
@@ -151,8 +151,8 @@ SPLIT_RE = re.compile(r"[,;()\[\]/|]")
 DIGITS_RE = re.compile(r"\d+")
 SAFE_KEY = re.compile(r"[A-Za-z0-9_]{1,32}")  # a UUID has hyphens, a FASTIGHET has a space: neither is printed
 SAFE_WORD = re.compile(r"[a-z]{1,16}( [a-z]{1,16})?")  # a status as an error line may quote it: "not measurable"
-# Plan 4a: what a card's photo may be licensed under (D16) and where its page is, and the fields that would state the
-# exact year of a house the card shows only by its decade (D18, D34)
+# What a card's photo may be licensed under and where its page is, and the fields that would state the
+# exact year of a house the card shows only by its decade
 PHOTO_LICENCE = re.compile(r"CC BY(-SA)? \d\.\d( [A-Z]{2})?|CC0|Public domain( \(Sweden\))?")
 OLD_CC = re.compile(r"CC BY(-SA)? [23]\.\d( [A-Z]{2})?")
 COMMONS_PAGE = "https://commons.wikimedia.org/w/index.php?curid="
@@ -199,7 +199,7 @@ def quoted(status) -> str:
 
 def privacy_sets(data: Path) -> tuple[set[str], set[str], set[int]]:
     """(UUIDs casefolded, normalised FASTIGHET designations, FNR property-unit keys) of data/buildings.parquet; no
-    FNR set from a buildings file written before Task 14b (it has no fnr column, so nothing could ship one). 0 is "no
+    FNR set from a buildings file written before 2026-10-15 (it has no fnr column, so nothing could ship one). 0 is "no
     key" and never in the set."""
     path = data / "buildings.parquet"
     has_fnr = "fnr" in pq.read_schema(path).names
@@ -237,7 +237,7 @@ def check_sizes(out: Path, cfg: dict) -> list[str]:
 
 
 def check_base(out: Path, cfg: dict) -> list[str]:
-    """P1: the folder is the one stockholm.json names, and holds the land, water and labels the viewer loads."""
+    """The folder is the one stockholm.json names, and holds the land, water and labels the viewer loads."""
     errors = []
     if cfg.get("version") != out.name:
         errors.append(f"{city.SLUG}.json: version is {cfg.get('version')} but the folder is {out.name}")
@@ -269,12 +269,12 @@ def check_base(out: Path, cfg: dict) -> list[str]:
 
 def check_terrain(out: Path, cfg: dict, data: Path = DATA, *, release: bool = False,
                   sources: list[dict] = ()) -> list[str]:
-    """terrain.bin.gz against stockholm.json's terrain block and water.bin.gz (C16, C17), its values, the terrain
+    """terrain.bin.gz against stockholm.json's terrain block and water.bin.gz, its values, the terrain
     budget, the source it says it came from (the file's header, data/terrain.json and the credits must agree with
     stockholm.json), the buildings the terrace could not free and, for a DTM build, the datum. A missing
     terrain.bin.gz is check_base's to report; a missing data/terrain.json is reported here (its checks cannot run).
     A release built from the City's contour lines also needs sources.yml's city_stadskarta to say covers_contours:
-    true (the final review's PRIVACY-3: the O1 that was sent named the Stadskarta's other layers, not the contours)."""
+    true (the City's licence answer named the Stadskarta's other layers, not the contours)."""
     path, t = out / "terrain.bin.gz", cfg.get("terrain")
     if not path.exists():
         return []
@@ -285,7 +285,7 @@ def check_terrain(out: Path, cfg: dict, data: Path = DATA, *, release: bool = Fa
     if release and t.get("source") == "contours" and not covered:
         errors.append("terrain: a release built from the City's contour lines needs the City's answer to name them: "
                       f"sources.yml's {CONTOUR_SOURCE} does not say covers_contours: true (ask the City, or build from "
-                      "Lantmäteriet's model, P13)")
+                      "Lantmäteriet's model)")
     if transferred(path) > TERRAIN_BYTES:
         errors.append(f"budget: terrain is {transferred(path):,} bytes, over {TERRAIN_BYTES:,}")
     try:
@@ -351,7 +351,7 @@ def check_terrain(out: Path, cfg: dict, data: Path = DATA, *, release: bool = Fa
 
 
 def check_attribution(cfg: dict) -> list[str]:
-    """Plan 4b, Task 9 (D44): every source About lists carries its line in English and Swedish, "Dataset: publisher,
+    """Every source About lists carries its line in English and Swedish, "Dataset: publisher,
     licence", the dataset and the licence the same in both, the licence the entry's own (sources.licence_names), and
     ", processed" / ", bearbetad" in both or in neither."""
     errors = []
@@ -363,7 +363,7 @@ def check_attribution(cfg: dict) -> list[str]:
                  for lang in PROCESSED}
         if not all(found.values()) or len({(m["dataset"], m["licence"], bool(m["p"])) for m in found.values()}) != 1:
             errors.append(f"attribution: {sid}: its credit must read \"Dataset: publisher, licence\" (plus \", processed\" "
-                          f"/ \", bearbetad\") in en and sv, naming {a.get('licence')} (D44): {c!r}")
+                          f"/ \", bearbetad\") in en and sv, naming {a.get('licence')}: {c!r}")
     return errors
 
 
@@ -382,11 +382,11 @@ def check_attrs(a: np.ndarray, periods: list[tuple[int, int]] | None = None) -> 
             errors.append(f"attrs: {int(mask.sum())} buildings {what} (gids {first_gids(mask)})")
 
     year, flag, period = a["year"].astype(int), a["yflag"], a["period"].astype(int)
-    rule(~np.isin(flag, YFLAGS), "with a yflag outside contract C2")
+    rule(~np.isin(flag, YFLAGS), "with a yflag outside codes.py")
     src = a["ysrc"]
-    rule(~np.isin(src, YSRCS), "with a ysrc outside contract C2")
+    rule(~np.isin(src, YSRCS), "with a ysrc outside codes.py")
     paired = np.array([int(f) in PAIRS.get(int(s), DATED_FLAGS) for f, s in zip(flag, src)], dtype=bool)
-    rule(np.isin(src, YSRCS) & np.isin(flag, YFLAGS) & ~paired, "whose yflag does not pair with their ysrc (C8)")
+    rule(np.isin(src, YSRCS) & np.isin(flag, YFLAGS) & ~paired, "whose yflag does not pair with their ysrc")
     unknown = flag == codes.UNKNOWN
     rule((year == 0) != unknown, "where year 0 and yflag UNKNOWN disagree")
     in_bounds = (year >= YEAR_MIN) & (year <= YEAR_MAX)
@@ -425,7 +425,7 @@ def check_attrs(a: np.ndarray, periods: list[tuple[int, int]] | None = None) -> 
 
 
 def check_data(out: Path, data: Path, n: int) -> list[str]:
-    """P3: the KATEGORI and privacy checks read data/buildings.parquet by gid, so it must hold exactly this
+    """The KATEGORI and privacy checks read data/buildings.parquet by gid, so it must hold exactly this
     version's buildings, gids 0..n-1. An absent file is reported by the privacy check instead."""
     path = data / "buildings.parquet"
     if not path.exists():
@@ -440,9 +440,9 @@ def check_data(out: Path, data: Path, n: int) -> list[str]:
 
 
 def building_keys(n: int, data: Path) -> np.ndarray | None:
-    """Per gid, the building it belongs to for D35's count: its RAÄ record (data/years.parquet `raa_id`), else the gid
+    """Per gid, the building it belongs to for the rare-architect count: its RAÄ record (data/years.parquet `raa_id`), else the gid
     itself; None when the file is absent. LOD1 often draws one building as several footprints sharing a record, and
-    s02_attributes counts a name once per record (Task 5's review), so s99 counts the same way."""
+    s02_attributes counts a name once per record, so s99 counts the same way."""
     path = data / "years.parquet"
     if not path.exists():
         return None
@@ -461,7 +461,7 @@ def private_category(n: int, data: Path) -> np.ndarray | None:
 
 
 def check_private_marked(a: np.ndarray, data: Path) -> list[str]:
-    """D18, checked from KATEGORI rather than from the `private` flag it governs: a dated (yflag not UNKNOWN),
+    """The decade rule for private houses, checked from KATEGORI rather than from the `private` flag it governs: a dated (yflag not UNKNOWN),
     non-curated building in a private-house category must be marked private, or its exact year would ship."""
     in_set = private_category(len(a), data)
     if in_set is None:  # no KATEGORI by gid; the privacy check already fails the run
@@ -476,7 +476,7 @@ def check_private_marked(a: np.ndarray, data: Path) -> list[str]:
 def check_osm_floors(a: np.ndarray, data: Path) -> list[str]:
     """The card credits floors with fsrc FLOORS_OSM to OpenStreetMap ("5 (OpenStreetMap)"), so they must be its
     building:levels (data/attributes.parquet `floors_osm`, by gid): s02_terrain once recomputed them from a repaired
-    height (the final review of Plan 4a). Without the file, or a table without floors_osm, there is nothing to
+    height. Without the file, or a table without floors_osm, there is nothing to
     compare."""
     path = data / "attributes.parquet"
     if not path.exists() or "floors_osm" not in pq.read_schema(path).names:
@@ -491,7 +491,7 @@ def check_osm_floors(a: np.ndarray, data: Path) -> list[str]:
 
 
 def check_histograms(cfg: dict) -> list[str]:
-    """C5: histogram + histogramEst + unknown == stats.buildings."""
+    """Histogram + histogramEst + unknown == stats.buildings."""
     total = sum(sum(v) for h in (cfg.get("histogram", {}), cfg.get("histogramEst", {})) for v in h.values())
     total += int(cfg.get("unknown", 0))
     n = cfg.get("stats", {}).get("buildings")
@@ -536,12 +536,12 @@ def check_row(where: str, row, required: set[str], allowed: set[str], min_cell: 
         errors.append(f"accuracy: {where} band is not a number above 0")
     extra = stray(row, allowed)
     if extra:
-        errors.append(f"accuracy: {where} has keys outside contract C10: {extra}")
+        errors.append(f"accuracy: {where} has keys outside the accuracy table's: {extra}")
     return errors
 
 
 def check_estimate_cell(where: str, row, acc: dict) -> list[str]:
-    """A cell that reads "estimate" must be one the estimator could give (Task 14b review, M4): a type in
+    """A cell that reads "estimate" must be one the estimator could give: a type in
     city.ESTIMATE's estimate_groups, right_period at least min_right, band at most max_band (the table's thresholds,
     pinned to the estimator's above). A malformed cell is check_row's; the group is never printed."""
     if not (isinstance(row, dict) and row.get("status") == "estimate"):
@@ -583,7 +583,7 @@ def check_possible(where: str, obj: dict, keys, chains) -> list[str]:
 
 
 def check_by_period(rows) -> list[str]:
-    """by_true_period (Task 14b): a list of objects with exactly BY_PERIOD_KEYS, a period from city.PERIODS and
+    """by_true_period: a list of objects with exactly BY_PERIOD_KEYS, a period from city.PERIODS and
     whole-number counts that could be real (none below 0, right <= n, right_estimate <= n_estimate <= n), and exactly
     one row per period of city.PERIODS, in order (checked once every row is an object with a known period). No value
     read from a row is printed."""
@@ -605,7 +605,7 @@ def check_by_period(rows) -> list[str]:
                                  (("right", "n"), ("right_estimate", "n_estimate", "n")))
         extra = stray(row, BY_PERIOD_KEYS)
         if extra:
-            errors.append(f"accuracy: {where} has keys outside contract C10: {extra}")
+            errors.append(f"accuracy: {where} has keys outside the accuracy table's: {extra}")
     periods = [row.get("period") if isinstance(row, dict) else None for row in rows]
     if all(isinstance(q, str) and q in PERIOD_KEYS for q in periods) and tuple(periods) != PERIOD_KEYS:
         errors.append("accuracy: by_true_period does not hold one row per period of city.PERIODS, in order")
@@ -613,7 +613,7 @@ def check_by_period(rows) -> list[str]:
 
 
 def check_external(s: dict, min_cell: int) -> list[str]:
-    """The external entry's own rules (Task 14b), after its status and keys: every count present and a whole number,
+    """The external entry's own rules, after its status and keys: every count present and a whole number,
     the 1990 split two objects with exactly SPLIT_KEYS, and "measured" exactly when min_cell or more buildings would
     show as "≈ year" (else the page prints counts, never a share). The counts could be real: none below 0,
     right_estimate and in_band_estimate at most n_estimate, n_estimate + n_unknown at most n_all (a PERIOD row is in
@@ -639,7 +639,7 @@ def check_external(s: dict, min_cell: int) -> list[str]:
             errors.append(f"accuracy: {where} lacks one of {sorted(SPLIT_KEYS)}")
         extra = stray(part, SPLIT_KEYS)
         if extra:
-            errors.append(f"accuracy: {where} has keys outside contract C10: {extra}")
+            errors.append(f"accuracy: {where} has keys outside the accuracy table's: {extra}")
         errors += check_counts(where, part, sorted(SPLIT_KEYS))
         errors += check_possible(where, part, EXTERNAL_COUNTS[:4],
                                  (("right_estimate", "n_estimate", "n_all"), ("in_band_estimate", "n_estimate")))
@@ -659,7 +659,7 @@ def check_external(s: dict, min_cell: int) -> list[str]:
 
 
 def check_accuracy(cfg: dict) -> list[str]:
-    """C10: the accuracy table is present with exactly the contract's keys (on the table, the cells, the fallback
+    """The accuracy table is present with exactly the contract's keys (on the table, the cells, the fallback
     rows and the area and external entries: a per-building diagnostic or a stadsdel name must not ship), uses the
     estimator's thresholds, every cell and fallback row is well-formed (see check_row: its numbers are present
     exactly when n >= min_cell), every share (right_period, within_one, band_coverage) is from 0 to 1 and every band
@@ -675,10 +675,10 @@ def check_accuracy(cfg: dict) -> list[str]:
     errors = []
     extra = stray(acc, TABLE_KEYS)
     if extra:
-        errors.append(f"accuracy: stockholm.json accuracy has keys outside contract C10: {extra}")
+        errors.append(f"accuracy: stockholm.json accuracy has keys outside the accuracy table's: {extra}")
     missing = sorted(TABLE_KEYS - set(acc))
     if missing:
-        errors.append(f"accuracy: stockholm.json accuracy lacks keys required by contract C10: {missing}")
+        errors.append(f"accuracy: stockholm.json accuracy lacks keys the accuracy table requires: {missing}")
     for key in PINNED:
         if key in acc and acc[key] != city.ESTIMATE[key]:
             errors.append(f"accuracy: {key} is {num(acc[key])} but the estimator uses {num(city.ESTIMATE[key])} "
@@ -712,7 +712,7 @@ def check_accuracy(cfg: dict) -> list[str]:
             errors.append(f"accuracy: {side} has status {quoted(s['status'])}")
         extra = stray(s, SIDE_KEYS[side])
         if extra:
-            errors.append(f"accuracy: {side} has keys outside contract C10: {extra}")
+            errors.append(f"accuracy: {side} has keys outside the accuracy table's: {extra}")
         if side == "area":
             errors += check_shares("area", s, ("right_period",))
         if side == "external":
@@ -779,7 +779,7 @@ def check_tiles(out: Path, cfg: dict, n: int) -> list[str]:
 
 
 def check_tiles_attrs(out: Path, cfg: dict, a: np.ndarray) -> list[str]:
-    """P4: the shader draws a tile's year, yflag and period, the count and the card read attrs; per gid they must
+    """The shader draws a tile's year, yflag and period, the count and the card read attrs; per gid they must
     agree. Runs last, on a build with no other finding (any attrs finding would also show up here)."""
     errors = []
     for t, tile in decoded_tiles(out, cfg, errors):
@@ -794,7 +794,7 @@ def check_tiles_attrs(out: Path, cfg: dict, a: np.ndarray) -> list[str]:
 
 
 def raa_hidden(a: np.ndarray, data: Path) -> np.ndarray:
-    """Per gid, True where the card must not link RAÄ (D18): a row marked private, or any non-curated building
+    """Per gid, True where the card must not link RAÄ: a row marked private, or any non-curated building
     whose KATEGORI is in city.PRIVATE_HOUSE_KATEGORI, dated or not. KATEGORI is read by gid from
     data/buildings.parquet; without that file only the attrs `private` byte can be checked."""
     hidden = a["private"] != 0
@@ -809,16 +809,16 @@ def read_shards(folder: Path) -> list[tuple[Path, dict]]:
 
 
 def check_photo(out: Path, where: str, photo, used: set[str]) -> list[str]:
-    """One card photo (C21): the credit D16 and the licence ask for, the file it names (web/data/photos/<key>)."""
+    """One card photo: the credit the open licence asks for, the file it names (web/data/photos/<key>)."""
     if not isinstance(photo, dict):
         return [f"cards: {where} has a photo that is not an object"]
     errors = []
     extra = [shown(f, j, "field") for j, f in enumerate(sorted(set(photo) - set(PHOTO_FIELDS)))]
     if extra:
-        errors.append(f"cards: {where} has photo fields outside C21: {extra}")
+        errors.append(f"cards: {where} has photo fields outside a card's: {extra}")
     lic, key = str(photo.get("lic", "")), str(photo.get("key", ""))
     if not PHOTO_LICENCE.fullmatch(lic):
-        errors.append(f"cards: {where} has a photo whose licence is not CC BY, CC BY-SA, CC0 or public domain (D16)")
+        errors.append(f"cards: {where} has a photo whose licence is not CC BY, CC BY-SA, CC0 or public domain")
     if not str(photo.get("by", "")).strip():
         errors.append(f"cards: {where} has a photo without its author")
     if not COMMONS_PAGE_ID.fullmatch(str(photo.get("page", ""))):
@@ -839,11 +839,11 @@ def check_photo(out: Path, where: str, photo, used: set[str]) -> list[str]:
 
 def check_cards(out: Path, a: np.ndarray, hidden: np.ndarray, allowed_names: set[str] | None = None,
                 allowed_firms: set[str] | None = None, keys: np.ndarray | None = None) -> list[str]:
-    """C21's card fields; on a hidden card (raa_hidden: a private house, or a non-curated building in a private-house
+    """A card's fields; on a hidden card (raa_hidden: a private house, or a non-curated building in a private-house
     category) none of HIDDEN_FIELDS, a name only from the reviewed list, and no architect name that appears on
-    city.ARCHITECT_MAX_RARE buildings or fewer unless it is a reviewed firm (D35 point 2: counted per building,
+    city.ARCHITECT_MAX_RARE buildings or fewer unless it is a reviewed firm (the rare-architect rule: counted per building,
     `keys` from building_keys, as s02_attributes counts; a name the rule hid on a house is rare here
-    too); each photo as check_photo; `rebuilt` and `cellars` only on a curated card (Task 11a) and well formed."""
+    too); each photo as check_photo; `rebuilt` and `cellars` only on a curated card and well formed."""
     allowed_names = load_private_names() if allowed_names is None else allowed_names
     allowed_firms = load_private_firms() if allowed_firms is None else allowed_firms
     errors, n = [], len(a)
@@ -863,7 +863,7 @@ def check_cards(out: Path, a: np.ndarray, hidden: np.ndarray, allowed_names: set
             ref = f"gid {shown(key, i)}" if is_gid else f"entry {shown(key, i)}"
             extra = [shown(f, j, "field") for j, f in enumerate(sorted(set(card) - set(CARD_FIELDS)))]
             if extra:
-                errors.append(f"cards: {p.name} {ref} has fields other than C21's: {extra}")
+                errors.append(f"cards: {p.name} {ref} has fields other than a card's: {extra}")
             if not is_gid:
                 errors.append(f"cards: {p.name} holds a non-gid key ({shown(key, i)})")
                 continue
@@ -873,12 +873,12 @@ def check_cards(out: Path, a: np.ndarray, hidden: np.ndarray, allowed_names: set
             if "photo" in card:
                 errors += check_photo(out, f"{p.name} {ref}", card["photo"], used)
             errors += check_rebuilds(f"cards: {p.name} {ref}", card, a[int(key)])
-            for field in ("name", "en"):   # Plan 4b, Task 10: a register's building code is an internal id
+            for field in ("name", "en"):   # a register's building code is an internal id
                 if isinstance(card.get(field), str) and REGISTER_CODE.search(card[field]):
                     errors.append(f"cards: {p.name} {ref} {field} carries a register's building code")
             if not hidden[int(key)]:
                 continue
-            # D18, D34: each of them can state the exact year; Plan 4b: the address too, if decision 3 (Plan 4b) says so
+            # Each of them can state the exact year; the address too, when city.PRIVATE_ADDRESSES allows it
             for f in HIDDEN_FIELDS + (() if city.PRIVATE_ADDRESSES else ("addr", "addrn")):
                 if f in card:
                     what = ("links its RAÄ record" if f == "raa" else f"carries `{f}`"
@@ -891,12 +891,12 @@ def check_cards(out: Path, a: np.ndarray, hidden: np.ndarray, allowed_names: set
                     if x not in allowed_firms and named.get(x, 0) <= city.ARCHITECT_MAX_RARE]
             if rare:
                 errors.append(f"cards: {p.name} {ref} is in a private-house category and names {len(rare)} architect(s) "
-                              f"found on {city.ARCHITECT_MAX_RARE} cards or fewer (D35)")
+                              f"found on {city.ARCHITECT_MAX_RARE} cards or fewer")
     return errors
 
 
 def check_rebuilds(where: str, card: dict, rec) -> list[str]:
-    """A card's `rebuilt` and `cellars` (Task 11a): only on a curated building (s08_landmarks checked them against its
+    """A card's `rebuilt` and `cellars`: only on a curated building (s08_landmarks checked them against its
     article); `rebuilt` a non-empty list of [year, kind] by year, each kind one of REBUILD_KINDS and each year after
     the card's own year, by YEAR_MAX (a rebuild never sets the year, §14 of the Gamla stan research); `cellars`
     true."""
@@ -923,7 +923,7 @@ def check_rebuilds(where: str, card: dict, rec) -> list[str]:
 
 
 def check_wiki(out: Path, a: np.ndarray, hidden: np.ndarray) -> list[str]:
-    """The excerpt shards (C21): their licence, their gids, never on a hidden card, text and revision, a language the
+    """The excerpt shards: their licence, their gids, never on a hidden card, text and revision, a language the
     card lists in `wp`, and no sentence that says who owns the building or had it built (privacy.owner)."""
     errors, n = [], len(a)
     wp = {}
@@ -954,7 +954,7 @@ def check_wiki(out: Path, a: np.ndarray, hidden: np.ndarray) -> list[str]:
                     errors.append(f"wiki: {p.name} gid {g} has an excerpt in a language its card does not link")
                 if ok and owner(e["t"]):
                     errors.append(f"wiki: {p.name} gid {g} has an excerpt that says who owns the building or had it "
-                                  "built (spec §6.3)")
+                                  "built")
     return errors
 
 
@@ -977,7 +977,7 @@ def check_photo_gids(out: Path, hidden: np.ndarray) -> list[str]:
 
 
 def check_districts(out: Path, cfg: dict, n: int) -> list[str]:
-    """C26 (Plan 4b): districts.bin.gz, one byte per gid naming its stadsdel in stockholm.json `districts` (0: none)."""
+    """Districts.bin.gz, one byte per gid naming its stadsdel in stockholm.json `districts` (0: none)."""
     names = cfg.get("districts")
     if names is None:
         return []
@@ -992,7 +992,7 @@ def check_districts(out: Path, cfg: dict, n: int) -> list[str]:
 
 
 def check_beside_private(out: Path, a: np.ndarray, data: Path) -> list[str]:
-    """D50 (the final review of Plan 4a): no card whose footprint is not curated carries an item (`qid`, `wp`, a
+    """No card whose footprint is not curated carries an item (`qid`, `wp`, a
     photo, an English label or an excerpt) whose point (data/wiki.parquet lon, lat) lies within city.WIKI private_m of an uncurated
     private-category house on the same property, as s06_wiki leaves such items out (wiki.beside_private). Without
     data/buildings.parquet, or a wiki table without points, there is nothing to check this by."""
@@ -1014,8 +1014,8 @@ def check_beside_private(out: Path, a: np.ndarray, data: Path) -> list[str]:
     b = gpd.read_parquet(bpath, columns=["gid", "kategori", "fastighet", "geometry"])
     x, y = lonlat_to_3011(w.lon.to_numpy(dtype=float), w.lat.to_numpy(dtype=float))
     near = beside_private(b, np.flatnonzero(a["ysrc"] == codes.SRC_CURATED), w.gid.to_numpy(), x, y)
-    return [f"cards: gid {g} carries an item within {city.WIKI['private_m']:g} m of a private house on its property "
-            "(D50)" for g in w.gid.to_numpy()[near]]
+    return [f"cards: gid {g} carries an item within {city.WIKI['private_m']:g} m of a private house on its property"
+            for g in w.gid.to_numpy()[near]]
 
 
 def addresses_of(data: Path, gids) -> set[tuple[str, str]]:
@@ -1044,7 +1044,7 @@ def shard_pairs(out: Path) -> list[tuple[str, str, str]]:
 
 def check_search(out: Path, cfg: dict, a: np.ndarray, hidden: np.ndarray,
                  designations: set[str] = frozenset(), data: Path | None = None) -> list[str]:
-    """C27 (Plan 4b): search/index.json and its address shards, required once config.features.search is on. Every
+    """Search/index.json and its address shards, required once config.features.search is on. Every
     building entry names what its card names (so search shows nothing a card does not), every other name
     (`baliases`) is city.BUILDING_ALIASES' and points at the building whose card carries its target name, every gid
     is a building, every street's numbers sit in the shard it names, no street and number together read as a property
@@ -1125,7 +1125,7 @@ def check_search(out: Path, cfg: dict, a: np.ndarray, hidden: np.ndarray,
 
 
 def check_suppressed(out: Path, a: np.ndarray, data: Path, entries: list[dict]) -> list[str]:
-    """Plan 4b (spec §6.3): every takedown in pipeline/suppress.yml names a building of this build, and that building
+    """Every takedown in pipeline/suppress.yml names a building of this build, and that building
     ships nothing but its shape: "Year unknown" with no rating, an empty card (or none), no excerpt, and nowhere in
     search (a card may keep `nofloors`, a fact about its shape). Error lines name entries by their place in the file
     and buildings by gid, never by their keys."""
@@ -1185,7 +1185,7 @@ def check_suppressed(out: Path, a: np.ndarray, data: Path, entries: list[dict]) 
 
 
 def check_landmarks(cfg: dict, a: np.ndarray, data: Path) -> list[str]:
-    """stockholm.json `landmarks`: each a curated building's own year, never a private-category house (D18)."""
+    """stockholm.json `landmarks`: each a curated building's own year, never a private-category house."""
     errors, n = [], len(a)
     in_set = private_category(n, data)
     for i, L in enumerate(cfg.get("landmarks", [])):
@@ -1196,7 +1196,7 @@ def check_landmarks(cfg: dict, a: np.ndarray, data: Path) -> list[str]:
         if a["ysrc"][g] != codes.SRC_CURATED or int(a["year"][g]) != L.get("year"):
             errors.append(f"landmarks: entry {i} is not the curated year of gid {g}")
         if a["private"][g] or (in_set is not None and in_set[g]):
-            errors.append(f"landmarks: entry {i} is a private-category house (D18)")
+            errors.append(f"landmarks: entry {i} is a private-category house")
     return errors
 
 
@@ -1231,7 +1231,7 @@ def text_files(out: Path):
 
 
 def check_privacy(out: Path, uuids: set[str], props: set[str], fnrs: set[int] = frozenset()) -> list[str]:
-    """UUIDs, FASTIGHET designations and (Task 14b) FNR property-unit keys must not reach web/: a key is caught as a
+    """UUIDs, FASTIGHET designations and FNR property-unit keys must not reach web/: a key is caught as a
     digit run in any string, as a whole number anywhere in a JSON file, or as a field named fnr. Error lines carry
     the file and the JSON path, never the value."""
     errors = []
@@ -1265,7 +1265,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     takedowns = suppress.load() if takedowns is None else takedowns
     errors = [f"sources: {e}" for e in check_sources(sources, release=release)]
     if release:
-        # Plan 4b: a public map names who made it and where to write (GDPR Art. 14; About and the card use both)
+        # A public map names who made it and where to write (GDPR Art. 14; About and the card use both)
         errors += [f"release: city.{k} is empty (decision 2: who made the map and the address for corrections "
                    "and takedowns)" for k in ("MAKER", "CONTACT") if not getattr(city, k)]
         errors += [f"release: waiting for {w} (city.RELEASE_WAITS_FOR)" for w in city.RELEASE_WAITS_FOR]

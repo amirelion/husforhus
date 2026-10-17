@@ -1,4 +1,4 @@
-"""s02_terrain (Plan 3, Task 5) on the synthetic town (tests/terrain_town.py): the grid from contours or from a DTM,
+"""s02_terrain on the synthetic town (tests/terrain_town.py): the grid from contours or from a DTM,
 the water levels, the fixed ground, the hybrid TIN, the terrace and the files it writes. Then s04_base on the same
 town."""
 import gzip
@@ -190,7 +190,7 @@ def test_grounds_are_judged_on_the_hybrid_tin_not_on_the_contours_alone(made):
 
 
 def test_the_unlabelled_contours_are_inferred_again_with_the_shores_and_the_buildings_grounds(made, monkeypatch):
-    # Task 12: from the labels alone, the lines along Söder's quays took the cliff's height (18-22 m). The lake levels
+    # From the labels alone, the lines along Söder's quays took the cliff's height (18-22 m). The lake levels
     # come from that first inference; then the unlabelled lines are inferred again knowing every shore at its level
     # and every building ground the first TIN does not call an outlier, and the TIN is built from those heights.
     calls = []
@@ -222,7 +222,7 @@ def test_the_unlabelled_contours_are_inferred_again_with_the_shores_and_the_buil
 
 
 def test_the_second_inference_knows_the_grounds_anchors_keeps(made, monkeypatch):
-    # Task 12's review: the buildings whose grounds the second inference knows are anchors()'s, so the LOD1's
+    # The buildings whose grounds the second inference knows are anchors()'s, so the LOD1's
     # sheet-line errors stay out of it. With anchors() told to drop gid 5 too, its ground leaves the inference.
     calls, kept = [], []
     real_infer, real_anchors = contours.infer_unlabelled, s02_terrain.anchors
@@ -274,7 +274,7 @@ def test_the_lake_levels_come_from_the_lines_the_tin_is_built_from(made, monkeyp
     assert moved == both and moved[0] == plain[0] == 0.0
 
 
-# The LOD1's sheet-line errors (Task 12 review): buildings on the 1 km sheet edges whose MARK_Z is up to 20 m too low
+# The LOD1's sheet-line errors: buildings on the 1 km sheet edges whose MARK_Z is up to 20 m too low
 # pass the hybrid's 20 m test, and as anchors they pulled unlabelled lines down (pits in Vasastan and on Södermalm; gid
 # 28062, a villa on a 40 m hill, kept at 9.5 m). A sheet town in EPSG:3011 round the edge E = 154000 on a 35 m hill.
 E0, N0 = 154000.0, 6578445.0
@@ -364,7 +364,7 @@ def test_a_sheet_line_error_is_kept_out_of_the_tins_and_fixed_from_8_m(made, mon
 
 def test_the_record_counts_the_buildings_the_full_terrace_leaves_floating(made):
     # The final review's PIPELINE-3: the terrace caps every node of every cell a footprint touches at the lowest such
-    # building's ground + 0.3 m (D41), so a higher building sharing a cell with a lower one stands over the notch. Two
+    # building's ground + 0.3 m, so a higher building sharing a cell with a lower one stands over the notch. Two
     # houses in one 20 m cell on the hill's slope, the second on a strip 10 m lower: the first floats about 10 m above
     # the ground at its outline's highest point. s02_terrain counts the buildings more than FLOAT_M (3 m) above it.
     high, low = town.lbox(402, 562, 410, 570), town.lbox(412, 562, 418, 570)
@@ -397,7 +397,7 @@ def test_the_record_carries_the_hashes_of_the_buildings_and_attributes_it_read(m
 
 
 def test_nodes_inside_a_lake_away_from_land_hold_its_level():
-    # PIPELINE-7 (S9): the camera's floor and target and the water names read these nodes (contract C15). A 200 m lake
+    # PIPELINE-7 (S9): the camera's floor and target and the water names read these nodes. A 200 m lake
     # in flat land at 20 m: nodes more than `burn` rings from land take the lake's level, never the sea's.
     class Flat:
         kind = "contours"
@@ -436,7 +436,7 @@ def test_the_dtm_is_sampled_at_its_pixel_centres(tmp_path):
 
 def test_a_lakes_shore_reads_the_5th_percentile_of_the_land_along_its_ring():
     # PIPELINE-7 (S5): the level of a lake without a flat laser surface is its shore ring's 5th percentile minus the
-    # offset (spec §3.2). A source that rises eastwards: along the ring 20 m outside a 100 m lake x runs 80..220, so
+    # offset. A source that rises eastwards: along the ring 20 m outside a 100 m lake x runs 80..220, so
     # the 5th percentile reads 80 to 86, where the median would read 150.
     class East:
         kind = "contours"
@@ -452,7 +452,7 @@ def test_a_lakes_shore_reads_the_5th_percentile_of_the_land_along_its_ring():
 
 def test_the_datum_is_mark_z_minus_the_model(made, monkeypatch):
     # PIPELINE-7 (S8): a model reading 0.4 m above the grounds' own heights gives a datum of -0.4 m (MARK_Z - model),
-    # the sign s99 and the D37 note read
+    # the sign s99 and the terrain's About note read
     class Raised(CliffDtm):
         def sample(self, xz):
             x, z = np.asarray(xz, dtype=np.float64).reshape(-1, 2).T
@@ -607,7 +607,7 @@ REAL = Path("data/terrain.json")
 
 @pytest.mark.network
 def test_real_stockholm_terrain():
-    # After `uv run python -m pipeline.run s02_terrain` on the whole city (Task 12). The ranges hold for both sources:
+    # After `uv run python -m pipeline.run s02_terrain` on the whole city. The ranges hold for both sources:
     # the contour stand-in (v20261016-m4e) gave 79 sea pieces, 91 lakes, 37 fixed grounds, a datum of +0.14 m, 3
     # buildings buried at 2.5x and 1,412 standing more than 3 m over the terrace's cut.
     if not REAL.exists():
@@ -628,7 +628,7 @@ def test_real_stockholm_terrain():
 
 
 def test_a_repaired_ground_keeps_the_floors_openstreetmap_gives():
-    # the final review of Plan 4a: s02_terrain recomputed every repaired ground's floors from its new height, and the
+    # S02_terrain recomputed every repaired ground's floors from its new height, and the
     # card still labelled them "(OpenStreetMap)"; only floors from the height rule follow the height
     b = synth.buildings(rows=[
         {"geometry": synth.square(0, 0, 20), "kategori": "Flerbostadshus", "ground": 0.0, "height": 30.0},

@@ -1,4 +1,4 @@
-"""The terrain grid (spec §4.1 "Terrain (D9)", §3.2 s04_base; Plan 3, contract C15): pure functions shared by
+"""The terrain grid (the terrain files s02_terrain and s04_base share): pure functions shared by
 s02_terrain, s04_base and s99_validate, and mirrored in web/terrain.js. No file I/O here.
 
 Everything works in the viewer's local frame (metres from city.ORIGIN, x east, z south). A grid's node (i, j) sits at
@@ -6,7 +6,7 @@ Everything works in the viewer's local frame (metres from city.ORIGIN, x east, z
 the square between nodes (i, j) and (i+1, j+1). Heights are true metres in RH 2000; the viewer multiplies them by the
 relief (uRelief).
 
-terrain.bin.gz (contract C16; little-endian, every section starts on a 4-byte boundary):
+terrain.bin.gz (little-endian, every section starts on a 4-byte boundary):
   header (64 bytes) u32 magic 'HFT1', u32 version 1, f32 x0, z0, cell, u32 nx, nz, f32 waterZ, u32 nLevels, nEdge,
                     ringBytes, shoreBytes, nShoreVerts, u32 source (1 the City's contours, 2 Lantmäteriet's model),
                     2 x u32 reserved (0)
@@ -150,7 +150,7 @@ def water_systems(water, bridge_m: float) -> np.ndarray:
 
 def lake_levels(ring_p05: np.ndarray, inner_median: np.ndarray, systems: np.ndarray, *, water_z: float,
                 sea_max: float, offset: float) -> np.ndarray:
-    """One level per water polygon (spec §3.2's single water level, clarified by Plan 3): every polygon of a system
+    """One level per water polygon (a single water level per lake): every polygon of a system
     whose lowest shore reads under sea_max is the sea or Mälaren, at water_z. Every other polygon keeps its own level
     (never its system's: Flaten would come out 2 m low beside Magelungen): the median of the terrain inside it when the
     source gives one (the laser model's water is flat), else its shore's 5th percentile minus offset; a polygon with
@@ -257,7 +257,7 @@ def burial(grid: Grid, h: np.ndarray, cut: np.ndarray, polys, ground, relief: fl
     return relief * (top - np.asarray(ground, dtype=np.float64))
 
 
-# ---------- the binary file (contract C16) ----------
+# ---------- the binary file ----------
 
 def predict(h_dm: np.ndarray) -> np.ndarray:
     """The 2D predictor's residual, h - (left + up - upleft), in int16 arithmetic (wrapping)."""
@@ -295,7 +295,7 @@ def quantise_ring(ring_xz: np.ndarray, cx: float, cz: float, cell: float) -> np.
 
 
 def cell_rings(geom, cx: float, cz: float, cell: float) -> bytes:
-    """One edge cell's land, as the ring stream C16 describes. Polygons and rings that collapse below 3 vertices
+    """One edge cell's land, as the ring stream of terrain.bin.gz holds it. Polygons and rings that collapse below 3 vertices
     when quantised are dropped."""
     polys = []
     for p in getattr(geom, "geoms", [geom]):
@@ -397,7 +397,7 @@ def _pad(b: bytes) -> bytes:
 
 def pack(grid: Grid, h: np.ndarray, cut: np.ndarray, levels, water_z: float, cls: np.ndarray, rings: bytes,
          n_edge: int, shore: bytes, n_shore: int, source: str = "contours") -> bytes:
-    """terrain.bin (C16) from heights and cut in metres. Refuses what it cannot store exactly: a height, cut, level
+    """terrain.bin from heights and cut in metres. Refuses what it cannot store exactly: a height, cut, level
     or water_z that is not finite, a height or level beyond int16 decimetres, a cut outside 0..MAX_CUT."""
     h, cut = np.asarray(h, dtype=np.float64), np.asarray(cut, dtype=np.float64)
     if not (np.isfinite(h).all() and np.isfinite(cut).all()):

@@ -1,14 +1,14 @@
-// Buildings without a known year (yflag 7 UNKNOWN, D30). Pure, so it can be tested without a browser. app.js eases the
+// Buildings without a known year (yflag 7 UNKNOWN). Pure, so it can be tested without a browser. app.js eases the
 // map towards what unknownShown says (uShowUnknown), and the legend's "Year unknown" row has a switch, "Show", that
 // always reads what the map does now. The count takes them in where they are drawn, and only at "Today"
-// (web/count.js, P17).
+// (web/count.js).
 
-// The visitor's choice (D30, revised the same day): 'auto' until the switch is flipped (on at "Today", off in the
+// The visitor's choice (revised the same day): 'auto' until the switch is flipped (on at "Today", off in the
 // past), then 'show' or 'hide' at every year. Kept per device in localStorage under UNKNOWN_KEY: 'show' or 'hide';
 // automatic is nothing stored. Only clearing the site's storage brings 'auto' back.
 export const UNKNOWN_KEY = 'hfh-unknown';
 
-// What a stored value means. D30's first switch ("Show at every year") stored 'always' when on, which is 'show' now,
+// What a stored value means. The first switch ("Show at every year") stored 'always' when on, which is 'show' now,
 // and 'today' when off, which was the automatic rule.
 export function storedPref(stored) {
   if (stored === 'show' || stored === 'always') return 'show';

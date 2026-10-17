@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Task 18: build the tiles at 1200 m and 1500 m and measure draw calls at the home view and from 20 km.
+# Build the tiles at 1200 m and 1500 m and measure draw calls at the home view and from 20 km.
 # Needs a full pipeline run first, Node 22+ on PATH and a server of this checkout in another terminal, on HFH_PORT
 # (default 8653; never 8642, the owner's preview of the main checkout, which scripts/measure.mjs refuses):
 #   python3 scripts/serve.py 8653 --bind 0.0.0.0   (0.0.0.0 so a phone on the same network can open it)

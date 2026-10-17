@@ -1,4 +1,4 @@
-"""pipeline/sources.yml and pipeline/sources.py (contract C6)."""
+"""pipeline/sources.yml and pipeline/sources.py."""
 import copy
 from pathlib import Path
 
@@ -43,14 +43,14 @@ def test_repo_sources_file():
     assert ids == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse", "raa_old", "wikidata", "osm",
                    "lm_markhojd", "wikipedia"]
     by_id = {s["id"]: s for s in sources}
-    # Plan 3: Lantmäteriet's terrain model, CC BY 4.0 with no O1-style question (it never blocks --release); spec §6.1
+    # Lantmäteriet's terrain model, CC BY 4.0 with no licence question pending (it never blocks --release)
     # asks for the product name, ©Lantmäteriet, that it was processed and the licence
     lm = by_id["lm_markhojd"]
     assert (lm["licence"], lm["status"], lm["modified"], lm["publisher"]) == ("CC-BY-4.0", "confirmed", True, "Lantmäteriet")
     assert lm["attribution"] == "Markhöjdmodell Nedladdning, © Lantmäteriet, CC BY 4.0 (bearbetad / modified)"
-    # Plan 4a: the card's excerpts are CC BY-SA 4.0, shortened (modified), credited under each one too
+    # The card's excerpts are CC BY-SA 4.0, shortened (modified), credited under each one too
     assert by_id["wikipedia"]["licence"] == "CC-BY-SA-4.0" and by_id["wikipedia"]["modified"] is True
-    # Plan 2: the three year sources, their licences and the ODbL attribution D17 requires
+    # The three year sources, their licences and the ODbL attribution the licence requires
     assert {k: by_id[k]["licence"] for k in ("raa_old", "wikidata", "osm")} == {"raa_old": "CC0-1.0", "wikidata": "CC0-1.0", "osm": "ODbL-1.0"}
     assert "© OpenStreetMap contributors" in by_id["osm"]["attribution"]
     city_attribution = {
@@ -70,7 +70,7 @@ def test_repo_sources_file():
     assert raa["licence"] == "CC0-1.0" and raa["status"] == "confirmed"
     assert raa["attribution"] == "Riksantikvarieämbetet, Bebyggelseregistret (CC0)"
     assert check_sources(sources, release=False) == []
-    # Plan 4b: the corner credit names the City, RAÄ, OpenStreetMap (linked to its copyright page, as the OSMF asks)
+    # The corner credit names the City, RAÄ, OpenStreetMap (linked to its copyright page, as the OSMF asks)
     # and, on a build whose terrain came from its model, Lantmäteriet (s03_tiles.attribution leaves it out otherwise)
     words = [s["corner"]["en"] for s in sources if "corner" in s]
     assert list(dict.fromkeys(words)) == ["© Stockholms stad", "RAÄ", "© OpenStreetMap contributors", "© Lantmäteriet"]
@@ -90,7 +90,7 @@ def test_a_corner_credit_needs_both_languages_and_a_web_url(corner, message):
 
 
 def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
-    # Plan 4b, Task 9 (D44): every credit reads "Dataset: publisher, licence"; where a source prescribes its own words
+    # Every credit reads "Dataset: publisher, licence"; where a source prescribes its own words
     # (credit_as) they stand in the publisher's place, in both languages; licence_as (the City's "CC BY") is the
     # licence's own name with or without its version, never another licence's
     assert check_sources([with_(dataset=None)], release=False) == ["demo: missing field 'dataset'"]
@@ -117,7 +117,7 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
         "city_lod1": "© Stockholms stad, Stadsbyggnadskontoret", "city_stadsdelar": "© Stockholms stad, Stadsbyggnadskontoret",
         "city_stadskarta": "© Stockholms stad, Stadsbyggnadskontoret", "wikidata": "Wikidatas bidragsgivare",
         "osm": "© OpenStreetMap-bidragsgivare", "lm_markhojd": "© Lantmäteriet", "wikipedia": "Wikipedias bidragsgivare"}
-    # the City's own credit (its answer to O1, 2026-10-16): "© Stockholms stad, Stadsbyggnadskontoret, CC BY"
+    # the City's own credit (its licence answer, 2026-10-16): "© Stockholms stad, Stadsbyggnadskontoret, CC BY"
     assert {k for k, s in by_id.items() if "licence_as" in s} == {"city_lod1", "city_stadsdelar", "city_stadskarta"}
 
 
@@ -293,6 +293,6 @@ def test_main_defaults_to_the_register_next_to_the_module(monkeypatch, tmp_path,
 
 
 def test_wikipedia_is_credited_like_the_other_sources():
-    # Task 7's review: the attribution reaches the About page; the pattern "Product, © publisher, licence (modified)"
+    # The attribution reaches the About page; the pattern "Product, © publisher, licence (modified)"
     w = {s["id"]: s for s in load_sources()}["wikipedia"]
     assert w["attribution"] == "Wikipedia, © Wikipedia contributors, CC BY-SA 4.0 (bearbetad / modified)"

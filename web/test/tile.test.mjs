@@ -1,4 +1,4 @@
-// Decoder tests for tile v1 and attrs (contracts C4, C5). The fixture comes from tests/make_tile_fixture.py.
+// Decoder tests for tile v1 and attrs. The fixture comes from tests/make_tile_fixture.py.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

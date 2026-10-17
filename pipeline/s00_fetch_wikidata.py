@@ -1,4 +1,4 @@
-"""Fetch the Wikidata year sources (spec §3.1 s00_fetch_wikidata; docs/research/2026-10-15-wikidata-years.md §7).
+"""Fetch the Wikidata year sources.
 
 Two saved queries in pipeline/queries/:
   wikidata_dated.rq     every item with a coordinate in the municipality's WGS84 box that has an inception (P571)

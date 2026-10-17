@@ -1,4 +1,4 @@
-// The pre-launch audit's fixes (docs/research/2026-10-17-launch-audit.md): no WebGL (finding 2), optional files that
+// The pre-launch audit's fixes: no WebGL (finding 2), optional files that
 // fail (3), a card from the keyboard (1), a card shard that fails (6), the loading line as a live region (7), the
 // legend's accessible names (8), the zoom keys (9) and the icons (10). Runs on whatever web/data/current.json names.
 import { test, expect } from '@playwright/test';
