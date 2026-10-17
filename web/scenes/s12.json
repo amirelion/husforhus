@@ -19,6 +19,7 @@
         "lon": 18.06306
       },
       "duration_s": 7,
+      "year": 1950,
       "caption": {
         "en": "Klara around 1950: a dense grid of old blocks between Vasagatan, Kungsgatan and Drottninggatan.",
         "sv": "Klara omkring 1950: täta, gamla kvarter mellan Vasagatan, Kungsgatan och Drottninggatan."
@@ -26,7 +27,22 @@
       "sources": [
         "sv Wikipedia: Klarakvarteren",
         "Lantmäteriet orthophoto 1949"
-      ]
+      ],
+      "photo": {
+        "src": "img/e92959a47f87ee4371924c1789f9bfe119ca8469.jpg",
+        "width": 800,
+        "height": 595,
+        "credit": {
+          "author": "Cronquist, Gustaf W:son (1878-1967)",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Norrmalm_med_Klarakvarteren_1924.jpg",
+          "file": "File:Norrmalm med Klarakvarteren 1924.jpg"
+        },
+        "caption": {
+          "en": "Old Klara's blocks from the air, 1924",
+          "sv": "Klarakvarteren från luften, 1924"
+        }
+      }
     },
     {
       "n": 2,
@@ -40,6 +56,7 @@
         "lon": 18.061667
       },
       "duration_s": 8,
+      "year": 1950,
       "caption": {
         "en": "Until the 1960s, most of Stockholm's daily papers had their offices here, close to the railway.",
         "sv": "Fram till 1960-talet låg de flesta av Stockholms dagstidningar här, nära järnvägen."
@@ -60,13 +77,29 @@
         "lon": 18.063611
       },
       "duration_s": 9,
+      "year": 1952,
       "caption": {
         "en": "Decided in principle in 1945, the demolitions began in March 1952, where Sveavägen was to be extended south.",
         "sv": "Rivningarna, principbeslutade 1945, började i mars 1952 där Sveavägen skulle förlängas söderut."
       },
       "sources": [
         "sv Wikipedia: Norrmalmsregleringen"
-      ]
+      ],
+      "photo": {
+        "src": "img/e73933f460b8014b2fd876446ce7cadb0095283f.jpg",
+        "width": 800,
+        "height": 488,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Riksgropen_1953.jpg",
+          "file": "File:Riksgropen 1953.jpg"
+        },
+        "caption": {
+          "en": "Digging for the metro and the Hötorget towers, 1953; the old market hall coming down",
+          "sv": "Grävning för tunnelbanan och Hötorgshusen, 1953; den gamla saluhallen rivs"
+        }
+      }
     },
     {
       "n": 4,
@@ -80,13 +113,29 @@
         "lon": 18.064722
       },
       "duration_s": 13,
+      "year": 1957,
       "caption": {
         "en": "The metro was dug in an open cut through the ridge's gravel and sand. Slussen–Hötorget opened on 24 November 1957.",
         "sv": "Tunnelbanan grävdes i öppet schakt genom åsens grus och sand. Slussen–Hötorget öppnade den 24 november 1957."
       },
       "sources": [
         "sv Wikipedia: Norrmalmsregleringen"
-      ]
+      ],
+      "photo": {
+        "src": "img/0af6373650f385a1a1bc46f05d1f611281c3d317.jpg",
+        "width": 800,
+        "height": 591,
+        "credit": {
+          "author": "Svenska Dagbladet. Ehnemark, Jan.",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Rivning_i_Klara_1957.jpg",
+          "file": "File:Rivning i Klara 1957.jpg"
+        },
+        "caption": {
+          "en": "Demolition in Klara, 28 April 1957",
+          "sv": "Rivning i Klara den 28 april 1957"
+        }
+      }
     },
     {
       "n": 5,
@@ -100,6 +149,7 @@
         "lon": 18.063611
       },
       "duration_s": 9,
+      "year": 1966,
       "caption": {
         "en": "Five office towers rose at Hötorget. With Hötorgscity finished in 1966, the first building phase was complete.",
         "sv": "Fem höghus reste sig vid Hötorget. När Hötorgscity stod klart 1966 var den första byggetappen avslutad."
@@ -107,7 +157,22 @@
       "sources": [
         "sv Wikipedia: Norrmalmsregleringen",
         "Hötorgsskraporna"
-      ]
+      ],
+      "photo": {
+        "src": "img/31c9c71961a20add2f4bfda840f24fccb4f8cec2.jpg",
+        "width": 800,
+        "height": 594,
+        "credit": {
+          "author": "Folke Hellberg",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:H%C3%B6torgscity_1962.jpg",
+          "file": "File:Hötorgscity 1962.jpg"
+        },
+        "caption": {
+          "en": "Hötorgscity, 1962",
+          "sv": "Hötorgscity, 1962"
+        }
+      }
     },
     {
       "n": 6,
@@ -121,13 +186,29 @@
         "lon": 18.064722
       },
       "duration_s": 9,
+      "year": 1977,
       "caption": {
         "en": "The second phase filled the area south of Sergels torg: Kulturhuset and the Riksbank building, and Gallerian on Hamngatan.",
         "sv": "Den andra etappen fyllde ytan söder om Sergels torg: Kulturhuset och Riksbankshuset, och Gallerian vid Hamngatan."
       },
       "sources": [
         "sv Wikipedia: Norrmalmsregleringen"
-      ]
+      ],
+      "photo": {
+        "src": "img/00686c4cdd3709f142027ed306e84d5f2d5a94d6.jpg",
+        "width": 800,
+        "height": 791,
+        "credit": {
+          "author": "Ingemar Gram",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Sergels_torg_1967x.JPG",
+          "file": "File:Sergels torg 1967x.JPG"
+        },
+        "caption": {
+          "en": "Sergels torg, 4 June 1967",
+          "sv": "Sergels torg den 4 juni 1967"
+        }
+      }
     },
     {
       "n": 7,
@@ -141,6 +222,7 @@
         "lon": 18.064722
       },
       "duration_s": 9,
+      "year": 1977,
       "caption": {
         "en": "Some cleared plots stayed empty for years. Opposition grew, and later phases were never carried out.",
         "sv": "Vissa rivna tomter stod tomma i flera år. Motståndet växte, och de senare etapperna genomfördes aldrig."
@@ -161,12 +243,1034 @@
         "lon": 18.06306
       },
       "duration_s": 7,
+      "year": 2025,
       "caption": {
         "en": "About 700 buildings were replaced. Several of the new ones are now listed buildings.",
         "sv": "Omkring 700 byggnader ersattes. Flera av de nya är idag byggnadsminnen."
       },
       "sources": [
         "sv Wikipedia: Norrmalmsregleringen"
+      ]
+    }
+  ],
+  "ready": true,
+  "overlays": [
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Old Klara: the blocks cleared first, 1952–1957 (approximate: drawn on today's plots)",
+        "sv": "Old Klara: the blocks cleared first, 1952–1957 (approximate: drawn on today's plots)"
+      },
+      "from": 1,
+      "heights": [
+        18,
+        18
+      ],
+      "confidence": "low",
+      "until": 3,
+      "rings": [
+        [
+          [
+            59.334407,
+            18.062134
+          ],
+          [
+            59.334575,
+            18.062786
+          ],
+          [
+            59.334132,
+            18.063138
+          ],
+          [
+            59.334111,
+            18.063064
+          ],
+          [
+            59.334091,
+            18.063056
+          ],
+          [
+            59.333742,
+            18.063415
+          ],
+          [
+            59.333619,
+            18.062957
+          ],
+          [
+            59.334407,
+            18.062134
+          ]
+        ],
+        [
+          [
+            59.331622,
+            18.060827
+          ],
+          [
+            59.331893,
+            18.061933
+          ],
+          [
+            59.331759,
+            18.062069
+          ],
+          [
+            59.331533,
+            18.060915
+          ],
+          [
+            59.331622,
+            18.060827
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Old Klara: the blocks cleared for Hötorgscity and Sergels torg, 1958–1966 (approximate: today's plots)",
+        "sv": "Old Klara: the blocks cleared for Hötorgscity and Sergels torg, 1958–1966 (approximate: today's plots)"
+      },
+      "from": 1,
+      "heights": [
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18
+      ],
+      "confidence": "low",
+      "until": 4,
+      "rings": [
+        [
+          [
+            59.333229,
+            18.064026
+          ],
+          [
+            59.333397,
+            18.064702
+          ],
+          [
+            59.333256,
+            18.064787
+          ],
+          [
+            59.333247,
+            18.06482
+          ],
+          [
+            59.333259,
+            18.064873
+          ],
+          [
+            59.333166,
+            18.064961
+          ],
+          [
+            59.332989,
+            18.064255
+          ],
+          [
+            59.333229,
+            18.064026
+          ]
+        ],
+        [
+          [
+            59.33548,
+            18.064042
+          ],
+          [
+            59.335501,
+            18.064095
+          ],
+          [
+            59.335545,
+            18.064066
+          ],
+          [
+            59.335615,
+            18.064319
+          ],
+          [
+            59.335483,
+            18.064439
+          ],
+          [
+            59.335447,
+            18.064353
+          ],
+          [
+            59.335344,
+            18.064453
+          ],
+          [
+            59.335337,
+            18.064495
+          ],
+          [
+            59.335379,
+            18.064658
+          ],
+          [
+            59.335259,
+            18.064777
+          ],
+          [
+            59.335153,
+            18.064366
+          ],
+          [
+            59.33548,
+            18.064042
+          ]
+        ],
+        [
+          [
+            59.334628,
+            18.062998
+          ],
+          [
+            59.334835,
+            18.063797
+          ],
+          [
+            59.334734,
+            18.063863
+          ],
+          [
+            59.334726,
+            18.063893
+          ],
+          [
+            59.334738,
+            18.063946
+          ],
+          [
+            59.334663,
+            18.064017
+          ],
+          [
+            59.33463,
+            18.063928
+          ],
+          [
+            59.334464,
+            18.064031
+          ],
+          [
+            59.334403,
+            18.063785
+          ],
+          [
+            59.33444,
+            18.063749
+          ],
+          [
+            59.334444,
+            18.06371
+          ],
+          [
+            59.334405,
+            18.063552
+          ],
+          [
+            59.334384,
+            18.06354
+          ],
+          [
+            59.334294,
+            18.063646
+          ],
+          [
+            59.334391,
+            18.064061
+          ],
+          [
+            59.334357,
+            18.064104
+          ],
+          [
+            59.334368,
+            18.064176
+          ],
+          [
+            59.334291,
+            18.06425
+          ],
+          [
+            59.334271,
+            18.064175
+          ],
+          [
+            59.334254,
+            18.064162
+          ],
+          [
+            59.334026,
+            18.064288
+          ],
+          [
+            59.333995,
+            18.064328
+          ],
+          [
+            59.334006,
+            18.064392
+          ],
+          [
+            59.333922,
+            18.06448
+          ],
+          [
+            59.333888,
+            18.064394
+          ],
+          [
+            59.333629,
+            18.064556
+          ],
+          [
+            59.333617,
+            18.064588
+          ],
+          [
+            59.333628,
+            18.064643
+          ],
+          [
+            59.333554,
+            18.064713
+          ],
+          [
+            59.333382,
+            18.06402
+          ],
+          [
+            59.333408,
+            18.063977
+          ],
+          [
+            59.333391,
+            18.063896
+          ],
+          [
+            59.334224,
+            18.06337
+          ],
+          [
+            59.334628,
+            18.062998
+          ]
+        ],
+        [
+          [
+            59.333619,
+            18.062957
+          ],
+          [
+            59.333742,
+            18.063415
+          ],
+          [
+            59.333331,
+            18.063712
+          ],
+          [
+            59.333232,
+            18.063346
+          ],
+          [
+            59.333619,
+            18.062957
+          ]
+        ],
+        [
+          [
+            59.331933,
+            18.062091
+          ],
+          [
+            59.332159,
+            18.063011
+          ],
+          [
+            59.331917,
+            18.063255
+          ],
+          [
+            59.331807,
+            18.062819
+          ],
+          [
+            59.331763,
+            18.06283
+          ],
+          [
+            59.331652,
+            18.062379
+          ],
+          [
+            59.331933,
+            18.062091
+          ]
+        ],
+        [
+          [
+            59.332227,
+            18.060341
+          ],
+          [
+            59.332766,
+            18.062403
+          ],
+          [
+            59.332446,
+            18.062721
+          ],
+          [
+            59.331929,
+            18.060622
+          ],
+          [
+            59.332227,
+            18.060341
+          ]
+        ],
+        [
+          [
+            59.331453,
+            18.060146
+          ],
+          [
+            59.331563,
+            18.060597
+          ],
+          [
+            59.331487,
+            18.060677
+          ],
+          [
+            59.331402,
+            18.060193
+          ],
+          [
+            59.331453,
+            18.060146
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Old Klara: the blocks cleared last, 1967–1977 (approximate: drawn on today's plots)",
+        "sv": "Old Klara: the blocks cleared last, 1967–1977 (approximate: drawn on today's plots)"
+      },
+      "from": 1,
+      "heights": [
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18,
+        18
+      ],
+      "confidence": "low",
+      "until": 5,
+      "rings": [
+        [
+          [
+            59.332447,
+            18.066646
+          ],
+          [
+            59.332462,
+            18.066974
+          ],
+          [
+            59.332196,
+            18.067018
+          ],
+          [
+            59.332197,
+            18.067295
+          ],
+          [
+            59.331257,
+            18.067452
+          ],
+          [
+            59.331249,
+            18.067484
+          ],
+          [
+            59.331276,
+            18.068095
+          ],
+          [
+            59.330278,
+            18.068265
+          ],
+          [
+            59.330154,
+            18.067729
+          ],
+          [
+            59.330583,
+            18.067298
+          ],
+          [
+            59.33064,
+            18.067282
+          ],
+          [
+            59.330633,
+            18.066956
+          ],
+          [
+            59.332447,
+            18.066646
+          ]
+        ],
+        [
+          [
+            59.335646,
+            18.067738
+          ],
+          [
+            59.335663,
+            18.068102
+          ],
+          [
+            59.335422,
+            18.068146
+          ],
+          [
+            59.335404,
+            18.06778
+          ],
+          [
+            59.335646,
+            18.067738
+          ]
+        ],
+        [
+          [
+            59.333621,
+            18.066672
+          ],
+          [
+            59.333639,
+            18.066737
+          ],
+          [
+            59.3338,
+            18.066699
+          ],
+          [
+            59.333919,
+            18.067636
+          ],
+          [
+            59.333077,
+            18.067786
+          ],
+          [
+            59.333049,
+            18.066834
+          ],
+          [
+            59.333621,
+            18.066672
+          ]
+        ],
+        [
+          [
+            59.334583,
+            18.06604
+          ],
+          [
+            59.334658,
+            18.067548
+          ],
+          [
+            59.334138,
+            18.06761
+          ],
+          [
+            59.333964,
+            18.066243
+          ],
+          [
+            59.334583,
+            18.06604
+          ]
+        ],
+        [
+          [
+            59.335475,
+            18.066529
+          ],
+          [
+            59.335507,
+            18.067175
+          ],
+          [
+            59.335523,
+            18.067194
+          ],
+          [
+            59.33562,
+            18.067176
+          ],
+          [
+            59.335631,
+            18.067272
+          ],
+          [
+            59.335697,
+            18.067268
+          ],
+          [
+            59.335705,
+            18.067423
+          ],
+          [
+            59.335371,
+            18.067463
+          ],
+          [
+            59.335341,
+            18.066554
+          ],
+          [
+            59.335475,
+            18.066529
+          ]
+        ],
+        [
+          [
+            59.331958,
+            18.065372
+          ],
+          [
+            59.332162,
+            18.066199
+          ],
+          [
+            59.331745,
+            18.066439
+          ],
+          [
+            59.331613,
+            18.06557
+          ],
+          [
+            59.331958,
+            18.065372
+          ]
+        ],
+        [
+          [
+            59.33069,
+            18.064683
+          ],
+          [
+            59.330988,
+            18.065831
+          ],
+          [
+            59.330962,
+            18.065885
+          ],
+          [
+            59.331012,
+            18.066079
+          ],
+          [
+            59.33075,
+            18.066339
+          ],
+          [
+            59.330699,
+            18.066147
+          ],
+          [
+            59.330659,
+            18.066159
+          ],
+          [
+            59.330361,
+            18.065009
+          ],
+          [
+            59.33069,
+            18.064683
+          ]
+        ],
+        [
+          [
+            59.335134,
+            18.065822
+          ],
+          [
+            59.335149,
+            18.066138
+          ],
+          [
+            59.334703,
+            18.066311
+          ],
+          [
+            59.334685,
+            18.065957
+          ],
+          [
+            59.335134,
+            18.065822
+          ]
+        ],
+        [
+          [
+            59.331797,
+            18.063582
+          ],
+          [
+            59.332416,
+            18.066098
+          ],
+          [
+            59.332222,
+            18.066281
+          ],
+          [
+            59.331734,
+            18.0643
+          ],
+          [
+            59.331736,
+            18.06419
+          ],
+          [
+            59.331683,
+            18.064163
+          ],
+          [
+            59.331701,
+            18.063677
+          ],
+          [
+            59.331797,
+            18.063582
+          ]
+        ],
+        [
+          [
+            59.331535,
+            18.063842
+          ],
+          [
+            59.331815,
+            18.064922
+          ],
+          [
+            59.33134,
+            18.065396
+          ],
+          [
+            59.331334,
+            18.065436
+          ],
+          [
+            59.331401,
+            18.065692
+          ],
+          [
+            59.331128,
+            18.065963
+          ],
+          [
+            59.330772,
+            18.064592
+          ],
+          [
+            59.331535,
+            18.063842
+          ]
+        ],
+        [
+          [
+            59.335022,
+            18.064519
+          ],
+          [
+            59.335092,
+            18.064945
+          ],
+          [
+            59.335123,
+            18.065577
+          ],
+          [
+            59.334689,
+            18.065705
+          ],
+          [
+            59.334611,
+            18.065385
+          ],
+          [
+            59.334593,
+            18.065368
+          ],
+          [
+            59.333856,
+            18.065831
+          ],
+          [
+            59.333732,
+            18.065331
+          ],
+          [
+            59.335022,
+            18.064519
+          ]
+        ],
+        [
+          [
+            59.33558,
+            18.065078
+          ],
+          [
+            59.335596,
+            18.065136
+          ],
+          [
+            59.335625,
+            18.065124
+          ],
+          [
+            59.335644,
+            18.065209
+          ],
+          [
+            59.335615,
+            18.06526
+          ],
+          [
+            59.335646,
+            18.065432
+          ],
+          [
+            59.335443,
+            18.065491
+          ],
+          [
+            59.335385,
+            18.065265
+          ],
+          [
+            59.33558,
+            18.065078
+          ]
+        ],
+        [
+          [
+            59.330563,
+            18.064191
+          ],
+          [
+            59.330647,
+            18.064518
+          ],
+          [
+            59.330319,
+            18.064844
+          ],
+          [
+            59.330233,
+            18.064519
+          ],
+          [
+            59.330563,
+            18.064191
+          ]
+        ],
+        [
+          [
+            59.331036,
+            18.06301
+          ],
+          [
+            59.331279,
+            18.06389
+          ],
+          [
+            59.330732,
+            18.064433
+          ],
+          [
+            59.330574,
+            18.06382
+          ],
+          [
+            59.330956,
+            18.063425
+          ],
+          [
+            59.330952,
+            18.063351
+          ],
+          [
+            59.330987,
+            18.063289
+          ],
+          [
+            59.33094,
+            18.063113
+          ],
+          [
+            59.331036,
+            18.06301
+          ]
+        ],
+        [
+          [
+            59.332777,
+            18.063216
+          ],
+          [
+            59.332864,
+            18.063535
+          ],
+          [
+            59.333053,
+            18.063359
+          ],
+          [
+            59.333182,
+            18.063838
+          ],
+          [
+            59.332809,
+            18.064193
+          ],
+          [
+            59.332606,
+            18.063367
+          ],
+          [
+            59.332777,
+            18.063216
+          ]
+        ],
+        [
+          [
+            59.334591,
+            18.060067
+          ],
+          [
+            59.334699,
+            18.060487
+          ],
+          [
+            59.33425,
+            18.060929
+          ],
+          [
+            59.334146,
+            18.060512
+          ],
+          [
+            59.334591,
+            18.060067
+          ]
+        ],
+        [
+          [
+            59.331764,
+            18.058571
+          ],
+          [
+            59.332145,
+            18.060028
+          ],
+          [
+            59.331852,
+            18.060305
+          ],
+          [
+            59.331486,
+            18.058823
+          ],
+          [
+            59.331764,
+            18.058571
+          ]
+        ],
+        [
+          [
+            59.332097,
+            18.056376
+          ],
+          [
+            59.332366,
+            18.057407
+          ],
+          [
+            59.331797,
+            18.057923
+          ],
+          [
+            59.33154,
+            18.056937
+          ],
+          [
+            59.332097,
+            18.056376
+          ]
+        ],
+        [
+          [
+            59.332796,
+            18.055823
+          ],
+          [
+            59.333044,
+            18.056787
+          ],
+          [
+            59.332567,
+            18.057223
+          ],
+          [
+            59.332325,
+            18.056293
+          ],
+          [
+            59.332796,
+            18.055823
+          ]
+        ]
       ]
     }
   ]

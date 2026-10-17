@@ -45,7 +45,7 @@ test('the three overlay scenes have their route or outline', () => {
 test('only the finished stories are ready, in the index too', async () => {
   const { buildAll } = await import('./build.mjs');
   const ready = Object.entries(SCENES).filter(([, m]) => m.ready).map(([id]) => id).sort();
-  assert.deepEqual(ready, ['metro-1950', 'metro-vallingby', 's04', 's07-kristina-lock', 's10-olympics-1912', 's11', 'tre-kronor-1697', 'vasa-1628']);
+  assert.deepEqual(ready, ['metro-1950', 'metro-vallingby', 's04', 's07-kristina-lock', 's10-olympics-1912', 's11', 's12', 'tre-kronor-1697', 'vasa-1628']);
   assert.ok(buildAll);
 });
 

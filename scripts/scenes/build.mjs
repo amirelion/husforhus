@@ -18,7 +18,7 @@ export const SCENES = {
   'tre-kronor-1697': { title: { en: 'Tre Kronor burns, 1697', sv: 'Tre Kronor brinner 1697' }, year: 1697, sensitive: false, ready: true },
   's10-olympics-1912': { title: { en: 'The Stockholm Olympics, 1912', sv: 'Olympiska spelen i Stockholm 1912' }, year: 1912, sensitive: true, ready: true },
   's11': { title: { en: 'The Stockholm Exhibition, 1930', sv: 'Stockholmsutställningen 1930' }, year: 1930, sensitive: false, ready: true },
-  's12': { title: { en: 'The clearance of Klara, 1952–1977', sv: 'Klararivningarna 1952–1977' }, year: 1952, sensitive: false },   // held 2026-10-17: the cleared Klara blocks are not drawn yet, and the fixture data has no Norrmalm buildings to frame
+  's12': { title: { en: 'The clearance of Klara, 1952–1977', sv: 'Klararivningarna 1952–1977' }, year: 1952, sensitive: false, ready: true },
   'metro-vallingby': { title: { en: 'Vällingby: a town around a station, 1950–1954', sv: 'Vällingby: en stad kring en station 1950–1954' },
     year: 1950, sensitive: false, layers: ['metro'], ready: true },
   'metro-1950': { title: { en: 'The first metro, 1 October 1950', sv: 'Den första tunnelbanan, 1 oktober 1950' },
