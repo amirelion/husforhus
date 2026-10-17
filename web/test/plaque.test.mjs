@@ -31,3 +31,8 @@ test('plaqueSection: text, credit and source, escaped', () => {
   assert.match(plaqueSection([P], SV, esc), /Blå skylt/);
   assert.doesNotMatch(plaqueSection([{ ...P, year: 0 }], EN, esc), /·  ?0/);
 });
+
+test('plaqueSection notes "Plaque text in Swedish" in English only', () => {
+  assert.match(plaqueSection([P], EN, esc), /<p class="plaque-note" lang="en">Plaque text in Swedish<\/p>/);
+  assert.doesNotMatch(plaqueSection([P], SV, esc), /plaque-note/);
+});

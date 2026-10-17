@@ -135,7 +135,7 @@
   modified: true
   status: confirmed
 
-# Blue plaques (behind city.FEATURES layers: a source with `feature` is credited only while that feature is on).
+# Blue plaques (behind city.FEATURES plaques: a source with `feature` is credited only while that feature is on).
 - id: samfundet_plaques
   url: https://samfundetsterik.se/wp-content/uploads/2026/02/KULTURHUSSKYLTAR-lista-6-februari-2026.pdf
   list_page: https://samfundetsterik.se/foreningen/kulturhusskyltar/   # s00_fetch_plaques takes the list it links now
@@ -149,7 +149,7 @@
   attribution: Samfundet S:t Erik, CC BY 4.0 (bearbetad / modified)
   modified: true   # a text loses the sentences that name an owner or a byggherre (plaques.cut); designations go
   status: confirmed   # O4, answered 2026-10-17: the plaque texts and the list (skyltförteckning) under CC BY 4.0
-  feature: layers
+  feature: plaques
 
 - id: openplaques
   url: https://openplaques.org/places/se/areas/stockholm
@@ -162,4 +162,4 @@
   attribution: Open Plaques (Public Domain)
   modified: true
   status: confirmed
-  feature: layers
+  feature: plaques

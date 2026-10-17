@@ -152,7 +152,7 @@ def test_s99_checks_plaques(tmp_path):
     assert any("owns" in e for e in errors) and any("twice" in e for e in errors)
 
 
-def test_plaque_sources_are_registered_and_wait_for_the_layers_switch(monkeypatch):
+def test_plaque_sources_are_registered_and_wait_for_the_plaques_switch(monkeypatch):
     sources = load_sources()
     by = {s["id"]: s for s in sources}
     assert check_sources(sources, release=True) == []
@@ -160,11 +160,18 @@ def test_plaque_sources_are_registered_and_wait_for_the_layers_switch(monkeypatc
     assert s["licence"] == "CC-BY-4.0" and "Samfundet S:t Erik, CC BY 4.0" in s["attribution"]
     assert s["list_page"].startswith("https://samfundetsterik.se/") and "{id}" in s["texts_url"]
     assert by["openplaques"]["licence"] == "LicenseRef-PublicDomain"
+    # About's sources list follows features.plaques (on in city.FEATURES), not the layers switch
+    assert city.FEATURES["plaques"] is True
     monkeypatch.setitem(city.FEATURES, "layers", False)
+    monkeypatch.setitem(city.FEATURES, "plaques", False)
     assert not {"samfundet_plaques", "openplaques"} & {a["id"] for a in s03_tiles.attribution(sources)}
-    monkeypatch.setitem(city.FEATURES, "layers", True)
+    monkeypatch.setitem(city.FEATURES, "plaques", True)
     shown = {a["id"]: a for a in s03_tiles.attribution(sources)}
-    assert shown["samfundet_plaques"]["credit"]["en"] == "Kulturhusskyltar: Samfundet S:t Erik, CC BY 4.0, processed"
+    assert shown["samfundet_plaques"]["credit"] == {"en": "Kulturhusskyltar: Samfundet S:t Erik, CC BY 4.0, processed",
+                                                    "sv": "Kulturhusskyltar: Samfundet S:t Erik, CC BY 4.0, bearbetad"}
+    assert shown["samfundet_plaques"]["url"].startswith("https://samfundetsterik.se/")
+    assert shown["samfundet_plaques"]["licence_url"] == "https://creativecommons.org/licenses/by/4.0/"
+    assert shown["openplaques"]["url"].startswith("https://openplaques.org/")   # its positions place some plaques
     assert s99_validate.check_attribution({"attribution": list(shown.values())}) == []
 
 

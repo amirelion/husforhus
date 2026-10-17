@@ -423,6 +423,8 @@ def test_attribution_credits_each_source_in_the_d44_form():
         "wikidata": ("Wikidata: Wikidata contributors, CC0, processed", "Wikidata: Wikidatas bidragsgivare, CC0, bearbetad"),
         "osm": ("OpenStreetMap: © OpenStreetMap contributors, ODbL, processed",
                 "OpenStreetMap: © OpenStreetMap-bidragsgivare, ODbL, bearbetad"),
+        "samfundet_plaques": both("Kulturhusskyltar: Samfundet S:t Erik, CC BY 4.0"),
+        "openplaques": both("Open Plaques: Open Plaques, Public Domain"),
         "lm_markhojd": both("Markhöjdmodell Nedladdning: © Lantmäteriet, CC BY 4.0"),
         "wikipedia": ("Wikipedia: Wikipedia contributors, CC BY-SA 4.0, processed",
                       "Wikipedia: Wikipedias bidragsgivare, CC BY-SA 4.0, bearbetad")}
@@ -436,3 +438,4 @@ def test_photo_gids_lists_the_cards_with_a_photo(tmp_path):
     assert json.loads((tmp_path / "photo-gids.json").read_text()) == [1]
     cards = [{"1": {"photo": {"key": "a"}}, "65": {"name": "x"}}, {"2": {"photo": {"key": "b"}}}]
     assert s03_tiles.photo_gids(cards) == [1, 2]
+

@@ -56,3 +56,23 @@ test('markPhotos flags exactly the photo gids and clears the rest', () => {
   assert.deepEqual([0, 1, 2].map(b => attr[b * 12 + PHOTO_FLOAT]), [0, 1, 0]);
   assert.equal(attr[1 * 12 + 3], 8);                     // the gid is untouched
 });
+
+test('the plaques switch is off by default, on from ?plaques=1 or a stored "on"', async () => {
+  const { plaquesOnFrom, PLAQUE_KEY, PLAQUE_PARAM } = await import('../panel.js');
+  assert.equal(PLAQUE_KEY, 'hfh-plaques');
+  assert.equal(PLAQUE_PARAM, 'plaques');
+  assert.equal(plaquesOnFrom('', null), false);
+  assert.equal(plaquesOnFrom('?plaques=0', 'off'), false);
+  assert.equal(plaquesOnFrom('?plaques=true', null), false);
+  assert.equal(plaquesOnFrom('?plaques=1', null), true);
+  assert.equal(plaquesOnFrom('?plaques=1', 'off'), true);
+  assert.equal(plaquesOnFrom('', 'on'), true);
+  assert.equal(plaquesOnFrom('?photos=1', 'yes'), false);
+});
+
+test('the plaques switch writes and clears ?plaques and keeps the other parameters', async () => {
+  const { plaquesHref } = await import('../panel.js');
+  assert.equal(plaquesHref('https://x.se/?photos=1#about', true), 'https://x.se/?photos=1&plaques=1#about');
+  assert.equal(plaquesHref('https://x.se/?plaques=1&lang=sv', false), 'https://x.se/?lang=sv');
+  assert.equal(plaquesHref('https://x.se/?plaques=1', true), 'https://x.se/?plaques=1');
+});

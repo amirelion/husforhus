@@ -21,6 +21,19 @@ export function photoOnlyHref(href, on) {
   return u.toString();
 }
 
+// The "Blue plaques" switch (features.plaques): off by default. Remembered per device (hfh-plaques: 'on' | 'off'), as
+// the estimates switch is, and kept in the URL while it is on (?plaques=1), as the photo switch is; a link with
+// ?plaques=1 turns it on.
+export const PLAQUE_PARAM = 'plaques';
+export const PLAQUE_KEY = 'hfh-plaques';
+export const plaquesOnFrom = (search, stored) =>
+  new URLSearchParams(search).get(PLAQUE_PARAM) === '1' || stored === 'on';
+export function plaquesHref(href, on) {
+  const u = new URL(href);
+  if (on) u.searchParams.set(PLAQUE_PARAM, '1'); else u.searchParams.delete(PLAQUE_PARAM);
+  return u.toString();
+}
+
 // The per-building flag the shader reads (float 9 of ATTR_FLOATS = 12, web/worker.js; float 3 is the gid): 1 for a
 // building whose card has a photo. Written once per tile, when it loads or when the list arrives, never per frame.
 export const PHOTO_FLOAT = 9;

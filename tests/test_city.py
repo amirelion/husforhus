@@ -22,7 +22,8 @@ def test_identity():
     # if that trap never runs, this fails instead of the next full build quietly using 1500 m.
     assert city.TILE == 1200.0
     assert set(city.HOME) == {"x", "z", "azimuth", "elevation", "span"}
-    assert city.FEATURES == {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True}
+    assert city.FEATURES == {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
+                             "plaques": True}
     assert "_default" in city.STOREY_M
     assert isinstance(city.TIER1, list)
     assert len(city.SALTSJON) == 3

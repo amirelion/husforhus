@@ -183,3 +183,19 @@ test('a build without the about block leaves out the sentences that need it, nev
   assert.doesNotMatch(text(aboutHtml({ ...CONFIG, about: undefined }, EN)), /A snapshot from|Only 76|never to fewer/);
   assert.doesNotMatch(aboutHtml({ ...CONFIG, about: undefined, accuracyLabels: undefined }, EN), /<details>|apartments/);
 });
+
+test('the sources list names Samfundet S:t Erik\'s plaques with their credit and licence, in both languages', () => {
+  // the entries s03_tiles.attribution writes from sources.yml while features.plaques is on
+  const plaques = { ...CONFIG, attribution: [...CONFIG.attribution,
+    { id: 'samfundet_plaques', url: 'https://samfundetsterik.se/foreningen/kulturhusskyltar/', licence: 'CC-BY-4.0',
+      licence_url: 'https://creativecommons.org/licenses/by/4.0/',
+      credit: { en: 'Kulturhusskyltar: Samfundet S:t Erik, CC BY 4.0, processed', sv: 'Kulturhusskyltar: Samfundet S:t Erik, CC BY 4.0, bearbetad' } },
+    { id: 'openplaques', url: 'https://openplaques.org/places/se/areas/stockholm', licence: 'LicenseRef-PublicDomain',
+      licence_url: 'https://openplaques.org/about', credit: { en: 'Open Plaques: Open Plaques, Public Domain, processed', sv: 'Open Plaques: Open Plaques, Public Domain, bearbetad' } }] };
+  const list = html => html.match(/<ul id="about-data">([\s\S]*?)<\/ul>/)[1];
+  for (const [T, done] of [[EN, 'processed'], [SV, 'bearbetad']]) {
+    const html = list(aboutHtml(plaques, T));
+    assert.match(html, new RegExp(`<a href="https://samfundetsterik\\.se/[^"]*"[^>]*>Kulturhusskyltar: Samfundet S:t Erik, CC BY 4\\.0, ${done}</a> \\(<a href="https://creativecommons\\.org/licenses/by/4\\.0/"`));
+    assert.match(html, /<a href="https:\/\/openplaques\.org\/[^"]*"[^>]*>Open Plaques: /);
+  }
+});

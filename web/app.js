@@ -14,7 +14,7 @@ import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
 import { THEMES, SHADING } from './themes.js';
 import { createLooks } from './look.js';
 import { mountSwitcher } from './switcher.js';
-import { initialCollapsed, LEGEND_KEY, photoOnlyFrom, photoOnlyHref, markPhotos } from './panel.js';
+import { initialCollapsed, LEGEND_KEY, photoOnlyFrom, photoOnlyHref, markPhotos, plaquesOnFrom, plaquesHref, PLAQUE_KEY } from './panel.js';
 import { cityCount, layerCount, tallyTitle, tallyFromAttrs, periodCounts } from './count.js';
 import { placeLabels, labelAt, stepYear } from './timeline.js';
 import { unknownShown, readPref, writePref, prefAfterClick, unknownHint, easeShown } from './unknown.js';
@@ -128,9 +128,12 @@ const attrTally = tallyFromAttrs(attrs, config.stats.buildings, config.attrStrid
 // ?try=stories,plaques (web/features.js) switches one on for this visit only, to try it on the live site.
 const FEATURES = withTry(config.features || {}, location.search);
 const layers = FEATURES.layers ? await getJson(`${DATA}layers.json`).catch(halt) : [];
-// Samfundet S:t Erik's blue plaques (web/plaque.js), with the layers: optional, so a build without them still starts.
+// Samfundet S:t Erik's blue plaques (web/plaque.js), with features.plaques (or the layers): optional, so a build without
+// them still starts. The legend's switch shows them (markers and the card's section); off by default (web/panel.js).
 const plaqueList = FEATURES.layers || FEATURES.plaques ? await getJson(`${DATA}plaques.json`).catch(() => []) : [];
 const plaquesOf = plaquesByGid(plaqueList);
+let plaquesOn = !!plaqueList.length && plaquesOnFrom(location.search, (() => { try { return localStorage.getItem(PLAQUE_KEY); } catch { return null; } })());
+if (plaquesOn) history.replaceState(history.state, '', plaquesHref(location.href, true));
 
 // ---------- Language ----------
 // English and Swedish (features.lang turns the switch on). ?lang= sets this visit only; the switch's
@@ -387,6 +390,7 @@ function redrawLabels() {
 // The plaques' markers: a blue disc above each plaque's building, the same size on screen at any distance. A click
 // on one picks the building under it, whose pinned card shows the plaque.
 const plaqueGroup = new THREE.Group();
+plaqueGroup.visible = plaquesOn;
 scene.add(plaqueGroup);
 if (plaqueList.length) {
   const c = document.createElement('canvas');
@@ -1173,7 +1177,7 @@ function pick(x, y) {
   labelGroup.visible = true;
   storyGroup.visible = true;
   for (const f of faints) f.visible = faintOn;
-  plaqueGroup.visible = true;
+  plaqueGroup.visible = plaquesOn;
   highlight.mesh.visible = outlined;
   for (const m of meshes) m.material = m.userData.draw;
   for (const m of terrainMeshes) m.material = m.userData.draw;
@@ -1307,7 +1311,7 @@ function cardHtml(gid, pinned) {
     ${photo || ''}${head}${dating}${rebuiltHtml}${picked}
     <section><dl>${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
       ${b.rating ? `<p class="why">${esc(T('card.rating.why'))}</p>` : ''}</section>
-    ${plaqueSection(plaquesOf.get(gid), T, esc)}
+    ${plaquesOn ? plaqueSection(plaquesOf.get(gid), T, esc) : ''}
     ${excerpt || ''}
     ${links.length ? `<section class="sources"><h4>${esc(T('card.readmore'))}</h4><p>${links.map(l => link(l.href, l.text)).join(' · ')}</p></section>` : ''}
     <p class="share"><button class="card-share">${esc(T('card.share'))}</button></p>
@@ -1907,6 +1911,8 @@ function renderPanel() {
         <span class="unknown-hint" id="unknown-hint"></span></div>` : ''}</div>
       <div class="est-row"><button class="switch" id="photo-only" aria-pressed="${photoOnly}" aria-describedby="photo-hint"><span class="toggle" aria-hidden="true"></span>${
         esc(T('ui.photoOnly'))}</button><span class="photo-hint" id="photo-hint"${photoOnly ? '' : ' hidden'}>${esc(T('ui.photoOnly.hint'))}</span></div>
+      ${plaqueList.length ? `<div class="est-row"><button class="switch" id="plaques-on" aria-pressed="${plaquesOn}" aria-describedby="plaques-hint"><span class="toggle" aria-hidden="true"></span>${
+        esc(T('ui.plaques'))}</button><span class="plaques-hint" id="plaques-hint"${plaquesOn ? '' : ' hidden'}>${esc(T('ui.plaques.hint'))}</span></div>` : ''}
       ${estTotal ? `<div class="est-row"><button class="switch" id="hide-est" aria-pressed="${hideEst}"><span class="toggle" aria-hidden="true"></span>${
         esc(T('ui.hideEst', { n: fmt(estTotal) }))}</button></div>` : ''}
       <p class="note">${approx(T('ui.legend.note'))}</p>`;
@@ -1915,6 +1921,8 @@ function renderPanel() {
     const estSw = panel.querySelector('#hide-est');
     if (estSw) estSw.onclick = () => setHideEst(!hideEst);
     panel.querySelector('#photo-only').onclick = () => setPhotoOnly(!photoOnly);
+    const plSw = panel.querySelector('#plaques-on');
+    if (plSw) plSw.onclick = () => setPlaques(!plaquesOn);
     panel.querySelectorAll('.swatch[data-i]').forEach(b => b.onclick = () => {
       const i = +b.dataset.i, m = maskTarget;
       const solo = m.every((v, j) => (j === i) === !!v);
@@ -2043,6 +2051,17 @@ async function setPhotoOnly(v) {
     }
   }
   uniforms.uPhotoOnly.value = photoOnly ? 1 : 0;
+}
+// The plaques switch: the markers and the pinned card's plaque section, remembered and kept in the URL (web/panel.js).
+function setPlaques(v) {
+  plaquesOn = !!v && !!plaqueList.length;
+  plaqueGroup.visible = plaquesOn;
+  panel.querySelector('#plaques-on')?.setAttribute('aria-pressed', String(plaquesOn));
+  const hint = panel.querySelector('#plaques-hint');
+  if (hint) hint.hidden = !plaquesOn;
+  try { localStorage.setItem(PLAQUE_KEY, plaquesOn ? 'on' : 'off'); } catch {}
+  history.replaceState(history.state, '', plaquesHref(location.href, plaquesOn));
+  refreshCard();
 }
 // Estimates are hidden only while the city is coloured by period (the switch lives in that legend).
 const estShown = () => !(hideEst && uniforms.uMode.value === MODE.period);
@@ -2690,7 +2709,7 @@ const scenePlayer = mountScenePlayer({ THREE, scene: storyGroup, faint: setFaint
     set: y => { stopPlay(); setHandle('uYearFrom', FROM_REST); setHandle('uYear', y); },
     restore: ([from, to]) => { stopPlay(); uniforms.uYearFrom.value = from; uniforms.uYear.value = to; drawHist(); } } });
 
-window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
+window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
   surfaceAt, setRelief, chooseRelief, get relief() { return relief; }, terrain: () => ({ state: terrainState, source: TERRAIN?.source, relief: uRelief.value, cutK: uCutK.value, chunks: chunkMeshes.length }),
   get timelineLabels() { return placedLabels; }, get pinned() { return pinnedGid; }, districtOf,
   get forced() { return forcedGid; }, force, scene, highlight: () => highlight.state() };
