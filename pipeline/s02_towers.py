@@ -49,6 +49,9 @@ MATCH_M, MATCH_SHARE = 4.0, 0.25
 RAISE_M, RAISE_SHARE = 6.0, 0.25
 CELL_M = 1.5
 MIN_CLUSTER = 4
+# Outside the hand list a raised part needs this many points: the full run of 2026-10-17 showed 4–20-point parts
+# beside tall buildings (a neighbour's facade spilling over the footprint edge) and at building sites (cranes).
+MIN_POINTS_UNLISTED = 20
 STEP_M = 3.0
 HULL_BUFFER_M = 1.0
 MIN_SIDE_M = 3.0
@@ -133,7 +136,7 @@ def detect(footprint, lod1: float, pts: dict, fallback_ground: float, trusted: b
     labels = clusters(x, y)
     for k in range(labels.max() + 1 if len(labels) else 0):
         sel = labels == k
-        if sel.sum() < MIN_CLUSTER:
+        if sel.sum() < (MIN_CLUSTER if trusted else max(MIN_CLUSTER, MIN_POINTS_UNLISTED)):
             continue
         top = cluster_top(z[sel])
         if top is None:

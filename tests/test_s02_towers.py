@@ -140,3 +140,12 @@ def test_a_hand_listed_landmark_skips_the_roof_check():
     r = st.detect(fp, 13.0, base, fallback_ground=0.0, trusted=True)
     assert r["skip"] is None and len(r["parts"]) == 1 and r["parts"][0]["top_z"] == 150.0
     assert r["parts"][0]["height_m"] == pytest.approx(150.0 - r["ground"])
+
+
+def test_a_raised_part_with_few_points_needs_the_hand_list():
+    # a neighbour's facade or a crane in the scan gives a handful of high points; a real tower top gives dozens
+    fp = shapely.box(0, 0, 20, 20)
+    sx, sy = np.meshgrid(np.arange(8, 11, 1.0), np.arange(8, 11, 1.0))           # 9 points, 40 m up
+    few = (sx.ravel(), sy.ravel(), np.full(sx.size, 40.0), 1, 1, 1)
+    assert st.detect(fp, 12.0, pts(*site(fp, 12.0), few), fallback_ground=0.0)["parts"] == []
+    assert len(st.detect(fp, 12.0, pts(*site(fp, 12.0), few), fallback_ground=0.0, trusted=True)["parts"]) == 1

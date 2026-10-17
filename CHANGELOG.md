@@ -6,7 +6,6 @@ What changed on [husforhus.se](https://husforhus.se), newest first: the map's fe
 
 Plans, not promises: the order can change.
 
-- **Taller towers everywhere.** Real heights from Lantmäteriet's laser data for about 3,100 more buildings: named buildings, churches and everything over 25 m (today 17 landmarks have them).
 - **More history stories.** The great fire of 1625, the clearance of Klara (1952–1977), Queen Kristina's lock (1637–1642), and stories about Tunnelbanan: Vällingby, a town built around its station; the first line in 1950; the blue line and Järvafältet; Kymlinge, the station that never opened.
 - **Narration** for the history stories, in English and Swedish.
 - **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 37 plaques not yet placed on a building.
@@ -21,18 +20,18 @@ Plans, not promises: the order can change.
 - **History stories** (Berättelser): the Vasa sinks, 1628; Tre Kronor burns, 1697; the Stockholm Olympics, 1912; the Stockholm Exhibition, 1930. Today's city is drawn faintly for orientation and the lost buildings in sandstone, with period photos and sources on every step.
 - **Tunnelbanan** as a legend switch: the green, red and blue lines grow with the timeline from 1950, and every station has a card with its opening date and earlier names.
 - **Blue plaques** as a legend switch: 127 of Samfundet S:t Erik's plaques, with their Swedish texts on the cards.
-- **Real tower heights** for 17 landmarks, from Lantmäteriet's laser data: Stadshuset 103 m, Kaknästornet 139 m, Klara kyrka 95 m and the Gamla stan churches, instead of flat blocks.
+- **Real tower heights** for 189 buildings, from Lantmäteriet's laser data: Stadshuset 103 m, Kaknästornet 139 m, Klara kyrka 95 m, the Gamla stan churches, Hötorgscity, DN-skrapan, Folksamhuset and more, instead of flat blocks. About 3,100 buildings were checked; one that changed since the 2021 scan keeps its old height.
 - **Highlight buildings with a photo**: a legend switch that turns the others pale.
 - **Share a building**: a link that opens its card, or the phone's share sheet.
 - **Phones and accessibility**: 44-pixel tap targets, the whole interface by keyboard, and screen-reader labels.
 - A link to the source code in About, and issue forms on GitHub for corrections, photos, data sources and translations.
 
 ### Data
-- Data versions `v20261017-p4c` to `v20261017-p4i`.
+- Data versions `v20261017-p4c` to `v20261017-p4j`.
 - 77 public institutions inside buildings, from Wikidata, for search.
 - Samfundet S:t Erik's plaque list and texts (CC BY 4.0), placed by address and by Open Plaques positions.
 - Tunnelbanan: 101 stations (Wikidata) and 32 dated line sections on OpenStreetMap's track.
-- Lantmäteriet's Laserdata Nedladdning, skog (CC BY 4.0) for the 17 landmark towers.
+- Lantmäteriet's Laserdata Nedladdning, skog (CC BY 4.0, scanned 2020–2021) for the towers: points read only around about 3,100 candidate buildings.
 - Period photos for the stories from Wikimedia Commons, public domain or CC licences only, each checked by hand.
 
 ## 2026-10-14 to 2026-10-16: before launch
