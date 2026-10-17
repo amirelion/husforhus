@@ -103,7 +103,7 @@ test('ghosts: shown from their beat to their last; the hull is 69 m long and 12 
 
 // The ready stories: every beat's camera looks down on its target at 25° or more (flat ground), and every
 // lost building has a shape, a height and a first beat inside the story.
-for (const id of ['vasa-1628', 'tre-kronor-1697', 's10-olympics-1912', 's11']) {
+for (const id of ['vasa-1628', 'tre-kronor-1697', 's10-olympics-1912', 's11', 's12']) {
   test(`${id}: cameras look down at 25° or more; ghosts are drawable`, () => {
     const s = JSON.parse(fs.readFileSync(new URL(`../scenes/${id}.json`, import.meta.url)));
     assert.equal(s.ready, true);
