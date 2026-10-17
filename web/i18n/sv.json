@@ -252,6 +252,8 @@
   "about.contact.code": "Koden och datakedjan är öppen källkod: {repo}",
   "card.why": "Varför?",
   "card.wrong": "Något som inte stämmer? Hör av dig",
+  "card.share": "Dela",
+  "card.share.copied": "Länk kopierad",
   "card.wrong.subject": "Hus för hus: {what}",
   "card.wrong.building": "byggnad {gid}",
   "card.wrong.body": "Om byggnad {gid} på kartan (data {version}):",

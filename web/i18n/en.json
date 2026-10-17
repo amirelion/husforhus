@@ -252,6 +252,8 @@
   "about.contact.code": "The code and data pipeline are open source: {repo}",
   "card.why": "Why?",
   "card.wrong": "Something wrong? Tell us",
+  "card.share": "Share",
+  "card.share.copied": "Link copied",
   "card.wrong.subject": "Hus för hus: {what}",
   "card.wrong.building": "building {gid}",
   "card.wrong.body": "About building {gid} on the map (data {version}):",

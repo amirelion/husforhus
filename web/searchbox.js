@@ -204,6 +204,12 @@ export function mountSearch({ root, openButton, getJson, base, T, onPick, swatch
       if (rows.length) pick(0);
       else { render(); message(res.message); }
     },
+    // The gid the top row of a search for q would pick, else -1 (web/share.js: is ?q= a stable link to it?).
+    async topGid(q) {
+      await load();
+      const row = (await search(P, q, loadShard)).rows[0];
+      return row?.gid ?? -1;
+    },
     get input() { return input; },
   };
 }

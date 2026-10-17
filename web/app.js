@@ -6,6 +6,7 @@ import { liftBounds } from './bounds.js';
 import { YFLAG } from './codes.js';
 import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
   isEstimate, placeLine, whyAnchor, wrongHref } from './card.js';
+import { shareText, shareLink, parseAt } from './share.js';
 import { makeT, legacy, pickLang } from './i18n.js';
 import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
 import { THEMES, SHADING } from './themes.js';
@@ -1238,6 +1239,7 @@ function cardHtml(gid, pinned) {
       ${b.rating ? `<p class="why">${esc(T('card.rating.why'))}</p>` : ''}</section>
     ${excerpt || ''}
     ${links.length ? `<section class="sources"><h4>${esc(T('card.readmore'))}</h4><p>${links.map(l => link(l.href, l.text)).join(' · ')}</p></section>` : ''}
+    <p class="share"><button class="card-share">${esc(T('card.share'))}</button></p>
     ${wrong ? `<p class="wrong"><a href="${esc(wrong)}">${esc(T('card.wrong'))}</a></p>` : ''}`;
 }
 
@@ -1311,6 +1313,7 @@ function pinCard(gid, x, y) {
   card.hidden = false;
   const close = card.querySelector('.card-close');
   close.onclick = () => pinCard(-1);
+  card.querySelector('.card-share').onclick = e => shareCard(gid, e.currentTarget);
   card.querySelector('.photo img')?.addEventListener('error', e => {
     failedPhotos.add(cardOf(gid).photo?.key);
     if (!e.target.isConnected || pinnedGid !== gid) return;    // a late error from a card drawn over since
@@ -1326,6 +1329,19 @@ function pinCard(gid, x, y) {
       (now.find(el => focusKey(el) === focusWas) || now[focusAt] || close).focus({ preventScroll: true });
     }
   }
+}
+// "Share": a phone opens the system share sheet; elsewhere the link is copied and the button says so for 2 s.
+async function shareCard(gid, button) {
+  const b = building(gid), text = shareText(cardOf(gid), b);
+  const resolves = !!text && !!searchBox && await searchBox.topGid(text).then(g => g === gid, () => false);
+  const url = shareLink({ text, resolves, x: b.x, z: b.z, zoom: camera.position.distanceTo(controls.target) });
+  if (phone.matches && navigator.share) {
+    navigator.share({ title: text || T('card.label'), url }).catch(() => {});
+    return;
+  }
+  try { await navigator.clipboard.writeText(url); } catch { return; }
+  button.textContent = T('card.share.copied');
+  setTimeout(() => { if (button.isConnected) button.textContent = T('card.share'); }, 2000);
 }
 // Escape closes the pinned card, unless it is closing another dialog (About, Look), which keeps the card.
 addEventListener('keydown', e => {
@@ -2503,6 +2519,20 @@ creditOpen.onclick = () => {
 // ?q=: search once on load and pick the top row (picking never writes ?q= back).
 const askedQ = new URLSearchParams(location.search).get('q');
 if (searchBox && askedQ) searchBox.runQuery(askedQ).catch(() => {});
+// ?at=<x>,<z>,<zoom> (a shared card that ?q= cannot find back): fly there and pin the building at the point. The
+// point is the shared building's centre, so the building whose centre is nearest is the one (a pick at the middle of
+// the screen would find the roof in front of it).
+const askedAt = !askedQ && parseAt(new URLSearchParams(location.search).get('at'));
+if (askedAt) {
+  let best = -1, bestD = Infinity;
+  for (let g = 0; g < config.stats.buildings; g++) {
+    const b = building(g), d = (b.x - askedAt.x) ** 2 + (b.z - askedAt.z) ** 2;
+    if (d < bestD) { best = g; bestD = d; }
+  }
+  flyTo(askedAt.x, askedAt.z, () => {
+    if (best >= 0 && pinnedGid < 0) pinCard(best, innerWidth, document.querySelector('.corner').getBoundingClientRect().bottom - 8);
+  }, askedAt.zoom);
+}
 
 // ---------- Debug ----------
 // ?debug=1 shows renderer statistics; scripts/measure.mjs reads the same numbers from __dbg.stats().

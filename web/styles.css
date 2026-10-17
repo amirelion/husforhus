@@ -634,6 +634,9 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .about summary { cursor: pointer; font-weight: 600; }
 .about-close { color: var(--ink); }   /* not the browser's ButtonText, which a dark look would hide */
 .card .dating .why { margin-left: 4px; font-size: 12px; white-space: nowrap; }
+.card .share { margin: 0; padding: 8px 16px; border-top: 1px solid var(--line); }
+.card .share button { font: inherit; font-size: 13px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px;
+  background: transparent; color: inherit; cursor: pointer; }
 .card .wrong { margin: 0; padding: 8px 16px 12px; border-top: 1px solid var(--line); font-size: 12px; }
 .card .wrong a { color: var(--muted); }
 
