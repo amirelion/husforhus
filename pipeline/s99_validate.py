@@ -1,6 +1,8 @@
 """Validate web/data/<version> before it ships (the spec's s99 rules as Plans 1 and 2 implement them).
 
 Fails (exit 1, with a readable list) on:
+- plaques (s15_plaques, when plaques.json is there): a plaque on no building of the version, without its credit,
+  name, text or position, listed twice, or with a text that names an owner or a byggherre (spec §6.3);
 - stockholm.json naming another version than its folder;
 - any file over 20 MiB; first-load or whole-city transferred bytes over budget;
 - base: land.bin.gz or water.bin.gz missing, not decoding or without a polygon; labels.json missing or not a
@@ -81,6 +83,7 @@ is one (`num`), and anything else reads `[value]`; a group or era is never print
 import argparse
 import gzip
 import json
+import math
 import re
 import struct
 import sys
@@ -91,7 +94,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from . import city, codes, suppress
+from . import city, codes, plaques, suppress
 from .estimate import GROUPS
 from .geo import lonlat_to_3011
 from .privacy import mentions, normalise, owner, phrases
@@ -1258,6 +1261,40 @@ def check_privacy(out: Path, uuids: set[str], props: set[str], fnrs: set[int] = 
     return errors
 
 
+def check_plaques(out: Path, n_buildings: int) -> list[str]:
+    """The blue plaques (s15_plaques), when the version has them: each on a real gid, with its id, name, text, the
+    credit (plaques.CREDIT: Samfundet S:t Erik, CC BY 4.0) and a finite position; no plaque twice."""
+    path = out / "plaques.json"
+    if not path.exists():
+        return []
+    try:
+        items = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return ["plaques: plaques.json is not JSON"]
+    if not isinstance(items, list):
+        return ["plaques: plaques.json is not a list"]
+    errors, seen = [], set()
+    for i, p in enumerate(items):
+        pid = p.get("id", f"#{i}") if isinstance(p, dict) else f"#{i}"
+        if not isinstance(p, dict):
+            errors.append(f"plaques: {pid} is not an object")
+            continue
+        g = p.get("gid")
+        if not isinstance(g, int) or isinstance(g, bool) or not 0 <= g < n_buildings:
+            errors.append(f"plaques: {pid} is on gid {g!r}, not a building of this version")
+        if p.get("credit") != plaques.CREDIT:
+            errors.append(f"plaques: {pid} lacks its credit ({plaques.CREDIT!r})")
+        errors += [f"plaques: {pid} has no {k}" for k in ("name", "text") if not str(p.get(k) or "").strip()]
+        if not all(isinstance(p.get(k), (int, float)) and math.isfinite(p[k]) for k in ("x", "z")):
+            errors.append(f"plaques: {pid} has no position")
+        if owner(str(p.get("text") or "")):
+            errors.append(f"plaques: {pid} has a text that says who owns the building or had it built (spec §6.3)")
+        if pid in seen:
+            errors.append(f"plaques: {pid} twice")
+        seen.add(pid)
+    return errors
+
+
 def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: list[dict] | None = None,
              takedowns: list[dict] | None = None) -> list[str]:
     out, data = Path(out), Path(data)
@@ -1303,6 +1340,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     errors += check_suppressed(out, a, data, takedowns)
     sets = privacy_sets(data) if (data / "buildings.parquet").exists() else None
     errors += check_search(out, cfg, a, hidden, sets[1] if sets else frozenset(), data)
+    errors += check_plaques(out, len(a))
     if sets:
         errors += check_privacy(out, *sets)
     else:

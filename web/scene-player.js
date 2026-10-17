@@ -11,6 +11,15 @@
 export const DEFAULT_BEAT_S = 8;   // a beat without duration_s (the prototype's default)
 export const PREV_RESTART_S = 1.5; // Previous restarts the beat after this much of it, else goes a beat back
 const ON_ROUTE_M = 80;             // a beat whose target is this close to a route moves its marker
+// The story's lost buildings (ghosts.csv): one warm sandstone on every look, roofs lighter than walls, dark edges.
+export const GHOST = { roof: '#e0b27a', wall: '#b9844e', edge: '#5a3a1c' };
+// Is a ghost (from/until, 1-based beats) up at beat i (0-based)?
+export const ghostShown = (o, i) => i + 1 >= o.from && (o.until == null || i + 1 <= o.until);
+// The Vasa's hull in its own frame, metres: bow towards +x, beam across z.
+export function hullOutline(L = 69, B = 12) {
+  const h = L / 2, b = B / 2;
+  return [[-h, -b * 0.8], [-h + 4, -b], [h - 14, -b], [h - 4, -b * 0.45], [h, 0], [h - 4, b * 0.45], [h - 14, b], [-h + 4, b], [-h, b * 0.8]];
+}
 
 // ---------- Timing ----------
 export const beatDuration = b => (Number.isFinite(b?.duration_s) && b.duration_s > 0 ? b.duration_s : DEFAULT_BEAT_S);
@@ -104,11 +113,13 @@ const STR = {
   en: { stories: 'Stories', exit: 'Exit', exitScene: 'Exit scene', play: 'Play', pause: 'Pause', prev: 'Previous beat',
     next: 'Next beat', beat: n => `Beat ${n}`, left: s => `${s} remaining`, source: 'Source', player: 'Scene player',
     captionLang: 'Caption language', beats: n => `${n} beats`, cont: 'Continue', skip: 'Skip',
-    warn: 'This story tells of people who died. It shows only places, dates and short captions.' },
+    warn: 'This story tells of people who died. It shows only places, dates and short captions.',
+    faint: "Faint: today's city, for orientation" },
   sv: { stories: 'Berättelser', exit: 'Avsluta', exitScene: 'Avsluta scenen', play: 'Spela', pause: 'Pausa',
     prev: 'Föregående', next: 'Nästa', beat: n => `Del ${n}`, left: s => `${s} kvar`, source: 'Källa',
     player: 'Scenspelare', captionLang: 'Språk för texten', beats: n => `${n} delar`, cont: 'Fortsätt', skip: 'Hoppa över',
-    warn: 'Berättelsen handlar om människor som dog. Den visar bara platser, datum och korta texter.' },
+    warn: 'Berättelsen handlar om människor som dog. Den visar bara platser, datum och korta texter.',
+    faint: 'Svagt: dagens stad, för orientering' },
 };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -161,6 +172,7 @@ export function mountScenePlayer(opts) {
       <button class="sp-next">⏭&#xFE0E;</button>
       <span class="sp-count"></span>
     </div>
+    <p class="sp-legend"></p>
   </div>
 </section>
 <div class="sp-pins" aria-hidden="true"></div>`;
@@ -179,7 +191,7 @@ export function mountScenePlayer(opts) {
   // ---------- Stories list ----------
   async function renderList() {
     const scenes = await loadIndex();
-    list.querySelector('ul').innerHTML = scenes.map(s => `<li><button data-id="${esc(s.id)}"><span>${esc(L(s.title))}</span>
+    list.querySelector('ul').innerHTML = scenes.filter(s => s.ready).map(s => `<li><button data-id="${esc(s.id)}"><span>${esc(L(s.title))}</span>
       <span class="sp-yr">${esc(s.year)}</span></button></li>`).join('');
   }
   function showList(on) {
@@ -234,6 +246,7 @@ export function mountScenePlayer(opts) {
       targets: scene.beats.map(b => local(b.target)), cams: scene.beats.map(b => [...local(b.camera), b.camera.height_m]) };
     addOverlays(scene);
     opts.year.set(scene.year);
+    opts.faint?.(true);   // what the year hides stays as a faint, flat today's city (app.js)
     const u = new URL(location.href); u.searchParams.set('scene', scene.id); history.replaceState(history.state, '', u);
     cinema.hidden = false;
     cinema.setAttribute('aria-label', `${S().player}: ${L(scene.title)}`);
@@ -249,6 +262,7 @@ export function mountScenePlayer(opts) {
   function exit(restoreFocus = true) {
     cancelAnimationFrame(raf);
     removeOverlays();
+    opts.faint?.(false);
     st = null;
     cinema.hidden = true;
     warning.hidden = true;
@@ -292,6 +306,7 @@ export function mountScenePlayer(opts) {
   function staticText() {
     const s = S();
     $('.sp-exit').textContent = `✕ ${s.exit}`;
+    $('.sp-legend').textContent = s.faint;
     $('.sp-exit').setAttribute('aria-label', s.exitScene);
     $('.sp-prev').setAttribute('aria-label', s.prev);
     $('.sp-next').setAttribute('aria-label', s.next);
@@ -322,7 +337,8 @@ export function mountScenePlayer(opts) {
   const v3 = new THREE.Vector3();
   function frame(now) {
     if (!st) return;
-    const dt = (now - st.last) / 1000;
+    // at most a quarter second a frame: a stalled frame (the faint city's shaders compiling) never skips a beat
+    const dt = Math.min(0.25, (now - st.last) / 1000);
     st.last = now;
     if (st.playing) {
       st.elapsed += dt;
@@ -371,8 +387,59 @@ export function mountScenePlayer(opts) {
         el.innerHTML = `<span class="sp-pin-dot"></span><span class="sp-pin-label">${esc(L(o.label))}</span>`;
         pins.append(el);
         overlays.push({ kind: 'marker', at, el });
+      } else if (o.type === 'ghost') {
+        overlays.push(o.ship ? ship(o) : ghost(o));
       }
     }
+  }
+  const ghostMats = () => {
+    const side = { side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1 };
+    return [new THREE.MeshBasicMaterial({ color: GHOST.roof, ...side }), new THREE.MeshBasicMaterial({ color: GHOST.wall, ...side }),
+      new THREE.LineBasicMaterial({ color: GHOST.edge })];
+  };
+  // An outline in local [x, z] standing from below its lowest ground to h above it (ExtrudeGeometry: groups 0 the
+  // caps, 1 the walls). Returns the meshes and the top's height.
+  function prism(pts, h, mats, base) {
+    const shape = new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, -z)));
+    const g = new THREE.ExtrudeGeometry(shape, { depth: h + 2, bevelEnabled: false });
+    g.rotateX(-Math.PI / 2);   // the shape's y becomes -z, its depth y
+    g.translate(0, base - 2, 0);
+    return [new THREE.Mesh(g, mats.slice(0, 2)), new THREE.LineSegments(new THREE.EdgesGeometry(g, 20), mats[2])];
+  }
+  function label(o) {
+    const el = document.createElement('div');
+    el.className = 'sp-pin sp-ghost';
+    el.innerHTML = `<span class="sp-pin-label">${esc(L(o.label))}</span>`;
+    pins.append(el);
+    return el;
+  }
+  function ghost(o) {
+    const group = new THREE.Group(), mats = ghostMats();
+    let top = 0, cx = 0, cz = 0, n = 0;
+    o.rings.forEach((ring, k) => {
+      const pts = ring.map(([la, lo]) => toLocal(la, lo, origin));
+      if (pts.length > 2 && pts[0][0] === pts.at(-1)[0] && pts[0][1] === pts.at(-1)[1]) pts.pop();
+      const base = Math.min(...pts.map(([x, z]) => surfaceAt(x, z)));
+      group.add(...prism(pts, o.heights[k], mats, base));
+      top = Math.max(top, base + o.heights[k]);
+      for (const [x, z] of pts) { cx += x; cz += z; n++; }
+    });
+    group.renderOrder = 10;
+    opts.scene.add(group);
+    return { kind: 'ghost', o, group, mats, el: label(o), at: [cx / n, cz / n], top };
+  }
+  // The Vasa: a hull and three masts as thin lines, riding the route's marker (else at the beat's target).
+  function ship(o) {
+    const group = new THREE.Group(), mats = ghostMats();
+    const [hull, mast1, mast2, mast3] = o.heights;
+    group.add(...prism(hullOutline(o.ship.length_m, o.ship.beam_m), hull, mats, 0));
+    const m = [[22, mast1], [2, mast2], [-24, mast3]].flatMap(([x, h]) => [x, hull, 0, x, h, 0]);
+    const mg = new THREE.BufferGeometry();
+    mg.setAttribute('position', new THREE.Float32BufferAttribute(m, 3));
+    group.add(new THREE.LineSegments(mg, new THREE.LineBasicMaterial({ color: GHOST.edge })));
+    group.renderOrder = 10;
+    opts.scene.add(group);
+    return { kind: 'ship', o, group, mats, el: label(o), top: Math.max(mast1, mast2, mast3) };
   }
   function ribbon(line, width) {
     const pos = [], idx = [], step = 15;
@@ -409,6 +476,11 @@ export function mountScenePlayer(opts) {
         const k = reduced() ? 1 : Math.min(1, st.elapsed / st.tm.durations[st.beat]);
         const p = pointAt(o.line, leg.from + (leg.to - leg.from) * k);
         put(o.dot, screenAt(p[0], p[1]));
+      } else if (o.kind === 'ghost' || o.kind === 'ship') {
+        const on = ghostShown(o.o, st.beat);
+        o.group.visible = on;
+        if (on && o.kind === 'ship') placeShip(o);
+        put(o.el, on ? screenAt(o.at[0], o.at[1], o.top - surfaceAt(o.at[0], o.at[1]) + 6) : null);
       } else {
         put(o.el, screenAt(o.at[0], o.at[1]));
         // the marker at this beat's target carries its label; the others are points
@@ -416,9 +488,27 @@ export function mountScenePlayer(opts) {
       }
     }
   }
+  function placeShip(o) {
+    const route = overlays.find(r => r.kind === 'route'), leg = route?.legs[st.beat];
+    let p = st.targets[st.beat], dir = [1, 0];
+    if (leg) {
+      const k = reduced() ? 1 : Math.min(1, st.elapsed / st.tm.durations[st.beat]), s = leg.from + (leg.to - leg.from) * k;
+      p = pointAt(route.line, s);
+      const a = pointAt(route.line, Math.max(0, s - 20)), b = pointAt(route.line, Math.min(route.line.length, s + 20));
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 1) dir = [b[0] - a[0], b[1] - a[1]];
+    }
+    o.group.position.set(p[0], surfaceAt(p[0], p[1]), p[1]);
+    o.group.rotation.y = -Math.atan2(dir[1], dir[0]);   // the bow (+x) along the route
+    o.at = p;
+  }
   function removeOverlays() {
     for (const o of overlays) {
       if (o.mesh) { opts.scene.remove(o.mesh); o.mesh.geometry.dispose(); o.mesh.material.dispose(); }
+      if (o.group) {
+        opts.scene.remove(o.group);
+        o.group.traverse(c => { c.geometry?.dispose(); if (c.material && !Array.isArray(c.material)) c.material.dispose(); });
+        o.mats.forEach(m => m.dispose());
+      }
     }
     overlays = [];
     pins.textContent = '';

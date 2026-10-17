@@ -503,7 +503,8 @@ def attribution(sources: list[dict], terrain_source: str = "dtm") -> list[dict]:
     return [{"id": s["id"], "text": s["attribution"], "url": s["url"], "licence": s["licence"],
              "licence_url": s["licence_url"], **({"corner": s["corner"]} if s.get("corner") else {}),
              "credit": credit(s)}
-            for s in sources if s["id"] != DTM_SOURCE or terrain_source == "dtm"]
+            for s in sources if (s["id"] != DTM_SOURCE or terrain_source == "dtm")
+            and city.FEATURES.get(s.get("feature"), True)]   # a source of a switched-off feature waits
 
 
 def terrain_config(record: dict) -> dict:

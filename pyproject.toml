@@ -10,6 +10,7 @@ dependencies = [
     "pandas>=3.0.6",
     "pyarrow>=26.0.0",
     "pyogrio>=0.13.0",
+    "pypdf>=6.21.1",
     "pyproj>=3.8.0",
     "pyyaml>=6.0.3",
     "rasterio>=1.5.2",

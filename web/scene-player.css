@@ -64,6 +64,7 @@ body.scene-on .quest, body.scene-on .howto, body.scene-on .timeline { visibility
 .sp-controls > button { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
 .sp-controls > button.sp-play { width: 48px; height: 48px; background: var(--ink); color: var(--panel); border: 0; }
 .sp-count { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.sp-legend { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
 
 /* Overlays placed over the map: the route's moving marker and the labelled points. */
 .sp-pins { position: fixed; inset: 0; z-index: 39; pointer-events: none; overflow: hidden; }
@@ -75,6 +76,9 @@ body.scene-on .quest, body.scene-on .howto, body.scene-on .timeline { visibility
 .sp-pin-label { font-size: 12px; font-weight: 600; background: var(--panel); color: var(--ink); padding: 2px 7px; border-radius: 4px;
   white-space: nowrap; max-width: min(30ch, 45vw); overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity var(--sp-fade); }
 .sp-pin.sp-here .sp-pin-label { opacity: 1; }
+/* A lost building's name, centred above its roof, always shown, in the ghosts' sandstone (GHOST.edge). */
+.sp-pin.sp-ghost { margin: 0; }
+.sp-pin.sp-ghost .sp-pin-label { opacity: 1; translate: -50% -100%; border: 1px solid #b9844e; color: #5a3a1c; background: #f6e7d2; white-space: nowrap; }
 
 /* Phone, portrait (prototype): larger targets, a smaller caption with room for three lines, the list above the timeline. */
 @media (max-width: 600px) and (orientation: portrait) {

@@ -10,9 +10,9 @@
     {
       "n": 1,
       "camera": {
-        "lat": 59.342,
-        "lon": 18.074,
-        "height_m": 300
+        "lat": 59.34107,
+        "lon": 18.07589,
+        "height_m": 418
       },
       "target": {
         "lat": 59.345278,
@@ -32,9 +32,9 @@
     {
       "n": 2,
       "camera": {
-        "lat": 59.3,
-        "lon": 18,
-        "height_m": 6000
+        "lat": 59.3284,
+        "lon": 17.94311,
+        "height_m": 7713
       },
       "target": {
         "lat": 59.406,
@@ -53,9 +53,9 @@
     {
       "n": 3,
       "camera": {
-        "lat": 59.348,
-        "lon": 18.083,
-        "height_m": 150
+        "lat": 59.34851,
+        "lon": 18.0812,
+        "height_m": 321
       },
       "target": {
         "lat": 59.345278,
@@ -72,6 +72,7 @@
       ]
     }
   ],
+  "ready": true,
   "overlays": [
     {
       "type": "route",
@@ -145,6 +146,150 @@
         "en": "Tureberg (about 30 km)",
         "sv": "Tureberg (about 30 km)"
       }
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Stadion north stand (temporary 1912)",
+        "sv": "Stadion north stand (temporary 1912)"
+      },
+      "from": 1,
+      "heights": [
+        12
+      ],
+      "confidence": "low",
+      "rings": [
+        [
+          [
+            59.345907,
+            18.07792
+          ],
+          [
+            59.345907,
+            18.079858
+          ],
+          [
+            59.346069,
+            18.079858
+          ],
+          [
+            59.346069,
+            18.07792
+          ],
+          [
+            59.345907,
+            18.07792
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Swimming stadium in Djurgårdsbrunnsviken",
+        "sv": "Swimming stadium in Djurgårdsbrunnsviken"
+      },
+      "from": 1,
+      "heights": [
+        4
+      ],
+      "confidence": "low",
+      "rings": [
+        [
+          [
+            59.330477,
+            18.118587
+          ],
+          [
+            59.330477,
+            18.120525
+          ],
+          [
+            59.330801,
+            18.120525
+          ],
+          [
+            59.330801,
+            18.118587
+          ],
+          [
+            59.330477,
+            18.118587
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Tranebergs IP",
+        "sv": "Tranebergs IP"
+      },
+      "from": 1,
+      "heights": [
+        3
+      ],
+      "confidence": "low",
+      "rings": [
+        [
+          [
+            59.334386,
+            17.987137
+          ],
+          [
+            59.334386,
+            17.989075
+          ],
+          [
+            59.335014,
+            17.989075
+          ],
+          [
+            59.335014,
+            17.987137
+          ],
+          [
+            59.334386,
+            17.987137
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Råsunda IP (1910 ground)",
+        "sv": "Råsunda IP (1910 ground)"
+      },
+      "from": 1,
+      "heights": [
+        5
+      ],
+      "confidence": "low",
+      "rings": [
+        [
+          [
+            59.362428,
+            17.995338
+          ],
+          [
+            59.362428,
+            17.997278
+          ],
+          [
+            59.363056,
+            17.997278
+          ],
+          [
+            59.363056,
+            17.995338
+          ],
+          [
+            59.362428,
+            17.995338
+          ]
+        ]
+      ]
     }
   ]
 }

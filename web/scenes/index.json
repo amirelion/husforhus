@@ -7,7 +7,8 @@
         "sv": "Vasa sjunker 1628"
       },
       "year": 1628,
-      "beats": 8
+      "beats": 8,
+      "ready": true
     },
     {
       "id": "s04",
@@ -34,7 +35,8 @@
         "sv": "Tre Kronor brinner 1697"
       },
       "year": 1697,
-      "beats": 9
+      "beats": 9,
+      "ready": true
     },
     {
       "id": "s10-olympics-1912",
@@ -43,7 +45,8 @@
         "sv": "Olympiska spelen i Stockholm 1912"
       },
       "year": 1912,
-      "beats": 3
+      "beats": 3,
+      "ready": true
     },
     {
       "id": "s11",

@@ -13,3 +13,4 @@ dist/
 .dist-versions.json
 # Takedown requests name the homes that asked (spec §6.3, Plan 4b): never committed
 pipeline/suppress.yml
+web/_shots/

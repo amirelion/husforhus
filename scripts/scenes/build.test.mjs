@@ -28,7 +28,8 @@ for (const id of Object.keys(SCENES)) {
       assert.ok(b.camera.height_m > 0, `${w}: camera above ground`);
     }
     for (const o of s.overlays ?? []) {
-      const pts = o.type === 'route' ? o.coords : [o.at];
+      if (o.type === 'ghost' && o.ship) continue;   // the Vasa rides the route
+      const pts = o.type === 'route' ? o.coords : o.type === 'ghost' ? o.rings.flat() : [o.at];
       assert.ok(o.type !== 'route' || pts.length >= 2, `${id}: route has 2+ points`);
       for (const [lat, lon] of pts) assert.ok(inStockholm(lat, lon), `${id} ${o.type}: [${lat}, ${lon}] inside Stockholm`);
     }
@@ -39,4 +40,18 @@ test('the three overlay scenes have their route or outline', () => {
   for (const id of ['vasa-1628', 's10-olympics-1912', 's11']) {
     assert.ok(buildScene(id).overlays.some((o) => o.type === 'route'), id);
   }
+});
+
+test('only the three launch stories are ready, in the index too', async () => {
+  const { buildAll } = await import('./build.mjs');
+  const ready = Object.entries(SCENES).filter(([, m]) => m.ready).map(([id]) => id).sort();
+  assert.deepEqual(ready, ['s10-olympics-1912', 'tre-kronor-1697', 'vasa-1628']);
+  assert.ok(buildAll);
+});
+
+test('WKT polygons parse to [lat, lon] rings', async () => {
+  const { parseWkt } = await import('./build.mjs');
+  assert.deepEqual(parseWkt('POLYGON((18 59, 18.1 59, 18.1 59.1, 18 59))'), [[[59, 18], [59, 18.1], [59.1, 18.1], [59, 18]]]);
+  assert.equal(parseWkt('MULTIPOLYGON(((18 59, 18.1 59, 18 59.1, 18 59)), ((18 59, 18.1 59, 18 59.1, 18 59)))').length, 2);
+  assert.throws(() => parseWkt('to be traced'));
 });

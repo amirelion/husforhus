@@ -97,7 +97,7 @@ function cellTable(cells, config, T, withGroup) {
     c.within_one !== undefined ? pct(c.within_one, T.lang, 0) : '–', c.band !== undefined ? `±${T.num(c.band)}` : '–',
     esc(T(`about.acc.status.${c.status}`)),
   ];
-  return `<div class="table"><table><thead><tr>${head.map(h => `<th>${esc(T(`about.acc.col.${h}`))}</th>`).join('')}</tr></thead>
+  return `<div class="table" tabindex="0"><table><thead><tr>${head.map(h => `<th>${esc(T(`about.acc.col.${h}`))}</th>`).join('')}</tr></thead>
     <tbody>${cells.map(c => `<tr>${row(c).map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 
@@ -132,7 +132,7 @@ export function aboutHtml(config, T, howto = '') {
       ${howto ? `<li>${esc(howto)}</li>` : ''}</ul>
     ${h3('about.years.title', 'years')}
     ${P('about.years.lead')}
-    <div class="table"><table><thead><tr><th>${esc(T('about.table.source'))}</th><th>${esc(T('about.table.buildings'))}</th>
+    <div class="table" tabindex="0"><table><thead><tr><th>${esc(T('about.table.source'))}</th><th>${esc(T('about.table.buildings'))}</th>
       <th>${esc(T('about.table.share'))}</th></tr></thead><tbody>${sourceRows}
       <tr class="total"><td>${esc(T('about.table.all'))}</td><td>${k.buildings}</td><td>${pct(1, T.lang)}</td></tr></tbody></table></div>
     ${P('about.years.kinds')}

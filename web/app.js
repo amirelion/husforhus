@@ -8,6 +8,7 @@ import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, ratingLine, 
   isEstimate, placeLine, whyAnchor, wrongHref } from './card.js';
 import { shareText, shareLink, parseAt } from './share.js';
 import { makeT, legacy, pickLang } from './i18n.js';
+import { plaquesByGid, plaqueSection } from './plaque.js';
 import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
 import { THEMES, SHADING } from './themes.js';
 import { createLooks } from './look.js';
@@ -125,6 +126,9 @@ const attrTally = tallyFromAttrs(attrs, config.stats.buildings, config.attrStrid
 // config.features (pipeline/city.py FEATURES); their buttons are hidden, never removed.
 const FEATURES = config.features || {};
 const layers = FEATURES.layers ? await getJson(`${DATA}layers.json`).catch(halt) : [];
+// Samfundet S:t Erik's blue plaques (web/plaque.js), with the layers: optional, so a build without them still starts.
+const plaqueList = FEATURES.layers ? await getJson(`${DATA}plaques.json`).catch(() => []) : [];
+const plaquesOf = plaquesByGid(plaqueList);
 
 // ---------- Language ----------
 // English and Swedish (features.lang turns the switch on). ?lang= sets this visit only; the switch's
@@ -378,6 +382,29 @@ function redrawLabels() {
   labelsShown = 0;
   loadLabelFont();
 }
+// The plaques' markers: a blue disc above each plaque's building, the same size on screen at any distance. A click
+// on one picks the building under it, whose pinned card shows the plaque.
+const plaqueGroup = new THREE.Group();
+scene.add(plaqueGroup);
+if (plaqueList.length) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#1f4e9c'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.arc(32, 32, 26, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), sizeAttenuation: false, depthTest: false });
+  for (const p of plaqueList) {
+    const s = new THREE.Sprite(mat);
+    s.scale.set(0.022, 0.022, 1);
+    s.renderOrder = 3;
+    s.userData = { x: p.x, z: p.z, h: readAttrs(attrs, p.gid, config.attrStride).height || 0 };
+    plaqueGroup.add(s);
+  }
+}
+// Each marker follows the relief as it changes.
+function updatePlaqueMarkers() {
+  for (const s of plaqueGroup.children) s.position.set(s.userData.x, surfaceAt(s.userData.x, s.userData.z) + s.userData.h + 4, s.userData.z);
+}
 let labels = [];
 // Requested after the first frame with buildings, like land and water.
 async function loadLabels() {
@@ -483,6 +510,8 @@ const uniforms = {
   uGridO: { value: new THREE.Vector2(0, 0) }, uGridN: { value: new THREE.Vector2(1, 1) }, uCell: { value: 1 },
   uEdgeBuildings: { value: 0 },
   uSun: { value: new THREE.Vector3(...SHADING.sun).normalize() },
+  uFaint: { value: 0.13 },                         // today's city during a story: its opacity (setFaint)
+  uFaintColor: { value: col(THEME.ui['--ink']) },
 };
 
 // The terrain grid's uniforms: every shader stage that reads the grid includes this once, before TERRAIN_GLSL,
@@ -582,7 +611,14 @@ const VERT = /* glsl */`
     g = g * g * (3.0 - 2.0 * g);
     // The building picked from search stands whatever the timeline, a period shown alone or a switch says.
     if (abs(a.w - uForce) < 0.5) { vis = 1.0; g = 1.0; }
-    if (g <= 0.003 || vis <= 0.003) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+    #ifdef FAINT
+      // During a story (web/scene-player.js): only what the story's year hides (built later, or "Year unknown"), at
+      // full height, as today's city drawn faint and flat (FRAG).
+      if (!(g <= 0.003 || (yflag == 7 && vis <= 0.003))) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+      g = 1.0; vis = 1.0;
+    #else
+      if (g <= 0.003 || vis <= 0.003) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+    #endif
 
     // Entrances, only while the film plays and while tiles load: a building drops in from its own side of the
     // sky, the same side every time (seeded by its id). Filters and scrubbing change the dated city at once.
@@ -662,7 +698,8 @@ const FRAG = /* glsl */`
   precision highp float;
   uniform vec3 uFogColor, uSun;
   uniform vec2 uFog;
-  uniform float uEdgeBuildings;
+  uniform float uEdgeBuildings, uFaint;
+  uniform vec3 uFaintColor;
   ${GRID_GLSL}
   ${FADE_GLSL}
   in vec3 vColor;
@@ -681,6 +718,8 @@ const FRAG = /* glsl */`
     #ifdef PICK
       float id = vGid + 1.0;
       outColor = vec4(mod(id, 256.0), mod(floor(id / 256.0), 256.0), floor(id / 65536.0), 255.0) / 255.0;
+    #elif defined(FAINT)
+      outColor = vec4(uFaintColor, uFaint);   // flat: no light, hatch or outline
     #else
       // n faces the camera (screen-space derivatives), so on every wall seen from outside it is the outward normal.
       vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
@@ -713,15 +752,26 @@ const FRAG = /* glsl */`
   }
 `;
 
-function makeMaterial(tex, pick, born) {
+// faint: 'depth' or 'colour', the two passes of today's city drawn faint during a story: the nearest surface's depth
+// first, then its colour over it, so each pixel is tinted once however many walls lie behind it.
+function makeMaterial(tex, pick, born, faint = null) {
   return new THREE.ShaderMaterial({
     glslVersion: THREE.GLSL3,
     uniforms: { ...uniforms, uAttr: { value: tex }, uBorn: born },
     vertexShader: VERT,
     fragmentShader: FRAG,
-    defines: pick ? { PICK: 1 } : {},
+    defines: pick ? { PICK: 1 } : faint ? { FAINT: 1 } : {},
     side: THREE.DoubleSide,
+    ...(faint && { transparent: true, depthWrite: faint === 'depth', colorWrite: faint === 'colour' }),
   });
+}
+// Today's city, faint, under a story (scene-player.js opts.faint): uniforms.uFaint (13%) of the look's ink. Each tile carries
+// the two passes as children, hidden outside a story and in the pick pass, so they are never hovered or clicked.
+const faints = [];
+let faintOn = false;
+function setFaint(on) {
+  faintOn = on;
+  for (const f of faints) f.visible = on;
 }
 
 // ---------- Tiles ----------
@@ -750,6 +800,13 @@ function addTile(m) {
   mesh.userData = { draw: mesh.material, pick: makeMaterial(tex, true, born), attr: m.attr, nB: m.nB };   // attr, nB: the pick's outline
   mesh.scale.setScalar(0.1);
   mesh.position.set(m.origin[0], 0, m.origin[1]);
+  for (const [k, pass] of ['depth', 'colour'].entries()) {
+    const f = new THREE.Mesh(g, makeMaterial(tex, false, born, pass));
+    f.renderOrder = 1 + k;
+    f.visible = faintOn;
+    mesh.add(f);
+    faints.push(f);
+  }
   scene.add(mesh);
   meshes.push(mesh);
   fetchRestPacks();
@@ -1087,6 +1144,9 @@ function followGround(dist, dt) {
 
 // ---------- Picking ----------
 const pickTarget = new THREE.WebGLRenderTarget(1, 1);
+// A story's own shapes (route, lost buildings) in their own group, left out of the pick pass.
+const storyGroup = new THREE.Group();
+scene.add(storyGroup);
 const pickPixel = new Uint8Array(4);
 function pick(x, y) {
   const w = renderer.domElement.clientWidth, h = renderer.domElement.clientHeight;
@@ -1095,6 +1155,9 @@ function pick(x, y) {
   for (const m of terrainMeshes) m.material = m.userData.pick;
   flat.visible = false;
   labelGroup.visible = false;
+  storyGroup.visible = false;
+  for (const f of faints) f.visible = false;
+  plaqueGroup.visible = false;
   const outlined = highlight.mesh.visible;
   highlight.mesh.visible = false;
   renderer.setRenderTarget(pickTarget);
@@ -1106,6 +1169,9 @@ function pick(x, y) {
   renderer.setClearColor(THEME.sky, 1);
   flat.visible = true;
   labelGroup.visible = true;
+  storyGroup.visible = true;
+  for (const f of faints) f.visible = faintOn;
+  plaqueGroup.visible = true;
   highlight.mesh.visible = outlined;
   for (const m of meshes) m.material = m.userData.draw;
   for (const m of terrainMeshes) m.material = m.userData.draw;
@@ -1187,7 +1253,7 @@ function cardHtml(gid, pinned) {
     <header class="card-head" style="--band:${unknown ? unknownFill(THEME) : band};--band-ink:${inkOn(band)}">
       ${more.name ? `<h3 id="card-title">${esc(more.name)}</h3>` : ''}
       ${more.en && LANG === 'en' ? `<p class="en">${esc(more.en)}</p>` : ''}
-      ${place ? `<p class="place">${esc(place)}</p>` : ''}
+      ${place ? `<p class="place" id="card-place">${esc(place)}</p>` : ''}
       <div class="when"><span class="y" ${more.name ? '' : 'id="card-title"'}>${approx(yearLine(b, label, T))}</span>
         ${unknown || b.yflag === YFLAG.PERIOD ? '' : `<span class="period">${esc(label)}</span>`}</div>
     </header>`;
@@ -1216,9 +1282,11 @@ function cardHtml(gid, pinned) {
   // A photo that failed to load stays off this card's redraws; its width and height (when known) keep its room.
   const ph = more.photo && !failedPhotos.has(more.photo.key) ? more.photo : null;
   const size = ph && ph.w > 0 && ph.h > 0 ? `width="${+ph.w}" height="${+ph.h}"` : '';
+  // The photo's alt names the building as the card's title does: its name, else its address.
+  const what = more.name || placeLine(more, T);
   const photo = ph && `
     <figure class="photo"><img src="data/photos/${esc(ph.key)}" ${size}
-      alt="${esc(more.name ? T('card.photo.alt', { name: more.name }) : T('card.photo.alt.none'))}" loading="lazy" decoding="async">
+      alt="${esc(what ? T('card.photo.alt', { name: what }) : T('card.photo.alt.none'))}" loading="lazy" decoding="async">
       <figcaption>${photoCredit(ph, T).map(c => (c.href ? link(c.href, c.text) : esc(c.text))).join(' · ')}</figcaption></figure>`;
   const ex = more.wp ? extractFor(wikiOf(gid), LANG) : null;
   const excerpt = ex && `
@@ -1237,6 +1305,7 @@ function cardHtml(gid, pinned) {
     ${photo || ''}${head}${dating}${rebuiltHtml}${picked}
     <section><dl>${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
       ${b.rating ? `<p class="why">${esc(T('card.rating.why'))}</p>` : ''}</section>
+    ${plaqueSection(plaquesOf.get(gid), T, esc)}
     ${excerpt || ''}
     ${links.length ? `<section class="sources"><h4>${esc(T('card.readmore'))}</h4><p>${links.map(l => link(l.href, l.text)).join(' · ')}</p></section>` : ''}
     <p class="share"><button class="card-share">${esc(T('card.share'))}</button></p>
@@ -1307,7 +1376,9 @@ function pinCard(gid, x, y) {
   card.innerHTML = cardHtml(gid, true);
   card.classList.add('pinned');
   card.setAttribute('role', 'dialog');
-  card.setAttribute('aria-labelledby', 'card-title');
+  // A building without a name is announced by its address and its year, not by the year alone.
+  card.setAttribute('aria-labelledby', card.querySelector('h3#card-title') ? 'card-title'
+    : ['card-place', 'card-title'].filter(id => card.querySelector(`#${id}`)).join(' '));
   lastPin = [x, y];
   collapsePanelOnPhone();
   card.hidden = false;
@@ -2465,6 +2536,7 @@ function applyLook(name) {
   uniforms.uEstimateTo.value.set(THEME.estimateTo);
   uniforms.uHoverTo.value.set(THEME.hoverTo);
   uniforms.uFogColor.value.set(THEME.sky);
+  uniforms.uFaintColor.value.set(THEME.ui['--ink']);
   redrawLabels();
   recolourLegend(); drawHist(); refreshCard();
 }
@@ -2576,7 +2648,7 @@ renderer.setAnimationLoop(now => {
   followGround(dist, dt);
   updateLods();
   uniforms.uFog.value.set(dist * 1.6, dist * 4);
-  if (frame % 6 === 0) { updateLabels(dist); stepPick(); }
+  if (frame % 6 === 0) { updateLabels(dist); updatePlaqueMarkers(); stepPick(); }
   highlight.step(now, THEME.ui['--accent'], meshes);
   if (playing) {
     const t = Math.min(1, playT0 + (now - playStart) / DURATION);
@@ -2609,7 +2681,7 @@ renderer.setAnimationLoop(now => {
 
 // History scenes (web/scene-player.js): the Stories button and ?scene=<id>, both only with FEATURES.scenes. The year goes through the timeline's own
 // setHandle, the from-handle first to rest so the to-handle can reach the scene's year.
-const scenePlayer = mountScenePlayer({ THREE, scene, camera, controls, origin: config.origin, surfaceAt, calm,
+const scenePlayer = mountScenePlayer({ THREE, scene: storyGroup, faint: setFaint, camera, controls, origin: config.origin, surfaceAt, calm,
   lang: () => LANG, setLang: FEATURES.lang ? setLang : null, stopFlight: () => { flight = null; },
   button: document.querySelector('.stories-open'), enabled: !!FEATURES.scenes,
   year: { save: () => [uniforms.uYearFrom.value, uniforms.uYear.value],

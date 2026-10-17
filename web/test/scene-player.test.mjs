@@ -90,3 +90,34 @@ test('?scene= opens a scene only when features.scenes is on', () => {
   assert.equal(askedScene(false, '?scene=vasa-1628'), null, 'off: the URL is ignored');
   assert.equal(askedScene(undefined, '?scene=vasa-1628'), null, 'a config without the switch counts as off');
 });
+
+test('ghosts: shown from their beat to their last; the hull is 69 m long and 12 m wide', async () => {
+  const { ghostShown, hullOutline } = await import('../scene-player.js');
+  assert.equal(ghostShown({ from: 2 }, 0), false);
+  assert.equal(ghostShown({ from: 2 }, 1), true);
+  assert.equal(ghostShown({ from: 1, until: 4 }, 4), false);
+  const xs = hullOutline().map(p => p[0]), zs = hullOutline().map(p => p[1]);
+  assert.equal(Math.max(...xs) - Math.min(...xs), 69);
+  assert.equal(Math.max(...zs) - Math.min(...zs), 12);
+});
+
+// The three ready stories: every beat's camera looks down on its target at 25° or more (flat ground), and every
+// lost building has a shape, a height and a first beat inside the story.
+for (const id of ['vasa-1628', 'tre-kronor-1697', 's10-olympics-1912']) {
+  test(`${id}: cameras look down at 25° or more; ghosts are drawable`, () => {
+    const s = JSON.parse(fs.readFileSync(new URL(`../scenes/${id}.json`, import.meta.url)));
+    assert.equal(s.ready, true);
+    const origin = [150000, 6580000];
+    for (const b of s.beats) {
+      const [cx, cz] = toLocal(b.camera.lat, b.camera.lon, origin), [tx, tz] = toLocal(b.target.lat, b.target.lon, origin);
+      const down = Math.atan2(b.camera.height_m, Math.hypot(cx - tx, cz - tz)) * 180 / Math.PI;
+      assert.ok(down >= 25, `${id} beat ${b.n}: ${down.toFixed(1)}°`);
+    }
+    const ghosts = s.overlays.filter(o => o.type === 'ghost');
+    assert.ok(ghosts.length >= 3, `${id}: ghosts`);
+    for (const g of ghosts) {
+      assert.ok(g.from >= 1 && g.from <= s.beats.length && g.heights.every(h => h > 0), g.label.en);
+      assert.ok(g.ship || g.rings.every(r => r.length >= 4), g.label.en);
+    }
+  });
+}

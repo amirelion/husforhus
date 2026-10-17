@@ -1,5 +1,6 @@
 # Every dataset the pipeline uses (contract C6). Checked by pipeline/sources.py and by s99_validate.
-# licence: SPDX id, one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, ODbL-1.0.
+# licence: SPDX id, one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, ODbL-1.0, LicenseRef-PublicDomain.
+# feature (optional): a city.FEATURES switch; the source is credited (About, the corner) only while it is on.
 # modified: required for CC-BY* and ODbL; true when we reproject, clip, simplify or join the data.
 # attribution: for CC-BY*, ODbL it must contain the `product` string and the licence marker ("CC BY 4.0",
 #         "CC BY-SA 4.0" or "ODbL"), and say "modified" or "bearbetad" when `modified` is true.
@@ -133,3 +134,32 @@
   attribution: Wikipedia, © Wikipedia contributors, CC BY-SA 4.0 (bearbetad / modified)
   modified: true
   status: confirmed
+
+# Blue plaques (behind city.FEATURES layers: a source with `feature` is credited only while that feature is on).
+- id: samfundet_plaques
+  url: https://samfundetsterik.se/wp-content/uploads/2026/02/KULTURHUSSKYLTAR-lista-6-februari-2026.pdf
+  list_page: https://samfundetsterik.se/foreningen/kulturhusskyltar/   # s00_fetch_plaques takes the list it links now
+  texts_url: https://stockholmskallan.stockholm.se/post/{id}           # each plaque's text, as the society publishes it
+  publisher: Samfundet S:t Erik
+  product: Samfundet S:t Erik
+  dataset: Kulturhusskyltar
+  credit_as: {en: "Samfundet S:t Erik", sv: "Samfundet S:t Erik"}
+  licence: CC-BY-4.0
+  licence_url: https://creativecommons.org/licenses/by/4.0/
+  attribution: Samfundet S:t Erik, CC BY 4.0 (bearbetad / modified)
+  modified: true   # a text loses the sentences that name an owner or a byggherre (plaques.cut); designations go
+  status: confirmed   # O4, answered 2026-10-17: the plaque texts and the list (skyltförteckning) under CC BY 4.0
+  feature: layers
+
+- id: openplaques
+  url: https://openplaques.org/places/se/areas/stockholm
+  data_url: https://openplaques.org/places/se/areas/stockholm/plaques.json
+  publisher: Open Plaques
+  product: Open Plaques
+  dataset: Open Plaques
+  licence: LicenseRef-PublicDomain   # "free to use under a Public Domain declaration" (openplaques.org/about)
+  licence_url: https://openplaques.org/about
+  attribution: Open Plaques (Public Domain)
+  modified: true
+  status: confirmed
+  feature: layers

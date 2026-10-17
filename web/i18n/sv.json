@@ -54,6 +54,8 @@
   "card.photo.unknown": "okänd fotograf",
   "card.extract.credit": "Från {wikipedia}, {licence} (utdrag)",
   "card.extract.read": "Läs artikeln",
+  "card.plaque": "Blå skylt",
+  "card.plaque.source": "Skyltens text",
   "card.readmore": "Läs mer",
   "card.link.raa": "Bebyggelseregistret (RAÄ)",
   "card.link.wikipedia": "Wikipedia",

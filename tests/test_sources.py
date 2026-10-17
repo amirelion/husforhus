@@ -41,7 +41,7 @@ def test_repo_sources_file():
     sources = load_sources(ROOT / "pipeline" / "sources.yml")
     ids = [s["id"] for s in sources]
     assert ids == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse", "raa_old", "wikidata", "osm",
-                   "lm_markhojd", "wikipedia"]
+                   "lm_markhojd", "wikipedia", "samfundet_plaques", "openplaques"]
     by_id = {s["id"]: s for s in sources}
     # Lantmäteriet's terrain model, CC BY 4.0 with no licence question pending (it never blocks --release)
     # asks for the product name, ©Lantmäteriet, that it was processed and the licence
@@ -112,11 +112,13 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
         "city_lod1": "SBK 3D-Byggnader (LOD1) generaliserade", "city_stadsdelar": "Stadsdelar",
         "city_stadskarta": "Stadskarta", "raa_bebyggelse": "Bebyggelseregistret",
         "raa_old": "Bebyggelseregistret, äldre registret", "wikidata": "Wikidata", "osm": "OpenStreetMap",
-        "lm_markhojd": "Markhöjdmodell Nedladdning", "wikipedia": "Wikipedia"}
+        "lm_markhojd": "Markhöjdmodell Nedladdning", "wikipedia": "Wikipedia",
+        "samfundet_plaques": "Kulturhusskyltar", "openplaques": "Open Plaques"}
     assert {k: s["credit_as"]["sv"] for k, s in by_id.items() if "credit_as" in s} == {
         "city_lod1": "© Stockholms stad, Stadsbyggnadskontoret", "city_stadsdelar": "© Stockholms stad, Stadsbyggnadskontoret",
         "city_stadskarta": "© Stockholms stad, Stadsbyggnadskontoret", "wikidata": "Wikidatas bidragsgivare",
-        "osm": "© OpenStreetMap-bidragsgivare", "lm_markhojd": "© Lantmäteriet", "wikipedia": "Wikipedias bidragsgivare"}
+        "osm": "© OpenStreetMap-bidragsgivare", "lm_markhojd": "© Lantmäteriet", "wikipedia": "Wikipedias bidragsgivare",
+        "samfundet_plaques": "Samfundet S:t Erik"}
     # the City's own credit (its licence answer, 2026-10-16): "© Stockholms stad, Stadsbyggnadskontoret, CC BY"
     assert {k for k, s in by_id.items() if "licence_as" in s} == {"city_lod1", "city_stadsdelar", "city_stadskarta"}
 
@@ -124,7 +126,7 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
 def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)  # any working directory
     assert [s["id"] for s in load_sources()] == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse",
-                                                  "raa_old", "wikidata", "osm", "lm_markhojd", "wikipedia"]
+                                                  "raa_old", "wikidata", "osm", "lm_markhojd", "wikipedia", "samfundet_plaques", "openplaques"]
 
 
 def test_release_fails_on_pending_sources():
@@ -160,7 +162,7 @@ def test_required_field_empty(field):
 
 def test_licence_must_be_allowed_spdx():
     assert check_sources([with_(licence="CC-BY-NC-4.0")], release=False) == [
-        "demo: licence 'CC-BY-NC-4.0' is not one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, ODbL-1.0"]
+        "demo: licence 'CC-BY-NC-4.0' is not one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, LicenseRef-PublicDomain, ODbL-1.0"]
     for ok in ["CC-BY-4.0", "CC0-1.0", "ODbL-1.0", "CC-BY-SA-4.0"]:
         assert check_sources([with_(licence=ok)], release=False) == []
 

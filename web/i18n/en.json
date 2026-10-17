@@ -54,6 +54,8 @@
   "card.photo.unknown": "unknown photographer",
   "card.extract.credit": "From {wikipedia}, {licence} (excerpt)",
   "card.extract.read": "Read the article",
+  "card.plaque": "Blue plaque",
+  "card.plaque.source": "Plaque text",
   "card.readmore": "Read more",
   "card.link.raa": "Heritage register (RAÄ)",
   "card.link.wikipedia": "Wikipedia",

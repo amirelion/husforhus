@@ -8,7 +8,7 @@ from pathlib import Path
 import yaml
 
 REQUIRED = ["id", "url", "publisher", "product", "dataset", "licence", "licence_url", "attribution", "status"]
-LICENCES = {"CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0", "ODbL-1.0"}
+LICENCES = {"CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0", "ODbL-1.0", "LicenseRef-PublicDomain"}   # the last: Open Plaques
 # Licences that oblige an attribution line. For these, check_sources requires:
 #   - `modified` is a real true/false;
 #   - `attribution` contains the entry's `product` string;
@@ -20,7 +20,8 @@ MODIFIED_WORDS = ("modified", "bearbetad")
 STATUSES = ("confirmed", "pending-O1")
 # The standard credit line: "Dataset: publisher, licence", plus PROCESSED when `modified` is true. The licence
 # reads as CREDIT_LICENCES says, or as the source's own `licence_as`, which may only drop the version ("CC BY").
-CREDIT_LICENCES = {"CC-BY-4.0": "CC BY 4.0", "CC-BY-SA-4.0": "CC BY-SA 4.0", "CC0-1.0": "CC0", "ODbL-1.0": "ODbL"}
+CREDIT_LICENCES = {"CC-BY-4.0": "CC BY 4.0", "CC-BY-SA-4.0": "CC BY-SA 4.0", "CC0-1.0": "CC0", "ODbL-1.0": "ODbL",
+                   "LicenseRef-PublicDomain": "Public Domain"}
 PROCESSED = {"en": "processed", "sv": "bearbetad"}
 
 

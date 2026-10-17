@@ -79,7 +79,7 @@ test('?scene=vasa-1628 plays the Vasa at 1628, steps to its last beat, and Esc r
   await expect(to).toHaveAttribute('aria-valuenow', '1628');
   await expect(page.locator('.panel')).toBeHidden();
   await expect(page.locator('.sp-mover')).toHaveCount(1);
-  await expect(page.locator('.sp-pin')).toHaveCount(7);
+  await expect(page.locator('.sp-pin:not(.sp-ghost)')).toHaveCount(7);
 
   for (let i = 0; i < 7; i++) await page.keyboard.press('ArrowRight');
   await expect(page.locator('.sp-count')).toContainText('8 / 8');

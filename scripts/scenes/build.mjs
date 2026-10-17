@@ -12,14 +12,47 @@ const DEFAULT_DURATION_S = 8;
 // Per-scene metadata the CSVs don't carry. sensitive: shows a warning and never autoplays
 // (history-scenes.md lists s10 beat 5 / the marathon death; Vasa and Tre Kronor state deaths too).
 export const SCENES = {
-  'vasa-1628': { title: { en: 'The Vasa sinks, 1628', sv: 'Vasa sjunker 1628' }, year: 1628, sensitive: true },
+  'vasa-1628': { title: { en: 'The Vasa sinks, 1628', sv: 'Vasa sjunker 1628' }, year: 1628, sensitive: true, ready: true },
   's04': { title: { en: 'The great fire of 1625', sv: 'Stora branden 1625' }, year: 1625, sensitive: false },
   's07-kristina-lock': { title: { en: "Queen Kristina's lock, 1637–1642", sv: 'Drottning Kristinas sluss 1637–1642' }, year: 1642, sensitive: false },
-  'tre-kronor-1697': { title: { en: 'Tre Kronor burns, 1697', sv: 'Tre Kronor brinner 1697' }, year: 1697, sensitive: false },
-  's10-olympics-1912': { title: { en: 'The Stockholm Olympics, 1912', sv: 'Olympiska spelen i Stockholm 1912' }, year: 1912, sensitive: true },
+  'tre-kronor-1697': { title: { en: 'Tre Kronor burns, 1697', sv: 'Tre Kronor brinner 1697' }, year: 1697, sensitive: false, ready: true },
+  's10-olympics-1912': { title: { en: 'The Stockholm Olympics, 1912', sv: 'Olympiska spelen i Stockholm 1912' }, year: 1912, sensitive: true, ready: true },
   's11': { title: { en: 'The Stockholm Exhibition, 1930', sv: 'Stockholmsutställningen 1930' }, year: 1930, sensitive: false },
   's12': { title: { en: 'The clearance of Klara, 1952–1977', sv: 'Klararivningarna 1952–1977' }, year: 1952, sensitive: false },
 };
+
+// ready: shown in the Stories list (web/scene-player.js lists only these).
+
+// WKT POLYGON / MULTIPOLYGON in lon/lat to rings of [lat, lon] (outer rings only; holes are not used).
+export function parseWkt(wkt) {
+  const m = /^\s*(MULTI)?POLYGON\s*\((.*)\)\s*$/i.exec(wkt || '');
+  if (!m) throw new Error(`not a POLYGON or MULTIPOLYGON: "${String(wkt).slice(0, 40)}"`);
+  const rings = m[1] ? m[2].split(/\)\s*\)\s*,\s*\(\s*\(/) : [m[2]];
+  return rings.map((r) => r.replace(/[()]/g, '').split(',').map((pt) => {
+    const [lon, lat] = pt.trim().split(/\s+/).map(Number);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error(`bad WKT point "${pt}"`);
+    return [lat, lon];
+  }));
+}
+
+// The story's lost buildings (ghosts.csv): an extruded shape per row from from_beat to until_beat (both 1-based,
+// until empty = the end); height_m per part, ";"-separated. footprint "ship" is the Vasa's hull, drawn along the route.
+export function ghostOverlays(dir, id) {
+  const file = path.join(dir, 'ghosts.csv');
+  if (!fs.existsSync(file)) return [];
+  return readCsv(file).filter((r) => r.from_beat).map((r) => {
+    const w = `${id}/ghosts.csv ${r.name}`;
+    const geom = r.geometry ?? r.footprint;
+    const heights = r.height_m.split(';').map((h) => num(h.trim(), w));
+    const o = { type: 'ghost', label: { en: r.name, sv: r.name }, from: num(r.from_beat, w), heights,
+      confidence: r.geometry_confidence || r.confidence };
+    if (r.until_beat) o.until = num(r.until_beat, w);
+    if (geom === 'ship') return { ...o, ship: { length_m: 69, beam_m: 12 } };
+    o.rings = parseWkt(geom);
+    if (o.rings.length !== heights.length) throw new Error(`${w}: ${o.rings.length} parts but ${heights.length} heights`);
+    return o;
+  });
+}
 
 // Overlay files per scene: route lines and closed outlines (both emitted as type "route").
 const OVERLAYS = {
@@ -80,6 +113,7 @@ export function buildScene(id, root = REPO) {
     };
   });
   const scene = { id, title: meta.title, year: meta.year, sensitive: meta.sensitive, beats };
+  if (meta.ready) scene.ready = true;
   const overlays = [];
   for (const o of OVERLAYS[id] ?? []) {
     const pts = readCsv(path.join(dir, o.file));
@@ -96,6 +130,7 @@ export function buildScene(id, root = REPO) {
       }
     }
   }
+  overlays.push(...ghostOverlays(dir, id));
   if (overlays.length) scene.overlays = overlays;
   return scene;
 }
@@ -107,7 +142,7 @@ export function buildAll(root = REPO) {
   for (const id of Object.keys(SCENES)) {
     const scene = buildScene(id, root);
     fs.writeFileSync(path.join(out, `${id}.json`), JSON.stringify(scene, null, 2) + '\n');
-    index.push({ id, title: scene.title, year: scene.year, beats: scene.beats.length });
+    index.push({ id, title: scene.title, year: scene.year, beats: scene.beats.length, ...(scene.ready && { ready: true }) });
   }
   fs.writeFileSync(path.join(out, 'index.json'), JSON.stringify({ scenes: index }, null, 2) + '\n');
   return index;

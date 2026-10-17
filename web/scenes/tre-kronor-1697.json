@@ -10,13 +10,13 @@
     {
       "n": 1,
       "camera": {
-        "lat": 59.329,
-        "lon": 18.083,
-        "height_m": 500
+        "lat": 59.32906,
+        "lon": 18.08308,
+        "height_m": 579
       },
       "target": {
-        "lat": 59.325833,
-        "lon": 18.071389
+        "lat": 59.326944,
+        "lon": 18.071667
       },
       "duration_s": 6,
       "caption": {
@@ -30,13 +30,13 @@
     {
       "n": 2,
       "camera": {
-        "lat": 59.3262,
-        "lon": 18.079,
-        "height_m": 90
+        "lat": 59.32804,
+        "lon": 18.07652,
+        "height_m": 270
       },
       "target": {
-        "lat": 59.325833,
-        "lon": 18.071389
+        "lat": 59.32705,
+        "lon": 18.0712
       },
       "duration_s": 9,
       "caption": {
@@ -51,13 +51,13 @@
     {
       "n": 3,
       "camera": {
-        "lat": 59.3245,
-        "lon": 18.076,
-        "height_m": 120
+        "lat": 59.32606,
+        "lon": 18.07622,
+        "height_m": 270
       },
       "target": {
-        "lat": 59.3256,
-        "lon": 18.0712
+        "lat": 59.32705,
+        "lon": 18.0709
       },
       "duration_s": 9,
       "caption": {
@@ -71,13 +71,13 @@
     {
       "n": 4,
       "camera": {
-        "lat": 59.3275,
-        "lon": 18.08,
-        "height_m": 200
+        "lat": 59.32901,
+        "lon": 18.07868,
+        "height_m": 386
       },
       "target": {
-        "lat": 59.325833,
-        "lon": 18.071389
+        "lat": 59.326944,
+        "lon": 18.071667
       },
       "duration_s": 6,
       "caption": {
@@ -92,13 +92,13 @@
     {
       "n": 5,
       "camera": {
-        "lat": 59.3262,
-        "lon": 18.079,
-        "height_m": 90
+        "lat": 59.32804,
+        "lon": 18.07652,
+        "height_m": 270
       },
       "target": {
-        "lat": 59.325833,
-        "lon": 18.071389
+        "lat": 59.32705,
+        "lon": 18.0712
       },
       "duration_s": 12,
       "caption": {
@@ -112,13 +112,13 @@
     {
       "n": 6,
       "camera": {
-        "lat": 59.327,
-        "lon": 18.078,
-        "height_m": 150
+        "lat": 59.328,
+        "lon": 18.07737,
+        "height_m": 289
       },
       "target": {
-        "lat": 59.3264,
-        "lon": 18.0715
+        "lat": 59.326944,
+        "lon": 18.071667
       },
       "duration_s": 10,
       "caption": {
@@ -133,9 +133,9 @@
     {
       "n": 7,
       "camera": {
-        "lat": 59.327,
-        "lon": 18.078,
-        "height_m": 150
+        "lat": 59.328,
+        "lon": 18.07737,
+        "height_m": 289
       },
       "target": {
         "lat": 59.326944,
@@ -153,9 +153,9 @@
     {
       "n": 8,
       "camera": {
-        "lat": 59.3285,
-        "lon": 18.079,
-        "height_m": 250
+        "lat": 59.32938,
+        "lon": 18.07735,
+        "height_m": 354
       },
       "target": {
         "lat": 59.326944,
@@ -173,9 +173,9 @@
     {
       "n": 9,
       "camera": {
-        "lat": 59.328,
-        "lon": 18.07,
-        "height_m": 300
+        "lat": 59.33085,
+        "lon": 18.07046,
+        "height_m": 482
       },
       "target": {
         "lat": 59.326,
@@ -189,6 +189,373 @@
       "sources": [
         "sv Wikipedia Stockholms slott",
         "sv Wikipedia Slottsbranden 1697"
+      ]
+    }
+  ],
+  "ready": true,
+  "overlays": [
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Tre Kronor: keep (kärntornet)",
+        "sv": "Tre Kronor: keep (kärntornet)"
+      },
+      "from": 1,
+      "heights": [
+        60
+      ],
+      "confidence": "low",
+      "until": 4,
+      "rings": [
+        [
+          [
+            59.327106,
+            18.07135
+          ],
+          [
+            59.327106,
+            18.071614
+          ],
+          [
+            59.32724,
+            18.071614
+          ],
+          [
+            59.32724,
+            18.07135
+          ],
+          [
+            59.327106,
+            18.07135
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Tre Kronor: högborgen (inner castle) ranges",
+        "sv": "Tre Kronor: högborgen (inner castle) ranges"
+      },
+      "from": 1,
+      "heights": [
+        20
+      ],
+      "confidence": "low",
+      "until": 4,
+      "rings": [
+        [
+          [
+            59.326989,
+            18.070963
+          ],
+          [
+            59.326989,
+            18.071755
+          ],
+          [
+            59.327348,
+            18.071755
+          ],
+          [
+            59.327348,
+            18.070963
+          ],
+          [
+            59.326989,
+            18.070963
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Tre Kronor: Stora borggården east range (kanslilängan)",
+        "sv": "Tre Kronor: Stora borggården east range (kanslilängan)"
+      },
+      "from": 1,
+      "heights": [
+        16
+      ],
+      "confidence": "low",
+      "until": 4,
+      "rings": [
+        [
+          [
+            59.326495,
+            18.072407
+          ],
+          [
+            59.326495,
+            18.072653
+          ],
+          [
+            59.327348,
+            18.072653
+          ],
+          [
+            59.327348,
+            18.072407
+          ],
+          [
+            59.326495,
+            18.072407
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Tre Kronor: Stora borggården west range",
+        "sv": "Tre Kronor: Stora borggården west range"
+      },
+      "from": 1,
+      "heights": [
+        18
+      ],
+      "confidence": "low",
+      "until": 4,
+      "rings": [
+        [
+          [
+            59.326495,
+            18.070681
+          ],
+          [
+            59.326495,
+            18.070927
+          ],
+          [
+            59.327348,
+            18.070927
+          ],
+          [
+            59.327348,
+            18.070681
+          ],
+          [
+            59.326495,
+            18.070681
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Tre Kronor: north range (Tessin the Younger's rebuild)",
+        "sv": "Tre Kronor: north range (Tessin the Younger's rebuild)"
+      },
+      "from": 1,
+      "heights": [
+        22
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.327348,
+            18.070681
+          ],
+          [
+            59.327348,
+            18.072653
+          ],
+          [
+            59.327483,
+            18.072653
+          ],
+          [
+            59.327483,
+            18.070681
+          ],
+          [
+            59.327348,
+            18.070681
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Tre Kronor: ruin state",
+        "sv": "Tre Kronor: ruin state"
+      },
+      "from": 5,
+      "heights": [
+        25,
+        8
+      ],
+      "confidence": "low",
+      "until": 6,
+      "rings": [
+        [
+          [
+            59.327106,
+            18.07135
+          ],
+          [
+            59.327106,
+            18.071614
+          ],
+          [
+            59.32724,
+            18.071614
+          ],
+          [
+            59.32724,
+            18.07135
+          ],
+          [
+            59.327106,
+            18.07135
+          ]
+        ],
+        [
+          [
+            59.326495,
+            18.070681
+          ],
+          [
+            59.326495,
+            18.070927
+          ],
+          [
+            59.327348,
+            18.070927
+          ],
+          [
+            59.327348,
+            18.070681
+          ],
+          [
+            59.326495,
+            18.070681
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "New palace: half-built state",
+        "sv": "New palace: half-built state"
+      },
+      "from": 7,
+      "heights": [
+        6,
+        6,
+        3
+      ],
+      "confidence": "low",
+      "until": 8,
+      "rings": [
+        [
+          [
+            59.326405,
+            18.07061
+          ],
+          [
+            59.326405,
+            18.072724
+          ],
+          [
+            59.326567,
+            18.072724
+          ],
+          [
+            59.326567,
+            18.07061
+          ],
+          [
+            59.326405,
+            18.07061
+          ]
+        ],
+        [
+          [
+            59.326567,
+            18.072407
+          ],
+          [
+            59.326567,
+            18.072724
+          ],
+          [
+            59.327321,
+            18.072724
+          ],
+          [
+            59.327321,
+            18.072407
+          ],
+          [
+            59.326567,
+            18.072407
+          ]
+        ],
+        [
+          [
+            59.326567,
+            18.07061
+          ],
+          [
+            59.326567,
+            18.070927
+          ],
+          [
+            59.327321,
+            18.070927
+          ],
+          [
+            59.327321,
+            18.07061
+          ],
+          [
+            59.326567,
+            18.07061
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Stora Bollhuset",
+        "sv": "Stora Bollhuset"
+      },
+      "from": 1,
+      "heights": [
+        10
+      ],
+      "confidence": "low",
+      "rings": [
+        [
+          [
+            59.326078,
+            18.073598
+          ],
+          [
+            59.326078,
+            18.074302
+          ],
+          [
+            59.326222,
+            18.074302
+          ],
+          [
+            59.326222,
+            18.073598
+          ],
+          [
+            59.326078,
+            18.073598
+          ]
+        ]
       ]
     }
   ]

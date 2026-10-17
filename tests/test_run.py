@@ -15,10 +15,11 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_steps_contract():
     # S08_landmarks verifies the curated list before s02_years reads it (spec order, not number order);
     # s06_wiki needs the years (curated private houses) and feeds s03_tiles' cards. s02_addresses puts the
-    # OSM addresses and the stadsdel on each footprint, for the cards; s14_search indexes the version's cards
+    # OSM addresses and the stadsdel on each footprint, for the cards; s14_search indexes the version's cards. The blue
+    # plaques: s15_plaques needs s02_addresses' table and writes into the version s03_tiles made
     assert run.STEPS == ["s00_fetch_city", "s00_fetch_raa", "s00_fetch_raa_old", "s00_fetch_wikidata", "s00_fetch_osm",
-                         "s00_fetch_dem", "s01_load", "s08_landmarks", "s02_years", "s02_attributes", "s02_addresses",
-                         "s02_terrain", "s06_wiki", "s03_tiles", "s04_base", "s07_labels", "s14_search", "s99_validate"]
+                         "s00_fetch_dem", "s00_fetch_plaques", "s01_load", "s08_landmarks", "s02_years", "s02_attributes", "s02_addresses",
+                         "s02_terrain", "s06_wiki", "s03_tiles", "s04_base", "s07_labels", "s14_search", "s15_plaques", "s99_validate"]
 
 
 def test_list_prints_steps_without_importing_them(capsys):

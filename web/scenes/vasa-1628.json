@@ -10,9 +10,9 @@
     {
       "n": 1,
       "camera": {
-        "lat": 59.333,
-        "lon": 18.06,
-        "height_m": 900
+        "lat": 59.33345,
+        "lon": 18.05938,
+        "height_m": 964
       },
       "target": {
         "lat": 59.325,
@@ -30,9 +30,9 @@
     {
       "n": 2,
       "camera": {
-        "lat": 59.331,
-        "lon": 18.082,
-        "height_m": 150
+        "lat": 59.33105,
+        "lon": 18.08314,
+        "height_m": 270
       },
       "target": {
         "lat": 59.3308,
@@ -50,9 +50,9 @@
     {
       "n": 3,
       "camera": {
-        "lat": 59.327,
-        "lon": 18.08,
-        "height_m": 80
+        "lat": 59.32771,
+        "lon": 18.08778,
+        "height_m": 643
       },
       "target": {
         "lat": 59.3265,
@@ -70,9 +70,9 @@
     {
       "n": 4,
       "camera": {
-        "lat": 59.3245,
-        "lon": 18.077,
-        "height_m": 60
+        "lat": 59.32495,
+        "lon": 18.07927,
+        "height_m": 244
       },
       "target": {
         "lat": 59.324,
@@ -91,9 +91,9 @@
     {
       "n": 5,
       "camera": {
-        "lat": 59.318,
-        "lon": 18.068,
-        "height_m": 120
+        "lat": 59.31869,
+        "lon": 18.06901,
+        "height_m": 289
       },
       "target": {
         "lat": 59.321167,
@@ -113,9 +113,9 @@
     {
       "n": 6,
       "camera": {
-        "lat": 59.322,
-        "lon": 18.088,
-        "height_m": 100
+        "lat": 59.32065,
+        "lon": 18.08071,
+        "height_m": 289
       },
       "target": {
         "lat": 59.3196,
@@ -134,9 +134,9 @@
     {
       "n": 7,
       "camera": {
-        "lat": 59.322,
-        "lon": 18.095,
-        "height_m": 150
+        "lat": 59.32196,
+        "lon": 18.09505,
+        "height_m": 321
       },
       "target": {
         "lat": 59.319,
@@ -156,8 +156,8 @@
       "n": 8,
       "camera": {
         "lat": 59.3255,
-        "lon": 18.087,
-        "height_m": 150
+        "lon": 18.08699,
+        "height_m": 321
       },
       "target": {
         "lat": 59.3281,
@@ -174,6 +174,7 @@
       ]
     }
   ],
+  "ready": true,
   "overlays": [
     {
       "type": "route",
@@ -287,6 +288,156 @@
       "label": {
         "en": "Beckholmen shore (survivors swam about 120 m)",
         "sv": "Beckholmen shore (survivors swam about 120 m)"
+      }
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Tre Kronor castle",
+        "sv": "Tre Kronor castle"
+      },
+      "from": 1,
+      "heights": [
+        18,
+        50
+      ],
+      "confidence": "low",
+      "rings": [
+        [
+          [
+            59.32654,
+            18.070751
+          ],
+          [
+            59.32654,
+            18.072583
+          ],
+          [
+            59.327438,
+            18.072583
+          ],
+          [
+            59.327438,
+            18.070751
+          ],
+          [
+            59.32654,
+            18.070751
+          ]
+        ],
+        [
+          [
+            59.327106,
+            18.07135
+          ],
+          [
+            59.327106,
+            18.071614
+          ],
+          [
+            59.32724,
+            18.071614
+          ],
+          [
+            59.32724,
+            18.07135
+          ],
+          [
+            59.327106,
+            18.07135
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Skeppsgården (navy yard) on today's Blasieholmen",
+        "sv": "Skeppsgården (navy yard) on today's Blasieholmen"
+      },
+      "from": 2,
+      "heights": [
+        6
+      ],
+      "confidence": "low",
+      "rings": [
+        [
+          [
+            59.330665,
+            18.076884
+          ],
+          [
+            59.330665,
+            18.078116
+          ],
+          [
+            59.330935,
+            18.078116
+          ],
+          [
+            59.330935,
+            18.076884
+          ],
+          [
+            59.330665,
+            18.076884
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Rådstugan (town hall) on Stortorget",
+        "sv": "Rådstugan (town hall) on Stortorget"
+      },
+      "from": 1,
+      "heights": [
+        15
+      ],
+      "confidence": "low",
+      "rings": [
+        [
+          [
+            59.325299,
+            18.070478
+          ],
+          [
+            59.325299,
+            18.071182
+          ],
+          [
+            59.325461,
+            18.071182
+          ],
+          [
+            59.325461,
+            18.070478
+          ],
+          [
+            59.325299,
+            18.070478
+          ]
+        ]
+      ]
+    },
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Vasa (the ship)",
+        "sv": "Vasa (the ship)"
+      },
+      "from": 2,
+      "heights": [
+        10,
+        45,
+        50,
+        35
+      ],
+      "confidence": "low",
+      "ship": {
+        "length_m": 69,
+        "beam_m": 12
       }
     }
   ]

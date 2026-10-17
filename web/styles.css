@@ -663,3 +663,28 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 #scene:focus-visible ~ .crosshair { display: block; }
 #scene:focus-visible { outline-offset: -4px; }
 .card .card-failed { color: var(--ink); font-weight: 500; }
+
+/* Launch check (phones): on a touch screen every control takes a tap in at least 44 × 44 px. Rows and pills grow to
+   it; the small round buttons keep their drawn size and take the tap in an invisible band around it (::after), as
+   the top-right buttons do above. Links inside running text are exempt (WCAG 2.5.8, inline). */
+@media (pointer: coarse) {
+  .modes button, .swatch, .swatch.unknown .switch, .est-row .switch, .sheet-handle, .search-cancel,
+  .about-nav a, .look-atmos button, .card .photo .years button { min-height: 44px; }
+  .about-nav a { display: inline-flex; align-items: center; }
+  .search-clear { width: 44px; height: 44px; }
+  /* the round top-right buttons take a full 44 px band on every side: a 16 px gap keeps the bands apart */
+  .buttons { gap: 16px; }
+  .north-open::after, .search-open::after { inset: -8px; }
+  .lang button { min-width: 44px; }
+  .play { width: 44px; height: 44px; }
+  .look-close { position: relative; }
+  .card-close::after, .about-close::after, .look-close::after, .credit-open::after,
+  .card .photo .prev::after, .card .photo .next::after { content: ""; position: absolute; inset: -7px; }
+  .credit-open { position: relative; }
+  .credit-open::after { inset: -9px; }
+}
+/* Samfundet S:t Erik's blue plaques (features.layers): the plaque's own blue edge, its credit like the excerpt's. */
+.card .plaque { border-left: 4px solid #1f4e9c; }
+.card .plaque p { margin: 0 0 6px; line-height: 1.5; }
+.card .plaque .plaque-name { font-weight: 600; }
+.card .plaque .credit { margin: 0; color: var(--muted); font-size: 11px; }
