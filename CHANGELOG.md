@@ -6,7 +6,7 @@ What changed on [husforhus.se](https://husforhus.se), newest first: the map's fe
 
 Plans, not promises: the order can change.
 
-- **More history stories.** The great fire of 1625, the clearance of Klara (1952–1977), Queen Kristina's lock (1637–1642), and stories about Tunnelbanan: Vällingby, a town built around its station; the first line in 1950; the blue line and Järvafältet; Kymlinge, the station that never opened.
+- **More history stories.** The clearance of Klara (1952–1977), and more about Tunnelbanan: the blue line and Järvafältet; Kymlinge, the station that never opened.
 - **Narration** for the history stories, in English and Swedish.
 - **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 37 plaques not yet placed on a building.
 - **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
@@ -16,7 +16,7 @@ Plans, not promises: the order can change.
 ### Features
 - **The map is public** at husforhus.se, in English and Swedish (Swedish for Swedish browsers), with no cookies and no tracking.
 - **Search** for a street, an address, a named building, a district, or what is inside a building ("Nobel" finds the Nobel Prize Museum in Börshuset).
-- **History stories** (Berättelser): the Vasa sinks, 1628; Tre Kronor burns, 1697; the Stockholm Olympics, 1912; the Stockholm Exhibition, 1930. Today's city is drawn faintly for orientation and the lost buildings in sandstone, with period photos and sources on every step.
+- **History stories** (Berättelser), eight of them: the great fire of 1625; the Vasa sinks, 1628; Queen Kristina's lock, 1637–1642 (and the locks that followed it at Slussen); Tre Kronor burns, 1697; the Stockholm Olympics, 1912; the Stockholm Exhibition, 1930; the first metro, 1950; Vällingby, a town built around its station, 1950–1954. The metro stories show the lines as they open. Today's city is drawn faintly for orientation and the lost buildings in sandstone, with period photos and sources on every step.
 - **Tunnelbanan** as a legend switch: the green, red and blue lines grow with the timeline from 1950, and every station has a card with its opening date and earlier names.
 - **Blue plaques** as a legend switch: 127 of Samfundet S:t Erik's plaques, with their Swedish texts on the cards.
 - **Real tower heights** for 189 buildings, from Lantmäteriet's laser data: Stadshuset 103 m, Kaknästornet 139 m, Klara kyrka 95 m, the Gamla stan churches, Hötorgscity, DN-skrapan, Folksamhuset and more, instead of flat blocks, and a Tower row on their cards. About 3,100 buildings were checked; one that changed since the 2021 scan keeps its old height.

@@ -17,7 +17,8 @@
         "sv": "Stora branden 1625"
       },
       "year": 1625,
-      "beats": 6
+      "beats": 6,
+      "ready": true
     },
     {
       "id": "s07-kristina-lock",
@@ -26,7 +27,8 @@
         "sv": "Drottning Kristinas sluss 1637–1642"
       },
       "year": 1642,
-      "beats": 3
+      "beats": 6,
+      "ready": true
     },
     {
       "id": "tre-kronor-1697",
@@ -66,6 +68,26 @@
       },
       "year": 1952,
       "beats": 8
+    },
+    {
+      "id": "metro-vallingby",
+      "title": {
+        "en": "Vällingby: a town around a station, 1950–1954",
+        "sv": "Vällingby: en stad kring en station 1950–1954"
+      },
+      "year": 1950,
+      "beats": 8,
+      "ready": true
+    },
+    {
+      "id": "metro-1950",
+      "title": {
+        "en": "The first metro, 1 October 1950",
+        "sv": "Den första tunnelbanan, 1 oktober 1950"
+      },
+      "year": 1950,
+      "beats": 6,
+      "ready": true
     }
   ]
 }

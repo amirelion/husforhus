@@ -1,0 +1,252 @@
+{
+  "id": "metro-vallingby",
+  "title": {
+    "en": "Vällingby: a town around a station, 1950–1954",
+    "sv": "Vällingby: en stad kring en station 1950–1954"
+  },
+  "year": 1950,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.35714,
+        "lon": 17.89348,
+        "height_m": 1400
+      },
+      "target": {
+        "lat": 59.363889,
+        "lon": 17.870556
+      },
+      "duration_s": 8,
+      "year": 1950,
+      "caption": {
+        "en": "Stockholm buys the land at Vällingby in 1949, the year the old parish of Spånga joins the city. Planning starts the same year.",
+        "sv": "Stockholms stad köper marken i Vällingby 1949, samma år som Spånga landskommun går upp i staden. Planeringen börjar samma år."
+      },
+      "sources": [
+        "sv Wikipedia: Vällingby (rev 59457211)",
+        "en Wikipedia: Vällingby (rev 1376958888)"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.35688,
+        "lon": 17.8785,
+        "height_m": 800
+      },
+      "target": {
+        "lat": 59.363889,
+        "lon": 17.870556
+      },
+      "duration_s": 8,
+      "year": 1951,
+      "caption": {
+        "en": "The plan is an \"ABC town\": arbete, bostad, centrum. Work, housing and a centre in one place, not a dormitory suburb.",
+        "sv": "Planen är en ABC-stad: arbete, bostad och centrum på samma plats, inte en sovstad."
+      },
+      "sources": [
+        "sv Wikipedia: Vällingby (rev 59457211)",
+        "sv Wikipedia: ABC-stad (rev 59052936)"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.35797,
+        "lon": 17.86633,
+        "height_m": 650
+      },
+      "target": {
+        "lat": 59.363889,
+        "lon": 17.870556
+      },
+      "duration_s": 8,
+      "year": 1951,
+      "caption": {
+        "en": "In 1951 the city housing company Svenska Bostäder is given the job of building the centre and part of the homes.",
+        "sv": "År 1951 får det kommunala Svenska Bostäder i uppdrag att bygga centrumet och en del av bostäderna."
+      },
+      "sources": [
+        "en Wikipedia: Vällingby (rev 1376958888)",
+        "sv Wikipedia: Vällingby Centrum (rev 59296485)"
+      ]
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.34673,
+        "lon": 17.92497,
+        "height_m": 2300
+      },
+      "target": {
+        "lat": 59.354722,
+        "lon": 17.881861
+      },
+      "duration_s": 9,
+      "year": 1952,
+      "caption": {
+        "en": "26 October 1952: the metro opens from Kungsgatan, today Hötorget, out to Vällingby. The first residents moved in that summer.",
+        "sv": "26 oktober 1952: tunnelbanan öppnar från Kungsgatan, i dag Hötorget, ut till Vällingby. De första invånarna flyttade in samma sommar."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholms tunnelbana (rev 59711828)",
+        "en Wikipedia: Vällingby (rev 1376958888)",
+        "sv Wikipedia: Hötorget (tunnelbanestation) (rev 59721040)"
+      ]
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.35949,
+        "lon": 17.87369,
+        "height_m": 520
+      },
+      "target": {
+        "lat": 59.363889,
+        "lon": 17.870556
+      },
+      "duration_s": 8,
+      "year": 1953,
+      "caption": {
+        "en": "At first trains stop at a temporary station 500 m to the east, by today's depot. The permanent station opens on 6 April 1954.",
+        "sv": "Först stannar tågen vid en provisorisk station 500 meter österut, vid dagens vagnhall. Den permanenta stationen öppnar 6 april 1954."
+      },
+      "sources": [
+        "sv Wikipedia: Vällingby (tunnelbanestation) (rev 59760910)"
+      ],
+      "photo": {
+        "src": "img/3b733adf86fb3ec15f5f73df36256c8ade81badf.jpg",
+        "width": 800,
+        "height": 562,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:V%C3%A4llingby_1950-tal.jpg",
+          "file": "File:Vällingby 1950-tal.jpg"
+        },
+        "caption": {
+          "en": "High-rise blocks and part of Vällingby centrum, 1950s (exact year not given)",
+          "sv": "Höghus och en del av Vällingby centrum, 1950-tal (exakt år anges inte)"
+        }
+      }
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.36062,
+        "lon": 17.86685,
+        "height_m": 450
+      },
+      "target": {
+        "lat": 59.363889,
+        "lon": 17.870556
+      },
+      "duration_s": 8,
+      "year": 1954,
+      "caption": {
+        "en": "14 November 1954: Vällingby centrum opens, close to 100,000 people come. The architects are Backström & Reinius.",
+        "sv": "14 november 1954: Vällingby centrum invigs och nära 100 000 människor kommer. Arkitekter är Backström & Reinius."
+      },
+      "sources": [
+        "sv Wikipedia: Vällingby Centrum (rev 59296485)",
+        "sv Wikipedia: Vällingby (rev 59457211)",
+        "en Wikipedia: Vällingby (rev 1376958888)"
+      ],
+      "photo": {
+        "src": "img/07fc706ed4e2eaff416b3bfda70699eb396271d9.jpg",
+        "width": 800,
+        "height": 594,
+        "credit": {
+          "author": "Lantz, Gunnar",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Vallingby_invigning.jpg",
+          "file": "File:Vallingby invigning.jpg"
+        },
+        "caption": {
+          "en": "Vällingby centrum on its opening day, 14 November 1954",
+          "sv": "Vällingby centrum på invigningsdagen 14 november 1954"
+        }
+      }
+    },
+    {
+      "n": 7,
+      "camera": {
+        "lat": 59.36778,
+        "lon": 17.86614,
+        "height_m": 520
+      },
+      "target": {
+        "lat": 59.363889,
+        "lon": 17.870556
+      },
+      "duration_s": 8,
+      "year": 1954,
+      "caption": {
+        "en": "Cars and deliveries go underneath; the squares above are for people on foot, with shops under long canopies.",
+        "sv": "Bilar och varuleveranser går under jord; torgen ovanpå är för gående, med butiker under långa skärmtak."
+      },
+      "sources": [
+        "en Wikipedia: Vällingby (rev 1376958888)",
+        "sv Wikipedia: Vällingby Centrum (rev 59296485)"
+      ],
+      "photo": {
+        "src": "img/fab3ed9b9d8f0b5d909dbd6b0c4f80cdbc45201b.jpg",
+        "width": 800,
+        "height": 539,
+        "credit": {
+          "author": "Sune Sundahl",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:V%C3%A4llingby_Centrum_font%C3%A4ner.jpg",
+          "file": "File:Vällingby Centrum fontäner.jpg"
+        },
+        "caption": {
+          "en": "The paddling pool in Vällingby centrum, 1954",
+          "sv": "Plaskdammen i Vällingby centrum, 1954"
+        }
+      }
+    },
+    {
+      "n": 8,
+      "camera": {
+        "lat": 59.36186,
+        "lon": 17.89315,
+        "height_m": 1200
+      },
+      "target": {
+        "lat": 59.363889,
+        "lon": 17.870556
+      },
+      "duration_s": 8,
+      "year": 1955,
+      "caption": {
+        "en": "Soon after the opening Vällingby has about 25,000 residents; ten years on, twice the number the centre was planned for.",
+        "sv": "Strax efter invigningen bor omkring 25 000 i Vällingby; tio år senare dubbelt så många som centrumet planerades för."
+      },
+      "sources": [
+        "en Wikipedia: Vällingby (rev 1376958888)",
+        "sv Wikipedia: Vällingby Centrum (rev 59296485)"
+      ],
+      "photo": {
+        "src": "img/d1e462e00523dd61360a16909649fb0ed4fc71b5.jpg",
+        "width": 800,
+        "height": 564,
+        "credit": {
+          "author": "Lennart Olson",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Vallingby_1956.jpg",
+          "file": "File:Vallingby 1956.jpg"
+        },
+        "caption": {
+          "en": "Vällingby, 1955 or 1956 (Commons gives both years)",
+          "sv": "Vällingby, 1955 eller 1956 (Commons anger båda åren)"
+        }
+      }
+    }
+  ],
+  "ready": true,
+  "layers": [
+    "metro"
+  ]
+}

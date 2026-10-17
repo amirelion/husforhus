@@ -13,15 +13,21 @@ const DEFAULT_DURATION_S = 8;
 // (history-scenes.md lists s10 beat 5 / the marathon death; Vasa and Tre Kronor state deaths too).
 export const SCENES = {
   'vasa-1628': { title: { en: 'The Vasa sinks, 1628', sv: 'Vasa sjunker 1628' }, year: 1628, sensitive: true, ready: true },
-  's04': { title: { en: 'The great fire of 1625', sv: 'Stora branden 1625' }, year: 1625, sensitive: false, ready: false },   // held 2026-10-17: two beats frame nothing, the burnt blocks are not traced yet
-  's07-kristina-lock': { title: { en: "Queen Kristina's lock, 1637–1642", sv: 'Drottning Kristinas sluss 1637–1642' }, year: 1642, sensitive: false },
+  's04': { title: { en: 'The great fire of 1625', sv: 'Stora branden 1625' }, year: 1625, sensitive: false, ready: true },
+  's07-kristina-lock': { title: { en: "Queen Kristina's lock, 1637–1642", sv: 'Drottning Kristinas sluss 1637–1642' }, year: 1642, sensitive: false, ready: true },
   'tre-kronor-1697': { title: { en: 'Tre Kronor burns, 1697', sv: 'Tre Kronor brinner 1697' }, year: 1697, sensitive: false, ready: true },
   's10-olympics-1912': { title: { en: 'The Stockholm Olympics, 1912', sv: 'Olympiska spelen i Stockholm 1912' }, year: 1912, sensitive: true, ready: true },
   's11': { title: { en: 'The Stockholm Exhibition, 1930', sv: 'Stockholmsutställningen 1930' }, year: 1930, sensitive: false, ready: true },
-  's12': { title: { en: 'The clearance of Klara, 1952–1977', sv: 'Klararivningarna 1952–1977' }, year: 1952, sensitive: false },
+  's12': { title: { en: 'The clearance of Klara, 1952–1977', sv: 'Klararivningarna 1952–1977' }, year: 1952, sensitive: false },   // held 2026-10-17: the cleared Klara blocks are not drawn yet, and the fixture data has no Norrmalm buildings to frame
+  'metro-vallingby': { title: { en: 'Vällingby: a town around a station, 1950–1954', sv: 'Vällingby: en stad kring en station 1950–1954' },
+    year: 1950, sensitive: false, layers: ['metro'], ready: true },
+  'metro-1950': { title: { en: 'The first metro, 1 October 1950', sv: 'Den första tunnelbanan, 1 oktober 1950' },
+    year: 1950, sensitive: false, layers: ['metro'], ready: true },
 };
 
 // ready: shown in the Stories list (web/scene-player.js lists only these).
+// layers: map layers the player shows during the story whatever the legend says (LAYERS; web/app.js storyLayers).
+export const LAYERS = ['metro'];
 
 // WKT POLYGON / MULTIPOLYGON in lon/lat to rings of [lat, lon] (outer rings only; holes are not used).
 export function parseWkt(wkt) {
@@ -113,6 +119,8 @@ export function buildScene(id, root = REPO) {
       camera: { lat: num(r.camera_lat, w), lon: num(r.camera_lon, w), height_m: num(r.camera_height_m, w) },
       target: { lat: num(r.target_lat, w), lon: num(r.target_lon, w) },
       duration_s: seconds.get(r.beat) || DEFAULT_DURATION_S,
+      // timeline_year (optional): the year the timeline shows in this beat, else the scene's year
+      ...(r.timeline_year ? { year: num(r.timeline_year, w) } : {}),
       caption: { en: r.caption_en, sv: r.caption_sv },
       sources: (r.sources ?? r.caption_source ?? '').split(';').map((s) => s.trim()).filter(Boolean),
       ...(r.photo_file ? { photo_file: r.photo_file, photo_caption: { en: r.photo_caption_en, sv: r.photo_caption_sv } } : {}),
@@ -120,6 +128,11 @@ export function buildScene(id, root = REPO) {
   });
   const scene = { id, title: meta.title, year: meta.year, sensitive: meta.sensitive, beats };
   if (meta.ready) scene.ready = true;
+  if (meta.layers) {
+    const bad = meta.layers.filter((l) => !LAYERS.includes(l));
+    if (bad.length) throw new Error(`${id}: unknown layer(s) ${bad.join(', ')} (known: ${LAYERS.join(', ')})`);
+    scene.layers = [...meta.layers];
+  }
   const overlays = [];
   for (const o of OVERLAYS[id] ?? []) {
     const pts = readCsv(path.join(dir, o.file));

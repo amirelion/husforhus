@@ -422,8 +422,10 @@ function updatePlaqueMarkers() {
 const metroLayer = metroData ? makeMetroLayer(THREE, { metro: metroData, surfaceAt, camera, theme: () => THEME, T }) : null;
 if (metroLayer) { metroLayer.group.visible = metroOn; scene.add(metroLayer.group); }
 const todayIso = () => new Date().toISOString().slice(0, 10);
+let storyLayers = new Set();   // the layers a playing story shows whatever the legend says (web/scene-player.js)
+const metroShown = () => metroOn || storyLayers.has('metro');
 function updateMetro(dist) {
-  if (!metroOn || !metroLayer) return;
+  if (!metroShown() || !metroLayer) return;
   const y = uniforms.uYear.value;
   metroLayer.update(Math.floor(y), y >= config.yearMax ? todayIso() : null, dist);
 }
@@ -1195,7 +1197,7 @@ function pick(x, y) {
   storyGroup.visible = true;
   for (const f of faints) f.visible = faintOn;
   plaqueGroup.visible = plaquesOn;
-  if (metroLayer) metroLayer.group.visible = metroOn;
+  if (metroLayer) metroLayer.group.visible = metroShown();
   highlight.mesh.visible = outlined;
   for (const m of meshes) m.material = m.userData.draw;
   for (const m of terrainMeshes) m.material = m.userData.draw;
@@ -2101,7 +2103,7 @@ async function setPhotoOnly(v) {
 // The Tunnelbanan switch: the lines and stations, remembered and kept in the URL (web/metro.js).
 function setMetro(v) {
   metroOn = !!v && !!metroLayer;
-  if (metroLayer) metroLayer.group.visible = metroOn;
+  if (metroLayer) metroLayer.group.visible = metroShown();
   if (!metroOn && pinnedStation) pinCard(-1);
   panel.querySelector('#metro-on')?.setAttribute('aria-pressed', String(metroOn));
   try { localStorage.setItem(METRO_KEY, metroOn ? 'on' : 'off'); } catch {}
@@ -2761,12 +2763,14 @@ renderer.setAnimationLoop(now => {
 // setHandle, the from-handle first to rest so the to-handle can reach the scene's year.
 const scenePlayer = mountScenePlayer({ THREE, scene: storyGroup, faint: setFaint, camera, controls, origin: config.origin, surfaceAt, calm,
   lang: () => LANG, setLang: FEATURES.lang ? setLang : null, stopFlight: () => { flight = null; },
+  layers: list => { storyLayers = new Set(list); if (metroLayer) metroLayer.group.visible = metroShown();
+    updateMetro(camera.position.distanceTo(controls.target)); },
   button: document.querySelector('.stories-open'), enabled: !!FEATURES.scenes,
   year: { save: () => [uniforms.uYearFrom.value, uniforms.uYear.value],
     set: y => { stopPlay(); setHandle('uYearFrom', FROM_REST); setHandle('uYear', y); },
     restore: ([from, to]) => { stopPlay(); uniforms.uYearFrom.value = from; uniforms.uYear.value = to; drawHist(); } } });
 
-window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, setMetro, get metroOn() { return metroOn; }, metroLayer, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
+window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, setMetro, get metroOn() { return metroOn; }, get storyLayers() { return [...storyLayers]; }, metroLayer, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
   surfaceAt, setRelief, chooseRelief, get relief() { return relief; }, terrain: () => ({ state: terrainState, source: TERRAIN?.source, relief: uRelief.value, cutK: uCutK.value, chunks: chunkMeshes.length }),
   get timelineLabels() { return placedLabels; }, get pinned() { return pinnedGid; }, districtOf,
   get forced() { return forcedGid; }, force, scene, highlight: () => highlight.state() };

@@ -10,8 +10,8 @@ const ready = index.scenes.filter(s => s.ready);
 const SIZES = { desktop: { width: 1280, height: 800 }, phone: { width: 390, height: 844 } };
 const OUT = 'data/test-results/beats';
 
-test('five stories are ready', () => {
-  expect(ready.map(s => s.id).sort()).toEqual(['s10-olympics-1912', 's11', 'tre-kronor-1697', 'vasa-1628']);
+test('six stories are ready', () => {
+  expect(ready.map(s => s.id).sort()).toEqual(['metro-1950', 'metro-vallingby', 's04', 's07-kristina-lock', 's10-olympics-1912', 's11', 'tre-kronor-1697', 'vasa-1628']);
 });
 
 for (const s of ready) {

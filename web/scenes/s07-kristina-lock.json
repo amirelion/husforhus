@@ -10,13 +10,13 @@
     {
       "n": 1,
       "camera": {
-        "lat": 59.3225,
-        "lon": 18.07,
-        "height_m": 60
+        "lat": 59.31969,
+        "lon": 18.06701,
+        "height_m": 260
       },
       "target": {
-        "lat": 59.32117,
-        "lon": 18.07264
+        "lat": 59.3215,
+        "lon": 18.0723
       },
       "duration_s": 10,
       "caption": {
@@ -24,49 +24,228 @@
         "sv": "Före 1637 finns ingen sluss här. Båtar dras upp genom strömmen, och det kostar en avgift."
       },
       "sources": [
-        "sv Wikipedia: Drottning Kristinas sluss",
-        "Slussens historia"
+        "sv Wikipedia: Drottning Kristinas sluss (rev 57988517)",
+        "sv Wikipedia: Slussens historia (rev 58150091)"
       ]
     },
     {
       "n": 2,
       "camera": {
-        "lat": 59.3222,
-        "lon": 18.0745,
-        "height_m": 90
+        "lat": 59.3208,
+        "lon": 18.078,
+        "height_m": 240
       },
       "target": {
-        "lat": 59.32117,
-        "lon": 18.07264
+        "lat": 59.3215,
+        "lon": 18.0723
       },
-      "duration_s": 11,
+      "duration_s": 10,
       "caption": {
-        "en": "From 1637 the channel is dammed and dug out. A lock chamber built on Skeppsholmen is sunk into place, and the lock opens in 1642.",
-        "sv": "Från 1637 dämms strömmen och grävs ur. En slussdamm som byggts på Skeppsholmen sänks på plats, och slussen öppnar 1642."
+        "en": "Work begins in May 1637. The channel is dammed and dug out; a chamber built on Skeppsholmen is sunk into place in 1638. The lock opens in 1642.",
+        "sv": "Arbetet börjar i maj 1637. Strömmen dämms och grävs ur; en slussdamm byggd på Skeppsholmen sänks på plats 1638. Slussen öppnar 1642."
       },
       "sources": [
-        "sv Wikipedia: Drottning Kristinas sluss",
-        "Slussens historia"
-      ]
+        "sv Wikipedia: Drottning Kristinas sluss (rev 57988517)"
+      ],
+      "photo": {
+        "src": "img/378bde6128898356836376f86fcb5c30161a9aa9.jpg",
+        "width": 800,
+        "height": 298,
+        "credit": {
+          "author": "Lorenzo Magalotti",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Drottning_Kristina_sluss_1674.jpg",
+          "file": "File:Drottning Kristina sluss 1674.jpg"
+        },
+        "caption": {
+          "en": "Plan of Queen Kristina's lock, drawn by Lorenzo Magalotti in 1674 (north is down)",
+          "sv": "Plan över Drottning Kristinas sluss, ritad av Lorenzo Magalotti 1674 (norr är nedåt)"
+        }
+      }
     },
     {
       "n": 3,
       "camera": {
-        "lat": 59.3218,
-        "lon": 18.0718,
-        "height_m": 40
+        "lat": 59.3205,
+        "lon": 18.0695,
+        "height_m": 170
       },
       "target": {
-        "lat": 59.32117,
-        "lon": 18.07264
+        "lat": 59.32188,
+        "lon": 18.07192
       },
       "duration_s": 10,
       "caption": {
-        "en": "A boat passes through. For the first time ships can move between Mälaren and the sea without being hauled.",
-        "sv": "En båt slussas igenom. För första gången kan fartyg ta sig mellan Mälaren och havet utan att dras."
+        "en": "The lock opens for boats four times a day. In 1645 the tolls bring in six times as much as in 1635.",
+        "sv": "Slussen öppnas för båtar fyra gånger om dagen. År 1645 ger tullen sex gånger mer än år 1635."
       },
       "sources": [
-        "sv Wikipedia: Drottning Kristinas sluss"
+        "sv Wikipedia: Drottning Kristinas sluss (rev 57988517)"
+      ],
+      "photo": {
+        "src": "img/d54ed5c7602a215bd14e55cc28371a36510fb9ef.jpg",
+        "width": 800,
+        "height": 535,
+        "credit": {
+          "author": "Wolfgang Hartmann",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Slussen_1642.jpg",
+          "file": "File:Slussen 1642.jpg"
+        },
+        "caption": {
+          "en": "Queen Kristina's lock, engraving by Wolfgang Hartmann made for the coronation in 1650",
+          "sv": "Drottning Kristinas sluss, kopparstick av Wolfgang Hartmann gjort till kröningen 1650"
+        }
+      }
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.3233,
+        "lon": 18.0756,
+        "height_m": 260
+      },
+      "target": {
+        "lat": 59.3215,
+        "lon": 18.0723
+      },
+      "duration_s": 10,
+      "year": 1755,
+      "caption": {
+        "en": "By the early 1700s the lock is too small. Christopher Polhem's new lock opens on the same spot on 2 May 1755.",
+        "sv": "I början av 1700-talet är slussen för liten. Christopher Polhems nya sluss öppnar på samma plats den 2 maj 1755."
+      },
+      "sources": [
+        "sv Wikipedia: Drottning Kristinas sluss (rev 57988517)",
+        "sv Wikipedia: Christopher Polhems sluss (rev 58523640)"
+      ],
+      "photo": {
+        "src": "img/dd06eab8bb4f77a3473b43fd0e6c4d55ed2e93e5.jpg",
+        "width": 800,
+        "height": 551,
+        "credit": {
+          "author": "Anders Holm",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Polhems_sluss_Anders_Holm_1780.jpg",
+          "file": "File:Polhems sluss Anders Holm 1780.jpg"
+        },
+        "caption": {
+          "en": "Polhem's lock in Stockholm, by Anders Holm, 1780",
+          "sv": "Polhems sluss i Stockholm, av Anders Holm, 1780"
+        }
+      }
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.319,
+        "lon": 18.0715,
+        "height_m": 280
+      },
+      "target": {
+        "lat": 59.3215,
+        "lon": 18.0723
+      },
+      "duration_s": 10,
+      "year": 1850,
+      "caption": {
+        "en": "The third lock, Nils Ericson's, opens close by on 28 November 1850. Its channel is still there and regulates Mälaren.",
+        "sv": "Den tredje slussen, Nils Ericsons, öppnar strax intill den 28 november 1850. Dess slussränna finns kvar och reglerar Mälaren."
+      },
+      "sources": [
+        "sv Wikipedia: Nils Ericsons sluss (rev 58995348)",
+        "sv Wikipedia: Christopher Polhems sluss (rev 58523640)"
+      ],
+      "photo": {
+        "src": "img/18b10e008ebfcdf9100990663f51e0bec1d1b4b3.jpg",
+        "width": 800,
+        "height": 603,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Ericsons_sluss_Karl_Johans_torg_1860.jpg",
+          "file": "File:Ericsons sluss Karl Johans torg 1860.jpg"
+        },
+        "caption": {
+          "en": "Nils Ericson's lock and Karl Johans torg, about 1860, looking north-west",
+          "sv": "Nils Ericsons sluss och Karl Johans torg omkring 1860, mot nordväst"
+        }
+      }
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.3195,
+        "lon": 18.0765,
+        "height_m": 300
+      },
+      "target": {
+        "lat": 59.3215,
+        "lon": 18.0723
+      },
+      "duration_s": 10,
+      "year": 1935,
+      "caption": {
+        "en": "The fourth, Karl Johansslussen, opens on 15 October 1935 together with the new Slussen traffic interchange.",
+        "sv": "Den fjärde, Karl Johansslussen, invigs den 15 oktober 1935 tillsammans med trafikplatsen Slussen."
+      },
+      "sources": [
+        "sv Wikipedia: Karl Johansslussen (rev 57988537)"
+      ],
+      "photo": {
+        "src": "img/2f427608fc095d511da690e924b454b8c12cd748.jpg",
+        "width": 800,
+        "height": 554,
+        "credit": {
+          "author": "Almberg & Preinitz",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Karl_Johansslussen_1936.jpg",
+          "file": "File:Karl Johansslussen 1936.jpg"
+        },
+        "caption": {
+          "en": "Karl Johansslussen with both gates open, 1935–1936",
+          "sv": "Karl Johansslussen med båda portarna öppna, 1935–1936"
+        }
+      }
+    }
+  ],
+  "ready": true,
+  "overlays": [
+    {
+      "type": "ghost",
+      "label": {
+        "en": "Queen Kristina's lock chamber",
+        "sv": "Queen Kristina's lock chamber"
+      },
+      "from": 2,
+      "heights": [
+        1.5
+      ],
+      "confidence": "low",
+      "until": 3,
+      "rings": [
+        [
+          [
+            59.322059,
+            18.071907
+          ],
+          [
+            59.3217,
+            18.071826
+          ],
+          [
+            59.321693,
+            18.071929
+          ],
+          [
+            59.322052,
+            18.072011
+          ],
+          [
+            59.322059,
+            18.071907
+          ]
+        ]
       ]
     }
   ]

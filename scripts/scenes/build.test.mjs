@@ -10,8 +10,8 @@ test('csv parser handles quotes, commas and doubled quotes', () => {
   assert.deepEqual(parseCsv('a,b\n"x, y","say ""hi"""\n'), [{ a: 'x, y', b: 'say "hi"' }]);
 });
 
-test('all 7 scenes parse', () => {
-  assert.equal(Object.keys(SCENES).length, 7);
+test('all 9 scenes parse', () => {
+  assert.equal(Object.keys(SCENES).length, 9);
   for (const id of Object.keys(SCENES)) assert.ok(buildScene(id).beats.length > 0, id);
 });
 
@@ -42,11 +42,28 @@ test('the three overlay scenes have their route or outline', () => {
   }
 });
 
-test('only the five finished stories are ready, in the index too', async () => {
+test('only the finished stories are ready, in the index too', async () => {
   const { buildAll } = await import('./build.mjs');
   const ready = Object.entries(SCENES).filter(([, m]) => m.ready).map(([id]) => id).sort();
-  assert.deepEqual(ready, ['s10-olympics-1912', 's11', 'tre-kronor-1697', 'vasa-1628']);
+  assert.deepEqual(ready, ['metro-1950', 'metro-vallingby', 's04', 's07-kristina-lock', 's10-olympics-1912', 's11', 'tre-kronor-1697', 'vasa-1628']);
   assert.ok(buildAll);
+});
+
+test('layers: the two metro stories force the metro on; an unknown layer fails the build', async () => {
+  for (const id of ['metro-vallingby', 'metro-1950']) assert.deepEqual(buildScene(id).layers, ['metro'], id);
+  assert.equal(buildScene('vasa-1628').layers, undefined, 'other stories leave the legend alone');
+  const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'layers-'));
+  fs.mkdirSync(path.join(root, 'scenes', 'metro-1950'), { recursive: true });
+  for (const f of ['beats.csv', 'narration.csv']) fs.copyFileSync(path.join('scenes', 'metro-1950', f), path.join(root, 'scenes', 'metro-1950', f));
+  SCENES['metro-1950'].layers = ['trams'];
+  try { assert.throws(() => buildScene('metro-1950', root), /unknown layer\(s\) trams/); }
+  finally { SCENES['metro-1950'].layers = ['metro']; }
+});
+
+test('timeline_year: a beat carries its own year when the column is set', () => {
+  assert.deepEqual(buildScene('metro-vallingby').beats.map((b) => b.year), [1950, 1951, 1951, 1952, 1953, 1954, 1954, 1955]);
+  assert.ok(buildScene('vasa-1628').beats.every((b) => b.year === undefined), 'no column, no beat year');
 });
 
 test('WKT polygons parse to [lat, lon] rings', async () => {

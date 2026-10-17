@@ -121,3 +121,48 @@ for (const id of ['vasa-1628', 'tre-kronor-1697', 's10-olympics-1912', 's11']) {
     }
   });
 }
+
+// The two Tunnelbanan stories: cameras at 25° or more, 3–5 photos, the metro layer forced on, and each beat's year
+// (timeline_year) late enough that the line has reached the station the beat is about (opening dates from
+// docs/research/2026-10-16-tunnelbanan-stations.csv, the source of s16_metro's metro.json).
+import { beatYear, sceneLayers } from '../scene-player.js';
+import { metroAt } from '../metro.js';
+
+test('beatYear: the beat\'s own year, else the scene\'s; sceneLayers keeps only known layers', () => {
+  const s = { year: 1950, beats: [{ year: 1952 }, {}] };
+  assert.equal(beatYear(s, 0), 1952);
+  assert.equal(beatYear(s, 1), 1950);
+  assert.deepEqual(sceneLayers({ layers: ['metro', 'trams'] }), ['metro']);
+  assert.deepEqual(sceneLayers({}), []);
+});
+
+const opened = Object.fromEntries(fs.readFileSync(new URL('../../docs/research/2026-10-16-tunnelbanan-stations.csv', import.meta.url), 'utf8')
+  .split('\n').slice(1).filter(Boolean).map(l => l.split(',')).filter(c => c[2]).map(c => [c[0], c.find(x => /^\d{4}-\d\d-\d\d$/.test(x))]));
+const reaches = { 'metro-vallingby': { 4: 'Vällingby', 5: 'Vällingby', 6: 'Vällingby', 7: 'Vällingby', 8: 'Vällingby' },
+  'metro-1950': { 1: 'Slussen', 2: 'Skärmarbrink', 3: 'Hökarängen', 4: 'Gubbängen', 6: 'Gamla stan' } };
+for (const id of ['metro-vallingby', 'metro-1950']) {
+  test(`${id}: cameras at 25° or more, 3–5 photos, the metro on, the line at its station by the beat's year`, () => {
+    const s = JSON.parse(fs.readFileSync(new URL(`../scenes/${id}.json`, import.meta.url)));
+    assert.equal(s.ready, true);
+    assert.deepEqual(sceneLayers(s), ['metro']);
+    const origin = [150000, 6580000];
+    for (const b of s.beats) {
+      const [cx, cz] = toLocal(b.camera.lat, b.camera.lon, origin), [tx, tz] = toLocal(b.target.lat, b.target.lon, origin);
+      assert.ok(Math.atan2(b.camera.height_m, Math.hypot(cx - tx, cz - tz)) * 180 / Math.PI >= 25, `${id} beat ${b.n}`);
+      assert.ok(Number.isInteger(b.year), `${id} beat ${b.n}: its own year`);
+    }
+    const photos = s.beats.filter(b => b.photo).length;
+    assert.ok(photos >= 3 && photos <= 5, `${id}: ${photos} photos`);
+    const metro = { segments: [], stations: Object.entries(opened).map(([name, d]) => ({ name, opened: d })) };
+    for (const [n, name] of Object.entries(reaches[id])) {
+      const y = beatYear(s, n - 1);
+      assert.ok(metroAt(metro, y).stations.some(x => x.name === name), `${id} beat ${n} (${y}): ${name} is open`);
+    }
+  });
+}
+
+test('metro-vallingby: no metro in the first beats (1950–1951), the line arrives in beat 4 (1952)', () => {
+  const s = JSON.parse(fs.readFileSync(new URL('../scenes/metro-vallingby.json', import.meta.url)));
+  assert.ok(opened['Vällingby'] > `${beatYear(s, 2)}-12-31`);
+  assert.ok(opened['Vällingby'] <= `${beatYear(s, 3)}-12-31`);
+});

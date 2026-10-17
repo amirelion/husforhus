@@ -1,0 +1,204 @@
+{
+  "id": "metro-1950",
+  "title": {
+    "en": "The first metro, 1 October 1950",
+    "sv": "Den första tunnelbanan, 1 oktober 1950"
+  },
+  "year": 1950,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.31505,
+        "lon": 18.07536,
+        "height_m": 520
+      },
+      "target": {
+        "lat": 59.319444,
+        "lon": 18.072222
+      },
+      "duration_s": 8,
+      "year": 1950,
+      "caption": {
+        "en": "1 October 1950: Stockholm's first metro opens. The tunnel under Södermalm from Slussen had carried trams since 1933.",
+        "sv": "1 oktober 1950: Stockholms första tunnelbana öppnar. Tunneln under Södermalm från Slussen hade haft spårvagnar sedan 1933."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholms tunnelbana (rev 59711828)",
+        "en Wikipedia: Stockholm Metro (rev 1377478475)"
+      ],
+      "photo": {
+        "src": "img/3b6635b868101878f40e463db01f1c0f616c7c54.jpg",
+        "width": 800,
+        "height": 634,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Slussen_tunnelbana_1950.jpg",
+          "file": "File:Slussen tunnelbana 1950.jpg"
+        },
+        "caption": {
+          "en": "Slussen metro station at the opening, 1 October 1950",
+          "sv": "Slussens tunnelbanestation vid invigningen 1 oktober 1950"
+        }
+      }
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.29313,
+        "lon": 18.14595,
+        "height_m": 3200
+      },
+      "target": {
+        "lat": 59.295639,
+        "lon": 18.089806
+      },
+      "duration_s": 9,
+      "year": 1950,
+      "caption": {
+        "en": "The line is tram line 18 rebuilt for metro trains: from Slussen to Hökarängen, partly on new track above ground.",
+        "sv": "Linjen är spårvagnslinje 18 ombyggd för tunnelbanetåg: från Slussen till Hökarängen, delvis på nybyggd bana i ytläge."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholms tunnelbana (rev 59711828)"
+      ]
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.25202,
+        "lon": 18.08449,
+        "height_m": 650
+      },
+      "target": {
+        "lat": 59.257778,
+        "lon": 18.0825
+      },
+      "duration_s": 8,
+      "year": 1950,
+      "caption": {
+        "en": "Hökarängen is built from 1946 as a planned suburb. In 1946 45 people lived here; by 1952, 16,000.",
+        "sv": "Hökarängen byggs från 1946 som en planerad förort. År 1946 bodde 45 personer här; 1952 var de 16 000."
+      },
+      "sources": [
+        "sv Wikipedia: Hökarängen (rev 56421157)"
+      ],
+      "photo": {
+        "src": "img/db86a2491326dc8310feccaae825791631f3b574.jpg",
+        "width": 800,
+        "height": 560,
+        "credit": {
+          "author": "Sune Sundahl",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Sk%C3%B6nstaholm_1950-tal.jpg",
+          "file": "File:Skönstaholm 1950-tal.jpg"
+        },
+        "caption": {
+          "en": "Terraced houses at Skönstaholm, Hökarängen, 12 May 1952",
+          "sv": "Radhusområdet Skönstaholm i Hökarängen, 12 maj 1952"
+        }
+      }
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.2501,
+        "lon": 18.07292,
+        "height_m": 1500
+      },
+      "target": {
+        "lat": 59.262778,
+        "lon": 18.081944
+      },
+      "duration_s": 8,
+      "year": 1954,
+      "caption": {
+        "en": "More suburbs follow along the line; a branch to Stureby opens in 1951. The metro let the outer city grow fast.",
+        "sv": "Fler förorter växer upp längs linjen; en gren till Stureby öppnar 1951. Tunnelbanan lät ytterstaden växa snabbt."
+      },
+      "sources": [
+        "en Wikipedia: Stockholm Metro (rev 1377478475)",
+        "sv Wikipedia: Stockholms tunnelbana (rev 59711828)"
+      ]
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.32825,
+        "lon": 18.06347,
+        "height_m": 520
+      },
+      "target": {
+        "lat": 59.3325,
+        "lon": 18.062
+      },
+      "duration_s": 10,
+      "year": 1956,
+      "caption": {
+        "en": "The link through the centre is the hard part: the loose Brunkebergsåsen ridge means an open cut through Klara, a tunnel under Norrström and a bridge over Söderström.",
+        "sv": "Länken genom city är svårast: Brunkebergsåsens lösa massor kräver öppet schakt genom Klara, tunnel under Norrström och bro över Söderström."
+      },
+      "sources": [
+        "sv Wikipedia: Stockholms tunnelbana (rev 59711828)"
+      ],
+      "photo": {
+        "src": "img/8531d225eb2ce9ad490e696f39ae5926db60bb8c.jpg",
+        "width": 800,
+        "height": 799,
+        "credit": {
+          "author": "Herman Ronninger",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Constructing_the_Stockholm_Metro_in_1957.jpg",
+          "file": "File:Constructing the Stockholm Metro in 1957.jpg"
+        },
+        "caption": {
+          "en": "Building the metro in Klara, 27 May 1957",
+          "sv": "Tunnelbanebygget i Klara 27 maj 1957"
+        }
+      }
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.31712,
+        "lon": 18.06484,
+        "height_m": 700
+      },
+      "target": {
+        "lat": 59.32332,
+        "lon": 18.06698
+      },
+      "duration_s": 9,
+      "year": 1957,
+      "caption": {
+        "en": "24 November 1957: Slussen–Hötorget opens, with new stations at T-Centralen and Gamla stan. Kungsgatan station is renamed Hötorget.",
+        "sv": "24 november 1957: Slussen–Hötorget öppnar, med nya stationer vid T-Centralen och Gamla stan. Stationen Kungsgatan byter namn till Hötorget."
+      },
+      "sources": [
+        "sv Wikipedia: Hötorget (tunnelbanestation) (rev 59721040)",
+        "en Wikipedia: Stockholm Metro (rev 1377478475)"
+      ],
+      "photo": {
+        "src": "img/ddfe5b8b20ef306cf491af7ade1bb3854e858fb4.jpg",
+        "width": 800,
+        "height": 558,
+        "credit": {
+          "author": "Inez Bergman",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:S%C3%B6derstr%C3%B6msbron_1956.jpg",
+          "file": "File:Söderströmsbron 1956.jpg"
+        },
+        "caption": {
+          "en": "The metro bridge over Söderström being built, 1956, seen from Katarinahissen",
+          "sv": "Tunnelbanebron över Söderström byggs 1956, sedd från Katarinahissen"
+        }
+      }
+    }
+  ],
+  "ready": true,
+  "layers": [
+    "metro"
+  ]
+}

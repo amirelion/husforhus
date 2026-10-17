@@ -80,3 +80,31 @@ test('a phone shows the lines with the switch on', async ({ browser }) => {
   await page.screenshot({ path: 'data/test-results/metro-phone.png' });
   await page.close();
 });
+
+// A story with "layers": ["metro"] (metro-1950) shows the lines whatever the switch says, as of each beat's year,
+// and hands the switch's state back at Exit.
+test('a metro story shows the lines as of each beat, with the switch off, and puts it back at Exit', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route('**/stockholm.json', async route => {
+    const r = await route.fetch();
+    const config = await r.json();
+    config.features = { ...config.features, scenes: true };
+    await route.fulfill({ response: r, json: config });
+  });
+  await open(page, '?scene=metro-1950');
+  test.skip(!(await hasMetro(page)), 'this build has no metro.json');
+  await expect(page.locator('.sp-cinema')).toBeVisible();
+  expect(await page.evaluate(() => window.__dbg.metroOn)).toBe(false);
+  await expect.poll(async () => (await shown(page)).visible).toBe(true);
+  await expect.poll(async () => (await shown(page)).stations).toEqual(expect.arrayContaining(['Slussen', 'Hökarängen']));
+  expect((await shown(page)).stations).not.toContain('T-Centralen');     // 1957
+  await expect(page.locator('.sp-year')).toHaveText('1950');
+  for (let i = 1; i < 6; i++) await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.sp-count')).toContainText('6 / 6');
+  await expect(page.locator('.sp-year')).toHaveText('1957');
+  await expect.poll(async () => (await shown(page)).stations).toEqual(expect.arrayContaining(['T-Centralen', 'Gamla stan', 'Vällingby']));
+  await page.locator('.sp-exit').click();
+  await expect(page.locator('.sp-cinema')).toBeHidden();
+  expect((await shown(page)).visible).toBe(false);
+  await expect(page.locator('#metro-on')).toHaveAttribute('aria-pressed', 'false');
+});

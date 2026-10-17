@@ -122,12 +122,17 @@ const STR = {
     faint: 'Svagt: dagens stad, för orientering' },
 };
 // "Photo: <author>, <licence>, Wikimedia Commons" (Foto in Swedish).
+// The timeline's year in beat i: the beat's own year (beats.csv timeline_year), else the scene's.
+export const beatYear = (scene, i) => scene.beats[i]?.year ?? scene.year;
+// The map layers a story shows whatever the legend says (scene.layers, e.g. ["metro"]); only the known ones.
+export const STORY_LAYERS = ['metro'];
+export const sceneLayers = scene => (scene?.layers || []).filter(l => STORY_LAYERS.includes(l));
 export const photoCredit = (c, lang) => `${lang === 'sv' ? 'Foto' : 'Photo'}: ${c.author}, ${c.licence}, Wikimedia Commons`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 // opts: THREE, scene, camera, controls, origin (config.origin), surfaceAt(x, z), calm (the reduced-motion query),
 // lang() (the page's language), setLang(l) or null when the switch is off, year: { save(), set(y), restore(saved) },
-// stopFlight(), button (the Stories button), base (the scenes' folder, default 'scenes/').
+// layers(list) (the map layers to force on during a story, [] at exit), stopFlight(), button (the Stories button), base (the scenes' folder, default 'scenes/').
 // The scene asked for by ?scene=<id>, or null; never while the city config keeps scenes off (features.scenes).
 export function askedScene(enabled, search) {
   return enabled ? new URLSearchParams(search).get('scene') || null : null;
@@ -252,10 +257,11 @@ export function mountScenePlayer(opts) {
   function start(scene) {
     const tm = timing(scene.beats);
     const local = p => { const [x, z] = toLocal(p.lat, p.lon, origin); return [x, z]; };
-    st = { scene, tm, beat: 0, elapsed: 0, playing: false, last: 0, from: null,
+    st = { scene, tm, beat: 0, year: beatYear(scene, 0), elapsed: 0, playing: false, last: 0, from: null,
       targets: scene.beats.map(b => local(b.target)), cams: scene.beats.map(b => [...local(b.camera), b.camera.height_m]) };
     addOverlays(scene);
-    opts.year.set(scene.year);
+    opts.layers?.(sceneLayers(scene));
+    opts.year.set(beatYear(scene, 0));
     opts.faint?.(true);   // what the year hides stays as a faint, flat today's city (app.js)
     const u = new URL(location.href); u.searchParams.set('scene', scene.id); history.replaceState(history.state, '', u);
     cinema.hidden = false;
@@ -272,6 +278,7 @@ export function mountScenePlayer(opts) {
   function exit(restoreFocus = true) {
     cancelAnimationFrame(raf);
     removeOverlays();
+    opts.layers?.([]);
     opts.faint?.(false);
     st = null;
     cinema.hidden = true;
@@ -299,13 +306,15 @@ export function mountScenePlayer(opts) {
     st.elapsed = 0;
     st.from = { pos: camera.position.clone(), target: controls.target.clone() };
     st.legFrom = null;
+    const y = beatYear(st.scene, st.beat);
+    if (y !== st.year) { st.year = y; opts.year.set(y); }   // the map's own buildings for the beat's year
     paint();
     progress();
   }
   function paint() {
     const b = st.scene.beats[st.beat], s = S();
     const write = () => {
-      $('.sp-year').textContent = st.scene.year;
+      $('.sp-year').textContent = beatYear(st.scene, st.beat);
       capEl.textContent = L(b.caption);
       $('.sp-source').textContent = b.sources?.length ? `${s.source}: ${b.sources.join('; ')}` : '';
       showPhoto(b.photo);
