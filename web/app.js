@@ -146,7 +146,7 @@ const estColors = periods.map(p => estimateTone(p.color, THEME.estimateTo));
 const EST_KEY = 'hfh-estimates';
 let hideEst = false;
 try { hideEst = localStorage.getItem(EST_KEY) === 'hidden'; } catch {}
-// The "Only buildings with photos" switch: the rest fade to the maquette, as the timeline's range fade does. On in the
+// The "Highlight buildings with a photo" switch: the rest fade to the maquette, as the timeline's range fade does. On in the
 // URL (?photos=1, web/panel.js). photoGids (photo-gids.json, s03_tiles) loads on first use.
 let photoOnly = photoOnlyFrom(location.search);
 let photoGids = null;
@@ -1816,8 +1816,8 @@ function renderPanel() {
       ${config.unknown ? `<div class="swatch unknown"><i style="background:${unknownFill(THEME)}"></i><span id="unknown-label">${esc(T('ui.unknown'))}</span><span class="n">${fmt(config.unknown)}</span>
         <button class="switch" aria-describedby="unknown-label unknown-hint"><span class="toggle" aria-hidden="true"></span>${esc(T('ui.show'))}</button>
         <span class="unknown-hint" id="unknown-hint"></span></div>` : ''}</div>
-      <div class="est-row"><button class="switch" id="photo-only" aria-pressed="${photoOnly}"><span class="toggle" aria-hidden="true"></span>${
-        esc(T('ui.photoOnly'))}</button></div>
+      <div class="est-row"><button class="switch" id="photo-only" aria-pressed="${photoOnly}" aria-describedby="photo-hint"><span class="toggle" aria-hidden="true"></span>${
+        esc(T('ui.photoOnly'))}</button><span class="photo-hint" id="photo-hint"${photoOnly ? '' : ' hidden'}>${esc(T('ui.photoOnly.hint'))}</span></div>
       ${estTotal ? `<div class="est-row"><button class="switch" id="hide-est" aria-pressed="${hideEst}"><span class="toggle" aria-hidden="true"></span>${
         esc(T('ui.hideEst', { n: fmt(estTotal) }))}</button></div>` : ''}
       <p class="note">${approx(T('ui.legend.note'))}</p>`;
@@ -1933,6 +1933,8 @@ function setHideEst(v) {
 async function setPhotoOnly(v) {
   photoOnly = !!v;
   panel.querySelector('#photo-only')?.setAttribute('aria-pressed', String(photoOnly));
+  const hint = panel.querySelector('#photo-hint');
+  if (hint) hint.hidden = !photoOnly;
   history.replaceState(history.state, '', photoOnlyHref(location.href, photoOnly));
   if (photoOnly && !photoGids) {
     try {
@@ -1941,6 +1943,7 @@ async function setPhotoOnly(v) {
       console.warn('photo-gids.json did not load; the photo switch is off', e);
       photoOnly = false;
       panel.querySelector('#photo-only')?.setAttribute('aria-pressed', 'false');
+      if (panel.querySelector('#photo-hint')) panel.querySelector('#photo-hint').hidden = true;
       history.replaceState(history.state, '', photoOnlyHref(location.href, false));
       return;
     }

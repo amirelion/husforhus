@@ -1,4 +1,4 @@
-// The legend's "Only buildings with photos" switch: on, every building whose card has no photo fades to the maquette
+// The legend's "Highlight buildings with a photo" switch: on, every building whose card has no photo fades to the maquette
 // (the shader reads a per-building flag written once per tile, web/panel.js markPhotos); a photo building keeps its
 // colour and its card still opens with the photo; the choice is kept in the URL. Runs on whatever web/data/current.json
 // names: the fixture in CI, the whole city on a laptop.
@@ -62,7 +62,9 @@ test('?photos=1 opens with the switch on, in Swedish too, on a phone', async ({ 
   await open(page, '?photos=1&lang=sv');
   const sw = page.locator('#photo-only');
   await expect(sw).toHaveAttribute('aria-pressed', 'true');
-  await expect(sw).toContainText('Bara hus med foto');
+  await expect(sw).toContainText('Markera hus med foto');
+  await expect(page.locator('#photo-hint')).not.toHaveAttribute('hidden');   // the legend sheet itself starts folded on a phone
+  await expect(page.locator('#photo-hint')).toContainText('Övriga hus blir bleka');
   await expect.poll(() => page.evaluate(() => window.__dbg.uniforms.uPhotoOnly.value)).toBe(1);
   await page.locator('.sheet-handle').click().catch(() => {});   // open the legend sheet for the screenshot
   await page.screenshot({ path: 'data/test-results/photos-phone.png' });

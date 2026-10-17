@@ -19,7 +19,7 @@ item, the languages with an article, the photo's credit and whether to leave the
 s06_wiki); a curated card also its rebuilds and older cellars (s08_landmarks' entries); Wikipedia excerpts
 go to their own shards wiki/NN.json (CC BY-SA 4.0), and photos.json lists the photos this version uses
 (scripts/build_dist.py ships them from web/data/photos/); photo-gids.json the sorted gids whose card has a photo
-(the legend's "Only buildings with photos" switch). No private house that is not curated carries a RAÄ link, a
+(the legend's "Highlight buildings with a photo" switch). No private house that is not curated carries a RAÄ link, a
 Wikidata item, an article, a photo or an excerpt. stockholm.json gains the link templates (city.LINKS) and
 the timeline's landmarks.
 """

@@ -11,7 +11,7 @@ export function initialCollapsed({ stored, phone, wide }) {
   return Boolean(phone) || !wide;
 }
 
-// The "Only buildings with photos" switch: kept in the URL (?photos=1), as the look is (web/look.js), so a reload or a
+// The "Highlight buildings with a photo" switch: kept in the URL (?photos=1), as the look is (web/look.js), so a reload or a
 // shared link keeps it.
 export const PHOTO_PARAM = 'photos';
 export const photoOnlyFrom = search => new URLSearchParams(search).get(PHOTO_PARAM) === '1';
