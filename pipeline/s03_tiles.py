@@ -18,7 +18,8 @@ Plan 4a (contract C21): a card also carries the English label, protection and th
 item, the languages with an article, the photo's credit and whether to leave the floors row out (s02_attributes,
 s06_wiki); a curated card also its rebuilds and older cellars (Task 11a, s08_landmarks' entries); Wikipedia excerpts
 go to their own shards wiki/NN.json (CC BY-SA 4.0, spec §6.1), and photos.json lists the photos this version uses
-(scripts/build_dist.py ships them from web/data/photos/). No private house that is not curated carries a RAÄ link, a
+(scripts/build_dist.py ships them from web/data/photos/); photo-gids.json the sorted gids whose card has a photo
+(the legend's "Only buildings with photos" switch, web/photos.js). No private house that is not curated carries a RAÄ link, a
 Wikidata item, an article, a photo or an excerpt (D18, D34). stockholm.json gains the link templates (city.LINKS) and
 the timeline's landmarks.
 """
@@ -550,6 +551,11 @@ def make_config(df, tiles, packs, version, tile, sources, accuracy, terrain, lan
     }
 
 
+def photo_gids(cards: list[dict]) -> list[int]:
+    """The sorted gids whose card carries a photo, from the card shards."""
+    return sorted(int(g) for shard in cards for g, c in shard.items() if "photo" in c)
+
+
 def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = city.TILE,
                   n_packs: int = city.N_PACKS, sources: list[dict] | None = None, accuracy: dict | None = None,
                   terrain: dict | None = None, wiki: dict | None = None, landmarks: list[dict] | None = None,
@@ -580,6 +586,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     io.write_gz(out / "districts.bin.gz", dist_bytes.tobytes())
     used = sorted({c["photo"]["key"] for shard in cards for c in shard.values() if "photo" in c})
     io.write_json(out / "photos.json", used)
+    io.write_json(out / "photo-gids.json", photo_gids(cards))
     io.write_json(out / "layers.json", [])
     excerpts = [v for shard in texts for v in shard["items"].values()]
     wiki_stats = {"photos": len(used), "extracts": {lang: sum(lang in v for v in excerpts) for lang in city.WIKI["langs"]}}

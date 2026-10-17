@@ -170,3 +170,16 @@ def test_a_street_spelt_in_two_cases_is_one_street(built):
     other = pd.DataFrame({"gid": pd.array([10], dtype="int32"), "street": ["Vasterlanggatan"], "number": ["1"]})
     index, _ = s14_search.build(df, cards, dict(PLACES, addresses=pd.concat([PLACES["addresses"], other])))
     assert {"Vasterlanggatan", "Västerlånggatan"} <= {s[0] for s in index["streets"]}
+
+
+def test_occupants_are_listed_only_for_buildings_a_card_names_and_carries(built):
+    # Börshuset (its card carries Q404416) holds the Nobel Prize Museum; an item on no card, a card without an item
+    # and an occupant that is the building itself under its own name add nothing
+    out, df, cards = built
+    cards = {**cards, 0: {**cards[0], "name": "Börshuset", "en": "Stock Exchange Building", "qid": "Q404416"}}
+    occ = {"Q404416": [{"qid": "Q1144549", "sv": "Nobelprismuseet", "en": "Nobel Prize Museum", "alt": ["Nobelmuseet"]},
+                       {"qid": "Q9", "sv": "Börshuset", "en": "Börshuset", "alt": []}],
+           "Q999": [{"qid": "Q8", "sv": "Ingenstans", "en": "Nowhere", "alt": []}]}
+    index, _ = s14_search.build(df, cards, PLACES, occ)
+    assert index["occupants"] == [["Nobelprismuseet", "Nobel Prize Museum", 0, ["Nobelmuseet"]]]
+    assert s14_search.build(df, cards, PLACES)[0]["occupants"] == []

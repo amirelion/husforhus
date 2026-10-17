@@ -3,7 +3,7 @@
 // it (web/test/search.test.mjs); app.js draws the list and flies to a pick.
 import { fold } from './fold.js';
 
-const KIND_ORDER = { district: 0, building: 1, street: 2 };
+const KIND_ORDER = { district: 0, building: 1, occupant: 1.5, street: 2 };
 
 // The index with every name folded once (fold.js: the same rules as the pipeline's), ready for searching.
 export function prepare(index) {
@@ -17,6 +17,9 @@ export function prepare(index) {
       fe: en ? fold(en) : '' })),
     // the names people use for the best-known buildings ("Slottet", "Royal Palace"), each pointing at a card's name
     baliases: (index.baliases || []).map(([name, gid]) => ({ name, gid, f: fold(name) })),
+    // what is inside a carded building ("Nobelprismuseet" in Börshuset): Swedish, English and other names
+    occupants: (index.occupants || []).map(([sv, en, gid, alt = []]) => ({ sv, en, gid, f: fold(sv), fe: fold(en),
+      fa: alt.map(fold) })),
   };
 }
 
@@ -92,11 +95,22 @@ export function textRows(P, q, raw = '') {
     const b = byGid.get(a.gid), s = score(a.f, q);
     if (b && s >= 0) add({ kind: 'building', label: b.name, gid: b.gid, d: b.d, en: b.en, via: a.name }, s, a.name);
   }
+  // an institution inside a building: found by any of its names, picked as the building, after an exact building name
+  for (const o of P.occupants || []) {
+    const b = byGid.get(o.gid);
+    if (!b) continue;
+    const s = score(o.f, q), se = score(o.fe, q), sa = o.fa.map(f => score(f, q)).filter(x => x >= 0);
+    const all = [s, se, ...sa].filter(x => x >= 0);
+    if (!all.length) continue;
+    const best = Math.min(...all);
+    add({ kind: 'occupant', label: o.sv, sv: o.sv, en: o.en, building: b.name, gid: o.gid, d: b.d }, best,
+      best === s ? o.sv : best === se ? o.en : '');
+  }
   for (const st of P.streets) add({ kind: 'street', label: st.name, n: st.n, ds: st.ds, shard: st.shard, street: st.name }, score(st.f, q), st.name);
   // a stadsdel found by its everyday name and by its own, or buildings of one name in one stadsdel: once, the better match
   const best = new Map();
   for (const r of rows) {
-    const key = r.kind === 'building' ? `b${r.label}\u0000${r.d}` : r.kind === 'district' ? `d${r.d}` : `s${r.label}`;
+    const key = r.kind === 'occupant' ? `o${r.gid}\u0000${r.label}` : r.kind === 'building' ? `b${r.label}\u0000${r.d}` : r.kind === 'district' ? `d${r.d}` : `s${r.label}`;
     if (!best.has(key) || r.s < best.get(key).s) best.set(key, r);
   }
   return cap(rank([...best.values()]), P.settings);
@@ -228,5 +242,7 @@ export function rowText(row, P, T) {
     if (dist(row.d)) parts.push(dist(row.d));
     if (row.near) parts.push(T(row.side ? 'search.near.side' : 'search.near', { n: row.near }));
   }
-  return { main: row.label, sub: parts.join(' · ') };
+  const main = row.kind === 'occupant'
+    ? T('search.in', { name: T.lang === 'en' ? row.en || row.sv : row.sv, building: row.building }) : row.label;
+  return { main, sub: parts.join(' · ') };
 }

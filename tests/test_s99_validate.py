@@ -54,6 +54,10 @@ def edit_card(out, gid, card):
     shard = json.loads(path.read_text())
     shard[str(gid)] = card
     io.write_json(path, shard)
+    gids = out / "photo-gids.json"           # kept in step with the cards, as s03_tiles writes it
+    if gids.exists():
+        listed = set(json.loads(gids.read_text())) - {gid}
+        io.write_json(gids, sorted(listed | ({gid} if "photo" in card else set())))
 
 
 def reindex(out):

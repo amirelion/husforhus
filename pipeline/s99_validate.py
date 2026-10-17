@@ -958,6 +958,24 @@ def check_wiki(out: Path, a: np.ndarray, hidden: np.ndarray) -> list[str]:
     return errors
 
 
+def check_photo_gids(out: Path, hidden: np.ndarray) -> list[str]:
+    """photo-gids.json (s03_tiles.photo_gids): a sorted list of exactly the gids whose card has a photo. A hidden card
+    with a photo is check_cards' error, so it is not counted here."""
+    path = out / "photo-gids.json"
+    if not path.exists():
+        return ["photos: photo-gids.json is missing (run s03_tiles)"]
+    listed = json.loads(path.read_text(encoding="utf-8"))
+    if not (isinstance(listed, list) and all(whole(g) for g in listed) and listed == sorted(set(listed))):
+        return ["photos: photo-gids.json is not a sorted list of gids"]
+    n = len(hidden)
+    has = {int(k) for _, shard in read_shards(out / "cards") for k, c in shard.items()
+           if k.isascii() and k.isdigit() and isinstance(c, dict) and "photo" in c and not (int(k) < n and hidden[int(k)])}
+    listed = {int(g) for g in listed}
+    return ([f"photos: photo-gids.json lists gid {g}, whose card has no photo" for g in sorted(listed - has)
+             if not (g < n and hidden[g])]
+            + [f"photos: photo-gids.json leaves out gid {g}, whose card has a photo" for g in sorted(has - listed)])
+
+
 def check_districts(out: Path, cfg: dict, n: int) -> list[str]:
     """C26 (Plan 4b): districts.bin.gz, one byte per gid naming its stadsdel in stockholm.json `districts` (0: none)."""
     names = cfg.get("districts")
@@ -1064,6 +1082,12 @@ def check_search(out: Path, cfg: dict, a: np.ndarray, hidden: np.ndarray,
         ok = isinstance(b, list) and len(b) == 2 and isinstance(b[0], str) and whole(b[1]) and 0 <= b[1] < n
         if not ok or city.BUILDING_ALIASES.get(b[0]) not in names.get(b[1], set()):
             errors.append(f"search: other-name entry {i} is not one of city.BUILDING_ALIASES for its building's card name")
+    for i, o in enumerate(listed("occupants")):              # what is inside a building: only one a card names
+        if not (isinstance(o, list) and len(o) == 4 and isinstance(o[0], str) and isinstance(o[1], str) and o[0]
+                and whole(o[2]) and 0 <= o[2] < n and isinstance(o[3], list)):
+            errors.append(f"search: occupant entry {i} is not [Swedish name, English name, gid, other names]")
+        elif not names.get(o[2]):
+            errors.append(f"search: occupant entry {i} (gid {o[2]}) is in a building no card names")
     shards = {}
     for p, s in read_shards(folder / "addr"):
         if isinstance(s, dict):
@@ -1132,6 +1156,7 @@ def check_suppressed(out: Path, a: np.ndarray, data: Path, entries: list[dict]) 
         index = index if isinstance(index, dict) else {}
         found |= {b[1] for b in lists(index.get("buildings")) if isinstance(b, list) and len(b) == 4}
         found |= {b[1] for b in lists(index.get("baliases")) if isinstance(b, list) and len(b) == 2}
+        found |= {o[2] for o in lists(index.get("occupants")) if isinstance(o, list) and len(o) == 4}
         for shard in objects(out / "search" / "addr"):
             found |= {p[1] for _, pairs in items(shard) for p in lists(pairs) if isinstance(p, list) and len(p) == 3}
     for g in sorted(gids):
@@ -1271,6 +1296,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     hidden = raa_hidden(a, data)
     errors += check_cards(out, a, hidden, keys=building_keys(len(a), data))
     errors += check_wiki(out, a, hidden)
+    errors += check_photo_gids(out, hidden)
     errors += check_beside_private(out, a, data)
     errors += check_landmarks(cfg, a, data)
     errors += check_districts(out, cfg, len(a))

@@ -11,7 +11,7 @@ import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
 import { THEMES, SHADING } from './themes.js';
 import { createLooks } from './look.js';
 import { mountSwitcher } from './switcher.js';
-import { initialCollapsed, LEGEND_KEY } from './panel.js';
+import { initialCollapsed, LEGEND_KEY, photoOnlyFrom, photoOnlyHref, markPhotos } from './panel.js';
 import { cityCount, layerCount, tallyTitle, tallyFromAttrs, periodCounts } from './count.js';
 import { placeLabels, labelAt, stepYear } from './timeline.js';
 import { unknownShown, readPref, writePref, prefAfterClick, unknownHint, easeShown } from './unknown.js';
@@ -146,6 +146,10 @@ const estColors = periods.map(p => estimateTone(p.color, THEME.estimateTo));
 const EST_KEY = 'hfh-estimates';
 let hideEst = false;
 try { hideEst = localStorage.getItem(EST_KEY) === 'hidden'; } catch {}
+// The "Only buildings with photos" switch: the rest fade to the maquette, as the timeline's range fade does. On in the
+// URL (?photos=1, web/panel.js). photoGids (photo-gids.json, s03_tiles) loads on first use.
+let photoOnly = photoOnlyFrom(location.search);
+let photoGids = null;
 // Terrain (Plan 3). What the map draws is uRelief * t - uCutK * cut (true metres t and the terrace cut, web/terrain.js),
 // in every shader and in surfaceAt, the CPU's copy: flat until the terrain is in.
 const uRelief = { value: 0 }, uCutK = { value: 0 };
@@ -459,6 +463,7 @@ const uniforms = {
   uHoverTo: { value: col(THEME.hoverTo) },
   uShowUnknown: { value: 1 },                      // how far buildings without a year stand, 1 to 0 (D30, stepUnknown)
   uHideEst: { value: hideEst ? 1 : 0 },            // 1 while the legend's switch hides the estimated years
+  uPhotoOnly: { value: 0 },                        // 1 while the legend's photo switch fades buildings without one
   uHatch: { value: THEME.unknownHatch ? 1 : 0 },   // 1 on a look that hatches "Year unknown" (D29), in uHatchInk
   uHatchInk: { value: col(THEME.unknownHatch || THEME.unknown) },
   uFloors: { value: THEME.floors.map(col) },       // the look's Floors ramp (web/themes.js, Plan 4a)
@@ -526,7 +531,7 @@ const VERT = /* glsl */`
   uniform vec3 uGroupColor[${MAX_GROUPS}];
   uniform vec3 uMaquette, uUnknown, uEstimateTo, uHoverTo, uHatchInk;
   uniform vec3 uFloors[4];
-  uniform float uShowUnknown, uHatch, uHideEst;
+  uniform float uShowUnknown, uHatch, uHideEst, uPhotoOnly;
   ${GRID_GLSL}
   ${TERRAIN_GLSL}
   out vec3 vColor;
@@ -619,6 +624,9 @@ const VERT = /* glsl */`
       }
     }
     if (yflag != 7 && year <= uYearFrom) c = mix(c, uMaquette, 0.8);
+    // The photo switch: a building whose card has no photo (float 9, web/panel.js markPhotos) fades the same way.
+    float photo = texelFetch(uAttr, tc + ivec2(2, 0), 0).y;
+    if (uMode < 0.5 && uPhotoOnly > 0.5 && photo < 0.5) { c = mix(c, uMaquette, 0.8); vHatch = 0.0; }
     // A quest's question about one building turns it red; a year riddle also hides every other age.
     if (uBlind > 0.5 && vGid == uSelected) c = vec3(0.925, 0.0, 0.0);
     else if (uBlind > 0.5 && uBlind < 1.5) c = uMaquette;
@@ -730,6 +738,7 @@ function addTile(m) {
   const rows = Math.ceil(m.nB / ATTR_W);
   const data = new Float32Array(ATTR_W * ATTR_FLOATS * rows);
   data.set(m.attr);
+  if (photoGids) markPhotos(data, m.nB, photoGids, ATTR_FLOATS);
   const tex = new THREE.DataTexture(data, ATTR_W * ATTR_FLOATS / 4, rows, THREE.RGBAFormat, THREE.FloatType);
   tex.needsUpdate = true;
   // Bounds that hold the shader's lift and skirts at the most relief the viewer offers (web/bounds.js): three.js's own
@@ -1807,6 +1816,8 @@ function renderPanel() {
       ${config.unknown ? `<div class="swatch unknown"><i style="background:${unknownFill(THEME)}"></i><span id="unknown-label">${esc(T('ui.unknown'))}</span><span class="n">${fmt(config.unknown)}</span>
         <button class="switch" aria-describedby="unknown-label unknown-hint"><span class="toggle" aria-hidden="true"></span>${esc(T('ui.show'))}</button>
         <span class="unknown-hint" id="unknown-hint"></span></div>` : ''}</div>
+      <div class="est-row"><button class="switch" id="photo-only" aria-pressed="${photoOnly}"><span class="toggle" aria-hidden="true"></span>${
+        esc(T('ui.photoOnly'))}</button></div>
       ${estTotal ? `<div class="est-row"><button class="switch" id="hide-est" aria-pressed="${hideEst}"><span class="toggle" aria-hidden="true"></span>${
         esc(T('ui.hideEst', { n: fmt(estTotal) }))}</button></div>` : ''}
       <p class="note">${approx(T('ui.legend.note'))}</p>`;
@@ -1814,6 +1825,7 @@ function renderPanel() {
     if (sw) { sw.onclick = flipUnknown; syncUnknownSwitch(); }
     const estSw = panel.querySelector('#hide-est');
     if (estSw) estSw.onclick = () => setHideEst(!hideEst);
+    panel.querySelector('#photo-only').onclick = () => setPhotoOnly(!photoOnly);
     panel.querySelectorAll('.swatch[data-i]').forEach(b => b.onclick = () => {
       const i = +b.dataset.i, m = maskTarget;
       const solo = m.every((v, j) => (j === i) === !!v);
@@ -1915,6 +1927,30 @@ function setHideEst(v) {
   try { localStorage.setItem(EST_KEY, hideEst ? 'hidden' : 'shown'); } catch {}
   panel.querySelector('#hide-est')?.setAttribute('aria-pressed', String(hideEst));
   drawHist();   // the legend's numbers follow (syncLegendCounts)
+}
+// The photo switch: the list loads once, then each tile's flags are written once (addTile marks later tiles); the
+// switch itself is one uniform. The choice goes into the URL.
+async function setPhotoOnly(v) {
+  photoOnly = !!v;
+  panel.querySelector('#photo-only')?.setAttribute('aria-pressed', String(photoOnly));
+  history.replaceState(history.state, '', photoOnlyHref(location.href, photoOnly));
+  if (photoOnly && !photoGids) {
+    try {
+      photoGids = new Set(await (await fetch(DATA + 'photo-gids.json')).json());
+    } catch (e) {
+      console.warn('photo-gids.json did not load; the photo switch is off', e);
+      photoOnly = false;
+      panel.querySelector('#photo-only')?.setAttribute('aria-pressed', 'false');
+      history.replaceState(history.state, '', photoOnlyHref(location.href, false));
+      return;
+    }
+    for (const mesh of meshes) {
+      const tex = mesh.material.uniforms.uAttr.value;
+      markPhotos(tex.image.data, mesh.userData.nB, photoGids, ATTR_FLOATS);
+      tex.needsUpdate = true;
+    }
+  }
+  uniforms.uPhotoOnly.value = photoOnly ? 1 : 0;
 }
 // Estimates are hidden only while the city is coloured by period (the switch lives in that legend).
 const estShown = () => !(hideEst && uniforms.uMode.value === MODE.period);
@@ -2429,6 +2465,7 @@ looks.subscribe(applyLook);
 
 applyStaticText();
 renderPanel();
+if (photoOnly) setPhotoOnly(true);
 applyLook(looks.current);
 resize();
 document.fonts?.ready.then(() => { drawHist(); placeSearch(); });
@@ -2546,7 +2583,7 @@ const scenePlayer = mountScenePlayer({ THREE, scene, camera, controls, origin: c
     set: y => { stopPlay(); setHandle('uYearFrom', FROM_REST); setHandle('uYear', y); },
     restore: ([from, to]) => { stopPlay(); uniforms.uYearFrom.value = from; uniforms.uYear.value = to; drawHist(); } } });
 
-window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
+window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
   surfaceAt, setRelief, chooseRelief, get relief() { return relief; }, terrain: () => ({ state: terrainState, source: TERRAIN?.source, relief: uRelief.value, cutK: uCutK.value, chunks: chunkMeshes.length }),
   get timelineLabels() { return placedLabels; }, get pinned() { return pinnedGid; }, districtOf,
   get forced() { return forcedGid; }, force, scene, highlight: () => highlight.state() };

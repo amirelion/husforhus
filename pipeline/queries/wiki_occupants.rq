@@ -1,0 +1,19 @@
+# Hus för hus, s06_wiki (step 4): what is inside the carded buildings. Items located in (P276) or headquartered in
+# (P159) a building's item, and the building's own occupants (P466), with their classes, sv/en labels and aliases.
+# Works of art and people are dropped here already (a museum holds thousands of paintings); pipeline/occupants.py
+# keeps the public institutions. The pipeline fills the VALUES line, a batch of buildings at a time.
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+SELECT DISTINCT ?b ?occ ?cls ?sv ?en ?alt WHERE {
+  VALUES ?b { __ITEMS__ }
+  { ?occ wdt:P276 ?b } UNION { ?occ wdt:P159 ?b } UNION { ?b wdt:P466 ?occ }
+  FILTER NOT EXISTS { ?occ wdt:P170 [] }
+  FILTER NOT EXISTS { ?occ wdt:P31 wd:Q5 }
+  FILTER NOT EXISTS { ?occ wdt:P576 [] }
+  OPTIONAL { ?occ wdt:P31 ?cls }
+  OPTIONAL { ?occ rdfs:label ?sv . FILTER(LANG(?sv) = "sv") }
+  OPTIONAL { ?occ rdfs:label ?en . FILTER(LANG(?en) = "en") }
+  OPTIONAL { ?occ skos:altLabel ?alt . FILTER(LANG(?alt) = "sv" || LANG(?alt) = "en") }
+}

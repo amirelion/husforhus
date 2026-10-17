@@ -308,7 +308,7 @@ def test_two_runs_write_identical_bytes(tmp_path):
     files = sorted(p.relative_to(tmp_path / "a") for p in (tmp_path / "a").rglob("*") if p.is_file())
     n_packs = len(json.loads((tmp_path / "a" / "stockholm.json").read_text())["packs"])
     # packs, attrs, 64 card shards, 64 excerpt shards, photos.json, layers.json, stockholm.json
-    assert len(files) == n_packs + 1 + 64 + 64 + 4                 # Plan 4b: districts.bin.gz
+    assert len(files) == n_packs + 1 + 64 + 64 + 5                 # Plan 4b: districts.bin.gz; photo-gids.json
     for f in files:
         assert (tmp_path / "a" / f).read_bytes() == (tmp_path / "b" / f).read_bytes(), f
 
@@ -428,3 +428,11 @@ def test_attribution_credits_each_source_in_the_d44_form():
                       "Wikipedia: Wikipedias bidragsgivare, CC BY-SA 4.0, bearbetad")}
     # an unmodified source has no "processed"
     assert s03_tiles.attribution(SOURCES)[0]["credit"] == {"en": "Test data: Test, CC0", "sv": "Test data: Test, CC0"}
+
+
+def test_photo_gids_lists_the_cards_with_a_photo(tmp_path):
+    # the photo filter (web/photos.js): the gids whose card shows a photo, sorted, nothing else
+    write(tmp_path)
+    assert json.loads((tmp_path / "photo-gids.json").read_text()) == [1]
+    cards = [{"1": {"photo": {"key": "a"}}, "65": {"name": "x"}}, {"2": {"photo": {"key": "b"}}}]
+    assert s03_tiles.photo_gids(cards) == [1, 2]

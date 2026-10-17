@@ -10,6 +10,10 @@ ratelimited, an answer that is not JSON) comes with HTTP 200, so it is retried a
      (data/raw/commons/meta_NNN.json); then each accepted photo's thumbnail at city.WIKI's thumb_width, once, into
      data/raw/commons/thumbs/<key> (content-addressed by the file's sha1, so nothing is fetched twice), PAUSE_S apart.
   3. Wikipedia: the intro of each placed item's sv and en article, 20 per request (data/raw/wiki/extracts/).
+  4. Wikidata (WDQS): what is inside each placed building (pipeline/queries/wiki_occupants.rq, OCCUPANT_BATCH items
+     per request, data/raw/wiki/occupants_NNN.json), then its classes' subclass graph (occupant_classes.json); the
+     public institutions (pipeline/occupants.py) go to data/occupants.json ({building qid: [{qid, sv, en, alt}]}),
+     which s14_search adds to the search index for the buildings that have a card.
 The photo: an item in the curated pick table pipeline/photo_picks.csv (qid, commons_file, decision; D19's later change of
 2026-10-16, derived from docs/research/2026-10-16-landmark-photos.csv) takes its pick instead of its Wikidata image
 (P18), "none" no photo at all; any other item keeps its first P18. A pick goes through the same checks as a P18 file
@@ -42,7 +46,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from . import city, suppress, wiki
+from . import city, occupants, suppress, wiki
 from .codes import SRC_CURATED
 from .fetch import UA, TIMEOUT, post_query_retrying, query_cached, retry_after
 from .privacy import normalise
@@ -57,6 +61,9 @@ from .years_wikidata import ancestors
 QUERIES = Path(__file__).with_name("queries")
 QUERY_ITEMS = QUERIES / "wiki_items.rq"
 QUERY_LABELS = QUERIES / "wiki_labels.rq"
+QUERY_OCCUPANTS = QUERIES / "wiki_occupants.rq"
+OCCUPANTS = Path("data/occupants.json")
+OCCUPANT_BATCH = 200
 RAW = Path("data/raw/wiki")
 COMMONS = Path("data/raw/commons")
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
@@ -98,6 +105,26 @@ def fetch_items(refresh: bool, raw: Path = RAW) -> tuple[pd.DataFrame, dict]:
     q = QUERY_CLASSES.read_text(encoding="utf-8").replace("__CLASSES__", " ".join(f"wd:{c}" for c in classes))
     ask([QLEVER, WDQS], {"query": q}, raw / "classes.json", refresh, ACCEPT)
     return items, ancestors([(qid(r["a"]), qid(r["b"])) for r in rows(raw / "classes.json")])
+
+
+def fetch_occupants(qids: list[str], refresh: bool, raw: Path = RAW) -> dict[str, list[dict]]:
+    """{building qid: its public institutions} (pipeline/occupants.py) for the buildings' items, OCCUPANT_BATCH per
+    cached request, then the classes' ancestors (QLever first, WDQS as fallback)."""
+    qids = sorted({q for q in qids if q})
+    if not qids:
+        return {}
+    found = []
+    for k, part in enumerate(chunks(qids, OCCUPANT_BATCH)):
+        q = QUERY_OCCUPANTS.read_text(encoding="utf-8").replace("__ITEMS__", " ".join(f"wd:{x}" for x in part))
+        ask([WDQS], {"query": q}, raw / f"occupants_{k:03d}.json", refresh, ACCEPT)
+        found += rows(raw / f"occupants_{k:03d}.json")
+    classes = sorted({qid(r["cls"]) for r in found if r.get("cls")})
+    anc = {}
+    if classes:
+        q = QUERY_CLASSES.read_text(encoding="utf-8").replace("__CLASSES__", " ".join(f"wd:{c}" for c in classes))
+        ask([QLEVER, WDQS], {"query": q}, raw / "occupant_classes.json", refresh, ACCEPT)
+        anc = ancestors([(qid(r["a"]), qid(r["b"])) for r in rows(raw / "occupant_classes.json")])
+    return occupants.occupants_from(found, anc)
 
 
 def chunks(values: list, n: int) -> list[list]:
@@ -347,6 +374,9 @@ def main(argv: list[str] | None = None) -> None:
                       + "# photos refused for a property designation in their title (file, item)\n"
                       + "".join(f"designation: {n} ({q})\n" for n, q in out["designation"]), encoding="utf-8")
     t = out["table"]
+    occ = fetch_occupants(list(t.qid), args.refresh)
+    OCCUPANTS.write_text(json.dumps(occ, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"occupants: {sum(map(len, occ.values()))} public institutions in {len(occ)} buildings -> {OCCUPANTS}")
     print(f"wiki: {len(t)} footprints with a building item, {int((t.photo != '').sum())} photos "
           f"({out['refused']} refused, {len(out['flagged'])} to look at; {out['p18']} from Wikidata), "
           f"{sum('sv' in v for v in out['extracts'].values())} sv and "

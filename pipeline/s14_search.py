@@ -6,7 +6,9 @@ Writes into the version folder (contract C27):
   (city.DISTRICT_ALIASES), the neighbouring municipalities (city.OUTSIDE), the streets with an address on a footprint
   (name, buildings, stadsdelar, the shard holding its numbers), the named buildings (name, gid, stadsdel, English
   label), the names people use for the best-known of them (city.BUILDING_ALIASES: "Slottet", "Royal Palace",
-  "Stadshuset", each with the gid of the one card carrying its target name) and how many buildings have an address
+  "Stadshuset", each with the gid of the one card carrying its target name), what is inside the carded buildings
+  (`occupants`: Swedish and English name, gid, other names, from s06_wiki's data/occupants.json: "Nobelprismuseet",
+  in Börshuset) and how many buildings have an address
   (the empty field says what share of the city search covers);
 - search/addr/<k>.json, loaded when a street is resolved: {street: [[number, gid, stadsdel], ...]}, the stadsdel an
   index into `districts`, k the first character of the street's folded name (pipeline/textfold.py; "_" for anything but
@@ -39,6 +41,7 @@ from .textfold import fold
 
 SHARD_KEY = re.compile(r"[a-z0-9]")
 TRASH = Path("temp_trash")
+OCCUPANTS = Path("data/occupants.json")
 EXAMPLE = re.compile(r"^(.*\S)\s+(\d+\s*[a-zA-Z]?)$")
 
 
@@ -73,9 +76,25 @@ def one_spelling(a: pd.DataFrame) -> pd.DataFrame:
     return a.assign(street=key.map(best.set_index("key").street).to_numpy())
 
 
-def build(df: pd.DataFrame, cards: dict[int, dict], places: dict) -> tuple[dict, dict[str, dict]]:
+def occupant_entries(cards: dict[int, dict], occupants: dict[str, list[dict]]) -> list[list]:
+    """[[Swedish name, English name, gid, [other names]], ...]: what is inside a building (s06_wiki's occupants.json,
+    {building qid: [{qid, sv, en, alt}]}), only for a building whose card has a name and carries that item; an
+    occupant that shares the building's own name is the building, not something inside it."""
+    out = []
+    for g in sorted(cards):
+        c = cards[g]
+        if not (c.get("name") and c.get("qid")):
+            continue
+        for o in occupants.get(c["qid"], []):
+            if fold(o["sv"]) != fold(c["name"]):
+                out.append([o["sv"], o["en"], g, list(o.get("alt", []))])
+    return out
+
+
+def build(df: pd.DataFrame, cards: dict[int, dict], places: dict,
+          occupants: dict[str, list[dict]] | None = None) -> tuple[dict, dict[str, dict]]:
     """(index, {shard key: {street: [[number, gid, stadsdel], ...]}}) for buildings `df` (s03_tiles.load: gid, x, z,
-    kategori, private, ysrc), the version's cards and s02_addresses' outputs."""
+    kategori, private, ysrc), the version's cards, s02_addresses' outputs and s06_wiki's occupants."""
     dist_of = places["districts"].set_index("gid").district.reindex(df.gid).fillna("").to_numpy(dtype=object)
     keys = sorted({d for d in dist_of if d}, key=lambda d: city.DISTRICT_NAMES.get(d, d))
     di = {d: i for i, d in enumerate(keys)}
@@ -111,7 +130,8 @@ def build(df: pd.DataFrame, cards: dict[int, dict], places: dict) -> tuple[dict,
                       if len(by_name.get(target, [])) == 1)
     index = {"v": 1, "settings": {k: v for k, v in city.SEARCH.items() if k not in ("examples", "addr_max_m")},
              "districts": districts, "aliases": aliases, "outside": list(city.OUTSIDE), "streets": streets,
-             "buildings": buildings, "baliases": baliases, "addressed": int(a.gid.nunique())}
+             "buildings": buildings, "baliases": baliases, "occupants": occupant_entries(cards, occupants or {}),
+             "addressed": int(a.gid.nunique())}
     index["examples"] = [e for e in city.SEARCH["examples"] if resolves(e, index, shards)]
     return index, shards
 
@@ -164,13 +184,15 @@ def main(argv: list[str] | None = None) -> None:
     if not cards:
         raise SystemExit(f"{out / 'cards'} holds no cards: run s03_tiles first")
     df = load(args.data)
-    index, shards = build(df, cards, load_places(args.data))
+    occ = json.loads(OCCUPANTS.read_text(encoding="utf-8")) if OCCUPANTS.exists() else {}
+    index, shards = build(df, cards, load_places(args.data), occ)
     s = write(out, index, shards)
     n_addr = sum(len(v) for shard in shards.values() for v in shard.values())
     dropped = [e for e in city.SEARCH["examples"] if e not in index["examples"]]
     missing = sorted(set(city.BUILDING_ALIASES) - {a[0] for a in index["baliases"]})
     print(f"search: {len(index['streets']):,} streets, {n_addr:,} addresses in {len(shards)} shards, "
           f"{len(index['buildings']):,} named buildings ({len(index['baliases'])} other names), "
+          f"{len(index['occupants'])} institutions inside them, "
           f"{len(index['districts'])} stadsdelar; index {s['index_gz'] / 1e3:.0f} KB gz, addresses "
           f"{s['addr_gz'] / 1e3:.0f} KB gz"
           + (f"; examples not in this build: {', '.join(dropped)}" if dropped else "")

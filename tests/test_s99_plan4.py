@@ -274,3 +274,15 @@ def test_a_rebuild_year_before_the_card_year_fails(site):
 def test_a_rebuild_of_another_kind_or_shape_fails(site, change, message):
     edit_card(site, 1, {**card_of(site, 1), **change})
     assert check(site) == [f"cards: 01.json gid 1 {message}"]
+
+
+def test_photo_gids_must_match_the_cards_with_a_photo(site):
+    # the photo filter's list (s03_tiles.photo_gids): exactly the shown cards with a photo, sorted
+    io.write_json(site / "photo-gids.json", [1, 3])
+    assert check(site) == ["photos: photo-gids.json lists gid 3, whose card has no photo"]
+    io.write_json(site / "photo-gids.json", [])
+    assert check(site) == ["photos: photo-gids.json leaves out gid 1, whose card has a photo"]
+    io.write_json(site / "photo-gids.json", {"1": 1})
+    assert check(site) == ["photos: photo-gids.json is not a sorted list of gids"]
+    (site / "photo-gids.json").unlink()
+    assert check(site) == ["photos: photo-gids.json is missing (run s03_tiles)"]

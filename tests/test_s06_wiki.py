@@ -15,6 +15,7 @@ def no_waiting(monkeypatch):
     """The pauses between requests and the retries' backoff are not waited for; each test starts a fresh run."""
     monkeypatch.setattr(s06_wiki, "sleep", lambda s: None)
     monkeypatch.setattr(s06_wiki, "_sent", [])
+    monkeypatch.setattr(s06_wiki, "fetch_occupants", lambda qids, refresh: {})   # tests/test_occupants.py's
 
 
 def town():

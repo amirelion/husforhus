@@ -350,3 +350,23 @@ test.describe('on a phone', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test('"nobel" finds the Nobel Prize Museum and flies to Börshuset', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page);
+  const gid = await page.evaluate(async () => {
+    const { version } = await (await fetch('data/current.json')).json();
+    const index = await (await fetch(`data/${version}/search/index.json`)).json();
+    const o = (index.occupants || []).find(e => /nobel/i.test(e[0]));
+    return o && index.buildings.some(b => b[0] === 'Börshuset' && b[1] === o[2]) ? o[2] : null;
+  });
+  test.skip(gid === null, 'this build has no Nobel occupant in Börshuset');
+  await page.getByRole('combobox').fill('nobel');
+  const row = page.getByRole('option', { name: /, in Börshuset/ }).first();
+  await expect(row).toContainText('Nobel Prize Museum, in Börshuset');
+  await expect(row).toContainText('Inside a building');
+  await row.click();
+  await expect.poll(() => page.evaluate(() => window.__dbg.pinned), { timeout: 10_000 }).toBe(gid);
+  await expect(page.locator('#card.pinned')).toContainText('Börshuset');
+  expect(errors).toEqual([]);
+});

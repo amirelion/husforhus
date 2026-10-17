@@ -32,3 +32,27 @@ test('an unknown, empty or missing stored value falls back to the defaults', () 
     assert.equal(initialCollapsed({ stored, phone: true, wide: true }), true, `phone ${String(stored)}`);
   }
 });
+
+import { photoOnlyFrom, photoOnlyHref, markPhotos, PHOTO_FLOAT } from '../panel.js';
+
+test('the photo switch reads ?photos=1 and nothing else as on', () => {
+  assert.equal(photoOnlyFrom('?photos=1'), true);
+  assert.equal(photoOnlyFrom('?theme=natt&photos=1'), true);
+  for (const s of ['', '?photos=0', '?photos=', '?photos=true', '?photo=1']) assert.equal(photoOnlyFrom(s), false, s);
+});
+
+test('the photo switch writes and clears ?photos and keeps the other parameters', () => {
+  const on = photoOnlyHref('https://x.se/?theme=natt#about', true);
+  assert.equal(on, 'https://x.se/?theme=natt&photos=1#about');
+  assert.equal(photoOnlyFrom(new URL(on).search), true);
+  assert.equal(photoOnlyHref(on, false), 'https://x.se/?theme=natt#about');
+  assert.equal(photoOnlyHref('https://x.se/', false), 'https://x.se/');
+});
+
+test('markPhotos flags exactly the photo gids and clears the rest', () => {
+  const attr = new Float32Array(3 * 12);
+  [7, 8, 9].forEach((g, b) => { attr[b * 12 + 3] = g; attr[b * 12 + PHOTO_FLOAT] = 1; });
+  assert.equal(markPhotos(attr, 3, new Set([8])), 1);
+  assert.deepEqual([0, 1, 2].map(b => attr[b * 12 + PHOTO_FLOAT]), [0, 1, 0]);
+  assert.equal(attr[1 * 12 + 3], 8);                     // the gid is untouched
+});
