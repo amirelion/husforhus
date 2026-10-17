@@ -166,3 +166,22 @@ def test_plaque_sources_are_registered_and_wait_for_the_layers_switch(monkeypatc
     shown = {a["id"]: a for a in s03_tiles.attribution(sources)}
     assert shown["samfundet_plaques"]["credit"]["en"] == "Kulturhusskyltar: Samfundet S:t Erik, CC BY 4.0, processed"
     assert s99_validate.check_attribution({"attribution": list(shown.values())}) == []
+
+
+def test_clean_name_drops_a_property_designation_from_a_plaque_name():
+    d = {"stamtavlan 5", "vätan 22", "argus 6"}
+    assert plaques.clean_name("Elefanthuset Stamtavlan 5", d) == "Elefanthuset"
+    assert plaques.clean_name("Kvarteret Vätan 22, Katolskt centrum/Otte Sköld", d) == "Katolskt centrum/Otte Sköld"
+    assert plaques.clean_name("Den Gyldene Freden", d) == "Den Gyldene Freden"
+    assert plaques.clean_name("Stamtavlan 5", d) == ""
+
+
+def test_build_keeps_one_entry_per_plaque_and_no_designation_in_its_name():
+    rows, texts, table, b, op = fixture()
+    twice = [*rows, dict(next(r for r in rows if r["id"] == 27627))]
+    out, review, _ = s15_plaques.build(twice, texts, table, b, op, designations={"argus 6"})
+    assert [p["id"] for p in out].count(27627) == 1
+    assert any(r.startswith("27627") and "listed twice" in r for r in review)
+    named = [dict(r, name="Den Gyldene Freden Argus 6") if r["id"] == 27627 else r for r in rows]
+    out, _, _ = s15_plaques.build(named, texts, table, b, op, designations={"argus 6"})
+    assert next(p for p in out if p["id"] == 27627)["name"] == "Den Gyldene Freden"

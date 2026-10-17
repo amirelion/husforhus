@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 
 from .addresses import numbers
-from .privacy import mentions, owner
+from .privacy import mentions, owner, phrases
 from .textfold import fold
 from .wiki import split_sentences
 
@@ -127,6 +127,16 @@ def text_from_post(page: str) -> tuple[str, str]:
         if s:
             paras.append(s)
     return title, "\n\n".join(paras)
+
+
+def clean_name(name: str, designations: set[str] = frozenset()) -> str:
+    """The plaque's name without a property designation ("Elefanthuset Stamtavlan 5" -> "Elefanthuset"), with a
+    leading "Kvarteret"/"kv." dropped along with it; "" when the name was only the designation."""
+    out = str(name or "")
+    for ph in sorted({q for q in phrases(out) if q in designations}, key=len, reverse=True):
+        words = r"\s+".join(re.escape(w) for w in ph.split(" "))
+        out = re.sub(rf"(?:\b(?:kvarteret|kv\.?)\s+)?\b{words}\b", " ", out, flags=re.IGNORECASE)
+    return re.sub(r"^[\s,;/–-]+|[\s,;/–-]+$", "", " ".join(out.split()))
 
 
 def cut(text: str, designations: set[str] = frozenset()) -> tuple[str, bool]:

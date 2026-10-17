@@ -41,7 +41,12 @@ def build(rows: list[dict], texts: dict[int, str], table: pd.DataFrame, b, op: l
     centre = b.set_index("gid").geometry.representative_point() if len(b) else None
     out, review = [], []
     n = {"plaques": len(rows), "address": 0, "position": 0, "unplaced": 0, "missing": 0, "left_out": 0}
+    seen = set()
     for p in placed:
+        if p["id"] in seen:                     # one plaque on two addresses, or listed twice: the first one stands
+            review.append(f"{p['id']}\t{p['n']}\t{p['name']}\t\tlisted twice: kept once")
+            continue
+        seen.add(p["id"])
         text, shortened = plaques.cut(texts.get(p["id"], ""), designations)
         addr = "; ".join(f"{s} {', '.join(nums)}" for s, nums in p["addrs"]) or "no address in the list"
         why = ("not on the wall now (Skylt saknas)" if p["missing"] else "no text" if not text
@@ -53,7 +58,7 @@ def build(rows: list[dict], texts: dict[int, str], table: pd.DataFrame, b, op: l
             continue
         n[p["how"]] += 1
         x, z = city.to_local(centre[p["gid"]].x, centre[p["gid"]].y)
-        out.append({"id": p["id"], "gid": p["gid"], "name": p["name"], "text": text, "year": p["year"],
+        out.append({"id": p["id"], "gid": p["gid"], "name": plaques.clean_name(p["name"], designations), "text": text, "year": p["year"],
                     "x": round(float(x), 1), "z": round(float(z), 1), "how": p["how"], "credit": plaques.CREDIT,
                     **({"cut": True} if shortened else {})})
     return sorted(out, key=lambda e: e["id"]), review, n

@@ -7,6 +7,7 @@ import { YFLAG } from './codes.js';
 import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
   isEstimate, placeLine, whyAnchor, wrongHref } from './card.js';
 import { shareText, shareLink, parseAt } from './share.js';
+import { withTry } from './features.js';
 import { makeT, legacy, pickLang } from './i18n.js';
 import { plaquesByGid, plaqueSection } from './plaque.js';
 import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
@@ -124,10 +125,11 @@ const attrTally = tallyFromAttrs(attrs, config.stats.buildings, config.attrStrid
   { periods: config.periods, yearMin: config.yearMin, yearMax: config.yearMax });
 // Features for v1.1 (Quests, Context layers, the language switch) stay in the code, switched off by
 // config.features (pipeline/city.py FEATURES); their buttons are hidden, never removed.
-const FEATURES = config.features || {};
+// ?try=stories,plaques (web/features.js) switches one on for this visit only, to try it on the live site.
+const FEATURES = withTry(config.features || {}, location.search);
 const layers = FEATURES.layers ? await getJson(`${DATA}layers.json`).catch(halt) : [];
 // Samfundet S:t Erik's blue plaques (web/plaque.js), with the layers: optional, so a build without them still starts.
-const plaqueList = FEATURES.layers ? await getJson(`${DATA}plaques.json`).catch(() => []) : [];
+const plaqueList = FEATURES.layers || FEATURES.plaques ? await getJson(`${DATA}plaques.json`).catch(() => []) : [];
 const plaquesOf = plaquesByGid(plaqueList);
 
 // ---------- Language ----------
