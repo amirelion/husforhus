@@ -1,0 +1,271 @@
+{
+  "id": "metro-blue-line",
+  "title": {
+    "en": "The blue line and Järvafältet, 1975–1977",
+    "sv": "Blå linjen och Järvafältet 1975–1977"
+  },
+  "year": 1975,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.37666,
+        "lon": 17.91506,
+        "height_m": 2600
+      },
+      "target": {
+        "lat": 59.4,
+        "lon": 17.915
+      },
+      "duration_s": 8,
+      "year": 1960,
+      "caption": {
+        "en": "In 1905 the Riksdag decides to make Järvafältet an army training ground, closed to the public. The farms work on, but may build nothing new.",
+        "sv": "År 1905 beslutar riksdagen att Järvafältet ska bli arméns övningsfält, stängt för allmänheten. Gårdarna brukas vidare men får inte bygga nytt."
+      },
+      "sources": [
+        "sv Wikipedia: Järvafältet (rev 59161119)",
+        "en Wikipedia: Tensta (rev 1380027849)"
+      ],
+      "photo": {
+        "src": "img/913cd587d1e6ab14d02064b52bb6bac37293c8ce.jpg",
+        "width": 800,
+        "height": 551,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:J%C3%A4rvaf%C3%A4ltet_man%C3%B6ver_1917.JPG",
+          "file": "File:Järvafältet manöver 1917.JPG"
+        },
+        "caption": {
+          "en": "A field exercise on Järvafältet, 1917",
+          "sv": "Fältmanöver på Järvafältet 1917"
+        }
+      }
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.37754,
+        "lon": 17.91503,
+        "height_m": 1500
+      },
+      "target": {
+        "lat": 59.391,
+        "lon": 17.915
+      },
+      "duration_s": 9,
+      "year": 1965,
+      "caption": {
+        "en": "Before the 1962 election the \"Järva bomb\" promises homes for 160,000 people on the field within eight years. The plan for Tensta and Rinkeby is adopted in April 1965.",
+        "sv": "Inför valet 1962 lovar ”Järvabomben” bostäder för 160 000 människor på fältet inom åtta år. Planen för Tensta och Rinkeby antas i april 1965."
+      },
+      "sources": [
+        "sv Wikipedia: Tensta (rev 58694448)",
+        "sv Wikipedia: Järvafältet (rev 59161119)",
+        "sv Wikipedia: Rinkeby (rev 59740740)"
+      ],
+      "photo": {
+        "src": "img/2047617ad5203b5a850b9ea3a9b1254df2db7475.jpg",
+        "width": 800,
+        "height": 802,
+        "credit": {
+          "author": "Lars Bergström",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Rinkeby_-_KMB_-_16001000506344.jpg",
+          "file": "File:Rinkeby - KMB - 16001000506344.jpg"
+        },
+        "caption": {
+          "en": "Rinkeby farm and the E18 from the air, 1964, before the estate was built",
+          "sv": "Rinkeby gård och E18 från luften 1964, innan förorten byggdes"
+        }
+      }
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.38173,
+        "lon": 17.90503,
+        "height_m": 1200
+      },
+      "target": {
+        "lat": 59.3925,
+        "lon": 17.905
+      },
+      "duration_s": 9,
+      "year": 1972,
+      "caption": {
+        "en": "Work on the metro starts on 2 September 1966, and on Tensta that November. The first tenants move in in 1967, onto a building site; by 1972 Tensta has 6,200 new homes.",
+        "sv": "Tunnelbanebygget börjar 2 september 1966 och Tensta i november samma år. De första flyttar in 1967, mitt på en byggarbetsplats; 1972 har Tensta 6 200 nya bostäder."
+      },
+      "sources": [
+        "sv Wikipedia: Blå linjen (Stockholms tunnelbana) (rev 59711771)",
+        "en Wikipedia: Blue Line (Stockholm Metro) (rev 1376146405)",
+        "sv Wikipedia: Tensta (rev 58694448)"
+      ],
+      "photo": {
+        "src": "img/22b61feef946c667bb2e8e4cc0f659268e3686ce.jpg",
+        "width": 800,
+        "height": 539,
+        "credit": {
+          "author": "Erik Claesson",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Tensta_-_KMB_-_16001000193564.jpg",
+          "file": "File:Tensta - KMB - 16001000193564.jpg"
+        },
+        "caption": {
+          "en": "Tensta being built, from the air, 4 February 1968",
+          "sv": "Tensta byggs, flygfoto 4 februari 1968"
+        }
+      }
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.37743,
+        "lon": 17.91803,
+        "height_m": 1400
+      },
+      "target": {
+        "lat": 59.39,
+        "lon": 17.918
+      },
+      "duration_s": 9,
+      "year": 1974,
+      "caption": {
+        "en": "Rinkeby is built 1968–1971, and its centre opens on 3 November 1971. Until the metro comes, buses take Tensta and Rinkeby to Spånga station.",
+        "sv": "Rinkeby byggs 1968–1971 och Rinkeby centrum invigs 3 november 1971. Tills tunnelbanan kommer går bussar från Tensta och Rinkeby till Spånga station."
+      },
+      "sources": [
+        "sv Wikipedia: Rinkeby (rev 59740740)",
+        "sv Wikipedia: Blå linjen (Stockholms tunnelbana) (rev 59711771)"
+      ],
+      "photo": {
+        "src": "img/80829ce21882ac2b3bf5b3483e46d719db6b1d1e.jpg",
+        "width": 800,
+        "height": 541,
+        "credit": {
+          "author": "Lennart af Petersens",
+          "licence": "CC BY 4.0",
+          "page": "https://commons.wikimedia.org/wiki/File:Tensta_all%C3%A9_1971.jpg",
+          "file": "File:Tensta allé 1971.jpg"
+        },
+        "caption": {
+          "en": "A bus on Tensta allé, 1971",
+          "sv": "Buss på Tensta allé 1971"
+        }
+      }
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.36666,
+        "lon": 17.92605,
+        "height_m": 2600
+      },
+      "target": {
+        "lat": 59.39,
+        "lon": 17.926
+      },
+      "duration_s": 9,
+      "year": 1975,
+      "caption": {
+        "en": "31 August 1975: the blue line opens from T-Centralen to Hjulsta, nine years after work began. Until 1985 its trains run via Hallonbergen.",
+        "sv": "31 augusti 1975: blå linjen öppnar mellan T-Centralen och Hjulsta, nio år efter att bygget började. Fram till 1985 går tågen via Hallonbergen."
+      },
+      "sources": [
+        "sv Wikipedia: Blå linjen (Stockholms tunnelbana) (rev 59711771)",
+        "en Wikipedia: Blue Line (Stockholm Metro) (rev 1376146405)",
+        "sv Wikipedia: Stockholms tunnelbana (rev 59711828)"
+      ],
+      "photo": {
+        "src": "img/881d2dffaa81eb54533b61b25bdbfbe2db9b5f56.jpg",
+        "width": 800,
+        "height": 1182,
+        "credit": {
+          "author": "Erik Claesson",
+          "licence": "CC BY 2.5",
+          "page": "https://commons.wikimedia.org/wiki/File:Hallonbergen_-_KMB_-_16001000417064.jpg",
+          "file": "File:Hallonbergen - KMB - 16001000417064.jpg"
+        },
+        "caption": {
+          "en": "Building the metro at Hallonbergen, Sundbyberg, from the air, 4 November 1970",
+          "sv": "Tunnelbanebygget vid Hallonbergen i Sundbyberg, flygfoto 4 november 1970"
+        }
+      }
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.39963,
+        "lon": 17.93102,
+        "height_m": 1100
+      },
+      "target": {
+        "lat": 59.4095,
+        "lon": 17.931
+      },
+      "duration_s": 9,
+      "year": 1976,
+      "caption": {
+        "en": "Husby, Akalla and Kista are planned together, learning from the criticism of Tensta and Rinkeby. Husby comes first: built 1972–1977, first tenants 1974.",
+        "sv": "Husby, Akalla och Kista planeras tillsammans, med lärdom av kritiken mot Tensta och Rinkeby. Husby byggs först, 1972–1977; de första flyttar in 1974."
+      },
+      "sources": [
+        "sv Wikipedia: Husby, Stockholm (rev 59324921)",
+        "sv Wikipedia: Akalla (rev 59604094)"
+      ]
+    },
+    {
+      "n": 7,
+      "camera": {
+        "lat": 59.38844,
+        "lon": 17.9522,
+        "height_m": 1700
+      },
+      "target": {
+        "lat": 59.402778,
+        "lon": 17.941944
+      },
+      "duration_s": 8,
+      "year": 1977,
+      "caption": {
+        "en": "5 June 1977: the branch to Kista, Husby and Akalla opens. Kista is the only station on the line above ground, on a 1,200 m viaduct.",
+        "sv": "5 juni 1977: grenen till Kista, Husby och Akalla öppnar. Kista är linjens enda station ovan jord, på en 1 200 meter lång högbana."
+      },
+      "sources": [
+        "sv Wikipedia: Blå linjen (Stockholms tunnelbana) (rev 59711771)",
+        "en Wikipedia: Blue Line (Stockholm Metro) (rev 1376146405)",
+        "sv Wikipedia: Stockholms tunnelbana (rev 59711828)"
+      ]
+    },
+    {
+      "n": 8,
+      "camera": {
+        "lat": 59.39522,
+        "lon": 17.94139,
+        "height_m": 1100
+      },
+      "target": {
+        "lat": 59.4045,
+        "lon": 17.948
+      },
+      "duration_s": 9,
+      "year": 2025,
+      "caption": {
+        "en": "From the 1980s Kista fills with offices and IT companies and is nicknamed \"Chipsta\". Today the line is being extended from Akalla to Barkarby.",
+        "sv": "Från 1980-talet fylls Kista av kontor och IT-företag och får smeknamnet Chipsta. I dag byggs linjen ut från Akalla till Barkarby."
+      },
+      "sources": [
+        "sv Wikipedia: Kista (rev 58995950)",
+        "en Wikipedia: Kista (rev 1369672820)",
+        "sv Wikipedia: Blå linjen (Stockholms tunnelbana) (rev 59711771)"
+      ]
+    }
+  ],
+  "ready": true,
+  "layers": [
+    "metro"
+  ]
+}

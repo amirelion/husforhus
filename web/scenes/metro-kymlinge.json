@@ -1,0 +1,207 @@
+{
+  "id": "metro-kymlinge",
+  "title": {
+    "en": "Kymlinge, the station that never opened",
+    "sv": "Kymlinge, stationen som aldrig öppnade"
+  },
+  "year": 1975,
+  "sensitive": false,
+  "beats": [
+    {
+      "n": 1,
+      "camera": {
+        "lat": 59.360845,
+        "lon": 17.949909,
+        "height_m": 3000
+      },
+      "target": {
+        "lat": 59.386142,
+        "lon": 17.931816
+      },
+      "duration_s": 11,
+      "year": 1975,
+      "caption": {
+        "en": "31 August 1975: the blue line opens from T-Centralen out to Hjulsta, by way of Hallonbergen. It was built for the big new suburbs of the north-west.",
+        "sv": "31 augusti 1975: blå linjen öppnar från T-Centralen ut till Hjulsta, via Hallonbergen. Den byggdes för de stora nya förorterna i nordväst."
+      },
+      "sources": [
+        "sv Wikipedia: Blå linjen (Stockholms tunnelbana) (rev 59711771)",
+        "en Wikipedia: Blue Line (Stockholm Metro) (rev 1376146405)"
+      ]
+    },
+    {
+      "n": 2,
+      "camera": {
+        "lat": 59.391461,
+        "lon": 17.97368,
+        "height_m": 2300
+      },
+      "target": {
+        "lat": 59.402778,
+        "lon": 17.941945
+      },
+      "duration_s": 10,
+      "year": 1976,
+      "caption": {
+        "en": "Kista, Husby and Akalla go up in 1972–1977. South of Kista, at Kymlinge, another district was planned, mainly for government offices leaving the inner city.",
+        "sv": "Kista, Husby och Akalla byggs 1972–1977. Söder om Kista, i Kymlinge, planerades ännu en stadsdel, främst för statliga verk som skulle flytta ut från innerstan."
+      },
+      "sources": [
+        "sv Wikipedia: Akalla (rev 59604094)",
+        "sv Wikipedia: Kymlinge (tunnelbanestation) (rev 59277167)",
+        "en Wikipedia: Kymlinge (rev 1376226740)"
+      ],
+      "photo": {
+        "src": "img/a47ed85552d8c6ff2254be4ec21676b0bb10cadc.jpg",
+        "width": 800,
+        "height": 777,
+        "credit": {
+          "author": "Lars Bergström",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:%C3%96vre_Kymlinge_-_KMB_-_16001000506164.jpg",
+          "file": "File:Övre Kymlinge - KMB - 16001000506164.jpg"
+        },
+        "caption": {
+          "en": "Övre Kymlinge farm from the air, 1964, with Ärvinge farm behind",
+          "sv": "Övre Kymlinge från luften 1964, med Ärvinge gård i bakgrunden"
+        }
+      }
+    },
+    {
+      "n": 3,
+      "camera": {
+        "lat": 59.373915,
+        "lon": 17.980063,
+        "height_m": 2600
+      },
+      "target": {
+        "lat": 59.395,
+        "lon": 17.965
+      },
+      "duration_s": 11,
+      "year": 1977,
+      "caption": {
+        "en": "5 June 1977: the branch from Hallonbergen to Kista, Husby and Akalla opens. On the way it passes Kymlinge, just beyond the map's edge in Sundbyberg.",
+        "sv": "5 juni 1977: grenen från Hallonbergen till Kista, Husby och Akalla öppnar. På vägen passerar den Kymlinge, strax utanför kartans kant i Sundbyberg."
+      },
+      "sources": [
+        "sv Wikipedia: Blå linjen (Stockholms tunnelbana) (rev 59711771)",
+        "sv Wikipedia: Kymlinge (tunnelbanestation) (rev 59277167)"
+      ]
+    },
+    {
+      "n": 4,
+      "camera": {
+        "lat": 59.390092,
+        "lon": 17.991465,
+        "height_m": 1700
+      },
+      "target": {
+        "lat": 59.395,
+        "lon": 17.965
+      },
+      "duration_s": 13,
+      "year": 1977,
+      "caption": {
+        "en": "The district was dropped: some agencies moved to other towns instead. The station's design was already under way, so it was built in rough form, with no ticket hall, escalators or lifts.",
+        "sv": "Stadsdelen blev aldrig av: en del myndigheter flyttade i stället till andra orter. Stationen var redan projekterad och byggdes i råkonstruktion, utan biljetthall, rulltrappor och hissar."
+      },
+      "sources": [
+        "sv Wikipedia: Kymlinge (tunnelbanestation) (rev 59277167)",
+        "en Wikipedia: Kymlinge (rev 1376226740)"
+      ],
+      "photo": {
+        "src": "img/50726938a0fbce0f3ca20566a75e79b058eeb86c.jpg",
+        "width": 800,
+        "height": 582,
+        "credit": {
+          "author": "Holger.Ellgaard",
+          "licence": "CC BY-SA 3.0",
+          "page": "https://commons.wikimedia.org/wiki/File:Kymlinge_station_2012e.jpg",
+          "file": "File:Kymlinge station 2012e.jpg"
+        },
+        "caption": {
+          "en": "The unfinished platform at Kymlinge, 19 January 2012",
+          "sv": "Den ofärdiga plattformen i Kymlinge, 19 januari 2012"
+        }
+      }
+    },
+    {
+      "n": 5,
+      "camera": {
+        "lat": 59.384635,
+        "lon": 17.985799,
+        "height_m": 1900
+      },
+      "target": {
+        "lat": 59.396056,
+        "lon": 17.963391
+      },
+      "duration_s": 9,
+      "year": 2025,
+      "caption": {
+        "en": "Blue line trains still run through Kymlinge without stopping. In folklore it is a \"ghost station\" where only the dead get off.",
+        "sv": "Blå linjens tåg kör fortfarande igenom Kymlinge utan att stanna. I vandringssägnerna är den en \"spökstation\" där bara de döda stiger av."
+      },
+      "sources": [
+        "en Wikipedia: Kymlinge (rev 1376226740)",
+        "sv Wikipedia: Kymlinge (tunnelbanestation) (rev 59277167)",
+        "sv Wikipedia: Silvertåget (rev 59751978)"
+      ]
+    },
+    {
+      "n": 6,
+      "camera": {
+        "lat": 59.377605,
+        "lon": 17.966313,
+        "height_m": 2050
+      },
+      "target": {
+        "lat": 59.395041,
+        "lon": 17.963304
+      },
+      "duration_s": 12,
+      "year": 2025,
+      "caption": {
+        "en": "The planned district is still woods and meadow, with no one living there. About two thirds of Kymlinge is now part of the Igelbäcken nature reserve, formed in 2004–2005.",
+        "sv": "Den planerade stadsdelen är fortfarande skog och äng, utan fast befolkning. Ungefär två tredjedelar av Kymlinge ingår i dag i Igelbäckens naturreservat, bildat 2004–2005."
+      },
+      "sources": [
+        "sv Wikipedia: Kymlinge (rev 59121705)",
+        "sv Wikipedia: Igelbäcken (rev 59353235)"
+      ],
+      "photo": {
+        "src": "img/79f767d5b2211e483fa4746482eec3bba4427c95.jpg",
+        "width": 800,
+        "height": 533,
+        "credit": {
+          "author": "Krr005",
+          "licence": "CC BY-SA 4.0",
+          "page": "https://commons.wikimedia.org/wiki/File:Igelb%C3%A4cken_Sundbyberg.jpg",
+          "file": "File:Igelbäcken Sundbyberg.jpg"
+        },
+        "caption": {
+          "en": "Igelbäcken in Sundbyberg, with Kista behind, 28 May 2020",
+          "sv": "Igelbäcken i Sundbyberg, med Kista i bakgrunden, 28 maj 2020"
+        }
+      }
+    }
+  ],
+  "ready": true,
+  "layers": [
+    "metro"
+  ],
+  "overlays": [
+    {
+      "type": "marker",
+      "at": [
+        59.395,
+        17.965
+      ],
+      "label": {
+        "en": "Kymlinge",
+        "sv": "Kymlinge"
+      }
+    }
+  ]
+}

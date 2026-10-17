@@ -11,7 +11,7 @@ const SIZES = { desktop: { width: 1280, height: 800 }, phone: { width: 390, heig
 const OUT = 'data/test-results/beats';
 
 test('six stories are ready', () => {
-  expect(ready.map(s => s.id).sort()).toEqual(['metro-1950', 'metro-vallingby', 's04', 's07-kristina-lock', 's10-olympics-1912', 's11', 's12', 'tre-kronor-1697', 'vasa-1628']);
+  expect(ready.map(s => s.id).sort()).toEqual(['metro-1950', 'metro-blue-line', 'metro-kymlinge', 'metro-vallingby', 's04', 's07-kristina-lock', 's10-olympics-1912', 's11', 's12', 'tre-kronor-1697', 'vasa-1628']);
 });
 
 for (const s of ready) {

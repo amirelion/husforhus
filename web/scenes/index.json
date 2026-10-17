@@ -89,6 +89,26 @@
       "year": 1950,
       "beats": 6,
       "ready": true
+    },
+    {
+      "id": "metro-blue-line",
+      "title": {
+        "en": "The blue line and Järvafältet, 1975–1977",
+        "sv": "Blå linjen och Järvafältet 1975–1977"
+      },
+      "year": 1975,
+      "beats": 8,
+      "ready": true
+    },
+    {
+      "id": "metro-kymlinge",
+      "title": {
+        "en": "Kymlinge, the station that never opened",
+        "sv": "Kymlinge, stationen som aldrig öppnade"
+      },
+      "year": 1975,
+      "beats": 6,
+      "ready": true
     }
   ]
 }

@@ -122,7 +122,7 @@ for (const id of ['vasa-1628', 'tre-kronor-1697', 's10-olympics-1912', 's11', 's
   });
 }
 
-// The two Tunnelbanan stories: cameras at 25° or more, 3–5 photos, the metro layer forced on, and each beat's year
+// The Tunnelbanan stories: cameras at 25° or more, 3–5 photos, the metro layer forced on, and each beat's year
 // (timeline_year) late enough that the line has reached the station the beat is about (opening dates from
 // docs/research/2026-10-16-tunnelbanan-stations.csv, the source of s16_metro's metro.json).
 import { beatYear, sceneLayers } from '../scene-player.js';
@@ -139,8 +139,10 @@ test('beatYear: the beat\'s own year, else the scene\'s; sceneLayers keeps only 
 const opened = Object.fromEntries(fs.readFileSync(new URL('../../docs/research/2026-10-16-tunnelbanan-stations.csv', import.meta.url), 'utf8')
   .split('\n').slice(1).filter(Boolean).map(l => l.split(',')).filter(c => c[2]).map(c => [c[0], c.find(x => /^\d{4}-\d\d-\d\d$/.test(x))]));
 const reaches = { 'metro-vallingby': { 4: 'Vällingby', 5: 'Vällingby', 6: 'Vällingby', 7: 'Vällingby', 8: 'Vällingby' },
-  'metro-1950': { 1: 'Slussen', 2: 'Skärmarbrink', 3: 'Hökarängen', 4: 'Gubbängen', 6: 'Gamla stan' } };
-for (const id of ['metro-vallingby', 'metro-1950']) {
+  'metro-1950': { 1: 'Slussen', 2: 'Skärmarbrink', 3: 'Hökarängen', 4: 'Gubbängen', 6: 'Gamla stan' },
+  'metro-blue-line': { 5: 'Hjulsta', 6: 'Rinkeby', 7: 'Kista', 8: 'Akalla' },
+  'metro-kymlinge': { 1: 'Rinkeby', 3: 'Kista', 4: 'Kista', 5: 'Kista', 6: 'Kista' } };
+for (const id of ['metro-vallingby', 'metro-1950', 'metro-blue-line', 'metro-kymlinge']) {
   test(`${id}: cameras at 25° or more, 3–5 photos, the metro on, the line at its station by the beat's year`, () => {
     const s = JSON.parse(fs.readFileSync(new URL(`../scenes/${id}.json`, import.meta.url)));
     assert.equal(s.ready, true);
@@ -165,4 +167,19 @@ test('metro-vallingby: no metro in the first beats (1950–1951), the line arriv
   const s = JSON.parse(fs.readFileSync(new URL('../scenes/metro-vallingby.json', import.meta.url)));
   assert.ok(opened['Vällingby'] > `${beatYear(s, 2)}-12-31`);
   assert.ok(opened['Vällingby'] <= `${beatYear(s, 3)}-12-31`);
+});
+
+test('metro-blue-line: no blue line before beat 5 (1975), the Akalla branch from beat 7 (1977)', () => {
+  const s = JSON.parse(fs.readFileSync(new URL('../scenes/metro-blue-line.json', import.meta.url)));
+  assert.ok(opened['Hjulsta'] > `${beatYear(s, 3)}-12-31`);
+  assert.ok(opened['Hjulsta'] <= `${beatYear(s, 4)}-12-31`);
+  assert.ok(opened['Kista'] > `${beatYear(s, 5)}-12-31`);
+  assert.ok(opened['Kista'] <= `${beatYear(s, 6)}-12-31`);
+});
+
+test('metro-kymlinge: the branch past Kymlinge opens in beat 3 (1977), and Kymlinge itself never opens', () => {
+  const s = JSON.parse(fs.readFileSync(new URL('../scenes/metro-kymlinge.json', import.meta.url)));
+  assert.ok(opened['Kista'] > `${beatYear(s, 1)}-12-31`);
+  assert.ok(opened['Kista'] <= `${beatYear(s, 2)}-12-31`);
+  assert.equal(opened['Kymlinge'], undefined);
 });

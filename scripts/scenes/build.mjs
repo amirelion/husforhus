@@ -23,6 +23,10 @@ export const SCENES = {
     year: 1950, sensitive: false, layers: ['metro'], ready: true },
   'metro-1950': { title: { en: 'The first metro, 1 October 1950', sv: 'Den första tunnelbanan, 1 oktober 1950' },
     year: 1950, sensitive: false, layers: ['metro'], ready: true },
+  'metro-blue-line': { title: { en: 'The blue line and Järvafältet, 1975–1977', sv: 'Blå linjen och Järvafältet 1975–1977' },
+    year: 1975, sensitive: false, layers: ['metro'], ready: true },
+  'metro-kymlinge': { title: { en: 'Kymlinge, the station that never opened', sv: 'Kymlinge, stationen som aldrig öppnade' },
+    year: 1975, sensitive: false, layers: ['metro'], ready: true },
 };
 
 // ready: shown in the Stories list (web/scene-player.js lists only these).
@@ -65,11 +69,13 @@ export function ghostOverlays(dir, id) {
   });
 }
 
-// Overlay files per scene: route lines and closed outlines (both emitted as type "route").
+// Overlay files per scene: route lines and closed outlines (both emitted as type "route"); route: false emits only
+// the file's markers (a place with no line, such as the station in metro-kymlinge).
 const OVERLAYS = {
   'vasa-1628': [{ file: 'route.csv', label: { en: "Vasa's route, 10 August 1628", sv: 'Vasas färdväg 10 augusti 1628' }, markers: 'place' }],
   's10-olympics-1912': [{ file: 'route.csv', label: { en: 'Marathon route, 14 July 1912', sv: 'Maratonbanan 14 juli 1912' }, markers: 'name' }],
   's11': [{ file: 'site.csv', label: { en: 'Exhibition grounds (approximate)', sv: 'Utställningsområdet (ungefärligt)' }, closed: true }],
+  'metro-kymlinge': [{ file: 'markers.csv', markers: 'name', route: false }],
 };
 
 export function parseCsv(text) {
@@ -138,7 +144,7 @@ export function buildScene(id, root = REPO) {
     const pts = readCsv(path.join(dir, o.file));
     const coords = pts.map((p) => [num(p.lat, `${id}/${o.file}`), num(p.lon, `${id}/${o.file}`)]);
     if (o.closed) coords.push([...coords[0]]);
-    overlays.push({ type: 'route', coords, label: o.label });
+    if (o.route !== false) overlays.push({ type: 'route', coords, label: o.label });
     if (o.markers) {
       const seen = new Set();
       for (const p of pts) {

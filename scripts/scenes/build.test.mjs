@@ -10,8 +10,8 @@ test('csv parser handles quotes, commas and doubled quotes', () => {
   assert.deepEqual(parseCsv('a,b\n"x, y","say ""hi"""\n'), [{ a: 'x, y', b: 'say "hi"' }]);
 });
 
-test('all 9 scenes parse', () => {
-  assert.equal(Object.keys(SCENES).length, 9);
+test('all 11 scenes parse', () => {
+  assert.equal(Object.keys(SCENES).length, 11);
   for (const id of Object.keys(SCENES)) assert.ok(buildScene(id).beats.length > 0, id);
 });
 
@@ -42,15 +42,20 @@ test('the three overlay scenes have their route or outline', () => {
   }
 });
 
+test('route: false: metro-kymlinge has its station marker and no route line', () => {
+  const o = buildScene('metro-kymlinge').overlays;
+  assert.deepEqual(o, [{ type: 'marker', at: [59.395, 17.965], label: { en: 'Kymlinge', sv: 'Kymlinge' } }]);
+});
+
 test('only the finished stories are ready, in the index too', async () => {
   const { buildAll } = await import('./build.mjs');
   const ready = Object.entries(SCENES).filter(([, m]) => m.ready).map(([id]) => id).sort();
-  assert.deepEqual(ready, ['metro-1950', 'metro-vallingby', 's04', 's07-kristina-lock', 's10-olympics-1912', 's11', 's12', 'tre-kronor-1697', 'vasa-1628']);
+  assert.deepEqual(ready, ['metro-1950', 'metro-blue-line', 'metro-kymlinge', 'metro-vallingby', 's04', 's07-kristina-lock', 's10-olympics-1912', 's11', 's12', 'tre-kronor-1697', 'vasa-1628']);
   assert.ok(buildAll);
 });
 
 test('layers: the two metro stories force the metro on; an unknown layer fails the build', async () => {
-  for (const id of ['metro-vallingby', 'metro-1950']) assert.deepEqual(buildScene(id).layers, ['metro'], id);
+  for (const id of ['metro-vallingby', 'metro-1950', 'metro-blue-line', 'metro-kymlinge']) assert.deepEqual(buildScene(id).layers, ['metro'], id);
   assert.equal(buildScene('vasa-1628').layers, undefined, 'other stories leave the legend alone');
   const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'layers-'));
