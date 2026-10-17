@@ -80,6 +80,17 @@ Useful help:
 
 Open a **New data source** issue describing what you have, with its link and licence.
 
+### Adding a history story
+
+A story is a short camera tour of a past event, kept as CSV files in one folder under [`scenes/`](https://github.com/amirelion/husforhus/tree/main/scenes). Copy the 1912 Olympics story (`scenes/s10-olympics-1912`) and work through this checklist; the full version is in [`scenes/README.md`](https://github.com/amirelion/husforhus/blob/main/scenes/README.md).
+
+- **Sourced beats** in English and Swedish: a short caption per beat, every fact with its source.
+- **Lost buildings** in `ghosts.csv`, each with the map or source its shape comes from and a confidence (high, medium or low).
+- **Cameras that frame the action**: the subject whole and in the middle of the screen, seen from above, on a computer and a phone.
+- **Period photos on 3–5 beats** where they exist: photographs, paintings, engravings or maps from Wikimedia Commons, with a short caption in both languages saying what the image shows and its date. Present-day photos only where the beat is about today.
+- **Licences checked**: public domain, CC0, CC BY or CC BY-SA only, never NC, ND or fair use. Note each file's licence, author and the date you checked in the story's `README.md`.
+- **Screenshots of every beat**, on a computer and a phone, in your pull request.
+
 ## Translations and code
 
 - **Translations.** The whole interface's strings live in `web/i18n/en.json` and `web/i18n/sv.json`, by the same ids in both. Open a pull request fixing a string or adding a language file.

@@ -25,7 +25,22 @@
       },
       "sources": [
         "Vasa Museum"
-      ]
+      ],
+      "photo": {
+        "src": "img/c854dc74a1e561886b507f2b7648301fb92b0fa4.jpg",
+        "width": 800,
+        "height": 701,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholm_karta_1642.jpg",
+          "file": "File:Stockholm karta 1642.jpg"
+        },
+        "caption": {
+          "en": "Stockholm on a hand-drawn map of 1640–1642, some fourteen years later",
+          "sv": "Stockholm på en handritad karta från 1640–1642, omkring fjorton år senare"
+        }
+      }
     },
     {
       "n": 2,
@@ -45,7 +60,22 @@
       },
       "sources": [
         "sv Wikipedia: Blasieholmen"
-      ]
+      ],
+      "photo": {
+        "src": "img/a105d277902667f5077feca84bf5f98469cffb41.jpg",
+        "width": 800,
+        "height": 276,
+        "credit": {
+          "author": "Anneli Karlsson",
+          "licence": "CC0",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholms_skeppsg%C3%A5rd.jpg",
+          "file": "File:Stockholms skeppsgård.jpg"
+        },
+        "caption": {
+          "en": "A model of the navy yard as it may have looked, in the Vasa Museum (photo 2011)",
+          "sv": "En modell av skeppsgården som den kan ha sett ut, på Vasamuseet (foto 2011)"
+        }
+      }
     },
     {
       "n": 3,
@@ -171,7 +201,22 @@
       "sources": [
         "en Wikipedia",
         "sv Wikipedia"
-      ]
+      ],
+      "photo": {
+        "src": "img/68ef1853d5a4bd4c5844586e8f3619a450dcfc02.jpg",
+        "width": 800,
+        "height": 1200,
+        "credit": {
+          "author": "Richard Mortel from Riyadh, Saudi Arabia",
+          "licence": "CC BY 2.0",
+          "page": "https://commons.wikimedia.org/wiki/File:Swedish_warship_Vasa,_sank_1628,_Vasamuseet,_Stockholm_(37)_(35433603574).jpg",
+          "file": "File:Swedish warship Vasa, sank 1628, Vasamuseet, Stockholm (37) (35433603574).jpg"
+        },
+        "caption": {
+          "en": "Vasa in the Vasa Museum, 2017",
+          "sv": "Vasa på Vasamuseet, 2017"
+        }
+      }
     }
   ],
   "ready": true,

@@ -162,7 +162,7 @@ export function checkLicence(meta) {
 }
 export function photoAuthor(meta) {
   const a = stripHtml(meta?.Artist?.value);
-  return !a || /^(ingen uppgift|unknown|okänd|anonymous|anonym)/i.test(a) ? 'unknown author' : a;
+  return !a || /^(ingen uppgift|unknown|okänd|okänt|anonymous|anonym)/i.test(a) ? 'unknown author' : a;
 }
 
 // One Commons file: its metadata, the licence check, and an 800 px thumbnail (or the original, if narrower) saved
@@ -215,6 +215,14 @@ export async function addPhotos(scene, outDir, fetchFn = fetch) {
   return problems;
 }
 
+// A ready story should carry photos (scenes/README.md, "What a story needs"): a warning, not an error, below 2.
+export const MIN_PHOTOS = 2;
+export function photoWarnings(scene) {
+  if (!scene.ready) return [];
+  const n = scene.beats.filter((b) => b.photo || b.photo_file).length;
+  return n < MIN_PHOTOS ? [`warning: ${scene.id} is ready but only ${n} beat(s) have a photo (aim for 3–5, at least ${MIN_PHOTOS})`] : [];
+}
+
 export async function buildAll(root = REPO, fetchFn = fetch) {
   const out = path.join(root, 'web', 'scenes');
   fs.mkdirSync(out, { recursive: true });
@@ -222,6 +230,7 @@ export async function buildAll(root = REPO, fetchFn = fetch) {
   for (const id of Object.keys(SCENES)) {
     const scene = buildScene(id, root);
     for (const p of await addPhotos(scene, out, fetchFn)) console.warn(p);
+    for (const p of photoWarnings(scene)) console.warn(p);
     fs.writeFileSync(path.join(out, `${id}.json`), JSON.stringify(scene, null, 2) + '\n');
     index.push({ id, title: scene.title, year: scene.year, beats: scene.beats.length, ...(scene.ready && { ready: true }) });
   }

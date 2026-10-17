@@ -46,7 +46,22 @@
       "sources": [
         "sv Wikipedia Tre Kronor (byggnad)",
         "sv Wikipedia Stockholms slott"
-      ]
+      ],
+      "photo": {
+        "src": "img/725c3b7709a9dd3525bd6c20e0c942a3807f112f.jpg",
+        "width": 800,
+        "height": 420,
+        "credit": {
+          "author": "Govert Dircksz Camphuysen",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Slottet_Tre_Kronor_1661.jpg",
+          "file": "File:Slottet Tre Kronor 1661.jpg"
+        },
+        "caption": {
+          "en": "Tre Kronor in 1661, painted by Govert Camphuysen, before the new north wing",
+          "sv": "Tre Kronor 1661, målad av Govert Camphuysen, före den nya norra längan"
+        }
+      }
     },
     {
       "n": 3,
@@ -66,7 +81,22 @@
       },
       "sources": [
         "sv Wikipedia Slottsbranden 1697 (hour given only there)"
-      ]
+      ],
+      "photo": {
+        "src": "img/90e34602a9f052aeef85d79ba292c8f9d74ac3a4.jpg",
+        "width": 800,
+        "height": 538,
+        "credit": {
+          "author": "Perelle, Adam, 1640-1695(Gravör), Dahlbergh, Erik, 1625-1703(Medarbetare)",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Suecia_1-015_;_Tre_kronor.jpg",
+          "file": "File:Suecia 1-015 ; Tre kronor.jpg"
+        },
+        "caption": {
+          "en": "Tre Kronor from the east, an engraving in Suecia antiqua printed 1670–1674",
+          "sv": "Tre Kronor från öster, ett kopparstick i Suecia antiqua, tryckt 1670–1674"
+        }
+      }
     },
     {
       "n": 4,
@@ -168,7 +198,22 @@
       },
       "sources": [
         "sv Wikipedia Stockholms slott"
-      ]
+      ],
+      "photo": {
+        "src": "img/8f99ae3fef0366f5b98d98b1249632e3666cc82b.jpg",
+        "width": 800,
+        "height": 530,
+        "credit": {
+          "author": "Arild Vågen",
+          "licence": "CC BY-SA 4.0",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholms_slott_August_2015_01.jpg",
+          "file": "File:Stockholms slott August 2015 01.jpg"
+        },
+        "caption": {
+          "en": "The palace Tessin designed and Hårleman completed, in 2015",
+          "sv": "Slottet som Tessin ritade och Hårleman fullbordade, 2015"
+        }
+      }
     },
     {
       "n": 9,
@@ -189,7 +234,22 @@
       "sources": [
         "sv Wikipedia Stockholms slott",
         "sv Wikipedia Slottsbranden 1697"
-      ]
+      ],
+      "photo": {
+        "src": "img/97e894f998f8cb751ea1628ebf3a56f41077b5ae.jpg",
+        "width": 800,
+        "height": 644,
+        "credit": {
+          "author": "Le Pautre, Jean, 1618-1682(Gravör) Dahlbergh, Erik, 1625-1703(Medarbetare)",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Suecia_1-038_;_Wrangelska_Dahlberg.jpg",
+          "file": "File:Suecia 1-038 ; Wrangelska Dahlberg.jpg"
+        },
+        "caption": {
+          "en": "The Wrangel Palace on Riddarholmen, an engraving in Suecia antiqua printed 1670–1674",
+          "sv": "Wrangelska palatset på Riddarholmen, ett kopparstick i Suecia antiqua, tryckt 1670–1674"
+        }
+      }
     }
   ],
   "ready": true,

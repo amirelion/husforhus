@@ -25,7 +25,22 @@
       },
       "sources": [
         "sv Wikipedia: Stora branden 1625 (rev 49159348)"
-      ]
+      ],
+      "photo": {
+        "src": "img/d37b1845cf4549dffad0f2342396b7f4e5748969.jpg",
+        "width": 800,
+        "height": 1175,
+        "credit": {
+          "author": "Urban målare",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:V%C3%A4dersolstavlan_1535.jpg",
+          "file": "File:Vädersolstavlan 1535.jpg"
+        },
+        "caption": {
+          "en": "Stockholm in 1535: the oldest picture of the town, in a copy painted in the 1630s",
+          "sv": "Stockholm 1535: den äldsta bilden av staden, i en kopia målad på 1630-talet"
+        }
+      }
     },
     {
       "n": 2,
@@ -86,7 +101,22 @@
       },
       "sources": [
         "sv Wikipedia: Stora branden 1625 (rev 49159348)"
-      ]
+      ],
+      "photo": {
+        "src": "img/b53f3c26d0b4bf7725771a1d0951cb218ffeadcf.jpg",
+        "width": 800,
+        "height": 564,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Stora_branden_1625_karta.jpg",
+          "file": "File:Stora branden 1625 karta.jpg"
+        },
+        "caption": {
+          "en": "The burnt area of 1625, a later reconstruction drawn on a map of the time",
+          "sv": "Det brända området 1625, en senare rekonstruktion ritad på en karta från tiden"
+        }
+      }
     },
     {
       "n": 5,
@@ -107,7 +137,22 @@
       "sources": [
         "sv Wikipedia: Stora branden 1625 (rev 49159348) (June 1626 tax relief",
         "1626 plan)"
-      ]
+      ],
+      "photo": {
+        "src": "img/a76280cdffb7dc940f97c2bd23d6abffa92e1f41.jpg",
+        "width": 800,
+        "height": 892,
+        "credit": {
+          "author": "Heinrich Thomé",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Gamla_stan_1626_c.jpg",
+          "file": "File:Gamla stan 1626 c.jpg"
+        },
+        "caption": {
+          "en": "Heinrich Thomé's 1626 plan for south-western Stadsholmen (inside the red frame)",
+          "sv": "Heinrich Thomés plan från 1626 för sydvästra Stadsholmen (inom den röda ramen)"
+        }
+      }
     },
     {
       "n": 6,
@@ -128,7 +173,22 @@
       "sources": [
         "sv Wikipedia: Stora branden 1625 (rev 49159348)",
         "sv Wikipedia: Stora Nygatan, Stockholm"
-      ]
+      ],
+      "photo": {
+        "src": "img/c854dc74a1e561886b507f2b7648301fb92b0fa4.jpg",
+        "width": 800,
+        "height": 701,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholm_karta_1642.jpg",
+          "file": "File:Stockholm karta 1642.jpg"
+        },
+        "caption": {
+          "en": "Stockholm on a hand-drawn map of 1640–1642",
+          "sv": "Stockholm på en handritad karta från 1640–1642"
+        }
+      }
     }
   ],
   "overlays": [

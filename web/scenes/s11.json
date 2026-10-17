@@ -25,7 +25,22 @@
       },
       "sources": [
         "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476)"
-      ]
+      ],
+      "photo": {
+        "src": "img/e6bae26dda71199a3e0a929c30c3e23df784af23.jpg",
+        "width": 800,
+        "height": 524,
+        "credit": {
+          "author": "unknown author",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholmsutstallningen_1930_flygbild.jpg",
+          "file": "File:Stockholmsutstallningen 1930 flygbild.jpg"
+        },
+        "caption": {
+          "en": "The exhibition from the air, 1930",
+          "sv": "Utställningen från luften, 1930"
+        }
+      }
     },
     {
       "n": 2,
@@ -45,7 +60,22 @@
       },
       "sources": [
         "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476)"
-      ]
+      ],
+      "photo": {
+        "src": "img/09e7fe568732d9feee7c8240442c69a7cd96b0ee.jpg",
+        "width": 800,
+        "height": 404,
+        "credit": {
+          "author": "unknown author",
+          "licence": "CC0",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholmsutst%C3%A4llningen_1930_Huvudentr%C3%A9_och_kommisariat.jpg",
+          "file": "File:Stockholmsutställningen 1930 Huvudentré och kommisariat.jpg"
+        },
+        "caption": {
+          "en": "The main entrance and the commissariat, 1930",
+          "sv": "Huvudentrén och kommissariatet, 1930"
+        }
+      }
     },
     {
       "n": 3,
@@ -65,7 +95,22 @@
       },
       "sources": [
         "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476)"
-      ]
+      ],
+      "photo": {
+        "src": "img/19ad0eb142eafc974aa3b2cabd25edb2ec6ea974.jpg",
+        "width": 800,
+        "height": 600,
+        "credit": {
+          "author": "unknown author",
+          "licence": "CC0",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholmsutst%C3%A4llningen_1930_Corson,_butiker_med_bl_a_Konsum.jpg",
+          "file": "File:Stockholmsutställningen 1930 Corson, butiker med bl a Konsum.jpg"
+        },
+        "caption": {
+          "en": "Shops along Corson, among them Konsum, 1930",
+          "sv": "Butiker längs Corson, bland dem Konsum, 1930"
+        }
+      }
     },
     {
       "n": 4,
@@ -85,7 +130,22 @@
       },
       "sources": [
         "sv Wikipedia: Stockholmsutställningens reklammast (rev 36563502)"
-      ]
+      ],
+      "photo": {
+        "src": "img/133f6befd45ab4a4dedc1fd0c890940daaeaae62.jpg",
+        "width": 800,
+        "height": 569,
+        "credit": {
+          "author": "Cronquist, Gustaf W:son (1878-1967)",
+          "licence": "Public domain",
+          "page": "https://commons.wikimedia.org/wiki/File:Stockholmsutst%C3%A4llningens_rekalmmast_1930.jpg",
+          "file": "File:Stockholmsutställningens rekalmmast 1930.jpg"
+        },
+        "caption": {
+          "en": "The festival square with Paradiset, the main restaurant and the mast, 1930",
+          "sv": "Festplatsen med Paradiset, huvudrestaurangen och reklammasten, 1930"
+        }
+      }
     },
     {
       "n": 5,
@@ -125,7 +185,22 @@
       },
       "sources": [
         "sv Wikipedia: Stockholmsutställningen 1930 (rev 57653476)"
-      ]
+      ],
+      "photo": {
+        "src": "img/e138365b5c3dc7b5081bff5821f755ede9236a4a.jpg",
+        "width": 800,
+        "height": 563,
+        "credit": {
+          "author": "Holger.Ellgaard",
+          "licence": "CC BY-SA 3.0",
+          "page": "https://commons.wikimedia.org/wiki/File:Villa_K%C3%A4llhagen_2013g.jpg",
+          "file": "File:Villa Källhagen 2013g.jpg"
+        },
+        "caption": {
+          "en": "Villa Källhagen with Röda stugan, 2013",
+          "sv": "Villa Källhagen med Röda stugan, 2013"
+        }
+      }
     },
     {
       "n": 7,

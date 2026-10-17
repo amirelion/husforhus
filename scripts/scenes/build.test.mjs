@@ -183,3 +183,16 @@ test('vasa beat 7 sees the wreck site, and the hull (the ghost ship) sinks in th
   const d = Math.hypot((b.camera.lat - wreck[0]) * 111e3, (b.camera.lon - wreck[1]) * 56e3);
   assert.ok(d > 300 && d < 2000, `camera ${Math.round(d)} m from the wreck`);
 });
+
+test('a ready story with fewer than 2 photo beats gets a warning, not an error', async () => {
+  const { photoWarnings } = await import('./build.mjs');
+  const beat = (photo) => ({ n: 1, ...(photo && { photo: { src: 'img/x.jpg' } }) });
+  assert.equal(photoWarnings({ id: 'x', ready: true, beats: [beat(true), beat()] }).length, 1);
+  assert.match(photoWarnings({ id: 'x', ready: true, beats: [beat()] })[0], /^warning: x is ready but only 0/);
+  assert.deepEqual(photoWarnings({ id: 'x', ready: true, beats: [beat(true), beat(true)] }), []);
+  assert.deepEqual(photoWarnings({ id: 'x', beats: [beat()] }), [], 'not ready: no warning');
+  for (const id of Object.keys(SCENES)) {
+    const s = JSON.parse(fs.readFileSync(new URL(`../../web/scenes/${id}.json`, import.meta.url)));
+    assert.deepEqual(photoWarnings(s), [], `${id}: ready stories carry photos`);
+  }
+});
