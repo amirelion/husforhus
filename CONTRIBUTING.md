@@ -37,7 +37,7 @@ A height, a floor count, a misplaced photo, a label: open an issue with the buil
 
 ### Privacy
 
-If a card shows something about a private home that it should not, open an issue without repeating the personal detail; describe where it is. Names of houses and of rarely seen architects ship only from lists a person has checked (`pipeline/private_names.txt`, `pipeline/private_firms.txt`); please don't add to those lists without a source.
+If a card shows something about a private home that it should not, don't open a public issue: use the contact in the site's About panel, as described in [Privacy](PRIVACY.md). The same contact takes requests to take a building's details off the map. Names of houses and of rarely seen architects ship only from lists a person has checked (`pipeline/private_names.txt`, `pipeline/private_firms.txt`); please don't add to those lists without a source.
 
 ## Adding building details
 
@@ -78,7 +78,8 @@ Open an issue describing what you have, with its source and licence.
 
 ## Translations and code
 
-- **Translations.** The viewer's strings live in `web/i18n/en.json` and `web/i18n/sv.json`. Open a pull request fixing a string or adding a language file.
+- **Translations.** The whole interface's strings live in `web/i18n/en.json` and `web/i18n/sv.json`, by the same ids in both. Open a pull request fixing a string or adding a language file.
+- **Search names.** The everyday names search knows for districts and landmarks ("Söder", "Slottet", "City Hall") are `DISTRICT_ALIASES` and `BUILDING_ALIASES` in `pipeline/city.py`. A name can point only at a district or a building whose card already carries the target name, never at a private house.
 - **Code.** Fixes are welcome as pull requests; please include a test and run the checks above.
 
 ## Adding a new city

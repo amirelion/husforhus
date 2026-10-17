@@ -1,6 +1,6 @@
 # How the years work
 
-Every building on the map is coloured by the year it was built. No single dataset dates all of Stockholm, so each building takes its year from the best source that has one, a few houses are estimated, and the rest are honestly marked "Year unknown". This page explains the rules. The measured numbers for the current build are in the generated accuracy report, [`docs/accuracy.md`](docs/accuracy.md); the figures below come from the build of October 2026 and change a little with each build.
+Every building on the map is coloured by the year it was built. No single dataset dates all of Stockholm, so each building takes its year from the best source that has one, a few houses are estimated, and the rest are honestly marked "Year unknown". This page explains the rules. The measured numbers for the current build are on the site, in the [About panel's accuracy section](https://husforhus.se/#about/accuracy), and `uv run python -m pipeline.report_accuracy` writes the full report for a build of your own; the figures below come from the build of October 2026 and change a little with each build.
 
 ## The year tiers
 
@@ -78,6 +78,12 @@ Estimated years, and area years, are drawn in a duller, darker version of their 
 Villas, row and chain houses and allotment cottages are people's homes. For these the card shows only the decade (for example "1950s", or "≈ 1950s" when estimated), never an exact year, even when a record has one. The colour still shows the period; when a period starts or ends inside the decade, the card narrows the decade to the part inside that period.
 
 The same reasoning removes anything else on the card that could reveal the exact year or point at the owners: a private house gets no Wikidata item, Wikipedia link, excerpt or photo, its name appears only if a person has checked it, and an architect named on only a few buildings citywide is left off. A notable house can still get its full card by joining the curated landmark list, where a person has checked it by hand.
+
+A private house's street address is shown on its card and search finds it, because an address names no one and the card still gives only the decade. Owners are never shown. See [Privacy](PRIVACY.md).
+
+## Buildings taken off the map
+
+Anyone can ask for a building's details to be taken off the map, without giving a reason (see [Privacy](PRIVACY.md)). Such a building keeps its shape, its height and its district, and is drawn as "Year unknown". Its year and source, name, architects, heritage rating, protection, addresses, Wikidata item, photo and excerpt are removed when the data is next rebuilt, so neither its card nor search shows them. The list of these buildings is kept out of the repository, because it would itself say which homes asked.
 
 ## Buildings with no year
 

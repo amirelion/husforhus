@@ -134,11 +134,13 @@ const CLIPS = {
   timeline: {
     seconds: 15, query: '?film=13',
     async run(page) {
-      await goHome(page, { x: 0, z: -220, azimuth: 205, elevation: 30, span: 1700 });
+      // wide, from the south: Södermalm in front, Gamla stan in the middle, Norrmalm and Östermalm behind (most of
+      // Gamla stan's houses have no known year, so a close shot of it stays empty until "today")
+      await goHome(page, { x: 300, z: -500, azimuth: 160, elevation: 42, span: 5000 });
       await settle(page);
       await page.evaluate(() => { window.__dbg.uniforms.uYear.value = 1e4; });   // at "today", so the film starts again
       await page.evaluate(() => window.__dbg.startPlay());
-      await page.evaluate(() => window.__rec.orbit(14500, 28, 0.82));
+      await page.evaluate(() => window.__rec.orbit(14500, 18, 0.85));
     },
   },
   // 2. The Hills slider dragged from flat to 2.5× with the camera low at Söder's cliffs (Skinnarviksberget and
@@ -270,7 +272,10 @@ for (const n of names) if (!Object.hasOwn(CLIPS, n)) usage(`unknown clip "${n}" 
 const { chromium } = await import('@playwright/test');
 mkdirSync(out, { recursive: true });
 const hasFfmpeg = (() => { try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); return true; } catch { return false; } })();
-const launch = () => chromium.launch({ args: ['--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
+// HFH_REC_GPU=1: the machine's own GPU (smoother on a Mac) instead of the software renderer.
+const launch = () => chromium.launch(process.env.HFH_REC_GPU
+  ? { args: ['--ignore-gpu-blocklist', '--use-angle=metal', '--enable-gpu'] }
+  : { args: ['--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
 let failed = 0;
 for (const name of names) {
   const clip = CLIPS[name], nn = String(Object.keys(CLIPS).indexOf(name) + 1).padStart(2, '0');
@@ -280,6 +285,18 @@ for (const name of names) {
     const browser = await launch();   // a browser of its own for each video, so one stalled page cannot hold up the next
     const context = await browser.newContext({ viewport: size, deviceScaleFactor: 1, recordVideo: { dir: tmp, size } });
     await context.addInitScript(recorderInit);
+    // HFH_REC_LEGEND=collapsed: start with the legend folded away, as a visitor's remembered choice would.
+    if (process.env.HFH_REC_LEGEND) await context.addInitScript(v => localStorage.setItem('hfh-legend', v), process.env.HFH_REC_LEGEND);
+    // HFH_REC_FEATURES=scenes: switch on features the build leaves off, for this recording only (a feature still
+    // behind its switch, shown as "coming soon").
+    if (process.env.HFH_REC_FEATURES) {
+      const on = process.env.HFH_REC_FEATURES.split(',');
+      await context.route('**/stockholm.json', async route => {
+        const res = await route.fetch(), cfg = await res.json();
+        cfg.features = { ...cfg.features, ...Object.fromEntries(on.map(f => [f, true])) };
+        await route.fulfill({ response: res, json: cfg });
+      });
+    }
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));

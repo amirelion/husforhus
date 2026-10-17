@@ -366,7 +366,9 @@ def test_wrangler_config():
     assert "account_id" not in cfg  # wrangler takes it from `wrangler login`
     assert cfg["assets"]["directory"] == "./dist"
     assert cfg["assets"]["not_found_handling"] == "none"  # a missing data file is a 404, not index.html
-    assert cfg["workers_dev"] is True
+    assert cfg["workers_dev"] is False  # launched 2026-10-17: only the production address
+    assert cfg["observability"] == {"enabled": False}
+    assert {r["pattern"] for r in cfg["routes"]} == {"husforhus.se", "www.husforhus.se"}
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", cfg["compatibility_date"])
 
 

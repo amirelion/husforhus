@@ -30,6 +30,9 @@ with `ffmpeg` on the PATH the video is cut to the clip, and without it the `.jso
 starts.
 
 Notes:
+- `HFH_REC_GPU=1` records with the machine's own GPU (smooth on a Mac; the default software renderer gives about 13
+  distinct frames a second). `HFH_REC_LEGEND=collapsed` starts with the legend folded. `HFH_REC_FEATURES=scenes`
+  switches on a feature the build leaves off, for the recording only.
 - Record from the whole-city build. On the fixture (`HFH_FIXTURE=1`, Gamla stan and Riddarholmen only), the clips run,
   but some show little: no Söder cliffs, no Götgatan.
 - The viewer has no place search yet. Until it does, `search` flies to the Götgatan street name and says so. Once a

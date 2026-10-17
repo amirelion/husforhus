@@ -11,8 +11,10 @@
     "not_found_handling": "none",
     "html_handling": "auto-trailing-slash"
   },
-  // The account's default Worker address.
-  "workers_dev": true,
+  // Only the production address below: no <name>.<account> default Worker address.
+  "workers_dev": false,
+  // No request logs kept by the host for this Worker (About's "Your visit").
+  "observability": { "enabled": false },
   // The production address.
   "routes": [
     { "pattern": "husforhus.se", "custom_domain": true },

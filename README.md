@@ -2,7 +2,14 @@
 
 *Stockholm, building by building.* A 3D map of every building in Stockholm municipality, about 78,000 of them, each coloured by when it was built.
 
-You can drag a timeline to watch the city grow, pick one of twelve periods of Stockholm's building history, and open a card for any building to see its year, where that year comes from, and, for notable buildings, a photo and a short excerpt from Wikipedia.
+The map is live at [husforhus.se](https://husforhus.se). On it you can:
+
+- drag a timeline to watch the city grow, or pick one of twelve periods of Stockholm's building history;
+- search for a street, an address ("Hornsgatan 30"), a named building ("Stadshuset", "Royal Palace") or a district, including everyday names such as "Söder" or "Vasastan";
+- open a card for any building: its year and where that year comes from, its height and floors, and, where open sources have them, its name, address, architect, heritage rating and protection. Notable buildings also get a photo with its credit, a short excerpt from Wikipedia, and links to the heritage register, Wikipedia and Wikidata;
+- read the About panel: how the years are known, how accurate the estimates are, privacy, sources and how to ask for a correction.
+
+The whole interface is in English and Swedish. It opens in Swedish for a Swedish browser and in English otherwise, and a switch changes the language (`?lang=sv` or `?lang=en` does it for one visit). Scenes from the city's history are coming later.
 
 The map is a port of [Amsterdam, building by building](https://github.com/alexbarakov/amsterdam-by-building) (MIT). It keeps that project's renderer and file layout and puts everything Stockholm-specific in one thin city layer (`pipeline/city.py`), so engine fixes can still move between the two.
 
@@ -10,6 +17,7 @@ More in this folder:
 
 - [How the years work](HOW-YEARS-WORK.md): where each building's year comes from, how gaps are estimated, and why private houses show only a decade.
 - [Data sources](DATA-SOURCES.md): every dataset, with its licence and credit.
+- [Privacy](PRIVACY.md): what the map shows about private houses, what the site does not collect, and how to ask for a correction or a takedown.
 - [Contributing](CONTRIBUTING.md): how to propose corrections, building details, history sources, new cities, translations and code.
 
 ## How it fits together
@@ -79,6 +87,7 @@ uv run python -m pipeline.run s03_tiles s04_base s07_labels s14_search s99_valid
 | `s03_tiles` | Writes the building tiles the viewer loads. |
 | `s04_base` | Writes the base map: water, land, terrain and the municipal edge. |
 | `s07_labels` | Writes street-name and place labels. |
+| `s14_search` | Writes the search index: districts and their everyday names, streets and their numbers, and named buildings, taken only from what the cards show. |
 | `s99_validate` | Checks the output: counts, ranges, privacy rules and that every source carries its credit. |
 
 Arguments after `--` go to every chosen step, for example `-- --version v20261017-2`.

@@ -62,3 +62,10 @@ def test_gitignore_and_nvmrc():
         assert entry in ignored, entry
     assert ".env" in ignored or ".env*" in ignored
     assert (ROOT / ".nvmrc").read_text(encoding="utf-8").strip() == "22"
+
+
+def test_one_canonical_address():
+    # www.husforhus.se serves the same page; search engines are pointed at the bare domain
+    html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    assert '<link rel="canonical" href="https://husforhus.se/">' in html
+    assert '<meta property="og:url" content="https://husforhus.se/">' in html
