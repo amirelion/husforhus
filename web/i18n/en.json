@@ -108,6 +108,7 @@
   "ui.fromToday": "{year}–Today",
   "ui.until": "until {year}",
   "ui.look": "Look",
+  "ui.stories": "Stories",
   "ui.classic": "Classic",
   "ui.atmosphere": "Atmosphere",
   "ui.relief.title": "Ground",
