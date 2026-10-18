@@ -1743,10 +1743,13 @@ function enterStep(first) {
   } else if (gids.length) {
     const b = building(gids[0]);
     setQuiz(gids[0], s.kind === 'year');
-    questFly(b.x, b.z, s.kind === 'year' ? 300 : 380);
+    questFly(b.x, b.z, questDist(b, s.kind === 'year' ? 300 : 380));
   }
   renderQuest();
 }
+// How far a quest stands back from a building: dist for an ordinary one, more for a tall one (Globen, Kaknästornet, a
+// church), and more again on a portrait screen, whose narrow view showed only Globen's near wall from 420 m (2026-10-18).
+const questDist = (b, dist) => Math.max(dist, (b.height || 0) * 8) * (innerWidth < innerHeight ? 1.4 : 1);
 // On a phone the quest sits over the top half of the map: aim past the building so it lands in the lower half.
 function questFly(x, z, dist, done = null) {
   if (phone.matches) {
@@ -1846,7 +1849,7 @@ function wireQuest(s) {
   questEl.querySelector('.q-reveal')?.addEventListener('click', () => {
     const g = stepGids(s)[0]; if (g === undefined) return;
     revealed = true; const b = building(g);
-    questFly(b.x, b.z, 420, () => solve(g));
+    questFly(b.x, b.z, questDist(b, 420), () => solve(g));
   });
   const range = questEl.querySelector('.q-year input');
   if (range) range.oninput = () => { guess = +range.value; questEl.querySelector('.q-year output').textContent = guess; };

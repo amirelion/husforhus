@@ -19,7 +19,7 @@ Plans, not promises: the order can change.
 - **Google Maps from a card**: a pin at the end of a pinned card's address line opens the building in Google Maps. Not on private houses.
 - **Station cards** have the same margins as building cards (their text sat on the edge).
 - **For search engines**: a structured description of the map, and a line for browsers without JavaScript.
-- **Quests and walks, to try**: riddles around Gamla stan and walks past buildings with a story, adapted from Amsterdam, building by building. Off for now; `?try=quests,walks` switches them on for one visit.
+- **Quests and walks, to try**: seven quests (Gamla stan, the city centre, Skeppsholmen and Djurgården, Södermalm and Långholmen, Östermalm and Gärdet, south of the city, Bromma), every fact checked against the landmark's Wikipedia article, and walks past buildings with a story, adapted from Amsterdam, building by building. Off for now; `?try=quests,walks` switches them on for one visit.
 - **Readers' reports become map data.** A checked report can date a building, choose its main address, name it or give it a photo; the card credits only "a reader's report" and its reference.
 - **A report form.** "Something wrong?" on a card opens a form with the building as the card shows it: a wrong or missing year or detail, a photo of your own (shrunk and stripped of its location data in the browser, CC BY 4.0 with your name), or something else. About's Contact has "Suggest something". See [Privacy](PRIVACY.md) for what is kept and for how long.
 - **The layer switches moved into Look**, under "Show on the map": Tunnelbanan, the blue plaques and the photo highlight. A dot on the Look button shows while one is on, and the legend is shorter.
@@ -27,6 +27,7 @@ Plans, not promises: the order can change.
 - **Story cards.** The Stories list shows each story's opening line, its length and number of steps, and a "Mentions deaths" tag on the stories that do; a story picked from the list starts without a second warning. When a story ends: "Replay story" or "Back to map".
 
 ### Data
+- Data version `v20261018-p4o`: the six new quests.
 - Data version `v20261018-p4n`: the quests' data and the walks' starting points.
 - Data version `v20261018-p4m`: **the first reader's report on the map.** L.M. Ericssons väg 30 in Midsommarkransen, unknown until now, is dated 1938–1939 from construction photos a reader sent (HFH-3). Its card says so: "A reader's report (HFH-3), checked". Reports accepted from the form now reach the map this way, with no name or email.
 - Data version `v20261018-p4l`.
