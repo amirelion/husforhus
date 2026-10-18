@@ -126,3 +126,49 @@ test('a 1912 beat with a photo shows it from the site itself, with its alt text 
   await expect(page.locator('.sp-photo')).toBeHidden();
   expect(errors).toEqual([]);
 });
+
+test('the Stories list shows each story\'s lead-in, length and warning, and a story ends on Replay or Back to map', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errors = watchErrors(page);
+  await scenesOn(page);
+  const vasa = await (await page.request.get('scenes/vasa-1628.json')).json();
+  await page.goto('/');
+  await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
+
+  // the cards: title, the first caption as a lead-in, year · minutes · beats, and the warning tag on a sensitive story
+  await page.locator('.stories-open').click();
+  const card = page.locator('.sp-stories button[data-id="vasa-1628"]');
+  await expect(card.locator('.sp-card-title')).toHaveText(/Vasa/);
+  await expect(card.locator('.sp-card-lead')).toHaveText(vasa.beats[0].caption.en);
+  await expect(card.locator('.sp-yr')).toHaveText(/^1628 · \d+ min · 8 beats$/);
+  await expect(card.locator('.sp-card-warn')).toHaveText(/Mentions deaths/);
+  await expect(page.locator('.sp-stories button[data-id="metro-1950"] .sp-card-warn')).toHaveCount(0);
+
+  // picked from the list, whose card carries the warning, it starts without the separate warning
+  await card.click();
+  await expect(page.locator('.sp-cinema')).toBeVisible();
+  await expect(page.locator('.sp-warning')).toBeHidden();
+
+  // the last beat runs out: the end screen, with Replay focused
+  for (let i = 0; i < 7; i++) await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.sp-count')).toContainText('8 / 8');
+  if ((await page.locator('.sp-play').textContent()).startsWith('▶')) await page.locator('.sp-play').click();
+  const end = page.locator('.sp-end');
+  await expect(end).toBeVisible({ timeout: 60_000 });
+  await expect(end).toContainText('Story complete');
+  await expect(page.locator('.sp-replay')).toBeFocused();
+
+  // Replay: beat 1, playing, the end screen gone
+  await page.locator('.sp-replay').click();
+  await expect(page.locator('.sp-count')).toContainText('1 / 8');
+  await expect(end).toBeHidden();
+  await expect(page.locator('.sp-play')).toHaveText('⏸︎');
+
+  // Back to map, from the end screen: the player closes and the map's panels return
+  for (let i = 0; i < 7; i++) await page.keyboard.press('ArrowRight');
+  await expect(end).toBeVisible({ timeout: 60_000 });
+  await page.locator('.sp-tomap').click();
+  await expect(page.locator('.sp-cinema')).toBeHidden();
+  await expect(page.locator('.panel')).toBeVisible();
+  expect(errors).toEqual([]);
+});

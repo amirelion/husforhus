@@ -114,12 +114,14 @@ const STR = {
     next: 'Next beat', beat: n => `Beat ${n}`, left: s => `${s} remaining`, source: 'Source', player: 'Scene player',
     captionLang: 'Caption language', beats: n => `${n} beats`, cont: 'Continue', skip: 'Skip',
     warn: 'This story tells of people who died. It shows only places, dates and short captions.',
-    faint: "Faint: today's city, for orientation" },
+    faint: "Faint: today's city, for orientation", min: m => `${m} min`, sensitive: 'Mentions deaths',
+    done: 'Story complete', replay: 'Replay story', toMap: 'Back to map' },
   sv: { stories: 'Berättelser', exit: 'Avsluta', exitScene: 'Avsluta scenen', play: 'Spela', pause: 'Pausa',
     prev: 'Föregående', next: 'Nästa', beat: n => `Del ${n}`, left: s => `${s} kvar`, source: 'Källa',
     player: 'Scenspelare', captionLang: 'Språk för texten', beats: n => `${n} delar`, cont: 'Fortsätt', skip: 'Hoppa över',
     warn: 'Berättelsen handlar om människor som dog. Den visar bara platser, datum och korta texter.',
-    faint: 'Svagt: dagens stad, för orientering' },
+    faint: 'Svagt: dagens stad, för orientering', min: m => `${m} min`, sensitive: 'Nämner dödsfall',
+    done: 'Berättelsen är slut', replay: 'Spela igen', toMap: 'Tillbaka till kartan' },
 };
 // "Photo: <author>, <licence>, Wikimedia Commons" (Foto in Swedish).
 // The timeline's year in beat i: the beat's own year (beats.csv timeline_year), else the scene's.
@@ -188,6 +190,8 @@ export function mountScenePlayer(opts) {
       <span class="sp-count"></span>
     </div>
     <p class="sp-legend"></p>
+    <div class="sp-end" hidden><strong class="sp-end-title"></strong>
+      <button class="sp-pill sp-dark sp-replay"></button><button class="sp-pill sp-tomap"></button></div>
   </div>
 </section>
 <div class="sp-pins" aria-hidden="true"></div>`;
@@ -204,10 +208,29 @@ export function mountScenePlayer(opts) {
   let st = null, saved = null, raf = 0, returnFocus = null;
 
   // ---------- Stories list ----------
+  // Each card's details come from the scene file itself (cached): its first caption as a lead-in, its length, its warning.
+  const details = new Map();
+  const loadDetails = id => details.get(id) || details.set(id, fetch(`${base}${encodeURIComponent(id)}.json`)
+    .then(r => r.json()).catch(() => null)).get(id);
+  // The titles and years show at once; each card's lead-in, length and warning follow when its file has loaded.
   async function renderList() {
-    const scenes = await loadIndex();
-    list.querySelector('ul').innerHTML = scenes.filter(s => s.ready).map(s => `<li><button data-id="${esc(s.id)}"><span>${esc(L(s.title))}</span>
-      <span class="sp-yr">${esc(s.year)}</span></button></li>`).join('');
+    const scenes = (await loadIndex()).filter(s => s.ready), s = S(), ul = list.querySelector('ul');
+    const card = (x, d) => {
+      const meta = [x.year];
+      if (d?.beats?.length) meta.push(s.min(Math.max(1, Math.round(timing(d.beats).total / 60))), s.beats(d.beats.length));
+      const lead = d?.beats?.[0] ? L(d.beats[0].caption) : '';
+      return `<li><button data-id="${esc(x.id)}"><span class="sp-card-title">${esc(L(x.title))}</span>
+      ${lead ? `<span class="sp-card-lead">${esc(lead)}</span>` : ''}
+      <span class="sp-yr">${meta.map(esc).join(' · ')}</span>
+      ${d?.sensitive ? `<span class="sp-card-warn" title="${esc(s.warn)}">⚠&#xFE0E; ${esc(s.sensitive)}</span>` : ''}</button></li>`;
+    };
+    const draw = all => {
+      const focused = list.contains(document.activeElement) && document.activeElement.dataset.id;
+      ul.innerHTML = scenes.map((x, i) => card(x, all[i])).join('');
+      if (focused) ul.querySelector(`[data-id="${CSS.escape(focused)}"]`)?.focus();
+    };
+    draw([]);
+    draw(await Promise.all(scenes.map(x => loadDetails(x.id))));
   }
   function showList(on) {
     list.hidden = !on;
@@ -216,7 +239,7 @@ export function mountScenePlayer(opts) {
   }
   button.textContent = S().stories;
   button.onclick = () => showList(list.hidden);
-  list.onclick = e => { const b = e.target.closest('button[data-id]'); if (b) { showList(false); open(b.dataset.id, button); } };
+  list.onclick = e => { const b = e.target.closest('button[data-id]'); if (b) { showList(false); ackSensitive.add(b.dataset.id); open(b.dataset.id, button); } };
   list.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); showList(false); button.focus(); } });
   document.addEventListener('pointerdown', e => { if (!list.hidden && !list.contains(e.target) && e.target !== button) showList(false); });
 
@@ -306,6 +329,7 @@ export function mountScenePlayer(opts) {
     st.elapsed = 0;
     st.from = { pos: camera.position.clone(), target: controls.target.clone() };
     st.legFrom = null;
+    $('.sp-end').hidden = true;
     const y = beatYear(st.scene, st.beat);
     if (y !== st.year) { st.year = y; opts.year.set(y); }   // the map's own buildings for the beat's year
     paint();
@@ -348,6 +372,14 @@ export function mountScenePlayer(opts) {
     progEl.querySelectorAll('.sp-tick').forEach((el, i) => el.setAttribute('aria-label', s.beat(i + 1)));
     setPlaying(st.playing);
   }
+  function showEnd() {
+    const s = S();
+    $('.sp-end-title').textContent = s.done;
+    $('.sp-replay').textContent = `↻ ${s.replay}`;
+    $('.sp-tomap').textContent = s.toMap;
+    $('.sp-end').hidden = false;
+    $('.sp-replay').focus();
+  }
   function progress() {
     const { tm, beat, elapsed } = st;
     $('.sp-fill').style.width = `${(playedS(tm, beat, elapsed) / tm.total) * 100}%`;
@@ -376,7 +408,7 @@ export function mountScenePlayer(opts) {
       st.elapsed += dt;
       const d = st.tm.durations[st.beat];
       if (st.elapsed >= d) {
-        if (st.beat === st.tm.durations.length - 1) { st.elapsed = d; setPlaying(false); }   // stops on its last beat
+        if (st.beat === st.tm.durations.length - 1) { st.elapsed = d; setPlaying(false); showEnd(); }   // stops on its last beat
         else go(st.beat + 1);
       }
       progress();
@@ -560,6 +592,8 @@ export function mountScenePlayer(opts) {
   $('.sp-next').onclick = () => go(st.beat + 1);
   $('.sp-prev').onclick = () => go(prevBeat(st.beat, st.elapsed));
   $('.sp-exit').onclick = () => exit();
+  $('.sp-replay').onclick = () => { go(0); setPlaying(true); };
+  $('.sp-tomap').onclick = () => exit();
   progEl.onclick = e => { const b = e.target.closest('.sp-tick'); if (b) go(+b.dataset.i); };
   langEl.onclick = e => {
     const b = e.target.closest('[data-lang]');

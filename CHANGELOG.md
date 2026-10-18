@@ -17,6 +17,7 @@ Plans, not promises: the order can change.
 - **A report form.** "Something wrong?" on a card opens a form with the building as the card shows it: a wrong or missing year or detail, a photo of your own (shrunk and stripped of its location data in the browser, CC BY 4.0 with your name), or something else. About's Contact has "Suggest something". See [Privacy](PRIVACY.md) for what is kept and for how long.
 - **The layer switches moved into Look**, under "Show on the map": Tunnelbanan, the blue plaques and the photo highlight. A dot on the Look button shows while one is on, and the legend is shorter.
 - On a phone, a tap just under the Look button no longer opens About.
+- **Story cards.** The Stories list shows each story's opening line, its length and number of steps, and a "Mentions deaths" tag on the stories that do; a story picked from the list starts without a second warning. When a story ends: "Replay story" or "Back to map".
 
 ### Data
 - Data version `v20261018-p4l`.
