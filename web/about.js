@@ -160,6 +160,7 @@ export function aboutHtml(config, T, howto = '') {
     ${a.privateAddresses === false ? P('about.privacy.private.address') : ''}
     ${P('about.privacy.why')}
     ${P('about.privacy.visit')}
+    ${P('about.privacy.form')}
     ${P(a.contact ? 'about.privacy.hide' : 'about.privacy.hide.nocontact')}
     ${P(a.maker ? 'about.privacy.who' : 'about.privacy.who.nomaker')}
     ${h3('about.sources.title', 'sources')}
@@ -176,6 +177,7 @@ export function aboutHtml(config, T, howto = '') {
     ${!a.maker && !a.contact ? P('about.contact.none') : ''}
     ${a.maker && !a.contact ? P('about.contact.none.contact') : ''}
     ${!a.maker && a.contact ? P('about.contact.none.maker') : ''}
+    <p><button type="button" class="report-open">${esc(T('about.contact.suggest'))}</button></p>
     ${P('about.contact.code')}
     ${P('about.contact.data')}`;
 }

@@ -11,6 +11,13 @@ Plans, not promises: the order can change.
 - **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 37 plaques not yet placed on a building.
 - **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
 
+## 2026-10-18
+
+### Features
+- **A report form.** "Something wrong?" on a card opens a form with the building as the card shows it: a wrong or missing year or detail, a photo of your own (shrunk and stripped of its location data in the browser, CC BY 4.0 with your name), or something else. About's Contact has "Suggest something". See [Privacy](PRIVACY.md) for what is kept and for how long.
+- **The layer switches moved into Look**, under "Show on the map": Tunnelbanan, the blue plaques and the photo highlight. A dot on the Look button shows while one is on, and the legend is shorter.
+- On a phone, a tap just under the Look button no longer opens About.
+
 ## 2026-10-17: launch day
 
 ### Features

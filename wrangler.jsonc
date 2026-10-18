@@ -1,16 +1,32 @@
-// An assets-only Cloudflare Worker (no Worker script) serving dist/, which `npm run dist` builds
-// (scripts/build_dist.py writes dist/_headers too). No account_id: wrangler takes it from `npx wrangler login`.
+// A Worker (src/worker.js) in front of dist/, which `npm run dist` builds (scripts/build_dist.py writes dist/_headers
+// too). The Worker runs first only for /api/* (the report form and the owner's triage); every other path is served
+// from the assets as before. No account_id: wrangler takes it from `npx wrangler login`.
 // `npm run preview:local` serves the same files on http://localhost:8787.
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "husforhus",
+  "main": "src/worker.js",
   "compatibility_date": "2026-09-30",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
     // One page and its files: a missing file (a data file above all) is a plain 404, never index.html.
     "not_found_handling": "none",
     "html_handling": "auto-trailing-slash"
   },
+  // Reports filed through the form (created 2026-10-18 with `npx wrangler d1 create husforhus-reports`).
+  "d1_databases": [
+    { "binding": "REPORTS", "database_name": "husforhus-reports", "database_id": "57a750ce-9fc9-40d9-a867-16dd9a19f3ce",
+      "migrations_dir": "src/migrations" }
+  ],
+  // Photos sent with reports, under reports/<id>/. Private: served only to the owner, or once published.
+  "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "husforhus-report-photos" }],
+  // ACCESS_TEAM_DOMAIN and ACCESS_AUD (Cloudflare Access) are set in the dashboard, kept across deploys;
+  // GITHUB_TOKEN is a secret (`npx wrangler secret put GITHUB_TOKEN`). None of them is in the repo.
+  "keep_vars": true,
+  // Daily: blank the email of reports closed more than 12 months ago.
+  "triggers": { "crons": ["17 3 * * *"] },
   // Only the production address below: no <name>.<account> default Worker address.
   "workers_dev": false,
   // No request logs kept by the host for this Worker (About's "Your visit").

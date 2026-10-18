@@ -38,20 +38,13 @@ test('"Why?" on a building without a year opens About where the years are explai
   await expect(page.locator('#about-years')).toBeInViewport();
 });
 
-test('with an address, every pinned card has "Something wrong? Tell us"', async ({ page }) => {
-  await page.addInitScript(() => {
-    const fetch0 = window.fetch;
-    window.fetch = async (url, init) => {
-      const r = await fetch0(url, init);
-      if (!String(url).endsWith('/stockholm.json')) return r;
-      const config = await r.json();
-      config.about = { ...config.about, contact: 'hej@example.org' };
-      return new Response(JSON.stringify(config), { headers: { 'content-type': 'application/json' } });
-    };
-  });
+test('every pinned card has "Something wrong?", which opens the report form for that building', async ({ page }) => {
   await open(page);
   await page.evaluate(() => window.__dbg.pinCard(0, 300, 300));
-  const a = page.locator('#card.pinned .wrong a');
-  await expect(a).toHaveText('Something wrong? Tell us');
-  await expect(a).toHaveAttribute('href', /^mailto:hej@example\.org\?subject=Hus%20f%C3%B6r%20hus%3A%20.+&body=About%20building%200%20on%20the%20map%20\(data%20v\w+(-\w+)?\)%3A$/);
+  const b = page.locator('#card.pinned .wrong button');
+  await expect(b).toHaveText('Something wrong?');
+  await b.click();
+  const dialog = page.getByRole('dialog', { name: 'Something wrong?' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('.report-ref')).toContainText('building 0, data v');
 });

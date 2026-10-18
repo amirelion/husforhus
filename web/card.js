@@ -140,13 +140,3 @@ export function whyAnchor(b) {
   if (b.private) return 'privacy';
   return b.yflag === YFLAG.UNKNOWN ? 'years' : null;
 }
-
-// "Something wrong? Tell us": a mailto to the project's address (stockholm.json about.contact,
-// decided 2026-10-17), the building named in the subject and its gid and the data version in the body, so the
-// maintainer finds it in that version's data (gids can change between versions); '' while the map has no address.
-export function wrongHref(contact, card, gid, T, version = '') {
-  if (!contact) return '';
-  const what = card?.name || card?.addr || T('card.wrong.building', { gid });
-  return `mailto:${contact}?subject=${encodeURIComponent(T('card.wrong.subject', { what }))}`
-    + `&body=${encodeURIComponent(T('card.wrong.body', { gid, version }))}`;
-}

@@ -2,6 +2,8 @@
 pipeline/**
 web/**
 !web/data/**
+# The Worker in front of the site (wrangler.jsonc main), its D1 migrations and its tests.
+src/**
 scripts/**
 !scripts/public/leaks.txt
 tests/**
@@ -13,6 +15,7 @@ package-lock.json
 pyproject.toml
 uv.lock
 playwright.config.mjs
+playwright.worker.config.mjs
 LICENSE
 .gitignore
 .nvmrc

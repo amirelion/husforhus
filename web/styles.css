@@ -336,6 +336,12 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .look-open svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .look-open svg path { fill: currentColor; stroke: none; }
 .look-open[aria-expanded="true"] { background: var(--ink); color: var(--panel); }
+/* The dot on the Look button: a layer of "Show on the map" is on (web/switcher.js); gone while the panel is open. */
+.look-open { position: relative; }
+.look-dot { position: absolute; top: 1px; right: 1px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent, currentColor); box-shadow: 0 0 0 2px var(--panel); }
+.look-open[aria-expanded="true"] .look-dot { display: none; }
+.look-layers .est-row:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 /* The north button (web/north.js): round, as tall as the Look button and in its colours. The needle's north half is
    filled, its south half drawn; app.js turns the whole icon with the map (a transform, so no layout). */
 .north-open { display: grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0;
@@ -638,7 +644,37 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .card .share button { font: inherit; font-size: 13px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px;
   background: transparent; color: inherit; cursor: pointer; }
 .card .wrong { margin: 0; padding: 8px 16px 12px; border-top: 1px solid var(--line); font-size: 12px; }
-.card .wrong a { color: var(--muted); }
+.card .wrong button { font: inherit; padding: 0; border: 0; background: none; color: var(--muted); cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px; }
+.about .report-open { font: inherit; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: transparent; color: inherit; cursor: pointer; }
+
+/* The report form (web/report-form.js): About's surface, one column, big enough targets for a thumb. */
+.report form { padding: 24px 28px 28px; display: grid; gap: 6px; }
+.report h2 { margin: 0 0 8px; font-size: 22px; font-weight: 800; }
+.report h3 { margin: 0 0 4px; font-size: 14px; }
+.report-ref { padding: 10px 12px; border-radius: 8px; background: var(--bg); }
+.report-ref dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; font-size: 13px; }
+.report-ref dt { color: var(--muted); }
+.report-ref dd { margin: 0; }
+.report fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 8px 0; padding: 8px 12px 10px; display: grid; gap: 6px; }
+.report legend { font-weight: 700; padding: 0 4px; }
+.report label { font-weight: 600; margin-top: 6px; }
+.report .report-kind, .report .report-check { font-weight: 400; display: flex; gap: 8px; align-items: flex-start; min-height: 32px; }
+.report .report-kind input, .report .report-check input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
+.report textarea, .report input[type="text"], .report input[type="email"] { font: inherit; padding: 8px 10px; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box; }
+.report [aria-invalid="true"] { border-color: #c0392b; outline: 2px solid #c0392b; }
+.report-note { margin: 0; font-size: 12px; color: var(--muted); }
+.report-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.report-status:empty { display: none; }
+.report-status { margin: 6px 0 0; font-weight: 600; }
+.report-actions { display: flex; gap: 8px; margin: 10px 0 0; }
+.report-actions button { font: inherit; padding: 8px 18px; border-radius: 999px; border: 1px solid var(--line); cursor: pointer;
+  background: transparent; color: inherit; min-height: 40px; }
+.report-actions .report-send, .report-actions .report-done { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.report-address { font-weight: 600; margin: 0; }
+@media (max-width: 720px) { .report form { padding: 18px 16px 22px; } }
 
 /* The corner credit (Plan 4b, web/credits.js): under the drag hint and above the timeline on a desktop; on a phone
    under the buttons in the sky, folding into its (i) button after 5 s. */
@@ -698,5 +734,7 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 #card .metro-line i { width: 14px; height: 4px; border-radius: 2px; }
 #card .metro-formerly { color: var(--muted); }
 /* On a narrow phone the corner's row (search, north, Look, Stories, About, EN | SV) wraps right-aligned onto a second
-   line rather than pushing the first buttons off the left edge (e2e/credits.spec.mjs checks 390 and 360 px). */
-@media (max-width: 430px) { .corner .buttons { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; } }
+   line rather than pushing the first buttons off the left edge (e2e/credits.spec.mjs checks 390 and 360 px). The 18 px
+   between the lines keeps the touch bands apart (Look's reaches 8 px down, About's 10 px up), so a tap just under Look
+   is still Look (e2e/smoke.spec.mjs). */
+@media (max-width: 430px) { .corner .buttons { flex-wrap: wrap; justify-content: flex-end; row-gap: 18px; } }

@@ -1,9 +1,14 @@
-// The legend's "Highlight buildings with a photo" switch: on, every building whose card has no photo fades to the maquette
+// The Look panel's "Highlight buildings with a photo" switch: on, every building whose card has no photo fades to the maquette
 // (the shader reads a per-building flag written once per tile, web/panel.js markPhotos); a photo building keeps its
 // colour and its card still opens with the photo; the choice is kept in the URL. Runs on whatever web/data/current.json
 // names: the fixture in CI, the whole city on a laptop.
 import { test, expect } from '@playwright/test';
 
+// The layer switches sit in the Look panel (web/switcher.js): open it before a click.
+async function openLook(page) {
+  if (await page.locator('.look-open').getAttribute('aria-expanded') !== 'true') await page.locator('.look-open').click();
+  await expect(page.locator('#look')).toBeVisible();
+}
 async function open(page, query = '') {
   await page.goto('/' + query);
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
@@ -37,12 +42,15 @@ test('the photo switch fades the buildings without a photo, keeps the URL and th
   const sw = page.locator('#photo-only');
   await expect(sw).toHaveAttribute('aria-pressed', 'false');
   expect((await state(page, photo)).on).toBe(0);
+  await openLook(page);
   await sw.click();
   await expect(sw).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(() => state(page, photo)).toEqual({ flag: 1, on: 1 });   // stays coloured
   expect(await state(page, plain)).toEqual({ flag: 0, on: 1 });              // fades
   expect(new URL(page.url()).searchParams.get('photos')).toBe('1');
   await page.screenshot({ path: 'data/test-results/photos-desktop.png' });
+  await page.keyboard.press('Escape');   // closes the Look panel
+  await expect(page.locator('.look-dot')).toBeVisible();
 
   // a photo building's card opens with its photo, as without the switch
   await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), photo);
@@ -50,6 +58,7 @@ test('the photo switch fades the buildings without a photo, keeps the URL and th
   await page.keyboard.press('Escape');
 
   // off restores everything
+  await openLook(page);
   await sw.click();
   await expect(sw).toHaveAttribute('aria-pressed', 'false');
   expect((await state(page, plain)).on).toBe(0);
@@ -63,9 +72,9 @@ test('?photos=1 opens with the switch on, in Swedish too, on a phone', async ({ 
   const sw = page.locator('#photo-only');
   await expect(sw).toHaveAttribute('aria-pressed', 'true');
   await expect(sw).toContainText('Markera hus med foto');
-  await expect(page.locator('#photo-hint')).not.toHaveAttribute('hidden');   // the legend sheet itself starts folded on a phone
+  await expect(page.locator('#photo-hint')).not.toHaveAttribute('hidden');   // the Look panel itself starts closed
   await expect(page.locator('#photo-hint')).toContainText('Övriga hus blir bleka');
   await expect.poll(() => page.evaluate(() => window.__dbg.uniforms.uPhotoOnly.value)).toBe(1);
-  await page.locator('.sheet-handle').click().catch(() => {});   // open the legend sheet for the screenshot
+  await openLook(page);   // the Look sheet, for the screenshot
   await page.screenshot({ path: 'data/test-results/photos-phone.png' });
 });

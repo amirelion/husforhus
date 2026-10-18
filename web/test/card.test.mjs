@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { yearLine, sourceLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
-  decade, band, decadeOnly, isEstimate, rebuildLine, placeLine, whyAnchor, wrongHref } from '../card.js';
+  decade, band, decadeOnly, isEstimate, rebuildLine, placeLine, whyAnchor } from '../card.js';
 import { makeT } from '../i18n.js';
 import { YFLAG, YSRC, FSRC } from '../codes.js';
 
@@ -229,16 +229,6 @@ test('"Why?" points a private house at the privacy rule and an undated building 
   assert.equal(whyAnchor(b({ private: 1, yflag: YFLAG.PERIOD, year: 1930 })), 'privacy');
   assert.equal(whyAnchor(b({})), 'years');                                 // b() is a building with no year
   assert.equal(whyAnchor(b({ yflag: YFLAG.EXACT, year: 1924, ysrc: YSRC.RAA })), null);
-});
-
-test('"Something wrong?" writes to the project\'s address, naming the building; nothing without an address', () => {
-  assert.equal(wrongHref('', { name: 'Stadshuset' }, 7, EN), '');
-  assert.equal(wrongHref('hej@example.org', { name: 'Stadshuset' }, 7, EN, 'v1'),
-    'mailto:hej@example.org?subject=Hus%20f%C3%B6r%20hus%3A%20Stadshuset&body=About%20building%207%20on%20the%20map%20(data%20v1)%3A');
-  assert.match(wrongHref('hej@example.org', { addr: 'Hornsgatan 30' }, 7, SV), /subject=Hus%20f%C3%B6r%20hus%3A%20Hornsgatan%2030&body=Om%20byggnad%207/);
-  // the data version too: a gid belongs to one version's data (the takedown routine reads that version's buildings)
-  assert.match(wrongHref('hej@example.org', {}, 7, EN, 'v20261016-m8'), /body=About%20building%207%20on%20the%20map%20\(data%20v20261016-m8\)/);
-  assert.match(wrongHref('hej@example.org', {}, 7, EN), /subject=Hus%20f%C3%B6r%20hus%3A%20building%207&/);
 });
 
 test('the tower row: a laser-measured tower, to its top', () => {

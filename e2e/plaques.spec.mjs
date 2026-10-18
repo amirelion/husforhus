@@ -1,8 +1,13 @@
-// The legend's "Blue plaques" switch (features.plaques): off on a fresh visit; on, Samfundet S:t Erik's blue markers show
+// The Look panel's "Blue plaques" switch (features.plaques): off on a fresh visit; on, Samfundet S:t Erik's blue markers show
 // and a plaque building's pinned card has its plaque section; the choice is remembered and kept in the URL (?plaques=1).
 // Runs on whatever web/data/current.json names: the fixture (Gamla stan, with Den Gyldene Freden) in CI.
 import { test, expect } from '@playwright/test';
 
+// The layer switches sit in the Look panel (web/switcher.js): open it before a click.
+async function openLook(page) {
+  if (await page.locator('.look-open').getAttribute('aria-expanded') !== 'true') await page.locator('.look-open').click();
+  await expect(page.locator('#look')).toBeVisible();
+}
 async function open(page, query = '') {
   await page.goto('/' + query);
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
@@ -16,6 +21,7 @@ const markers = page => page.evaluate(() => ({ on: window.__dbg.plaquesOn, visib
   n: window.__dbg.plaqueGroup.children.length }));
 
 test('the plaques switch is off on a fresh visit, and on it shows the markers and Den Gyldene Freden\'s plaque', async ({ page }) => {
+  test.setTimeout(240_000);   // three loads of the whole map: past 2 min when the full suite runs alongside
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await open(page);
@@ -34,6 +40,7 @@ test('the plaques switch is off on a fresh visit, and on it shows the markers an
   await expect(page.locator('#card .plaque')).toHaveCount(0);
 
   // on: the markers, the line under the switch, the card's plaque, the URL
+  await openLook(page);
   await sw.click();
   await expect(sw).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#plaques-hint')).toHaveText("Samfundet S:t Erik's plaques on buildings with a story. Their texts are in Swedish.");
@@ -49,6 +56,7 @@ test('the plaques switch is off on a fresh visit, and on it shows the markers an
   await open(page);
   await expect(page.locator('#plaques-on')).toHaveAttribute('aria-pressed', 'true');
   expect(new URL(page.url()).searchParams.get('plaques')).toBe('1');
+  await openLook(page);
   await page.locator('#plaques-on').click();
   expect(await markers(page)).toMatchObject({ on: false, visible: false });
   expect(new URL(page.url()).searchParams.has('plaques')).toBe(false);
@@ -65,12 +73,11 @@ test('?plaques=1 turns the switch on, in Swedish too', async ({ page }) => {
   await expect(page.locator('#plaques-hint')).toHaveText('Samfundet S:t Eriks skyltar på hus med en historia. Texterna är på svenska.');
 });
 
-test('a phone shows the switch on in the legend', async ({ browser }) => {
+test('a phone shows the switch on in the Look sheet', async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   await open(page, '?plaques=1');
   test.skip(!(await plaques(page)).length, 'this build has no plaques');
-  const handle = page.locator('.sheet-handle');   // a phone starts with the legend collapsed
-  if (await handle.getAttribute('aria-expanded') === 'false') await handle.click();
+  await openLook(page);
   await expect(page.locator('#plaques-on')).toBeVisible();
   await page.locator('#plaques-on').scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'data/test-results/plaques-phone.png' });

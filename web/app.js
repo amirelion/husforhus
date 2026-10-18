@@ -5,7 +5,7 @@ import { readAttrs, ATTR_FLOATS } from './tile.js';
 import { liftBounds } from './bounds.js';
 import { YFLAG } from './codes.js';
 import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
-  isEstimate, placeLine, whyAnchor, wrongHref } from './card.js';
+  isEstimate, placeLine, whyAnchor } from './card.js';
 import { shareText, shareLink, parseAt } from './share.js';
 import { withTry } from './features.js';
 import { makeT, legacy, pickLang } from './i18n.js';
@@ -28,6 +28,8 @@ import { northTurn, turnAt, needleDeg } from './north.js';
 import { mountSearch } from './searchbox.js';
 import { makeHighlight } from './highlight.js';
 import { aboutHtml, aboutTarget } from './about.js';
+import { buildingRef } from './report.js';
+import { reportDialog } from './report-form.js';
 import { cornerHtml } from './credits.js';
 import { mountScenePlayer } from './scene-player.js';
 
@@ -109,8 +111,16 @@ const halt = (e, id) => { loadFailed(e, id); return new Promise(() => {}); };
 const reliefUi = { available: false, step: RELIEF_STEP, get value() { return relief; }, get max() { return reliefMax; },
   get disabled() { return terrainState === 'failed'; }, choose: v => chooseRelief(v), label: v => reliefValue(v, LANG),
   note: () => reliefNote(relief, LANG, terrainState) };
+// The map's layer switches sit in the Look panel under "Show on the map"; the list is empty until the data says
+// which layers this build has (layerUi.ready, below).
+const layerUi = { ready: false, title: () => T('ui.layers.title'), items: () => !layerUi.ready ? [] : [
+  metroData && { id: 'metro-on', label: T('ui.metro'), on: metroOn, set: setMetro },
+  plaqueList.length && { id: 'plaques-on', label: T('ui.plaques'), on: plaquesOn, set: setPlaques,
+    hint: { id: 'plaques-hint', cls: 'plaques-hint', text: T('ui.plaques.hint') } },
+  { id: 'photo-only', label: T('ui.photoOnly'), on: photoOnly, set: setPhotoOnly,
+    hint: { id: 'photo-hint', cls: 'photo-hint', text: T('ui.photoOnly.hint') } }].filter(Boolean) };
 const switcher = mountSwitcher({ button: document.querySelector('.look-open'), panel: document.getElementById('look'), looks, t,
-  relief: reliefUi });
+  relief: reliefUi, layers: layerUi });
 const pageLookOnly = looks.subscribe(applyPageLook);
 const { version } = await getJson('data/current.json', { cache: 'no-cache' }).catch(halt);
 const DATA = `data/${version}/`;
@@ -141,6 +151,7 @@ if (plaquesOn) history.replaceState(history.state, '', plaquesHref(location.href
 const metroData = FEATURES.metro ? await getJson(`${DATA}metro.json`).catch(() => null) : null;
 let metroOn = !!metroData && metroOnFrom(location.search, (() => { try { return localStorage.getItem(METRO_KEY); } catch { return null; } })());
 if (metroOn) history.replaceState(history.state, '', metroHref(location.href, true));
+layerUi.ready = true;
 
 // ---------- Language ----------
 // English and Swedish (features.lang turns the switch on). ?lang= sets this visit only; the switch's
@@ -1325,7 +1336,6 @@ function cardHtml(gid, pinned) {
   //. s03 already leaves them out of the card of every non-curated building in PRIVATE_HOUSE_KATEGORI;
   // cardLinks is a second guard for the RAÄ link.
   const links = cardLinks(more, b, T, config.links);
-  const wrong = wrongHref(config.about?.contact, more, gid, T, config.version);   // once the map has an address
   const picked = gid === forcedGid && hiddenByMap(b) ? `<p class="picked">${esc(T('card.picked'))}</p>` : '';
   return `
     <button class="card-close" aria-label="${esc(T('card.close'))}">×</button>
@@ -1336,7 +1346,7 @@ function cardHtml(gid, pinned) {
     ${excerpt || ''}
     ${links.length ? `<section class="sources"><h4>${esc(T('card.readmore'))}</h4><p>${links.map(l => link(l.href, l.text)).join(' · ')}</p></section>` : ''}
     <p class="share"><button class="card-share">${esc(T('card.share'))}</button></p>
-    ${wrong ? `<p class="wrong"><a href="${esc(wrong)}">${esc(T('card.wrong'))}</a></p>` : ''}`;
+    <p class="wrong"><button type="button" class="card-wrong">${esc(T('card.wrong'))}</button></p>`;
 }
 
 const card = document.getElementById('card');
@@ -1416,6 +1426,7 @@ function pinCard(gid, x, y) {
   const close = card.querySelector('.card-close');
   close.onclick = () => pinCard(-1);
   card.querySelector('.card-share').onclick = e => shareCard(gid, e.currentTarget);
+  card.querySelector('.card-wrong').onclick = () => openReport(reportRefOf(gid));
   card.querySelector('.photo img')?.addEventListener('error', e => {
     failedPhotos.add(cardOf(gid).photo?.key);
     if (!e.target.isConnected || pinnedGid !== gid) return;    // a late error from a card drawn over since
@@ -1450,6 +1461,15 @@ function pinStation(s, x, y) {
   close.focus({ preventScroll: true });
 }
 // "Share": a phone opens the system share sheet; elsewhere the link is copied and the button says so for 2 s.
+// "Something wrong?": the report form (web/report-form.js) with the building as its card shows it, read-only.
+const openReport = reportDialog(document.getElementById('report'), () => T);
+function reportRefOf(gid) {
+  const b = building(gid), more = cardOf(gid) || {}, p = periods[b.period] || periods[0];
+  return buildingRef({ gid, b, card: more, district: districtOf(gid), version: config.version,
+    year: yearLine(b, tr(p, 'label') || `${p.from}–${p.to}`, T), source: sourceLine(b, T, more),
+    link: shareLink({ text: '', resolves: false, x: b.x, z: b.z, zoom: 400 }),
+    hideAddress: !!b.private && config.about?.privateAddresses === false });
+}
 async function shareCard(gid, button) {
   const b = building(gid), text = shareText(cardOf(gid), b);
   const resolves = !!text && !!searchBox && await searchBox.topGid(text).then(g => g === gid, () => false);
@@ -1953,12 +1973,6 @@ function renderPanel() {
       ${config.unknown ? `<div class="swatch unknown"><i style="background:${unknownFill(THEME)}"></i><span id="unknown-label">${esc(T('ui.unknown'))}</span><span class="n">${fmt(config.unknown)}</span>
         <button class="switch" aria-describedby="unknown-label unknown-hint"><span class="toggle" aria-hidden="true"></span>${esc(T('ui.show'))}</button>
         <span class="unknown-hint" id="unknown-hint"></span></div>` : ''}</div>
-      <div class="est-row"><button class="switch" id="photo-only" aria-pressed="${photoOnly}" aria-describedby="photo-hint"><span class="toggle" aria-hidden="true"></span>${
-        esc(T('ui.photoOnly'))}</button><span class="photo-hint" id="photo-hint"${photoOnly ? '' : ' hidden'}>${esc(T('ui.photoOnly.hint'))}</span></div>
-      ${plaqueList.length ? `<div class="est-row"><button class="switch" id="plaques-on" aria-pressed="${plaquesOn}" aria-describedby="plaques-hint"><span class="toggle" aria-hidden="true"></span>${
-        esc(T('ui.plaques'))}</button><span class="plaques-hint" id="plaques-hint"${plaquesOn ? '' : ' hidden'}>${esc(T('ui.plaques.hint'))}</span></div>` : ''}
-      ${metroData ? `<div class="est-row"><button class="switch" id="metro-on" aria-pressed="${metroOn}"><span class="toggle" aria-hidden="true"></span>${
-        esc(T('ui.metro'))}</button></div>` : ''}
       ${estTotal ? `<div class="est-row"><button class="switch" id="hide-est" aria-pressed="${hideEst}"><span class="toggle" aria-hidden="true"></span>${
         esc(T('ui.hideEst', { n: fmt(estTotal) }))}</button></div>` : ''}
       <p class="note">${approx(T('ui.legend.note'))}</p>`;
@@ -1966,11 +1980,6 @@ function renderPanel() {
     if (sw) { sw.onclick = flipUnknown; syncUnknownSwitch(); }
     const estSw = panel.querySelector('#hide-est');
     if (estSw) estSw.onclick = () => setHideEst(!hideEst);
-    panel.querySelector('#photo-only').onclick = () => setPhotoOnly(!photoOnly);
-    const plSw = panel.querySelector('#plaques-on');
-    if (plSw) plSw.onclick = () => setPlaques(!plaquesOn);
-    const mSw = panel.querySelector('#metro-on');
-    if (mSw) mSw.onclick = () => setMetro(!metroOn);
     panel.querySelectorAll('.swatch[data-i]').forEach(b => b.onclick = () => {
       const i = +b.dataset.i, m = maskTarget;
       const solo = m.every((v, j) => (j === i) === !!v);
@@ -2077,9 +2086,7 @@ function setHideEst(v) {
 // switch itself is one uniform. The choice goes into the URL.
 async function setPhotoOnly(v) {
   photoOnly = !!v;
-  panel.querySelector('#photo-only')?.setAttribute('aria-pressed', String(photoOnly));
-  const hint = panel.querySelector('#photo-hint');
-  if (hint) hint.hidden = !photoOnly;
+  switcher.markLayers();
   history.replaceState(history.state, '', photoOnlyHref(location.href, photoOnly));
   if (photoOnly && !photoGids) {
     try {
@@ -2087,8 +2094,7 @@ async function setPhotoOnly(v) {
     } catch (e) {
       console.warn('photo-gids.json did not load; the photo switch is off', e);
       photoOnly = false;
-      panel.querySelector('#photo-only')?.setAttribute('aria-pressed', 'false');
-      if (panel.querySelector('#photo-hint')) panel.querySelector('#photo-hint').hidden = true;
+      switcher.markLayers();
       history.replaceState(history.state, '', photoOnlyHref(location.href, false));
       return;
     }
@@ -2105,7 +2111,7 @@ function setMetro(v) {
   metroOn = !!v && !!metroLayer;
   if (metroLayer) metroLayer.group.visible = metroShown();
   if (!metroOn && pinnedStation) pinCard(-1);
-  panel.querySelector('#metro-on')?.setAttribute('aria-pressed', String(metroOn));
+  switcher.markLayers();
   try { localStorage.setItem(METRO_KEY, metroOn ? 'on' : 'off'); } catch {}
   history.replaceState(history.state, '', metroHref(location.href, metroOn));
   updateMetro(camera.position.distanceTo(controls.target));
@@ -2114,9 +2120,7 @@ function setMetro(v) {
 function setPlaques(v) {
   plaquesOn = !!v && !!plaqueList.length;
   plaqueGroup.visible = plaquesOn;
-  panel.querySelector('#plaques-on')?.setAttribute('aria-pressed', String(plaquesOn));
-  const hint = panel.querySelector('#plaques-hint');
-  if (hint) hint.hidden = !plaquesOn;
+  switcher.markLayers();
   try { localStorage.setItem(PLAQUE_KEY, plaquesOn ? 'on' : 'off'); } catch {}
   history.replaceState(history.state, '', plaquesHref(location.href, plaquesOn));
   refreshCard();
@@ -2565,6 +2569,8 @@ addEventListener('hashchange', aboutFromHash);
 aboutBody.addEventListener('click', e => {
   const a = e.target.closest('a[data-section]');
   if (a) { e.preventDefault(); openAbout(a.dataset.section); }
+  if (e.target.closest('.report-open')) openReport(null);   // About's "Suggest something"
+
 });
 document.querySelector('.about-open').onclick = () => openAbout();
 about.querySelector('.about-close').onclick = () => about.close();

@@ -1,8 +1,13 @@
-// The legend's "Tunnelbanan" switch (features.metro, s16_metro's metro.json): off on a fresh visit; on, the lines grow
+// The Look panel's "Tunnelbanan" switch (features.metro, s16_metro's metro.json): off on a fresh visit; on, the lines grow
 // with the timeline: at 1960 the green line's first stations and no red line (opened 1964); at Today every line, and
 // Kymlinge as "never opened". A station's card has its name, lines, opening date and Wikidata link, and no image.
 import { test, expect } from '@playwright/test';
 
+// The layer switches sit in the Look panel (web/switcher.js): open it before a click.
+async function openLook(page) {
+  if (await page.locator('.look-open').getAttribute('aria-expanded') !== 'true') await page.locator('.look-open').click();
+  await expect(page.locator('#look')).toBeVisible();
+}
 async function open(page, query = '') {
   await page.goto('/' + query);
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
@@ -29,8 +34,10 @@ test('the switch grows the lines with the timeline: green in 1960, no red until 
   expect((await shown(page)).visible).toBe(false);
 
   await atYear(page, 1960);
+  await openLook(page);
   await sw.click();
   await expect(sw).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');   // closes the Look panel
   expect(new URL(page.url()).searchParams.get('metro')).toBe('1');
   await expect.poll(async () => (await shown(page)).lines).toEqual(['green']);
   const s1960 = await shown(page);
@@ -61,6 +68,7 @@ test('the switch grows the lines with the timeline: green in 1960, no red until 
   // remembered; off clears it and the URL
   await open(page);
   await expect(page.locator('#metro-on')).toHaveAttribute('aria-pressed', 'true');
+  await openLook(page);
   await page.locator('#metro-on').click();
   expect(new URL(page.url()).searchParams.has('metro')).toBe(false);
   expect((await shown(page)).visible).toBe(false);
@@ -72,8 +80,7 @@ test('a phone shows the lines with the switch on', async ({ browser }) => {
   await open(page, '?metro=1');
   test.skip(!(await hasMetro(page)), 'this build has no metro.json');
   await page.evaluate(() => window.__dbg.viewAt(9000));
-  const handle = page.locator('.sheet-handle');
-  if (await handle.getAttribute('aria-expanded') === 'false') await handle.click();
+  await openLook(page);
   await expect(page.locator('#metro-on')).toHaveAttribute('aria-pressed', 'true');
   await page.locator('#metro-on').scrollIntoViewIfNeeded();
   await page.waitForTimeout(800);

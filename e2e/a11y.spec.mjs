@@ -37,7 +37,7 @@ test('Tab reaches every control, each visibly focused', async ({ page }) => {
     if (seen.has('.grip') && seen.has('#scene') && seen.size > 12 && f?.key === '#scene') break;   // round the page once
   }
   const must = ['#scene', '.search-input', '[data-mode="0"]', '[data-mode="1"]', '.north-open', '.look-open', '.about-open',
-    '[data-lang="sv"]', '.sheet-handle', '#photo-only', '#play', '.grip'];
+    '[data-lang="sv"]', '.sheet-handle', '#play', '.grip'];
   for (const k of must) expect([...seen.keys()], `${k} is reached by Tab`).toContain(k);
   expect([...seen].filter(([, ring]) => !ring).map(([k]) => k), 'every focused control shows a ring').toEqual([]);
 });

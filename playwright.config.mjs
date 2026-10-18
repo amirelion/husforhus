@@ -8,6 +8,8 @@ if (PORT === 8642) throw new Error('8642 is the preview server of the main check
 
 export default defineConfig({
   testDir: 'e2e',
+  // e2e/worker runs against `wrangler dev` (playwright.worker.config.mjs), not this static server.
+  testIgnore: 'worker/**',
   timeout: 120_000,
   // scripts/serve.py takes a burst of module requests now (Server.request_queue_size); before that, macOS reset
   // connections beyond a backlog of 5. Every run starts its own server (webServer, below), so none predates the fix.

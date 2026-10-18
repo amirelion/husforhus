@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Reports · Hus för hus</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="admin.css">
+<!-- The owner's triage of reports (src/admin.js). Cloudflare Access guards /admin* and /api/admin/*; the Worker
+     checks the Access token again on every /api/admin/* call. -->
+<script type="module" src="admin.js"></script>
+</head>
+<body>
+<header>
+  <h1>Reports</h1>
+  <form id="filters">
+    <label>Status <select name="status"><option value="">All</option><option>new</option><option>in-progress</option>
+      <option>fixed</option><option>wontfix</option><option>published</option></select></label>
+    <label>Kind <select name="kind"><option value="">All</option><option value="year_or_detail">Year or detail</option>
+      <option value="photo">Photo</option><option value="other">Something else</option><option value="general">Suggestion</option></select></label>
+  </form>
+  <p id="msg" role="status" aria-live="polite"></p>
+</header>
+<main>
+  <section aria-label="Reports"><table id="list"><thead><tr><th>Ref</th><th>Date</th><th>Kind</th><th>Building</th><th>Status</th></tr></thead>
+    <tbody></tbody></table></section>
+  <section id="detail" aria-live="polite" hidden></section>
+</main>
+</body>
+</html>
