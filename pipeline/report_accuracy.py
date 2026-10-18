@@ -41,6 +41,7 @@ SOURCES = [("curated", "A hand-checked list of landmarks"),
            ("raa_area", "RAÄ, for a whole area (a district or an estate)"),
            ("wikidata", "Wikidata"),
            ("osm", "OpenStreetMap"),
+           ("reader", "A reader's report, checked by the map's maker"),
            ("estimate", "Estimated from similar dated buildings nearby"),
            ("none", 'No source: the year stays unknown, shown as "Year unknown"')]
 # The hand-check list (data/review-years.json): its six sizes, in words.
@@ -82,23 +83,23 @@ def shares(counts: list[int], decimals: int = 1) -> list[str]:
 
 
 # The summary's four kinds as the table's sources (codes.py pairs each yflag with its ysrc)
-KIND_SOURCES = [("curated", "raa", "raa_old", "wikidata", "osm"), ("raa_area",), ("estimate",), ("none",)]
+KIND_SOURCES = [("curated", "raa", "raa_old", "wikidata", "osm", "reader"), ("raa_area",), ("estimate",), ("none",)]
 
 
 def kind_shares(by_flag: dict, by_src: dict) -> tuple[list[str], list[str]]:
     """(the four kinds' shares, the sources' shares): the kinds rounded together, then each kind's share split among
     its sources, so a kind and its sources never disagree (a review found one count at 8.0% and
     8.1%) and the summary, the figure people quote, is the closest rounding."""
-    src = [by_src[key] for key, _ in SOURCES]
+    src = [by_src.get(key, 0) for key, _ in SOURCES]
     kind_counts = list(kinds(by_flag))
-    if [sum(by_src[k] for k in ks) for ks in KIND_SOURCES] != kind_counts:
+    if [sum(by_src.get(k, 0) for k in ks) for ks in KIND_SOURCES] != kind_counts:
         raise ValueError("the yflag counts and the ysrc counts disagree: rebuild the years")
     units = share_units(kind_counts)
     if units is None:
         return ["–"] * 4, ["–"] * len(src)
     at = {}
     for ks, u in zip(KIND_SOURCES, units):
-        at.update(zip(ks, apportion([by_src[k] for k in ks], u) or [0] * len(ks)))
+        at.update(zip(ks, apportion([by_src.get(k, 0) for k in ks], u) or [0] * len(ks)))
     def tenths(v):
         return f"{v / 10:.1f}%"
     return [tenths(u) for u in units], [tenths(at[key]) for key, _ in SOURCES]

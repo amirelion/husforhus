@@ -35,13 +35,15 @@ before(async () => {
       if (u.host === TEAM && u.pathname === '/cdn-cgi/access/certs') return Response.json({ keys: [jwk] });
       if (u.host === 'api.github.com') {
         issues.push({ url: req.url, auth: req.headers.get('authorization'), body: await req.json() });
+        if (u.pathname.endsWith('/comments')) return Response.json({ id: 1 }, { status: 201 });
         return Response.json({ html_url: 'https://github.com/amirelion/husforhus/issues/7' }, { status: 201 });
       }
       return new Response('blocked', { status: 599 });
     },
   }));
   const db = await mf.getD1Database('REPORTS');
-  const sql = readFileSync('src/migrations/0001_reports.sql', 'utf8').replace(/--.*$/gm, '');
+  const sql = ['0001_reports.sql', '0002_contributions.sql'].map(f => readFileSync(`src/migrations/${f}`, 'utf8')).join(';\n')
+    .replace(/--.*$/gm, '');
   for (const stmt of sql.split(';').map(s => s.trim()).filter(Boolean)) await db.prepare(stmt).run();
 });
 after(() => mf?.dispose());
@@ -63,8 +65,14 @@ async function multipart(report, photo, from = ip()) {
   return mf.dispatchFetch('http://localhost/api/report', { method: 'POST', body: await req.arrayBuffer(),
     headers: { 'content-type': req.headers.get('content-type'), 'CF-Connecting-IP': from } });
 }
-const admin = async (path, init = {}) => mf.dispatchFetch(`http://localhost/api/admin/${path}`, { ...init,
-  headers: { 'Cf-Access-Jwt-Assertion': await goodToken(), ...(init.body ? { 'content-type': 'application/json' } : {}), ...init.headers } });
+// Every admin response's text, so the last test can check none carries a sender's email outside its Reply link.
+const adminTexts = [];
+const admin = async (path, init = {}) => {
+  const r = await mf.dispatchFetch(`http://localhost/api/admin/${path}`, { ...init,
+    headers: { 'Cf-Access-Jwt-Assertion': await goodToken(), ...(init.body ? { 'content-type': 'application/json' } : {}), ...init.headers } });
+  if ((r.headers.get('content-type') || '').startsWith('application/json')) adminTexts.push(await r.clone().text());
+  return r;
+};
 const rows = async () => (await (await mf.getD1Database('REPORTS')).prepare('SELECT * FROM reports ORDER BY id').all()).results;
 
 // A JPEG's headers: SOI, an optional APP1 (EXIF), a quantisation table, the scan.
@@ -207,4 +215,107 @@ test('the daily cron blanks emails of reports closed more than 12 months ago, an
   assert.equal(await email(old), '');
   assert.equal(await email(recent), 'old@example.org');
   assert.equal(await email(open), 'old@example.org');
+});
+
+const acceptBody = o => JSON.stringify({ kind: 'year', value: '1776', public_note: 'The plaque on the facade says 1776.', ...o });
+
+test('the report carries a Reply link in its language, never the email as a field', async () => {
+  const id = Number((await (await post(base({ lang: 'sv' }))).json()).reference.slice(4));
+  const { report } = await (await admin(`reports/${id}`)).json();
+  assert.equal(report.email, undefined);
+  const u = new URL(report.reply);
+  assert.equal(u.protocol, 'mailto:');
+  assert.equal(decodeURIComponent(u.pathname), 'reader@example.org');
+  assert.equal(u.searchParams.get('subject'), `Hus för hus: your report HFH-${id}`);
+  assert.match(u.searchParams.get('body'), /Tack för din rapport/);
+  const en = (await (await admin(`reports/${Number((await (await post(base())).json()).reference.slice(4))}`)).json()).report;
+  assert.match(new URL(en.reply).searchParams.get('body'), /Thank you for your report/);
+});
+
+test('accept: validates the change, stores the contribution and the point, sets "accepted", comments on the issue', async () => {
+  const id = Number((await (await post(base())).json()).reference.slice(4));
+  const bad = async (o, field) => {
+    const r = await admin(`reports/${id}/accept`, { method: 'POST', body: acceptBody(o) });
+    assert.equal(r.status, 400);
+    assert.ok((await r.json()).fields.includes(field), JSON.stringify(o));
+  };
+  await bad({ kind: 'colour' }, 'kind');
+  await bad({ value: '17' }, 'value');
+  await bad({ value: '1939-1938' }, 'value');
+  await bad({ public_note: '' }, 'public_note');
+  await bad({ public_note: 'x'.repeat(201) }, 'public_note');
+  await bad({ public_note: 'two\nlines' }, 'public_note');
+  await bad({ public_note: 'Ask reader@example.org' }, 'personal');
+  await bad({ public_note: 'Call 070-123 45 67' }, 'personal');
+  await bad({ kind: 'name', value: 'x'.repeat(121) }, 'value');
+  await bad({ kind: 'photo' }, 'photo');                                   // this report has no photo
+  assert.equal((await rows()).find(x => x.id === id).status, 'new');
+
+  await admin(`reports/${id}/publish`, { method: 'POST', body: '{}' });   // now it has an issue
+  const n = issues.length;
+  const r = await admin(`reports/${id}/accept`, { method: 'POST', body: acceptBody({ value: '1938-1939', replaces_register: true }) });
+  assert.equal(r.status, 200);
+  const out = await r.json();
+  assert.equal(out.report.status, 'accepted');
+  assert.equal(out.report.closed_at, null);                                // accepted is not closed
+  assert.equal(out.commented, true);
+  const c = out.contribution;
+  assert.deepEqual({ kind: c.kind, value: c.value, rr: c.replaces_register, gid: c.gid, v: c.data_version, x: c.x, z: c.z, applied: c.applied_version },
+    { kind: 'year', value: '1938-1939', rr: true, gid: 12, v: 'v20261017', x: 1, z: 2, applied: null });
+  assert.equal(issues.length, n + 1);
+  assert.equal(issues.at(-1).url, 'https://api.github.com/repos/amirelion/husforhus/issues/7/comments');
+  assert.equal(issues.at(-1).auth, 'Bearer test-token');
+  assert.deepEqual(issues.at(-1).body, { body: 'Accepted: this will be in the next data update.' });
+
+  // without an issue: no comment; replaces_register only for a year; a name never on a private house
+  const id2 = Number((await (await post(base())).json()).reference.slice(4));
+  const r2 = await (await admin(`reports/${id2}/accept`, { method: 'POST',
+    body: acceptBody({ kind: 'name', value: 'Börshuset', replaces_register: true }) })).json();
+  assert.equal(r2.commented, false);
+  assert.equal(r2.contribution.replaces_register, false);
+  assert.equal(issues.length, n + 1);
+  const id3 = Number((await (await post(base({ building: { ...BORS, private: true } }))).json()).reference.slice(4));
+  await (async () => {
+    const x = await admin(`reports/${id3}/accept`, { method: 'POST', body: acceptBody({ kind: 'name', value: 'Villa X' }) });
+    assert.equal(x.status, 400);
+    assert.ok((await x.json()).fields.includes('private'));
+  })();
+});
+
+test('accept a photo: the value is the credit the sender gave', async () => {
+  const id = Number((await (await multipart(photoReport(), CLEAN)).json()).reference.slice(4));
+  const { contribution } = await (await admin(`reports/${id}/accept`, { method: 'POST', body: acceptBody({ kind: 'photo', value: 'ignored' }) })).json();
+  assert.equal(contribution.value, 'A. Reader');
+});
+
+test('contributions: the accepted, unapplied rows; "applied" sets the version and the report to fixed', async () => {
+  assert.equal((await admin('contributions')).status, 400);
+  let { contributions } = await (await admin('contributions?state=accepted')).json();
+  assert.ok(contributions.length >= 3 && contributions.every(c => c.applied_version === null));
+  const c = contributions.find(x => x.kind === 'year' && x.issue_url);
+  assert.equal(c.reference, `HFH-${c.report_id}`);
+  assert.equal((await admin(`contributions/${c.id}/applied`, { method: 'POST', body: JSON.stringify({ version: 'latest' }) })).status, 400);
+  const r = await admin(`contributions/${c.id}/applied`, { method: 'POST', body: JSON.stringify({ version: 'v20261101' }) });
+  assert.equal((await r.json()).contribution.applied_version, 'v20261101');
+  const report = (await rows()).find(x => x.id === c.report_id);
+  assert.equal(report.status, 'fixed');
+  assert.ok(report.closed_at);
+  ({ contributions } = await (await admin('contributions?state=accepted')).json());
+  assert.ok(!contributions.some(x => x.id === c.id));
+  for (const [path, method] of [['contributions?state=accepted', 'GET'], [`contributions/${c.id}/applied`, 'POST'], ['reports/1/accept', 'POST']]) {
+    const x = await mf.dispatchFetch(`http://localhost/api/admin/${path}`, { method, headers: { 'content-type': 'application/json' },
+      body: method === 'POST' ? '{}' : undefined });
+    assert.equal(x.status, 403);
+  }
+});
+
+test('no admin response carries a sender\'s email except inside its Reply link', async () => {
+  await admin('reports');
+  assert.ok(adminTexts.length > 10);
+  for (const text of adminTexts) {
+    const withoutReply = JSON.stringify(JSON.parse(text, (k, v) => (k === 'reply' ? undefined : v)));
+    assert.ok(!/@example\.org/.test(withoutReply.replace(/owner@example\.org/g, '')), withoutReply.slice(0, 200));
+    assert.ok(!withoutReply.includes('reader%40example.org') && !withoutReply.includes('old%40example.org'));
+  }
+  for (const i of issues) assert.ok(!JSON.stringify(i.body).includes('@'));
 });

@@ -4,8 +4,8 @@
 // opens it at a section for a link to #about/<section>.
 
 export const SECTIONS = ['years', 'accuracy', 'limits', 'privacy', 'sources', 'contact'];
-const RECORD = ['curated', 'raa', 'raa_old', 'wikidata', 'osm'];
-const SOURCE_ROWS = ['curated', 'raa', 'raa_old', 'raa_area', 'wikidata', 'osm', 'estimate', 'none'];
+const RECORD = ['curated', 'raa', 'raa_old', 'wikidata', 'osm', 'reader'];
+const SOURCE_ROWS = ['curated', 'raa', 'raa_old', 'raa_area', 'wikidata', 'osm', 'reader', 'estimate', 'none'];
 const AMSTERDAM = 'https://github.com/alexbarakov/amsterdam-by-building';
 const PARIS = 'https://paris.bogachev.fr/';
 const REPO = 'https://github.com/amirelion/husforhus';
@@ -165,7 +165,8 @@ export function aboutHtml(config, T, howto = '') {
     ${P(a.maker ? 'about.privacy.who' : 'about.privacy.who.nomaker')}
     ${h3('about.sources.title', 'sources')}
     <ul id="about-data">${sources}
-      <li>${esc(T('about.sources.wikipedia'))}</li><li>${esc(T('about.sources.commons'))}</li></ul>
+      <li>${esc(T('about.sources.wikipedia'))}</li><li>${esc(T('about.sources.commons'))}</li>
+      <li>${esc(T('about.sources.readers', { n: T.num(a.readers || 0) }))}</li></ul>
     <p>${esc(T('about.sources.odbl'))}</p>
     ${h3('about.thanks.title', 'thanks')}
     <p>${T('about.thanks.code', { amsterdam: link(AMSTERDAM, 'Amsterdam, building by building'),

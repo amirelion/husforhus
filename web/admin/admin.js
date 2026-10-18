@@ -1,6 +1,9 @@
 // The owner's triage page (/admin): lists reports from /api/admin/reports, opens one, changes its status and note,
-// replies from the owner's own mail client, and publishes it as a GitHub issue (never with the email).
-const STATUSES = ['new', 'in-progress', 'fixed', 'wontfix', 'published'];
+// replies from the owner's own mail client, publishes it as a GitHub issue (never with the email) and accepts it as
+// data for the next release (accept.js). The API never returns the email: only the Reply link (`reply`) carries it.
+import { acceptFormHtml, readAccept, showFields, addressesFor } from './accept.js';
+
+const STATUSES = ['new', 'in-progress', 'accepted', 'fixed', 'wontfix', 'published'];
 const KIND = { year_or_detail: 'Year or detail', photo: 'Photo', other: 'Something else', general: 'Suggestion' };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -13,10 +16,6 @@ async function api(path, body) {
   return r.json();
 }
 const what = r => (r.building ? r.building.name || r.building.address || `building ${r.building.gid}` : '—');
-
-export function replyHref(r) {
-  return `mailto:${encodeURIComponent(r.email)}?subject=${encodeURIComponent(`Re: Hus för hus ${r.reference}: ${what(r)}`)}`;
-}
 
 let current = null;
 async function list() {
@@ -37,7 +36,7 @@ function detailHtml(r) {
   const rows = b ? [['Name', b.name], ['Address', b.address], ['District', b.district], ['Year shown', b.year],
     ['Source shown', b.source], ['Building', `gid ${b.gid}, data ${b.version}`]].filter(([, v]) => v) : [];
   return `<h2>${esc(r.reference)} · ${esc(KIND[r.kind] || r.kind)}</h2>
-    <dl><dt>Received</dt><dd>${esc(r.created_at)}</dd><dt>Email</dt><dd>${r.email ? esc(r.email) : '<i>deleted</i>'}</dd>
+    <dl><dt>Received</dt><dd>${esc(r.created_at)}</dd><dt>Email</dt><dd>${r.reply ? 'kept (use Reply)' : '<i>deleted</i>'}</dd>
       <dt>Language</dt><dd>${esc(r.lang)}</dd>
       ${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}
       ${b?.link ? `<dt>Map</dt><dd><a href="${esc(b.link)}" target="_blank" rel="noopener">Open on the map</a></dd>` : ''}
@@ -50,12 +49,37 @@ function detailHtml(r) {
       <label>Status <select name="status">${STATUSES.map(s => `<option${s === r.status ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
       <p><label>Note (private)<br><textarea name="note" rows="3">${esc(r.note)}</textarea></label></p>
       <div class="actions"><button type="submit">Save</button>
-        ${r.email ? `<a href="${esc(replyHref(r))}">Reply</a>` : ''}</div>
+        ${r.reply ? `<a href="${esc(r.reply)}">Reply</a>` : ''}</div>
     </form>
     <div class="actions">
       <button type="button" id="publish">Publish as GitHub issue</button>
+      ${r.status === 'accepted' || r.status === 'fixed' ? '' : '<button type="button" id="accept-open">Accept</button>'}
       ${r.photo_key && !b?.private ? '<label><input type="checkbox" id="with-photo"> include photo</label>' : ''}
-    </div>`;
+    </div>
+    <div id="accept-slot"></div>`;
+}
+
+async function openAccept(r, d) {
+  const b = r.building;
+  let addresses = b ? await addressesFor(b.gid, b.version).catch(() => []) : [];
+  if (b?.address && addresses.includes(b.address)) addresses = [b.address, ...addresses.filter(a => a !== b.address)];
+  const slot = d.querySelector('#accept-slot');
+  slot.innerHTML = acceptFormHtml(r, addresses);
+  const form = slot.querySelector('#accept');
+  showFields(form);
+  form.querySelector('[name=kind]').onchange = () => showFields(form);
+  slot.querySelector('#accept-cancel').onclick = () => { slot.innerHTML = ''; };
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(form));
+    const { errors, body } = readAccept(f);
+    if (errors.length) { say(`Check: ${errors.join(', ')}`); return; }
+    try {
+      const res = await api(`reports/${r.id}/accept`, body);
+      say(`${r.reference} accepted${res.commented ? '; the GitHub issue has a comment' : ''}.`);
+      await list(); await open(r.id);
+    } catch (err) { say(err.message); }
+  };
 }
 
 async function open(id) {
@@ -72,6 +96,8 @@ async function open(id) {
       try { await api(`reports/${id}`, { status: f.get('status'), note: f.get('note') }); say(`${r.reference} saved.`); await list(); }
       catch (err) { say(err.message); }
     };
+    const acc = d.querySelector('#accept-open');
+    if (acc) acc.onclick = () => openAccept(r, d);
     d.querySelector('#publish').onclick = async () => {
       if (!confirm(`Publish ${r.reference} as a public GitHub issue? The email is never included.`)) return;
       try {

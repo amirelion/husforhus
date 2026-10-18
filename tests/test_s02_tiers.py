@@ -421,7 +421,7 @@ def test_summary_counts_every_tier():
     b = buildings(("u0", "Flerbostadshus", sq(0)), ("u1", "Flerbostadshus", sq(1)), ("u2", "Flerbostadshus", sq(2)))
     y, _ = run(b, no_raa(), wikidata=wikidata(("Q0", 0, 1700, 1700, False)), osm=osm(("way/1", 1, 1800, 1800)))
     s = s02_years.summary(y.reset_index())
-    assert set(s) == {"buildings", "curated", "raa", "raa_old", "raa_area", "wikidata", "osm", "estimate", "period",
+    assert set(s) == {"buildings", "curated", "raa", "raa_old", "raa_area", "wikidata", "osm", "reader", "estimate", "period",
                       "private", "unknown", "byFlag", "with_raa_id"}
     assert (s["wikidata"], s["osm"], s["unknown"], s["estimate"], s["period"]) == (1, 1, 1, 0, 0)
 

@@ -236,3 +236,18 @@ test('the tower row: a laser-measured tower, to its top', () => {
   assert.equal(towerLine({ tower: 103 }, SV), '103 m till toppen');
   assert.equal(towerLine({}, EN), '');
 });
+
+test("a reader's report: the source line with its reference and note, a private house's names the source only", () => {
+  const b = { yflag: YFLAG.EXACT, ysrc: YSRC.READER, year: 1938, yearFrom: 1938, yearTo: 1938 };
+  const yrd = { ref: 'HFH-12', note: 'The building permit is dated 1938.', url: 'https://github.com/amirelion/husforhus/issues/9' };
+  assert.equal(sourceLine(b, EN, { yrd }), "A reader's report (HFH-12), checked: The building permit is dated 1938.");
+  assert.equal(sourceLine(b, SV, { yrd }), 'En läsares rapport (HFH-12), granskad: The building permit is dated 1938.');
+  assert.equal(sourceLine({ ...b, private: true, year: 1930 }, EN, {}), "A reader's report · " + EN('card.private.rule'));
+});
+
+test("a reader's photo is credited with the sender's name, CC BY 4.0, as a reader's photo", () => {
+  const photo = { key: '0123456789abcdef-1600.jpg', w: 1600, h: 1200, by: 'A. Reader', lic: 'CC BY 4.0',
+    lu: 'https://creativecommons.org/licenses/by/4.0/', rd: 'HFH-12' };
+  assert.deepEqual(photoCredit(photo, EN), [{ text: "Photo: A. Reader, CC BY 4.0, a reader's photo" }]);
+  assert.deepEqual(photoCredit(photo, SV), [{ text: 'Foto: A. Reader, CC BY 4.0, en läsares foto' }]);
+});

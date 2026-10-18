@@ -20,3 +20,6 @@ td button { font: inherit; border: 0; background: none; padding: 0; text-decorat
 .actions button, .actions a { font: inherit; padding: 6px 12px; border: 1px solid #999; border-radius: 6px; background: #fff;
   color: inherit; text-decoration: none; cursor: pointer; }
 .warn { color: #a33; font-weight: 600; }
+.accept { margin-top: 16px; padding: 12px 14px; border: 1px solid #c90; border-radius: 8px; background: #fffbef; }
+.accept h3 { margin: 0 0 8px; font-size: 17px; }
+.accept input:not([type=checkbox]) { width: 100%; box-sizing: border-box; font: inherit; }

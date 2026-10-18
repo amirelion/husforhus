@@ -101,7 +101,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from . import city, codes, plaques, suppress
+from . import city, codes, contributions, plaques, suppress
 from .estimate import GROUPS
 from .geo import lonlat_to_3011
 from .privacy import mentions, normalise, owner, phrases
@@ -136,7 +136,7 @@ METRO_LINES = {"green", "red", "blue"}  # s16_metro (pipeline/metro.py LINES)
 MIN_PRIVATE_OVERLAP = 2  # years a private row's decade must share with its period, or the pair pins the year
 YFLAGS = (codes.EXACT, codes.RANGE, codes.LONG, codes.AREA, codes.ESTIMATE, codes.PERIOD, codes.UNKNOWN)
 YSRCS = (codes.SRC_NONE, codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_AREA, codes.SRC_WIKIDATA, codes.SRC_ESTIMATE,
-         codes.SRC_RAA_OLD, codes.SRC_OSM)
+         codes.SRC_RAA_OLD, codes.SRC_OSM, codes.SRC_READER)
 # The codes.py pairing: the yflags a source may carry.
 PAIRS = {codes.SRC_NONE: (codes.UNKNOWN,), codes.SRC_RAA_AREA: (codes.AREA,),
          codes.SRC_ESTIMATE: (codes.ESTIMATE, codes.PERIOD)}
@@ -837,7 +837,11 @@ def check_photo(out: Path, where: str, photo, used: set[str]) -> list[str]:
         errors.append(f"cards: {where} has a photo whose licence is not CC BY, CC BY-SA, CC0 or public domain")
     if not str(photo.get("by", "")).strip():
         errors.append(f"cards: {where} has a photo without its author")
-    if not COMMONS_PAGE_ID.fullmatch(str(photo.get("page", ""))):
+    reader = "rd" in photo          # a reader's photo (pipeline/contributions.py): CC BY 4.0, no Commons page
+    if reader and (lic != contributions.LICENCE or not contributions.REF.fullmatch(str(photo["rd"]))
+                   or "page" in photo or "title" in photo):
+        errors.append(f"cards: {where} has a reader's photo without CC BY 4.0 and its report's reference, or with a page")
+    if not reader and not COMMONS_PAGE_ID.fullmatch(str(photo.get("page", ""))):
         errors.append(f"cards: {where} has a photo without its Commons page")
     if photo.get("lu") and not str(photo["lu"]).startswith("https://"):
         errors.append(f"cards: {where} has a photo whose licence link is not an https URL")
@@ -889,6 +893,8 @@ def check_cards(out: Path, a: np.ndarray, hidden: np.ndarray, allowed_names: set
             if "photo" in card:
                 errors += check_photo(out, f"{p.name} {ref}", card["photo"], used)
             errors += check_rebuilds(f"cards: {p.name} {ref}", card, a[int(key)])
+            if "yrd" in card:
+                errors += check_reader_line(f"cards: {p.name} {ref}", card["yrd"], a[int(key)], hidden[int(key)])
             for field in ("name", "en"):   # a register's building code is an internal id
                 if isinstance(card.get(field), str) and REGISTER_CODE.search(card[field]):
                     errors.append(f"cards: {p.name} {ref} {field} carries a register's building code")
@@ -908,6 +914,47 @@ def check_cards(out: Path, a: np.ndarray, hidden: np.ndarray, allowed_names: set
             if rare:
                 errors.append(f"cards: {p.name} {ref} is in a private-house category and names {len(rare)} architect(s) "
                               f"found on {city.ARCHITECT_MAX_RARE} cards or fewer")
+    return errors
+
+
+def check_reader_line(where: str, yrd, rec, hide: bool) -> list[str]:
+    """A card's `yrd` (the reader's report its year comes from): only on a reader-dated, non-hidden card; the reference,
+    a one-line note with nothing email- or phone-like, an optional GitHub issue."""
+    if not isinstance(yrd, dict) or set(yrd) - {"ref", "note", "url"}:
+        return [f"{where} has a `yrd` that is not {{ref, note, url}}"]
+    errors = []
+    if rec["ysrc"] != codes.SRC_READER or hide:
+        errors.append(f"{where} has `yrd` but its year is not a reader's, or it is a private house")
+    note = str(yrd.get("note", ""))
+    if not contributions.REF.fullmatch(str(yrd.get("ref", ""))) or not note or len(note) > 200 or "\n" in note:
+        errors.append(f"{where} has a `yrd` without its reference or one-line note")
+    if contributions.personal(note):
+        errors.append(f"{where} has a reader's note with email-like or phone-like text")
+    if "url" in yrd and not contributions.ISSUE.fullmatch(str(yrd["url"])):
+        errors.append(f"{where} has a `yrd` link that is not a GitHub issue")
+    return errors
+
+
+def check_contributions(data: Path, path: Path = contributions.PATH) -> list[str]:
+    """pipeline/contributions.csv: well formed, nothing email- or phone-like in a note or value (contributions.read),
+    and every row's uuid on exactly one footprint of data/buildings.parquet."""
+    if not path.exists():
+        return [f"contributions: {path} is missing (seed it with its header)"]
+    try:
+        t = contributions.read(path)
+    except ValueError as e:
+        return [f"contributions: {e}"]
+    if t.empty:
+        return []
+    if not (data / "buildings.parquet").exists():
+        return [f"contributions: cannot resolve {len(t)} rows without {data / 'buildings.parquet'}"]
+    b = pd.read_parquet(data / "buildings.parquet", columns=["gid", "uuid"])
+    errors = []
+    for i in range(len(t)):
+        try:
+            contributions.gids(t.iloc[[i]], b)
+        except contributions.Refused as e:
+            errors.append(f"contributions: {e}")
     return errors
 
 
@@ -1465,6 +1512,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     errors += check_towers(out, cfg, a, data)
     errors += check_districts(out, cfg, len(a))
     errors += check_suppressed(out, a, data, takedowns)
+    errors += check_contributions(data)
     sets = privacy_sets(data) if (data / "buildings.parquet").exists() else None
     errors += check_search(out, cfg, a, hidden, sets[1] if sets else frozenset(), data)
     errors += check_plaques(out, len(a))

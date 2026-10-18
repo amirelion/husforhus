@@ -17,7 +17,7 @@ export const band = b => Math.max(b.year - b.yearFrom, b.yearTo - b.year);
 // completion-year ranges have year = yearTo, so they never match.
 export const decadeOnly = b => b.yflag === YFLAG.RANGE && b.year === b.yearFrom && b.yearTo === b.yearFrom + 9
   && b.yearFrom % 10 === 0;
-const SRC = { [YSRC.RAA]: 'raa', [YSRC.RAA_OLD]: 'raa_old', [YSRC.WIKIDATA]: 'wikidata', [YSRC.OSM]: 'osm' };
+const SRC = { [YSRC.RAA]: 'raa', [YSRC.RAA_OLD]: 'raa_old', [YSRC.WIKIDATA]: 'wikidata', [YSRC.OSM]: 'osm', [YSRC.READER]: 'reader' };
 const EST_FLAGS = [YFLAG.AREA, YFLAG.ESTIMATE, YFLAG.PERIOD];
 export const isEstimate = b => EST_FLAGS.includes(b.yflag);
 
@@ -45,6 +45,9 @@ export function sourceLine(b, T, card = {}) {
   if (b.ysrc === YSRC.CURATED) {
     return T(card?.cellars ? 'card.src.curated.cellars' : 'card.src.curated', { span: span(b.yearFrom, b.yearTo) });
   }
+  // A reader's report the owner checked (pipeline/contributions.py): its reference and the owner's note, card `yrd`
+  // (app.js links the line to the report's issue, `yrd.url`, when there is one).
+  if (b.ysrc === YSRC.READER) return card?.yrd ? T('card.src.reader', { ref: card.yrd.ref, note: card.yrd.note }) : T('card.private.reader');
   if (b.ysrc === YSRC.RAA_AREA) return T('card.src.area');
   if (b.ysrc === YSRC.ESTIMATE) return T('card.src.estimate', { n: band(b) });
   const key = SRC[b.ysrc];
@@ -102,6 +105,8 @@ export const fillUrl = (tpl, vars) => String(tpl).replace(/\{(\w+)\}/g, (m, k) =
 // The photo's credit as parts the card links: who took it, the work's title where the licence asks for
 // it (CC 2.0–3.0), the licence (linked to its text) and Wikimedia Commons (linked to the file's page).
 export function photoCredit(photo, T) {
+  // a reader's photo (pipeline/contributions.py): the credit its sender gave, under the CC BY 4.0 they granted
+  if (photo.rd) return [{ text: T('card.photo.reader', { by: photo.by }) }];
   const by = photo.by && photo.by !== 'unknown' ? photo.by : T('card.photo.unknown');
   const lic = { 'Public domain': T('card.photo.pd'), 'Public domain (Sweden)': T('card.photo.pd.se') }[photo.lic] || photo.lic;
   return [

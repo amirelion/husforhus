@@ -327,7 +327,7 @@ def test_a_tile_whose_year_disagrees_with_attrs_fails(site):
 def test_known_and_estimated_flags_split_the_histograms():
     assert s03_tiles.KNOWN_FLAGS == (codes.EXACT, codes.RANGE, codes.LONG)
     assert s03_tiles.ESTIMATED_FLAGS == (codes.AREA, codes.ESTIMATE, codes.PERIOD)
-    assert s03_tiles.SRC_NAMES == ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_old", "osm"]
+    assert s03_tiles.SRC_NAMES == ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_old", "osm", "reader"]
 
 
 # Final review PIPELINE-1: a measurable cell or fallback row carries its numbers, and no number or count is impossible

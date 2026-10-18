@@ -1,7 +1,7 @@
 // What a report must be (POST /api/report), and the checks on an uploaded photo. Pure: tested by src/test/worker.test.mjs.
 
 export const KINDS = ['year_or_detail', 'photo', 'other', 'general'];
-export const STATUSES = ['new', 'in-progress', 'fixed', 'wontfix', 'published'];
+export const STATUSES = ['new', 'in-progress', 'accepted', 'fixed', 'wontfix', 'published'];
 export const CLOSED = ['fixed', 'wontfix', 'published'];
 export const MAX_PHOTO = 10 * 1024 * 1024;
 export const MIN_FILL_MS = 3000;
@@ -93,4 +93,50 @@ export function hasExif(bytes, type) {
     return false;
   }
   return true;
+}
+
+// "Accept" on a report (POST /api/admin/reports/:id/accept): what the change is. The page's form checks the same
+// (web/admin/accept.js); pipeline/contributions.py checks it once more against the building.
+export const CHANGES = ['year', 'main_address', 'name', 'photo', 'none'];
+export const YEAR_VALUE = /^(\d{4})(?:-(\d{4}))?$/;
+// Text that looks like an email address or a phone number: never in a public note or a value.
+export const EMAIL_LIKE = /[^\s@]+@[^\s@]+\.[A-Za-z]{2,}/;
+export const PHONE_LIKE = /(?:\+|\b0)\d[\d\s-]{6,}\d/;
+
+// The map point of a report's link (?at=<x>,<z>,<zoom>), or null.
+export function pointOf(link) {
+  try {
+    const v = (new URL(link).searchParams.get('at') || '').split(',').map(Number);
+    return v.length === 3 && v.every(Number.isFinite) ? { x: v[0], z: v[1] } : null;
+  } catch { return null; }
+}
+
+// { errors: [...], contribution } for the accept form's body and the report (row() shape).
+export function validateContribution(raw, r) {
+  const errors = [];
+  const kind = CHANGES.includes(raw?.kind) ? raw.kind : null;
+  if (!kind) errors.push('kind');
+  const note = typeof raw?.public_note === 'string' ? raw.public_note.trim() : '';
+  if (!note || note.length > 200 || /[\r\n]/.test(note)) errors.push('public_note');
+  let value = typeof raw?.value === 'string' ? raw.value.trim() : '';
+  if (kind && kind !== 'none' && !r.building) errors.push('building');
+  if (kind === 'year') {
+    const m = value.match(YEAR_VALUE);
+    if (!m || (m[2] && +m[2] < +m[1]) || +m[1] < 1000 || +(m[2] || m[1]) > new Date().getUTCFullYear()) errors.push('value');
+  } else if (kind === 'main_address') {
+    if (!value || value.length > 200) errors.push('value');
+  } else if (kind === 'name') {
+    if (!value || value.length > 120 || /[\r\n]/.test(value)) errors.push('value');
+    if (r.building?.private) errors.push('private');
+  } else if (kind === 'photo') {
+    if (!r.photo_key || !r.consent_own || !r.consent_licence || !r.photo_credit) errors.push('photo');
+    if (r.building?.private) errors.push('private');
+    value = r.photo_credit || '';             // the credit the sender gave under CC BY 4.0
+  } else value = '';
+  if (EMAIL_LIKE.test(note) || PHONE_LIKE.test(note) || (kind !== 'photo' && (EMAIL_LIKE.test(value) || PHONE_LIKE.test(value)))) {
+    errors.push('personal');
+  }
+  const point = r.building ? pointOf(r.building.link) : null;
+  return { errors, contribution: { kind, value, public_note: note, replaces_register: kind === 'year' && raw?.replaces_register === true,
+    gid: r.building ? r.building.gid : null, data_version: r.building?.version || null, x: point?.x ?? null, z: point?.z ?? null } };
 }

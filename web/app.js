@@ -3,7 +3,7 @@ import { MapControls } from './vendor/MapControls.js';
 import { fetchGz, decoder } from './gz.js';
 import { readAttrs, ATTR_FLOATS } from './tile.js';
 import { liftBounds } from './bounds.js';
-import { YFLAG } from './codes.js';
+import { YFLAG, YSRC } from './codes.js';
 import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
   isEstimate, placeLine, whyAnchor } from './card.js';
 import { shareText, shareLink, parseAt } from './share.js';
@@ -1298,7 +1298,7 @@ function cardHtml(gid, pinned) {
   // A shard that failed: say so, in place of "No open record dates this building yet", which it cannot tell
   const failed = pinned && cardOf.failed(gid);
   const dating = failed && unknown ? `<p class="dating card-failed">${esc(T('card.failed'))}</p>`
-    : `<p class="dating">${approx(sourceLine(b, T, more))}${why ? ` <a class="why" href="#about/${why}">${esc(T('card.why'))}</a>` : ''}</p>${
+    : `<p class="dating">${more?.yrd?.url && b.ysrc === YSRC.READER ? link(more.yrd.url, sourceLine(b, T, more)) : approx(sourceLine(b, T, more))}${why ? ` <a class="why" href="#about/${why}">${esc(T('card.why'))}</a>` : ''}</p>${
       failed ? `<p class="dating card-failed">${esc(T('card.failed'))}</p>` : ''}`;
   if (!pinned) return `${head}${dating}<p class="hint">${esc(T('card.hint'))}</p>`;
   // A curated building's rebuilds, raised storeys and extensions, on a second line under the dating line;

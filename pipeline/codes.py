@@ -14,6 +14,8 @@ EXACT, RANGE, LONG, AREA, ESTIMATE, PERIOD, UNKNOWN = 0, 1, 2, 3, 4, 6, 7
 # SRC_ESTIMATE <-> ESTIMATE or PERIOD; every other source <-> EXACT, RANGE or LONG.
 SRC_NONE, SRC_CURATED, SRC_RAA, SRC_RAA_AREA, SRC_WIKIDATA, SRC_ESTIMATE = 0, 1, 2, 3, 4, 5
 SRC_RAA_OLD, SRC_OSM = 6, 7
+# SRC_READER: a reader's report the owner checked and accepted (pipeline/contributions.py); EXACT, RANGE or LONG.
+SRC_READER = 8
 # fsrc: floors source.
 FLOORS_OSM, FLOORS_HEIGHT = 0, 1
 # rating (Stadsmuseet klassificering): 0 none, 1 Blått, 2 Grönt, 3 Gult

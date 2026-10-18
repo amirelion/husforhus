@@ -99,7 +99,15 @@ test('the source table\'s shares are the accuracy page\'s: the kinds rounded tog
   const bySrc = { none: 43453, curated: 72, raa: 22039, raa_area: 6263, wikidata: 131, estimate: 4558, raa_old: 809, osm: 418 };
   const html = aboutHtml({ ...CONFIG, stats: { ...CONFIG.stats, bySrc } }, EN);
   const shares = [...html.matchAll(/<tr><td>[^<]+<\/td><td>[\d,]+<\/td>\s*<td>([\d.]+%)<\/td>/g)].map(m => m[1]);
-  assert.deepEqual(shares, ['0.1%', '28.4%', '1.0%', '8.0%', '0.2%', '0.5%', '5.9%', '55.9%']);
+  assert.deepEqual(shares, ['0.1%', '28.4%', '1.0%', '8.0%', '0.2%', '0.5%', '0.0%', '5.9%', '55.9%']);   // reader: none yet
+});
+
+test('About: the readers\' reports row in the years table, and in Sources with the count of applied contributions', () => {
+  const bySrc = { ...CONFIG.stats.bySrc, reader: 3 };
+  const html = aboutHtml({ ...CONFIG, stats: { ...CONFIG.stats, bySrc }, about: { ...CONFIG.about, readers: 4 } }, EN);
+  assert.match(html, /<tr><td>A reader's report, checked by the map's maker<\/td><td>3<\/td>/);
+  assert.match(text(html), /Readers' reports: 4 checked and accepted/);
+  assert.match(text(aboutHtml({ ...CONFIG, about: { ...CONFIG.about, readers: 4 } }, SV)), /Läsarnas rapporter: 4 granskade/);
 });
 
 test('the source table adds up to every building, and the accuracy table names each cell in the page\'s language', () => {

@@ -82,7 +82,7 @@ def test_the_sources_are_named_in_words_and_their_shares_add_up_to_100():
     md = page()
     table = section(md, "Where the years come from")
     shares = [float(s) for s in re.findall(r"\| ([\d.]+)% \|", table)]
-    assert len(shares) == 8 and round(sum(shares), 1) == 100.0
+    assert len(shares) == 9 and round(sum(shares), 1) == 100.0
     assert "| **All buildings** | **11** | **100.0%** |" in table
     for name in ("RAÄ's building register", "RAÄ's older register file", "Wikidata", "OpenStreetMap",
                  "A hand-checked list of landmarks", "No source: the year stays unknown"):

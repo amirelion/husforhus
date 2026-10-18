@@ -26,7 +26,9 @@ s06_wiki); a curated card also its rebuilds and older cellars (s08_landmarks' en
 go to their own shards wiki/NN.json (CC BY-SA 4.0), and photos.json lists the photos this version uses
 (scripts/build_dist.py ships them from web/data/photos/); photo-gids.json the sorted gids whose card has a photo
 (the legend's "Highlight buildings with a photo" switch). No private house that is not curated carries a RAÄ link, a
-Wikidata item, an article, a photo or an excerpt. stockholm.json gains the link templates (city.LINKS) and
+Wikidata item, an article, a photo or an excerpt. Readers' reports the owner accepted (pipeline/contributions.csv)
+then set a card's name, first address or photo, and `yrd` (reference, the owner's note, the issue) on a card whose year
+is a reader's (contributions.apply_cards); About counts them (`about.readers`). stockholm.json gains the link templates (city.LINKS) and
 the timeline's landmarks.
 """
 import argparse
@@ -42,7 +44,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 import shapely
 
-from . import city, codes, io, name_fixes
+from . import city, codes, contributions, io, name_fixes
 from .addresses import sharing
 from .sources import credit, load_sources
 from .tiles_decode import MAGIC
@@ -67,13 +69,14 @@ assert ATTR_DTYPE.itemsize == 24
 # stats.byFlag names by yflag code; 5 (once DECADE) is retired and refused.
 FLAG_NAMES = {codes.EXACT: "exact", codes.RANGE: "range", codes.LONG: "long", codes.AREA: "area",
               codes.ESTIMATE: "estimate", codes.PERIOD: "period", codes.UNKNOWN: "unknown"}
-SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_old", "osm"]  # index = codes ysrc
+SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_old", "osm", "reader"]  # index = codes ysrc
 # histogram holds the building-level years; histogramEst the area and kNN years (PERIOD rows are kNN products too).
 KNOWN_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
 ESTIMATED_FLAGS = (codes.AREA, codes.ESTIMATE, codes.PERIOD)
 CARD_FIELDS = ("name", "en", "architects", "raa", "prot", "since", "qid", "wp", "photo", "nofloors", "rebuilt",
-               "cellars", "addr", "addrn", "tower")
-PHOTO_FIELDS = ("key", "w", "h", "by", "lic", "lu", "page", "title")
+               "cellars", "addr", "addrn", "tower", "yrd")
+# rd: a reader's photo (pipeline/contributions.py), its report's reference; it has no Commons page or title
+PHOTO_FIELDS = ("key", "w", "h", "by", "lic", "lu", "page", "title", "rd")
 WIKI_LICENCE = "CC BY-SA 4.0"
 
 
@@ -483,7 +486,7 @@ def with_wiki(df: pd.DataFrame, table: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-RECORD_SRCS = (codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_OLD, codes.SRC_WIKIDATA, codes.SRC_OSM)
+RECORD_SRCS = (codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_OLD, codes.SRC_WIKIDATA, codes.SRC_OSM, codes.SRC_READER)
 
 
 def about_stats(df: pd.DataFrame, cards: list[dict]) -> dict:
@@ -617,11 +620,12 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
                   n_packs: int = city.N_PACKS, sources: list[dict] | None = None, accuracy: dict | None = None,
                   terrain: dict | None = None, wiki: dict | None = None, landmarks: list[dict] | None = None,
                   places: dict | None = None, towers: pd.DataFrame | None = None,
-                  fixes: pd.DataFrame | None = None) -> dict:
+                  fixes: pd.DataFrame | None = None, reader: pd.DataFrame | None = None) -> dict:
     """Write packs, attrs, cards, excerpt shards, photos.json, layers.json and stockholm.json into `out`; return a size
     summary. wiki: load_wiki()'s shape (default: read from data/); landmarks: s08_landmarks' entries (likewise);
     places: load_places()'s shape (likewise); towers: s02_towers' parts (load_towers(); default: none); fixes: the
-    card-name fixes (default pipeline/name_fixes.csv)."""
+    card-name fixes (default pipeline/name_fixes.csv); reader: the accepted readers' reports (default
+    pipeline/contributions.csv)."""
     out = Path(out)
     sources = load_sources(SOURCES) if sources is None else sources
     accuracy = load_accuracy() if accuracy is None else accuracy
@@ -630,6 +634,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     landmarks = load_landmarks() if landmarks is None else landmarks
     places = load_places() if places is None else places
     fixes = name_fixes.read() if fixes is None else fixes
+    reader = contributions.read() if reader is None else reader
     df = with_places(name_fixes.apply(with_wiki(df, wiki["table"]), fixes), places)
     parts = tower_parts(df, towers)
     tiles = build_tiles(df, tile, parts)
@@ -638,6 +643,11 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     attrs = attrs_array(df)
     attrs_gz = io.write_gz(out / "attrs.bin.gz", attrs.tobytes())
     cards = card_shards(df, wiki["photos"], landmarks, towers={g: max(h for h, _ in ps) for g, ps in parts.items()})
+    shown = shown_addresses(places["addresses"], df)
+    addresses = {}
+    for g, street, number in zip(shown.gid, shown.street, shown.number):
+        addresses.setdefault(int(g), []).append(f"{street} {number}")
+    n_reader = contributions.apply_cards(cards, df, reader, hidden(df), addresses) if len(reader) else 0
     for k, shard in enumerate(cards):
         io.write_json(out / "cards" / f"{k:02d}.json", shard)
     texts = wiki_shards(df, wiki["extracts"])
@@ -654,7 +664,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     config = make_config(df, tiles, packs, version, tile, sources, accuracy, terrain, timeline_landmarks(df, landmarks),
                          wiki_stats, laser=bool(parts))
     config["districts"] = names
-    config["about"] = about_stats(df, cards)
+    config["about"] = {**about_stats(df, cards), "readers": n_reader}
     # the accuracy table's rows and columns in each language (About): the groups by key, the eras by their English
     config["accuracyLabels"] = {"en": {"groups": city.GROUP_LABELS, "eras": {}},
                                 "sv": {"groups": city.GROUP_LABELS_SV, "eras": city.ERA_LABELS_SV}}

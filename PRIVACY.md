@@ -34,6 +34,7 @@ A card's "Something wrong?" and About's "Suggest something" open a form. Sending
 - **Photos.** The page shrinks a photo to at most 2048 pixels and re-encodes it, which removes its location and camera data, before sending; the server refuses a JPEG that still has them. A private house's card offers no upload. A photo is used under the licence you grant, CC BY 4.0, credited with the name you give.
 - **How long.** Your email address is deleted twelve months after your report is closed; the rest of the report is kept as a record of the correction.
 - **What is published.** Some reports become a public issue on the project's GitHub, with the kind, the building and the message, and the photo only if the maintainer chooses to include it. Nothing published ever includes your email address.
+- **When a report changes the map.** If the maintainer checks your report and accepts it, the change (a year, an address, a name or your photo) goes into the map's data and the building's card credits it only as "a reader's report (HFH-&lt;number&gt;)" with the maintainer's one-line note on how it was checked. Your name and email address are never part of the data. A photo keeps the credit you gave it, under CC BY 4.0. A private house never takes a name or a photo from a report.
 - **No cookies.** The form adds none, and sends nothing to any other service.
 
 The reports are stored with the site's host, Cloudflare (a database and a storage bucket), and only the maintainer can read them.

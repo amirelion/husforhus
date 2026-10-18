@@ -253,7 +253,7 @@ def test_config_follows_contract_c5(tmp_path):
     assert cfg["about"] == {"privateCategory": 4, "privateDated": 3, "ratings": [2, 1, 1], "protected": 2,
                             "withArchitect": 2, "addressed": 4, "gamla": {"n": 5, "dated": 3},
                             "fewestPrivateYears": 4, "lateYear": 2008, "nearM": 100, "rareArchitect": 3,
-                            "snapshot": "2023-01",
+                            "snapshot": "2023-01", "readers": 0,
                             "maker": city.MAKER, "contact": city.CONTACT, "privateAddresses": city.PRIVATE_ADDRESSES}
     assert cfg["accuracyLabels"]["sv"]["groups"]["house"] == "Småhus (villor, rad- och kedjehus)"
     assert cfg["accuracyLabels"]["en"]["groups"] == city.GROUP_LABELS
@@ -287,7 +287,7 @@ def test_config_follows_contract_c5(tmp_path):
     assert cfg["stats"] == {
         "buildings": 11,
         "byFlag": {"exact": 4, "range": 1, "long": 1, "area": 1, "estimate": 1, "period": 1, "unknown": 2},
-        "bySrc": {"none": 2, "curated": 1, "raa": 4, "raa_area": 1, "wikidata": 1, "estimate": 2, "raa_old": 0, "osm": 0},
+        "bySrc": {"none": 2, "curated": 1, "raa": 4, "raa_area": 1, "wikidata": 1, "estimate": 2, "raa_old": 0, "osm": 0, "reader": 0},
         "floorsOsm": 0, "floorsHeight": 11, "privateHouses": 3,
         "photos": 1, "extracts": {"sv": 2, "en": 1},
     }

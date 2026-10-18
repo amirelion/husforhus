@@ -11,6 +11,9 @@ The first tier that applies wins:
   estimate  the kNN estimate from dated neighbours (pipeline/estimate.py): ESTIMATE with a ±band for a house in a
             cell the table vouches for, else the building stays UNKNOWN (year 0; Ärg draws it hatched). PERIOD (the
             period only) comes only with city.ESTIMATE's give_period lever, off since 2026-10-15
+  reader    a reader's report the owner accepted (pipeline/contributions.csv, pipeline/contributions.py), written last:
+            it fills a building that is unknown, area-dated or estimated, and replaces a record year (raa, raa_old,
+            wikidata, osm) only when its row says replaces_register yes; a curated or withheld building refuses it
 
 Display rule for a from–to range (yearrules.display): a span of 15 years or less shows year_to (completion),
 flagged EXACT when from == to, else RANGE; a longer span shows year_from, flagged LONG. A Wikidata or OSM tier
@@ -49,9 +52,9 @@ import shapely
 
 from . import city
 from . import estimate as est
-from . import suppress, years_osm, years_raa_old, years_wikidata
+from . import contributions, suppress, years_osm, years_raa_old, years_wikidata
 from .codes import (AREA, ESTIMATE, EXACT, LONG, PERIOD, RANGE, SRC_CURATED, SRC_ESTIMATE, SRC_NONE, SRC_OSM, SRC_RAA,
-                    SRC_RAA_AREA, SRC_RAA_OLD, SRC_WIKIDATA, UNKNOWN)
+                    SRC_RAA_AREA, SRC_RAA_OLD, SRC_READER, SRC_WIKIDATA, UNKNOWN)
 from .geo import LANDMARK_MAX_M, lonlat_to_3011, resolve_points  # noqa: F401  (re-exported for callers and tests)
 from .s00_fetch_raa import DEST as RAA_GPKG
 from .s00_fetch_raa import LAYER as RAA_LAYER
@@ -202,7 +205,7 @@ def disagree(src: pd.DataFrame, y_from, y_to, pos, years: int = DISAGREE_YEARS) 
 
 def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dict], *, raa_old=None, wikidata=None,
                  osm=None, stadsdel=None, estimates: bool = True, params: dict | None = None,
-                 exclude: set[int] = frozenset()) -> tuple[pd.DataFrame, dict]:
+                 exclude: set[int] = frozenset(), reader: pd.DataFrame | None = None) -> tuple[pd.DataFrame, dict]:
     """years.parquet rows for buildings b (gid, uuid, kategori, geometry and, for the estimate tier,
     fastighet, height, area, prod_year, fnr; EPSG:3011), plus a report (raa_rejected, landmarks, review, accuracy).
 
@@ -211,6 +214,8 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     estimate tier (the accuracy table is then empty). params: city.ESTIMATE, or a copy with other settings.
     exclude: the takedowns' gids (pipeline/suppress.py). No tier dates them, so their years never train or
     test the estimate tier or the area check: an objection stops that use too (GDPR Art. 21), not only the display.
+    reader: contributions.reader_years' rows (gid: ref, year_from, year_to, replaces), applied after every other tier,
+    so they neither train nor test the estimate; a row the tier refuses stops the step (contributions.Refused).
     """
     p = city.ESTIMATE if params is None else params
     n = len(b)
@@ -282,7 +287,8 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
             report["landmarks"][L["name"]] = int(g)
 
     # A takedown is dated by nothing from here on (main() draws it as "Year unknown" afterwards).
-    gone = pos[[g for g in exclude if g in pos.index]].to_numpy()
+    gone_gids = [g for g in exclude if g in pos.index]
+    gone = pos[gone_gids].to_numpy()
     year[gone], y_from[gone], y_to[gone], ysrc[gone], yflag[gone] = 0, 0, 0, SRC_NONE, UNKNOWN
     raa_id[gone], landmark[gone] = "", ""
 
@@ -364,6 +370,15 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     accuracy["external"] = external
     report["accuracy"] = accuracy
 
+    # The reader tier, last: a checked report on top of what the sources and the estimate gave.
+    report["reader"] = 0
+    if reader is not None and len(reader):
+        report["reader"] = contributions.apply_years(reader, pos, year, y_from, y_to, ysrc, yflag, gone=gone_gids)
+        # the table describes what ships (s99 ties tested and result to stats.byFlag), as suppress.accuracy does
+        accuracy["tested"] = int(np.isin(yflag, (EXACT, RANGE, LONG)).sum())
+        accuracy["result"] = {**accuracy["result"], "estimate": int((yflag == ESTIMATE).sum()),
+                              "period": int((yflag == PERIOD).sum()), "unknown": int((yflag == UNKNOWN).sum())}
+
     # Period from the year before the decade rounding, so the map keeps each house's period colour.
     period = np.where(year > 0, city.period_indices(year), 0)
 
@@ -397,6 +412,7 @@ def summary(y: pd.DataFrame) -> dict:
         "raa_area": int((y.ysrc == SRC_RAA_AREA).sum()),
         "wikidata": int((y.ysrc == SRC_WIKIDATA).sum()),
         "osm": int((y.ysrc == SRC_OSM).sum()),
+        "reader": int((y.ysrc == SRC_READER).sum()),
         "estimate": int((y.yflag == ESTIMATE).sum()),
         "period": int((y.yflag == PERIOD).sum()),
         "private": int(y.private.sum()),
@@ -422,8 +438,13 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--review-out", type=Path, default=REVIEW)
     ap.add_argument("--no-estimates", action="store_true", help="skip the estimate tier (a quick build)")
     ap.add_argument("--suppress", type=Path, default=None, help="takedowns (default pipeline/suppress.yml)")
+    ap.add_argument("--contributions", type=Path, default=contributions.PATH, help="accepted readers' reports")
     a = ap.parse_args(argv or [])
     b = gpd.read_parquet(a.buildings)
+    try:
+        reader = contributions.reader_years(contributions.read(a.contributions), b) if a.contributions.exists() else None
+    except ValueError as e:
+        raise SystemExit(f"contributions: {e}; {a.out} is unchanged")
     if "fnr" not in b.columns and not a.no_estimates:
         # Without the property-unit key the estimate tier's late-unit guard would be off without a word
         raise SystemExit(f"run s01_load first ({a.buildings} has no fnr, the property-unit key the estimate tier's "
@@ -441,11 +462,14 @@ def main(argv: list[str] | None = None) -> None:
     # A takedown is dated by no tier, so it neither trains nor tests the estimate; it is drawn as "Year
     # unknown", and the table counts what ships (pipeline/suppress.py)
     hidden = suppress.gids_of(a.buildings, a.suppress)
-    years, report = assign_years(
-        b, load_raa(a.raa), load_landmarks(a.landmarks), raa_old=raa_old,
-        wikidata=years_wikidata.load(a.wikidata, a.wikidata_classes),
-        osm=years_osm.load(a.osm), stadsdel=est.stadsdel_of(b, a.stadsdelar), estimates=not a.no_estimates,
-        exclude=hidden)
+    try:
+        years, report = assign_years(
+            b, load_raa(a.raa), load_landmarks(a.landmarks), raa_old=raa_old,
+            wikidata=years_wikidata.load(a.wikidata, a.wikidata_classes),
+            osm=years_osm.load(a.osm), stadsdel=est.stadsdel_of(b, a.stadsdelar), estimates=not a.no_estimates,
+            exclude=hidden, reader=reader)
+    except contributions.Refused as e:
+        raise SystemExit(f"contributions: {e}; {a.out} is unchanged")
     if hidden:
         before, years = years, suppress.years(years, hidden)
         report["accuracy"] = suppress.accuracy(report["accuracy"], before, years)
