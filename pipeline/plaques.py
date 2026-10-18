@@ -9,8 +9,11 @@ lines. The parenthesised property designation ("(Rådstugan 1)") is dropped as i
 split_address(): the name and the street address in "Den Gyldene Freden Österlånggatan 51": the address is the first
 "street number" after the name, the street one the city's addresses know (or, without them, one that ends like a
 street). text_from_post(): the plaque's Swedish text on its Stockholmskällan post (published there by the society).
-place(): the footprint a plaque is on: its address in s02_addresses' table first, else its Open Plaques position
-(the footprint it lies in, or the nearest within POSITION_M), else none. Only what the list and the plaque say is
+place(): the footprint a plaque is on: its address in s02_addresses' table first (the street as the list writes it or
+a street_variants form of it), else its Open Plaques position (the footprint it lies in, or the nearest within
+POSITION_M), else its address with letter_variants for the numbers, else the one card whose name is the plaque's name
+(by_name), else none; a bridge's plaque (the list's "Broskyltar") never goes on a footprint. Never a guess: a variant or a name that fits more than one footprint places nothing, and the plaque is
+listed in the review file. Only what the list and the plaque say is
 kept, and cut() leaves out a sentence that says who owned a building or had it built (spec §6.3, as for Wikipedia's
 excerpts): never an owner or a resident.
 """
@@ -26,7 +29,7 @@ from .textfold import fold
 from .wiki import split_sentences
 
 CREDIT = "Samfundet S:t Erik, CC BY 4.0"
-POSITION_M = 15.0            # a plaque sits on a facade: its position can lie a few metres outside the footprint
+POSITION_M = 25.0            # a plaque sits on a facade: its position can lie a few metres outside the footprint
 ROW = re.compile(r"^(\d+)\.\s+(.*)$")
 TAIL = re.compile(r"\s(\d{5})(?:,\s*\w+)?\s+(\d{4}\b.*)$")    # "27460 1993 (rev 2013)", "28044, logga 1998"
 MISSING = re.compile(r"\(\s*skylt saknas\s*\)", re.I)
@@ -35,14 +38,25 @@ STREET_END = re.compile(r"(gatan|gata|vägen|väg|gränd|torg|torget|plan|backe|
                         r"hamnen|kajen|slätten|park|parken|allé|allén|liden|stigen|platsen|terrassen|passagen|kroken|"
                         r"gången|tull|tullen|slingan|svängen|lunden)$", re.I)
 PREFIXES = {"Södra", "Norra", "Östra", "Västra", "Stora", "Lilla", "Sankt", "S:t", "Gamla", "Nya"}
-NUMBERISH = re.compile(r"^(\d+[A-Za-z]?|[A-Z]|[–-]|\d+[A-Za-z]?[–-]\d+[A-Za-z]?),?$")
+NUMBERISH = re.compile(r"^(\d+[A-Za-z]?|[A-Z]|[–-]|\d+[A-Za-z]?[–-]\d*[A-Za-z]?),?$")   # "25–" before " 27"
+RANGE_SPAN = 8               # "18–24" also holds 20 and 22; a wider range ("46–108") only its ends
+RANGE = re.compile(r"^(\d+)[–-](\d+)$")
+# A street renamed since its plaque went up: {the name on the plaque (folded): the name today (folded)}. Only a
+# rename the City records belongs here; none of the current list's unplaced plaques needs one (checked 2026-10-18).
+RENAMED: dict[str, str] = {}
+ABBREV = ((re.compile(r"g\.?$"), "gatan"), (re.compile(r"gata$"), "gatan"), (re.compile(r"v\.$"), "vägen"))
+SIDES = (("Stora", "St.", "Sta"), ("Lilla", "L.", "Lla"), ("Sankt", "S:t", "St.", "St"))
 
 
 def parse_list(text: str) -> list[dict]:
-    """{n, id, head, missing, year} per plaque row, in list order. Headings, column titles and page titles are skipped."""
-    rows, cur = [], None
+    """{n, id, head, missing, year, bridge} per plaque row, in list order. Headings, column titles and page titles
+    are skipped; a row under the "Broskyltar" heading is a bridge's plaque (bridge: True)."""
+    rows, cur, bridge = [], None, False
     for raw in text.splitlines():
         line = " ".join(raw.split())
+        if line.casefold() == "broskyltar":
+            bridge, cur = True, None
+            continue
         if not line or "Populärnamn" in line:
             continue
         m = ROW.match(line)
@@ -59,7 +73,7 @@ def parse_list(text: str) -> list[dict]:
             missing = bool(MISSING.search(head))
             head = " ".join(PAREN.sub(" ", MISSING.sub(" ", head)).split()).rstrip(" ,/")
             rows.append({"n": cur["n"], "id": int(t.group(1)), "head": head, "missing": missing,
-                         "year": int(t.group(2)[:4])})
+                         "year": int(t.group(2)[:4]), "bridge": bridge})
             cur = None
     return rows
 
@@ -67,8 +81,13 @@ def parse_list(text: str) -> list[dict]:
 def house_numbers(tokens: list[str]) -> list[str]:
     """The numbers in "30 , 33", "18–20", "26 A", "40 A, B" (40A, 40B), "46–108, 35–201" (each end)."""
     out, base = [], ""
-    for t in (t.rstrip(",") for t in tokens):
+    for t in (t.rstrip(",").rstrip("–-") if len(t) > 1 else t for t in tokens):
         if t in ("–", "-") or not t:
+            continue
+        m = RANGE.match(t)
+        if m and 0 < int(m.group(2)) - int(m.group(1)) <= RANGE_SPAN and (int(m.group(2)) - int(m.group(1))) % 2 == 0:
+            out += [str(k) for k in range(int(m.group(1)), int(m.group(2)) + 1, 2)]
+            base = m.group(2)
             continue
         if len(t) == 1 and t.isalpha():
             if out and out[-1] == base:
@@ -82,6 +101,34 @@ def house_numbers(tokens: list[str]) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+def street_variants(street: str) -> list[str]:
+    """The folded ways the City may write a street the list writes `street`: as written, renamed (RENAMED), with
+    "g."/"gata" as "gatan" and "v." as "vägen", with "St."/"L." as "Stora"/"Lilla", or with "Stora"/"Lilla" in
+    front of a name written without it."""
+    words = street.split()
+    out = [fold(street)]
+    last = words[-1]
+    for pat, full in ABBREV:
+        if pat.search(last) and not last.endswith("gatan"):
+            out.append(fold(" ".join(words[:-1] + [pat.sub(full, last)])))
+    for side in SIDES:
+        if words[0] in side[1:] and len(words) > 1:
+            out.append(fold(" ".join([side[0]] + words[1:])))
+    if words[0] not in PREFIXES and words[0] not in {a for s in SIDES for a in s}:
+        out += [fold(f"{side[0]} {v}") for side in SIDES for v in list(out)]
+    out += [RENAMED[v] for v in list(out) if v in RENAMED]
+    return list(dict.fromkeys(out))
+
+
+def known_street(street: str, streets: set[str]) -> str | None:
+    """The one folded street the City knows that `street` is (street_variants); None when none is, or more than one
+    variant is (Stora and Lilla Nygatan both, for a plaque that says "Nygatan")."""
+    if fold(street) in streets:
+        return fold(street)
+    hits = [v for v in street_variants(street) if v in streets]
+    return hits[0] if len(hits) == 1 else None
+
+
 def split_address(head: str, streets: set[str] | None = None) -> tuple[str, list[tuple[str, list[str]]]]:
     """(name, [(street, [numbers]), ...]): the addresses from the first "street number" that follows the name.
     `streets`: the folded street names known (s02_addresses); without them a street is a word that ends like one."""
@@ -93,7 +140,7 @@ def split_address(head: str, streets: set[str] | None = None) -> tuple[str, list
             if i + k >= len(words) or not words[i + k][0].isdigit() or not NUMBERISH.match(words[i + k]):
                 continue
             street = " ".join(words[i:i + k]).rstrip(",")
-            if (fold(street) in streets) if streets is not None else (
+            if (known_street(street, streets) is not None) if streets is not None else (
                     STREET_END.search(street) and (k == 1 or k == 2 and words[i] in PREFIXES)):
                 hit = (k, street)
                 break
@@ -105,7 +152,8 @@ def split_address(head: str, streets: set[str] | None = None) -> tuple[str, list
         while j < len(words) and NUMBERISH.match(words[j]):
             j += 1
         start = start or i
-        found.append((street, house_numbers(words[i + k:j])))
+        known = known_street(street, streets) if streets is not None else None
+        found.append((street if known in (None, fold(street)) else known, house_numbers(words[i + k:j])))
         i = j
     if not found:
         return head, []
@@ -167,27 +215,67 @@ def match_openplaques(name: str, addrs: list, op: list[dict], head: str = "") ->
     return None
 
 
-def by_address(addrs: list, table: pd.DataFrame) -> int:
+def letter_variants(nums: list[str], have: set[str]) -> list[str]:
+    """The numbers the City writes for a plaque's `nums` when it writes none of them: "50" as its "50A", "50B";
+    "3A" as "3"."""
+    out = []
+    for n in nums:
+        base = re.match(r"\d+", n).group(0)
+        out += [h for h in have if re.match(r"\d+", h) and re.match(r"\d+", h).group(0) == base
+                and (n == base or h == base)]
+    return out
+
+
+def by_address(addrs: list, table: pd.DataFrame, variants: bool = False) -> int:
     """The footprint most of a plaque's addresses sit on in s02_addresses' table (gid, street, number), ties to the
-    first address; -1 when none does."""
+    first address; -1 when none does. With `variants`, the letter variants of the numbers instead (letter_variants),
+    an address's variants counting only when they all sit on one footprint."""
     if table.empty:
         return -1
     street = table.street.map(fold)
-    votes: dict[int, int] = {}
-    for s, nums in addrs:
-        hit = table[(street == fold(s)) & table.number.isin(nums)]
-        for g in hit.gid.drop_duplicates():
-            votes[int(g)] = votes.get(int(g), 0) + 1
+
+    def vote(variants: bool) -> dict[int, int]:
+        votes: dict[int, int] = {}
+        for s, nums in addrs:
+            on = table[street == fold(s)]
+            want = letter_variants(nums, set(on.number)) if variants else nums
+            gids = on[on.number.isin(want)].gid.drop_duplicates()
+            if variants and len(gids) > 1:
+                continue
+            for g in gids:
+                votes[int(g)] = votes.get(int(g), 0) + 1
+        return votes
+
+    votes = vote(variants)
     return max(votes, key=lambda g: (votes[g], -list(votes).index(g))) if votes else -1
 
 
+def by_name(name: str, cards: dict[str, list[int]], streets: set[str] | None = None) -> int:
+    """The footprint whose card name is the plaque's name (folded, dashes alike; "ABF–huset Sveavägen" also as
+    "ABF–huset", a known street dropped off its end); -1 when no card or more than one has it."""
+    words = name.replace("–", "-").split()
+    tries = [" ".join(words)]
+    for k in (1, 2, 3):
+        if streets is not None and len(words) > k and known_street(" ".join(words[-k:]), streets):
+            tries.append(" ".join(words[:-k]))
+    for t in tries:
+        gids = cards.get(fold(t), [])
+        if gids:
+            return gids[0] if len(gids) == 1 else -1
+    return -1
+
+
 def place(plaques: list[dict], table: pd.DataFrame, b, op: list[dict], *, streets: set[str] | None = None,
-          to_xy=None, assign=None) -> list[dict]:
-    """Each plaque with name, addresses, gid (-1 when unplaced) and how ("address", "position" or ""). `b`: the
-    footprints (gid, geometry); to_xy(lon, lat) -> (x, y) in EPSG:3011; assign(points, b, max_m) -> gids."""
+          to_xy=None, assign=None, cards: dict[str, list[int]] | None = None) -> list[dict]:
+    """Each plaque with name, addresses, gid (-1 when unplaced) and how ("address", "name", "position" or ""). `b`:
+    the footprints (gid, geometry); to_xy(lon, lat) -> (x, y) in EPSG:3011; assign(points, b, max_m) -> gids;
+    cards: {folded card name: [gid, ...]} of the non-private buildings with a name."""
     out = []
     for p in plaques:
         name, addrs = split_address(p["head"], streets)
+        if p.get("bridge"):                     # a bridge is no footprint: never the nearest house to its plaque
+            out.append({**p, "name": name or p["head"], "addrs": addrs, "gid": -1, "how": ""})
+            continue
         gid, how = by_address(addrs, table), "address"
         if gid < 0:
             how = ""
@@ -197,5 +285,11 @@ def place(plaques: list[dict], table: pd.DataFrame, b, op: list[dict], *, street
                 g = int(assign(pd.DataFrame({"x": x, "y": y}), b, POSITION_M)[0])
                 if g >= 0:
                     gid, how = g, "position"
+        if gid < 0:                             # the variants only where the plaque's own address and position fail
+            gid, how = by_address(addrs, table, variants=True), "address"
+        if gid < 0 and cards:
+            gid, how = by_name(name or p["head"], cards, streets), "name"
+        if gid < 0:
+            how = ""
         out.append({**p, "name": name or p["head"], "addrs": addrs, "gid": gid, "how": how})
     return out

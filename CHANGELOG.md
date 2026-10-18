@@ -8,7 +8,7 @@ Plans, not promises: the order can change.
 
 - **Old Klara traced from maps**, replacing the story's approximate blocks drawn on today's plots.
 - **Narration** for the history stories, in English and Swedish.
-- **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 37 plaques not yet placed on a building.
+- **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 17 plaques not yet placed on a building (the other 17 unplaced are on bridges).
 - **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
 
 ## 2026-10-18
@@ -17,6 +17,11 @@ Plans, not promises: the order can change.
 - **A report form.** "Something wrong?" on a card opens a form with the building as the card shows it: a wrong or missing year or detail, a photo of your own (shrunk and stripped of its location data in the browser, CC BY 4.0 with your name), or something else. About's Contact has "Suggest something". See [Privacy](PRIVACY.md) for what is kept and for how long.
 - **The layer switches moved into Look**, under "Show on the map": Tunnelbanan, the blue plaques and the photo highlight. A dot on the Look button shows while one is on, and the legend is shorter.
 - On a phone, a tap just under the Look button no longer opens About.
+
+### Data
+- Data version `v20261018-p4l`.
+- **More plaques on the right building**: 130 placed (was 127). The address is read more carefully (number ranges such as 18–24, house letters such as 50A, short street forms such as "g." and "St."), then the building's card name, and Open Plaques positions within 25 m. Five more plaques are placed, among them Hvita Björn and Mariebergs kollektivhus. Plaques from the list's bridge section are no longer put on a house nearby, which took two off the wrong buildings.
+- **Globen**: two buildings of the arena complex no longer carry the name; the arena itself keeps its name, Avicii Arena, and search finds it as "Globen".
 
 ## 2026-10-17: launch day
 

@@ -1,0 +1,3 @@
+key,action,target,reason
+27404,drop,,"RAÄ names the entrance building beside the dome (Entrébyggnad, B2025:5160) Globen; the dome (gid 71157, Globen's Wikidata item Q32926) keeps its curated name Avicii Arena, and search finds it as Globen (city.BUILDING_ALIASES). Checked on the full map data 2026-10-18"
+18487,drop,,"RAÄ also names this building of the arena complex (Arenaslingan 7, 72 m from the dome) Globen; the name is the dome's (gid 71157, Avicii Arena, found by Globen in search). Checked on the full map data 2026-10-18"

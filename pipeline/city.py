@@ -295,7 +295,7 @@ BUILDING_ALIASES = {
     "Dramaten": "Kungliga Dramatiska teatern (Dramaten)",
     "Konserthuset": "Stockholms konserthus", "Stadsbiblioteket": "Stockholms stadsbibliotek",
     "Centralen": "Stockholms centralstation", "Centralstationen": "Stockholms centralstation",
-    "Stadion": "Stockholms Stadion", "Ericsson Globe": "Avicii Arena", "Globe Arena": "Avicii Arena",
+    "Stadion": "Stockholms Stadion", "Ericsson Globe": "Avicii Arena", "Globe Arena": "Avicii Arena", "Globen": "Avicii Arena",
     "Rådhuset": "Stockholms rådhus", "Polishuset": "Stockholms polishus", "Stadsteatern": "Stockholms stadsteater",
     "NK": "Nordiska Kompaniet", "Börsen": "Börshuset", "Nobelprismuseet": "Börshuset", "Nobel Prize Museum": "Börshuset",
     "Vasa": "Vasamuseet", "Nationalmuseet": "Nationalmuseum", "National Museum": "Nationalmuseum",
@@ -319,8 +319,9 @@ SEARCH = dict(addr_max_m=10.0, min_chars=2, max_rows=8, max_per_kind=4, max_edit
 # named on a card, every church (s02_attributes' nofloors) and every one whose LOD1 height reaches min_lod1_m, plus this
 # hand list, matched by the card's name (casefolded; each entry's first name is how the review page writes it, the
 # others are the names a card may carry). Each footprint's box grows by ring_m on every side: the ground around it.
-# Not Globen: the card named Globen is the arena beside the dome; the dome is its own footprint, already 71 m in LOD1
-# (checked against the laser on 2026-10-17).
+# Not Globen: the dome is its own footprint, already 71 m in LOD1 (checked against the laser on 2026-10-17); the
+# name Globen RAÄ gives the entrance building beside it is dropped (pipeline/name_fixes.csv); search finds the dome,
+# Avicii Arena, as Globen (BUILDING_ALIASES).
 LASER = dict(ring_m=15.0, min_lod1_m=25.0, budget_bytes=500_000_000)
 LASER_TOWERS = (
     ("Kaknästornet",), ("Stadshuset", "Stockholms stadshus"), ("Riddarholmskyrkan",),

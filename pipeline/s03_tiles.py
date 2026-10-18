@@ -42,7 +42,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 import shapely
 
-from . import city, codes, io
+from . import city, codes, io, name_fixes
 from .addresses import sharing
 from .sources import credit, load_sources
 from .tiles_decode import MAGIC
@@ -616,10 +616,12 @@ def photo_gids(cards: list[dict]) -> list[int]:
 def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = city.TILE,
                   n_packs: int = city.N_PACKS, sources: list[dict] | None = None, accuracy: dict | None = None,
                   terrain: dict | None = None, wiki: dict | None = None, landmarks: list[dict] | None = None,
-                  places: dict | None = None, towers: pd.DataFrame | None = None) -> dict:
+                  places: dict | None = None, towers: pd.DataFrame | None = None,
+                  fixes: pd.DataFrame | None = None) -> dict:
     """Write packs, attrs, cards, excerpt shards, photos.json, layers.json and stockholm.json into `out`; return a size
     summary. wiki: load_wiki()'s shape (default: read from data/); landmarks: s08_landmarks' entries (likewise);
-    places: load_places()'s shape (likewise); towers: s02_towers' parts (load_towers(); default: none)."""
+    places: load_places()'s shape (likewise); towers: s02_towers' parts (load_towers(); default: none); fixes: the
+    card-name fixes (default pipeline/name_fixes.csv)."""
     out = Path(out)
     sources = load_sources(SOURCES) if sources is None else sources
     accuracy = load_accuracy() if accuracy is None else accuracy
@@ -627,7 +629,8 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     wiki = load_wiki() if wiki is None else wiki
     landmarks = load_landmarks() if landmarks is None else landmarks
     places = load_places() if places is None else places
-    df = with_places(with_wiki(df, wiki["table"]), places)
+    fixes = name_fixes.read() if fixes is None else fixes
+    df = with_places(name_fixes.apply(with_wiki(df, wiki["table"]), fixes), places)
     parts = tower_parts(df, towers)
     tiles = build_tiles(df, tile, parts)
     packs = assign_packs(tiles, n_packs)

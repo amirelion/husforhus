@@ -123,7 +123,7 @@ def test_place_by_address_then_position_else_unplaced():
 def test_build_writes_placed_plaques_and_reviews_the_rest():
     rows, texts, table, b, op = fixture()
     out, review, n = s15_plaques.build(rows, texts, table, b, op)
-    assert n == {"plaques": 5, "address": 2, "position": 1, "unplaced": 1, "missing": 1, "left_out": 0}
+    assert n == {"plaques": 5, "address": 2, "name": 0, "position": 1, "unplaced": 1, "missing": 1, "left_out": 0}
     assert [(p["id"], p["gid"], p["how"]) for p in out] == [(27460, 2, "position"), (27627, 0, "address"),
                                                             (27664, 1, "address")]
     freden = next(p for p in out if p["id"] == 27627)
@@ -192,3 +192,80 @@ def test_build_keeps_one_entry_per_plaque_and_no_designation_in_its_name():
     named = [dict(r, name="Den Gyldene Freden Argus 6") if r["id"] == 27627 else r for r in rows]
     out, _, _ = s15_plaques.build(named, texts, table, b, op, designations={"argus 6"})
     assert next(p for p in out if p["id"] == 27627)["name"] == "Den Gyldene Freden"
+
+
+def test_parse_list_marks_the_bridges_plaques():
+    rows = plaques.parse_list(LIST)
+    assert [r["id"] for r in rows if r["bridge"]] == [28351]                   # Vasabron, under "Broskyltar"
+
+
+def test_house_numbers_reads_ranges_and_a_dash_before_a_space():
+    assert plaques.house_numbers(["18–24"]) == ["18", "20", "22", "24"]
+    assert plaques.house_numbers(["46–108"]) == ["46", "108"]                  # too wide: only its ends
+    assert plaques.house_numbers(["25–", "27"]) == ["25", "27"]                # "Nybrogatan 25– 27"
+    assert plaques.split_address("Hvita Björn, Nybrogatan 25– 27", {"nybrogatan"}) == (
+        "Hvita Björn", [("Nybrogatan", ["25", "27"])])
+
+
+def test_street_variants_resolve_only_one_known_street():
+    streets = {"drottninggatan", "stora nygatan", "lilla nygatan", "sankt eriksgatan", "storgatan"}
+    assert plaques.known_street("Drottningg.", streets) == "drottninggatan"
+    assert plaques.known_street("Drottninggata", streets) == "drottninggatan"
+    assert plaques.known_street("St. Eriksgatan", streets) == "sankt eriksgatan"
+    assert plaques.known_street("L. Nygatan", streets) == "lilla nygatan"
+    assert plaques.known_street("Nygatan", streets) is None                    # Stora or Lilla: never a guess
+    assert plaques.known_street("Storgatan", {"stora storgatan"} | streets) == "storgatan"   # as written wins
+    assert plaques.known_street("Okändgatan", streets) is None
+
+
+def test_a_renamed_street_resolves_to_its_name_today(monkeypatch):
+    monkeypatch.setitem(plaques.RENAMED, "gamla vagen", "nya vagen")
+    assert plaques.known_street("Gamla vägen", {"nya vagen"}) == "nya vagen"
+
+
+def test_letter_variants_only_when_they_sit_on_one_footprint():
+    table = pd.DataFrame({"gid": [5, 5, 6, 8, 7], "street": ["Sibyllegatan", "Sibyllegatan", "Erstagatan", "Erstagatan",
+                                                              "Saltmätargatan"],
+                          "number": ["50A", "50B", "1A", "1B", "19"]})
+    assert plaques.by_address([("Sibyllegatan", ["50"])], table) == -1         # not as written
+    assert plaques.by_address([("Sibyllegatan", ["50"])], table, variants=True) == 5
+    assert plaques.by_address([("Erstagatan", ["1"])], table, variants=True) == -1      # 1A and 1B: two footprints
+    assert plaques.by_address([("Saltmätargatan", ["19B"])], table, variants=True) == 7  # 19B written as 19
+
+
+def test_by_name_takes_only_a_unique_card_name():
+    cards = {"abf huset": [11], "johannes brandstation": [12], "tullhuset": [1, 2]}
+    assert plaques.by_name("Johannes brandstation", cards) == 12
+    assert plaques.by_name("ABF–huset Sveavägen", cards, {"sveavagen"}) == 11     # the street off its end
+    assert plaques.by_name("Tullhuset", cards) == -1                           # two cards: never a guess
+    assert plaques.by_name("Okänt hus", cards) == -1
+
+
+def test_place_order_keeps_address_and_position_first_and_never_places_a_bridge():
+    rows, _, table, b, op = fixture()
+    streets = {"osterlanggatan", "stortorget", "kallargrand"}
+    # a card named like a plaque never overrides its address or its position
+    cards = {"den gyldene freden": [2], "vindragarlagets hus": [0], "vasabron": [3]}
+    placed = {p["id"]: (p["gid"], p["how"]) for p in plaques.place(
+        rows, table, b, op, streets=streets, to_xy=lonlat_to_3011, assign=assign, cards=cards)}
+    assert placed[27627] == (0, "address") and placed[27460] == (2, "position")
+    assert placed[28351] == (-1, "")                                          # the bridge, whatever its card or position
+    # a position within 25 m of a footprint
+    lon, lat = lonlat(80, 32)                                                  # 22 m off gid 2's facade
+    near = [dict(op[0], latitude=lat, longitude=lon)]
+    got = {p["id"]: p["gid"] for p in plaques.place(rows, table, b, near, streets=streets, to_xy=lonlat_to_3011,
+                                                    assign=assign)}
+    assert got[27460] == 2
+    # by the card's name when neither address nor position places it
+    got = {p["id"]: (p["gid"], p["how"]) for p in plaques.place(rows, table, b, [], streets=streets | {"stora hoparegrand"},
+                                                                to_xy=lonlat_to_3011, assign=assign, cards=cards)}
+    assert got[27460] == (0, "name")
+
+
+def test_load_cards_leaves_out_private_houses(tmp_path):
+    pd.DataFrame({"gid": [0, 1, 2], "kategori": ["Allmän byggnad", "Enbostadshus", "Allmän byggnad"]}
+                 ).to_parquet(tmp_path / "b.parquet")
+    pd.DataFrame({"gid": [0, 1], "name": ["ABF–huset", "Villa X"]}).to_parquet(tmp_path / "a.parquet")
+    pd.DataFrame({"gid": [2], "name": ["Johannes brandstation"]}).to_parquet(tmp_path / "w.parquet")
+    assert s15_plaques.load_cards(tmp_path / "b.parquet", tmp_path / "a.parquet", tmp_path / "w.parquet") == {
+        "abf huset": [0], "johannes brandstation": [2]}
