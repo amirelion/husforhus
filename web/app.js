@@ -6,8 +6,11 @@ import { liftBounds } from './bounds.js';
 import { YFLAG, YSRC } from './codes.js';
 import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
   isEstimate, placeLine, whyAnchor } from './card.js';
-import { shareText, shareLink, parseAt } from './share.js';
+import { shareText, shareLink, parseAt, findLayer } from './share.js';
+import { googleMapsUrl } from './geo.js';
 import { withTry } from './features.js';
+import { planWalk, walkMapsUrl, walkMinutes } from './walk.js';
+import { latLonToLocal, localToLatLon } from './sweref.js';
 import { makeT, legacy, pickLang } from './i18n.js';
 import { plaquesByGid, plaqueSection } from './plaque.js';
 import { metroOnFrom, metroHref, METRO_KEY, stationCard } from './metro.js';
@@ -1232,6 +1235,9 @@ const building = gid => ({ ...readAttrs(attrs, gid, config.attrStride), groups: 
 // NN = gid % 64; Wikipedia excerpts from wiki/NN.json (CC BY-SA 4.0, their own files), fetched only for a pinned card;
 // photos from data/photos/<key> (s06_wiki), loaded only when a card that has one is pinned.
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// The pinned card's pin at the end of its place line: Google Maps at the building's position (web/geo.js). Never on a
+// private house: the map shows where it stands, but does not hand out a street-level view of someone's home.
+const mapsPin = b => `<a class="gmaps" href="${esc(googleMapsUrl(b.x, b.z, config.origin))}" target="_blank" rel="noopener" title="${esc(T('card.gmaps'))}" aria-label="${esc(T('card.gmaps'))}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 15s5-4.6 5-8.6A5 5 0 0 0 3 6.4C3 10.4 8 15 8 15z"/><circle cx="8" cy="6.4" r="1.8"/></svg></a>`;
 const link = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
 // The self-hosted latin font subsets lack "≈" (U+2248); the span gives it the system font on purpose (W7). The card
 // and the legend's note use it.
@@ -1290,7 +1296,7 @@ function cardHtml(gid, pinned) {
     <header class="card-head" style="--band:${unknown ? unknownFill(THEME) : band};--band-ink:${inkOn(band)}">
       ${more.name ? `<h3 id="card-title">${esc(more.name)}</h3>` : ''}
       ${more.en && LANG === 'en' ? `<p class="en">${esc(more.en)}</p>` : ''}
-      ${place ? `<p class="place" id="card-place">${esc(place)}</p>` : ''}
+      ${place || (pinned && !b.private) ? `<p class="place" id="card-place">${place ? `<span>${esc(place)}</span>` : ''}${pinned && !b.private ? mapsPin(b) : ''}</p>` : ''}
       <div class="when"><span class="y" ${more.name ? '' : 'id="card-title"'}>${approx(yearLine(b, label, T))}</span>
         ${unknown || b.yflag === YFLAG.PERIOD ? '' : `<span class="period">${esc(label)}</span>`}</div>
     </header>`;
@@ -1499,6 +1505,7 @@ canvas.addEventListener('pointerup', e => {
   if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
   const station = metroOn && !quest && !cardsLocked() ? metroLayer.stationAt(e.clientX, e.clientY, canvas.clientWidth, canvas.clientHeight) : null;
   if (station) { pinStation(station, e.clientX, e.clientY); return; }
+  if (pickingStart) { walkStartClick(e.clientX, e.clientY); return; }
   const gid = pick(e.clientX, e.clientY);
   if (quest && !solved && qStep().kind === 'find') { questClick(gid); return; }
   if (cardsLocked()) return;
@@ -1714,6 +1721,7 @@ function setQuiz(gid, blind) {
 const cardsLocked = () => quest && !solved && quizGid >= 0;
 
 function startQuest(q, n, sc = 0, mk = []) {
+  if (walkRoute) closeWalk();
   quest = q; step = n; score = sc; marks = mk;
   document.body.classList.add('questing');
   pinCard(-1);
@@ -1905,6 +1913,165 @@ function questClick(gid) {
 }
 addEventListener('keydown', e => { if (e.key === 'Escape' && questsDlg.open) questsDlg.close(); });
 
+// ---------- Walks ----------
+// A walk through the buildings with a story (web/walk.js plans it): the blue plaques and the curated landmarks the
+// build carries, for the interests, start and distance the walker picks. Behind features.walks (?try=walks).
+// The walker's location is asked for only on "Share my location", used once in this page to set the start and never
+// stored or sent; the Google Maps link sends the stops' coordinates only when the walker opens it.
+const STARTS = config.starts?.length ? config.starts : [{ en: 'Stortorget', sv: 'Stortorget', x: 0, z: 0 }];
+const CITY_REACH_M = 12000;     // a shared location further than this from Stortorget is outside the city
+const walkEl = document.getElementById('walk');
+const walksDlg = document.getElementById('walks');
+const walksOpen = document.querySelector('.walks-open');
+walksOpen.hidden = !FEATURES.walks;
+const walkGroup = new THREE.Group();
+scene.add(walkGroup);
+let walkPrefs = { kinds: [], start: 0, km: 3, loop: true, at: null, atLabel: '', stops: 0 }, walkRoute = null;
+let pickingStart = false, locating = false;
+const walkStops = () => [
+  ...plaqueList.filter(p => p.gid >= 0 && Number.isFinite(p.x)).map(p => ({ id: `p${p.id}`, gid: p.gid, x: p.x, z: p.z,
+    kinds: ['plaques'], name: p.name || '', story: p.text, url: `https://stockholmskallan.stockholm.se/post/${+p.id}` })),
+  ...(config.landmarks || []).filter(L => L.gid >= 0).map(L => ({ id: `l${L.gid}`, gid: L.gid, x: L.x, z: L.z,
+    kinds: ['landmarks'], name: L.name, story: L.year ? T('walk.built', { year: L.year }) : '', score: 1.2 })),
+];
+const WALK_KINDS = [['landmarks', 'walk.kind.landmarks'], ['plaques', 'walk.kind.plaques']];
+const startName = () => walkPrefs.at ? walkPrefs.atLabel : (STARTS[walkPrefs.start] || STARTS[0])[LANG] || STARTS[0].en;
+const startPoint = () => walkPrefs.at || [(STARTS[walkPrefs.start] || STARTS[0]).x, (STARTS[walkPrefs.start] || STARTS[0]).z];
+const latLonOf = p => localToLatLon(p.x, p.z, config.origin);
+
+function renderWalkPlanner(msg = '') {
+  const all = walkStops(), kinds = WALK_KINDS.filter(([k]) => all.some(p => p.kinds.includes(k)));
+  const chip = (attr, on, label) => `<button class="w-chip" ${attr} aria-pressed="${on}">${esc(label)}</button>`;
+  document.getElementById('walks-body').innerHTML = `
+    <h2 id="walks-title">${esc(T('walk.plan'))}</h2>
+    <p class="w-lede">${esc(T('walk.lede'))}</p>
+    <h3>${esc(T('walk.where'))}</h3>
+    <div class="w-chips"><button class="w-chip" data-geo aria-pressed="${walkPrefs.atLabel === T('walk.yours')}">${esc(T(locating ? 'walk.locating' : 'walk.locate'))}</button>
+      ${STARTS.map((s, i) => chip(`data-start="${i}"`, !walkPrefs.at && walkPrefs.start === i, s[LANG] || s.en)).join('')}
+      ${chip('data-pick', walkPrefs.atLabel === T('walk.point'), T('walk.pick'))}</div>
+    <p class="w-note">${esc(T('walk.start', { name: startName() }))}</p>
+    <h3>${esc(T('walk.interests'))}</h3>
+    <div class="w-chips">${kinds.map(([k, id]) => chip(`data-k="${k}"`, walkPrefs.kinds.includes(k), T(id))).join('')}</div>
+    ${walkPrefs.kinds.length ? '' : `<p class="w-note">${esc(T('walk.every'))}</p>`}
+    <h3>${esc(T('walk.far'))}</h3>
+    <div class="w-chips">${[1, 2, 3, 5, 8].map(k => chip(`data-km="${k}"`, walkPrefs.km === k, `${k} km`)).join('')}
+      ${chip('data-loop="1"', walkPrefs.loop, T('walk.loop'))}${chip('data-loop="0"', !walkPrefs.loop, T('walk.oneway'))}</div>
+    <h3>${esc(T('walk.stops'))}</h3>
+    <div class="w-chips">${[0, 5, 10, 15, 20].map(n => chip(`data-stops="${n}"`, walkPrefs.stops === n, n ? String(n) : T('walk.fit'))).join('')}</div>
+    ${msg ? `<p class="w-msg" role="status">${esc(msg)}</p>` : ''}
+    <div class="w-go"><button class="primary w-make">${esc(T('walk.make'))}</button></div>`;
+  const body = document.getElementById('walks-body'), on = (sel, fn) => body.querySelectorAll(sel).forEach(b => b.onclick = () => fn(b.dataset));
+  on('[data-k]', d => { const s = walkPrefs.kinds; walkPrefs.kinds = s.includes(d.k) ? s.filter(x => x !== d.k) : [...s, d.k]; renderWalkPlanner(); });
+  on('[data-start]', d => { walkPrefs = { ...walkPrefs, start: +d.start, at: null, atLabel: '' }; renderWalkPlanner(); });
+  on('[data-km]', d => { walkPrefs.km = +d.km; renderWalkPlanner(); });
+  on('[data-stops]', d => { walkPrefs.stops = +d.stops; renderWalkPlanner(); });
+  on('[data-loop]', d => { walkPrefs.loop = d.loop === '1'; renderWalkPlanner(); });
+  on('[data-pick]', () => { pickingStart = true; walksDlg.close(); showWalkNote(T('walk.click')); });
+  on('[data-geo]', locate);
+  body.querySelector('.w-make').onclick = makeWalk;
+}
+// The walker's location, once, for the start: outside the city it falls back to the first start and says so.
+function locate() {
+  if (!navigator.geolocation) { renderWalkPlanner(T('walk.nogeo')); return; }
+  locating = true; renderWalkPlanner();
+  navigator.geolocation.getCurrentPosition(pos => {
+    locating = false;
+    const at = latLonToLocal(pos.coords.latitude, pos.coords.longitude, config.origin);
+    if (Math.hypot(...at) > CITY_REACH_M) {
+      walkPrefs = { ...walkPrefs, start: 0, at: null, atLabel: '' };
+      renderWalkPlanner(T('walk.outside', { name: STARTS[0][LANG] || STARTS[0].en }));
+      return;
+    }
+    walkPrefs = { ...walkPrefs, at, atLabel: T('walk.yours') };
+    renderWalkPlanner();
+  }, () => { locating = false; renderWalkPlanner(T('walk.nogeo')); }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+}
+function openWalks() { pickingStart = false; renderWalkPlanner(); walksDlg.showModal(); }
+walksOpen.onclick = () => { if (walkRoute) closeWalk(); openWalks(); };
+walksDlg.querySelector('.about-close').onclick = () => walksDlg.close();
+walksDlg.addEventListener('click', e => { if (e.target === walksDlg) walksDlg.close(); });
+// A click on the map while picking the start: the ground under the pointer (the y = 0 plane is close enough here).
+const groundRay = new THREE.Raycaster(), groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function walkStartClick(cx, cy) {
+  const r = canvas.getBoundingClientRect(), hit = new THREE.Vector3();
+  groundRay.setFromCamera(new THREE.Vector2((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1), camera);
+  if (!groundRay.ray.intersectPlane(groundPlane, hit)) return;
+  pickingStart = false; walkEl.hidden = true;
+  walkPrefs = { ...walkPrefs, at: [hit.x, hit.z], atLabel: T('walk.point') };
+  openWalks();
+}
+function showWalkNote(text) {
+  walkEl.innerHTML = `<button class="q-close" aria-label="${esc(T('ui.close'))}">×</button><p class="w-note">${esc(text)}</p>`;
+  walkEl.hidden = false;
+  walkEl.querySelector('.q-close').onclick = () => { pickingStart = false; walkEl.hidden = true; };
+}
+function makeWalk() {
+  const w = planWalk(walkStops(), walkPrefs, startPoint());
+  if (!w.stops.length) { renderWalkPlanner(T('walk.none')); return; }
+  walksDlg.close();
+  if (quest) closeQuest();
+  walkRoute = w; drawWalk(w); renderWalk(w);
+  const xs = [w.start, ...w.stops], mx = xs.reduce((a, p) => a + p.x, 0) / xs.length, mz = xs.reduce((a, p) => a + p.z, 0) / xs.length;
+  const spread = Math.max(...xs.map(p => Math.hypot(p.x - mx, p.z - mz)));
+  flyTo(mx, mz, null, Math.min(6000, Math.max(700, spread * 2.6)));
+}
+function closeWalk() {
+  walkRoute = null; walkGroup.clear(); walkEl.hidden = true;
+  walksOpen.setAttribute('aria-pressed', 'false'); document.body.classList.remove('walking');
+}
+function renderWalk(w) {
+  walksOpen.setAttribute('aria-pressed', 'true'); document.body.classList.add('walking');
+  const km = T.num(w.length / 1000, 1), min = walkMinutes(w);
+  walkEl.innerHTML = `
+    <button class="q-close" aria-label="${esc(T('ui.close'))}">×</button>
+    <header><b>${esc(T('walk.yourWalk'))}</b><span>${esc(T('walk.summary', { km, min, n: w.stops.length }))}</span></header>
+    ${w.stretched ? `<p class="w-note">${esc(T('walk.stretched'))}</p>` : ''}
+    <ol class="w-list">${w.stops.map((p, i) => `<li><button data-i="${i}"><b>${i + 1}. ${esc(p.name || T('walk.stop'))}</b>
+      ${p.story ? `<span${p.kinds.includes('plaques') ? ' lang="sv"' : ''}>${esc(p.story)}</span>` : ''}</button></li>`).join('')}</ol>
+    <p class="w-note">${esc(T('walk.lines'))}</p>
+    <div class="q-actions"><a class="primary w-google" href="${esc(walkMapsUrl(w, latLonOf))}" target="_blank" rel="noopener">${esc(T('walk.google'))}</a>
+      <button class="w-again">${esc(T('walk.again'))}</button></div>`;
+  walkEl.hidden = false;
+  walkEl.querySelector('.q-close').onclick = closeWalk;
+  walkEl.querySelector('.w-again').onclick = openWalks;
+  walkEl.querySelectorAll('.w-list button').forEach(b => b.onclick = () => {
+    const p = w.stops[+b.dataset.i];
+    flyTo(p.x, p.z, () => pinCard(p.gid, innerWidth * 0.3, 120), 380);
+  });
+}
+// On the map: a ribbon along the walk and a numbered disc over the start and every stop.
+function discTexture(text, fill, ink) {
+  const c = document.createElement('canvas'); c.width = c.height = 96;
+  const g = c.getContext('2d');
+  g.beginPath(); g.arc(48, 48, 40, 0, Math.PI * 2); g.fillStyle = fill; g.fill();
+  g.lineWidth = 7; g.strokeStyle = '#ffffff'; g.stroke();
+  g.fillStyle = ink; g.font = `800 44px ${getComputedStyle(document.body).fontFamily}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, 48, 51);
+  return new THREE.CanvasTexture(c);
+}
+function drawWalk(w) {
+  walkGroup.clear();
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1f5f8b';
+  const pos = [];
+  for (let i = 1; i < w.route.length; i++) {
+    const a = w.route[i - 1], b = w.route[i], len = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    const nx = -(b.z - a.z) / len * 3.5, nz = (b.x - a.x) / len * 3.5;
+    const ya = surfaceAt(a.x, a.z) + 1, yb = surfaceAt(b.x, b.z) + 1;
+    pos.push(a.x + nx, ya, a.z + nz, a.x - nx, ya, a.z - nz, b.x + nx, yb, b.z + nz, a.x - nx, ya, a.z - nz, b.x - nx, yb, b.z - nz, b.x + nx, yb, b.z + nz);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  walkGroup.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.85,
+    side: THREE.DoubleSide, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 })));
+  const marker = (p, text, fill, ink) => {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTexture(text, fill, ink), depthTest: false, sizeAttenuation: false }));
+    s.scale.set(0.034, 0.034, 1); s.position.set(p.x, surfaceAt(p.x, p.z) + 30, p.z); s.renderOrder = 20;
+    walkGroup.add(s);
+  };
+  marker(w.start, '★', '#ffffff', accent);
+  w.stops.forEach((p, i) => marker(p, String(i + 1), accent, '#ffffff'));
+}
+
 // ---------- Panel ----------
 const panelEl = document.getElementById('panel');
 const panel = document.getElementById('panel-body');
@@ -1920,7 +2087,22 @@ function setCollapsed(c, remember = false) {
   sheetHandle.textContent = T(c ? 'ui.legend.show' : 'ui.legend.hide');
   if (remember) { try { localStorage.setItem(LEGEND_KEY, c ? 'collapsed' : 'open'); } catch {} }
 }
-sheetHandle.onclick = () => setCollapsed(!panelEl.classList.contains('collapsed'), true);
+let sheetSwiped = false;
+sheetHandle.onclick = () => {
+  if (sheetSwiped) { sheetSwiped = false; return; }
+  setCollapsed(!panelEl.classList.contains('collapsed'), true);
+};
+// On a phone the open sheet covers about half the city: a touch on the map, or a swipe down on its handle, folds
+// it again (adapted from upstream 7afa3ff). Neither is remembered; the handle stays the keyboard's way to fold it.
+let sheetDown = null;
+sheetHandle.addEventListener('pointerdown', e => { sheetDown = e.clientY; });
+sheetHandle.addEventListener('pointerup', e => {
+  if (phone.matches && sheetDown !== null && e.clientY - sheetDown > 30) { setCollapsed(true); sheetSwiped = true; }
+  sheetDown = null;
+});
+canvas.addEventListener('pointerdown', () => {
+  if (phone.matches && !panelEl.classList.contains('collapsed')) setCollapsed(true);
+});
 function collapsePanelOnPhone() { if (phone.matches) setCollapsed(true); }
 let storedLegend = null;
 try { storedLegend = localStorage.getItem(LEGEND_KEY); } catch {}
@@ -2674,6 +2856,9 @@ creditOpen.onclick = () => {
   foldCredit(false);
   credits.querySelector('#credit a')?.focus();   // the button goes; focus stays in the credit, not on the page
 };
+// ?layer=<id>: open the Context layers mode on that layer; an unknown id leaves the map as it is.
+const askedLayer = findLayer(contextLayers, new URLSearchParams(location.search).get('layer'));
+if (askedLayer) { setModeNamed('layers'); setLayer(askedLayer); }
 // ?q=: search once on load and pick the top row (picking never writes ?q= back).
 const askedQ = new URLSearchParams(location.search).get('q');
 if (searchBox && askedQ) searchBox.runQuery(askedQ).catch(() => {});

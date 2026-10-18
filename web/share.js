@@ -16,3 +16,6 @@ export function parseAt(s) {
   if (v.length !== 3 || v.some(n => !Number.isFinite(n)) || v[2] <= 0) return null;
   return { x: v[0], z: v[1], zoom: v[2] };
 }
+
+// ?layer=<id>: a context layer by its id (ids are stable names in layers.json, unlike gids). Unknown ids give null.
+export const findLayer = (layers, id) => (id && layers?.find(L => L.id === id)) || null;

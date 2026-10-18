@@ -65,7 +65,13 @@ TIER1 = [
 ]
 SALTSJON = (2050.0, 600.0, 0.0)               # local (x, z, angle°): open water off Fåfängan, 237 m from any shore
 FEATURES = {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
-            "plaques": True, "metro": True}   # lang, search, scenes, plaques: on since 2026-10-17; metro: s16_metro
+            "plaques": True, "metro": True, "walks": False}   # lang, search, scenes, plaques: on since 2026-10-17; metro: s16_metro
+# quests and walks (D: post-v1): off for everyone; ?try=quests,walks switches them on for one visit (web/features.js)
+# Where a walk can start besides the walker's own location (web/app.js, Walks): (en, sv, x, z) in local metres,
+# from WGS84 via pyproj (2026-10-18). The first is the default; Stortorget is ORIGIN.
+STARTS = [("Stortorget", "Stortorget", 0.0, 0.0), ("Central Station", "Centralstationen", -688.8, -576.4),
+          ("Kungsträdgården", "Kungsträdgården", 33.4, -713.0), ("Slussen", "Slussen", 85.0, 621.5),
+          ("Medborgarplatsen", "Medborgarplatsen", 160.8, 1203.0), ("Odenplan", "Odenplan", -1201.0, -1990.8)]
 FIXTURE_BBOX = (153529.0, 6578318.0, 154556.0, 6579322.0)  # WGS84 18.062,59.320–18.080,59.329 via pyproj, rounded outward
 # HFH_FIXTURE=1 makes s01_load keep only buildings whose 2D footprint intersects FIXTURE_BBOX (519 on 2026-10-14);
 # tests/conftest.py gamla_stan_lod1 cuts with the same rule.

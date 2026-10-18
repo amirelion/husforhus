@@ -118,8 +118,25 @@ def read(path: Path = PATH) -> pd.DataFrame:
     return t
 
 
+def missing(t: pd.DataFrame, b: pd.DataFrame) -> list[str]:
+    """The refs whose uuid is on no footprint of b: a fixture build, or a footprint the City has since redrawn."""
+    have = set(b.uuid)
+    return [ref for ref, u in zip(t.ref, t.uuid) if u not in have]
+
+
+def present(t: pd.DataFrame, b: pd.DataFrame) -> pd.DataFrame:
+    """t without the rows whose footprint is not in this build, each named in a warning (as name_fixes does): a
+    reader's change is never applied to a building it was not about."""
+    gone = missing(t, b)
+    for ref in gone:
+        print(f"warning: contributions: {ref}: its footprint is not among these buildings (a fixture build, or the "
+              "City redrew it?); skipped", file=sys.stderr)
+    return t[~t.ref.isin(gone)] if gone else t
+
+
 def gids(t: pd.DataFrame, b: pd.DataFrame) -> pd.Series:
-    """Each row's gid by its uuid (b: gid, uuid); refuses a uuid on no footprint or on several."""
+    """Each row's gid by its uuid (b: gid, uuid); refuses a uuid on no footprint or on several (present() first drops
+    the rows whose footprint is not in the build)."""
     by = b.groupby("uuid").gid.agg(list)
     out = {}
     for ref, u in zip(t.ref, t.uuid):
@@ -138,7 +155,7 @@ def ref_number(ref: str) -> int:
 
 def reader_years(t: pd.DataFrame, b: pd.DataFrame) -> pd.DataFrame:
     """The year rows indexed by gid: ref, year_from, year_to, replaces (bool)."""
-    y = t[t.kind == "year"]
+    y = present(t[t.kind == "year"], b)
     if y.empty:
         return pd.DataFrame(columns=["ref", "year_from", "year_to", "replaces"], index=pd.Index([], name="gid"))
     g = gids(y, b)
@@ -180,6 +197,7 @@ def apply_cards(shards: list[dict], df: pd.DataFrame, t: pd.DataFrame, hide: np.
     """The reader rows on the card shards (s03_tiles.card_shards' output), in place; returns the applied rows but
     "none". df: gid, uuid, ysrc. hide: s03_tiles.hidden(df). addresses: gid -> its shown addresses ("Street 12")."""
     n_shards = len(shards)
+    t = present(t, df[["gid", "uuid"]])
     g_of = gids(t, df[["gid", "uuid"]])
     ysrc = df.ysrc.to_numpy()
     applied = 0

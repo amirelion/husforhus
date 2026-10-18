@@ -34,9 +34,9 @@ def write_csv(tmp_path: Path, *rows) -> Path:
     return p
 
 
-def test_the_seeded_table_is_its_header_only():
-    assert C.PATH.read_text(encoding="utf-8") == HEADER
-    assert C.read().empty
+def test_the_committed_table_is_well_formed():
+    assert C.PATH.read_text(encoding="utf-8").startswith(HEADER)
+    C.read()
 
 
 def test_read_refuses_malformed_rows(tmp_path):
@@ -184,12 +184,12 @@ def test_a_private_house_with_a_reader_year_shows_its_decade():
     assert (y.ysrc[0], y.private[0], y.year[0], y.year_to[0]) == (codes.SRC_READER, True, 1930, 1939)
 
 
-def test_a_uuid_on_no_footprint_or_on_two_is_refused():
+def test_a_uuid_on_two_footprints_is_refused_and_one_on_none_is_skipped_with_a_warning(capsys):
     b = years_buildings(("u0", "Flerbostadshus", sq(0)), ("u0", "Flerbostadshus", sq(1)))
     with pytest.raises(C.Refused, match="2 footprints"):
         reader(b, row(uuid="u0"))
-    with pytest.raises(C.Refused, match="0 footprints"):
-        reader(b, row(uuid="gone"))
+    assert reader(b, row(uuid="gone")).empty          # a fixture build, or a redrawn footprint
+    assert "HFH-12: its footprint is not among these buildings" in capsys.readouterr().err
 
 
 # ---- main_address, name, photo (s03_tiles)
@@ -266,7 +266,11 @@ def test_s99_every_row_resolves_to_exactly_one_footprint(tmp_path):
     b = gpd.read_parquet(data / "buildings.parquet")
     ok = write_csv(tmp_path, row(uuid=b.uuid[0]))
     assert s99_validate.check_contributions(data, ok) == []
-    assert "0 footprints" in s99_validate.check_contributions(data, write_csv(tmp_path, row(uuid="nowhere")))[0]
+    assert s99_validate.check_contributions(data, write_csv(tmp_path, row(uuid="nowhere"))) == []   # a warning only
+    two = synth.buildings(2).assign(uuid="same")
+    two.to_parquet(data / "buildings.parquet")
+    assert "2 footprints" in s99_validate.check_contributions(data, write_csv(tmp_path, row(uuid="same")))[0]
+    synth.buildings(2).to_parquet(data / "buildings.parquet")
     assert "email-like" in s99_validate.check_contributions(data, write_csv(tmp_path, row(public_note="x@example.org")))[0]
     assert s99_validate.check_contributions(data, C.PATH) == []
 

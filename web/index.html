@@ -16,12 +16,14 @@
 <meta property="og:locale" content="en_GB">
 <meta property="og:locale:alternate" content="sv_SE">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Hus för hus", "alternateName": "Stockholm, building by building", "url": "https://husforhus.se/", "description": "Every building in Stockholm, coloured by the year it was built, from 1100 to today.", "inLanguage": ["en", "sv"], "applicationCategory": "ReferenceApplication", "operatingSystem": "Any (web browser with WebGL)", "isAccessibleForFree": true, "image": "https://husforhus.se/og.png", "about": {"@type": "City", "name": "Stockholm"}, "isBasedOn": {"@type": "SoftwareSourceCode", "name": "Amsterdam, building by building", "codeRepository": "https://github.com/alexbarakov/amsterdam-by-building"}}</script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="scene-player.css">
 </head>
 <body>
+<noscript><p class="noscript">Hus för hus is a 3D map of every building in Stockholm, coloured by the year it was built. It needs JavaScript and WebGL. The code and data sources: <a href="https://github.com/amirelion/husforhus">github.com/amirelion/husforhus</a>.</p></noscript>
 <canvas id="scene" tabindex="0" aria-label="3D map of Stockholm's buildings, coloured by when they were built. Arrow keys move, + and − zoom, Enter opens the building in the middle." data-i18n-aria="ui.canvas"></canvas>
 <!-- The middle of the screen while the map has the keyboard: Enter opens the building under it (app.js). -->
 <div class="crosshair" aria-hidden="true"></div>
@@ -41,6 +43,7 @@
   <button data-mode="3" aria-pressed="false" hidden data-i18n="ui.mode.layers">Context layers</button>
   <button data-mode="1" aria-pressed="false" data-i18n="ui.mode.floors">Floors</button>
   <button class="quests-open" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 8" aria-hidden="true"><path d="M1 1l6 6M7 1L1 7M9 1l6 6M15 1L9 7M17 1l6 6M23 1l-6 6"/></svg><span>Quests</span></button>
+  <button class="walks-open" aria-haspopup="dialog" aria-pressed="false" hidden data-i18n="walk.button">Walk</button>
 </nav>
 
 <!-- Search (Plan 4b, web/searchbox.js): a pill beside the modes on a desktop, a full-screen sheet on a phone. -->
@@ -101,6 +104,11 @@
 <dialog id="quests" class="about quests" aria-labelledby="quests-title">
   <button class="about-close" aria-label="Close">×</button>
   <article id="quests-body"></article>
+</dialog>
+<section id="walk" class="quest walk" hidden aria-live="polite"></section>
+<dialog id="walks" class="about quests walks" aria-labelledby="walks-title">
+  <button class="about-close" aria-label="Close" data-i18n-aria="ui.close">×</button>
+  <article id="walks-body"></article>
 </dialog>
 <p class="howto">Drag to move. Right-drag or Ctrl-drag to turn. Scroll or press + / − to zoom.</p>
 <!-- The corner credit (Plan 4b, web/credits.js): always shown on a desktop; on a phone it folds to (i) after 5 s. -->

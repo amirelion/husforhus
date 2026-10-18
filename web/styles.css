@@ -255,6 +255,12 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .card .dating { margin: 0; padding: 8px 16px; color: var(--muted); font-size: 12px; line-height: 1.45; }
 .card-head .en { margin: -4px 0 6px; font-size: 13px; }   /* its size, not a fade, sets it under the name */
 .card-head .place { margin: -2px 0 8px; font-size: 13px; }   /* full ink, like .en: 4.5:1 on every band */
+/* Google Maps as a pin at the end of the place line, in the band's own ink */
+.card-head .place { display: flex; align-items: center; gap: 8px; }
+.card-head .gmaps { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; margin-left: auto; border-radius: 50%;
+  color: inherit; background: color-mix(in srgb, currentColor 14%, transparent); }
+.card-head .gmaps:hover, .card-head .gmaps:focus-visible { background: color-mix(in srgb, currentColor 26%, transparent); }
+.card-head .gmaps svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
 .card .extract .credit { margin: 6px 0 0; color: var(--muted); font-size: 11px; }
 .card .photo img { height: auto; }   /* with the img's width and height attributes the browser keeps the room */
 .card .photo figcaption { padding-bottom: 6px; line-height: 1.4; }
@@ -569,6 +575,27 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 }
 @media (prefers-reduced-motion: reduce) { .quest .q-feedback.miss, .q-stamp { animation: none; } }
 
+/* Walks (app.js Walks, web/walk.js): the planner reuses the quests dialog, the walk the quest panel. */
+.modes .walks-open { white-space: nowrap; }
+.walks h3 { margin: 16px 0 6px; font-size: 13px; }
+.w-lede, .w-note { font-size: 13px; line-height: 1.45; margin: 4px 0; opacity: .8; }
+.w-msg { font-size: 13px; margin: 12px 0 0; padding: 8px 10px; border-left: 3px solid var(--accent); background: #f1f3f4; }
+.w-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.w-chip { font: inherit; font-size: 13px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel); color: var(--ink); cursor: pointer; }
+.w-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.w-go { margin-top: 18px; }
+.walk header span { display: block; font-size: 12px; font-weight: 400; opacity: .75; }
+.w-list { list-style: none; margin: 8px 0; padding: 0; max-height: 40vh; overflow: auto; }
+.w-list button { display: block; width: 100%; text-align: left; font: inherit; font-size: 13px; padding: 6px 0;
+  border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); cursor: pointer; }
+.w-list button span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; opacity: .75; }
+.walk .w-google { text-decoration: none; }
+@media (max-width: 720px) {
+  body.walking .timeline, body.walking .tally { display: none; }
+  .walk { max-height: 50vh; }
+}
+
 /* Search (Plan 4b, web/searchbox.js): a pill beside the modes on a desktop (app.js placeSearch sets its left edge),
    under them on a narrow desktop, a full-screen sheet on a phone. */
 .search { position: fixed; top: calc(env(safe-area-inset-top, 0px) + var(--gutter)); left: calc(50% + 140px); z-index: 12;
@@ -729,6 +756,11 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .about-open, .stories-open, .look-open { white-space: nowrap; }
 
 /* A metro station's card (web/metro.js stationCard): its lines as small swatches in our own line colours. */
+/* A station's card (web/metro.js stationCard) has no sections of its own, so it takes the building card's inset itself. */
+#card.station { padding: 14px 16px 12px; }
+#card.station h3 { margin: 0 0 8px; padding-right: 30px; font-size: 17px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
+#card.station p { margin: 0 0 6px; }
+#card.station p:last-child { margin-bottom: 0; }
 #card .metro-lines { display: flex; flex-wrap: wrap; gap: 4px 12px; }
 #card .metro-line { display: inline-flex; align-items: center; gap: 6px; }
 #card .metro-line i { width: 14px; height: 4px; border-radius: 2px; }

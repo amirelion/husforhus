@@ -14,6 +14,11 @@ Plans, not promises: the order can change.
 ## 2026-10-18
 
 ### Features
+- **On a phone, the legend folds** when you touch the map or swipe its handle down, so the city is not half hidden.
+- **Google Maps from a card**: a pin at the end of a pinned card's address line opens the building in Google Maps. Not on private houses.
+- **Station cards** have the same margins as building cards (their text sat on the edge).
+- **For search engines**: a structured description of the map, and a line for browsers without JavaScript.
+- **Quests and walks, to try**: riddles around Gamla stan and walks past buildings with a story, adapted from Amsterdam, building by building. Off for now; `?try=quests,walks` switches them on for one visit.
 - **Readers' reports become map data.** A checked report can date a building, choose its main address, name it or give it a photo; the card credits only "a reader's report" and its reference.
 - **A report form.** "Something wrong?" on a card opens a form with the building as the card shows it: a wrong or missing year or detail, a photo of your own (shrunk and stripped of its location data in the browser, CC BY 4.0 with your name), or something else. About's Contact has "Suggest something". See [Privacy](PRIVACY.md) for what is kept and for how long.
 - **The layer switches moved into Look**, under "Show on the map": Tunnelbanan, the blue plaques and the photo highlight. A dot on the Look button shows while one is on, and the legend is shorter.
@@ -21,6 +26,7 @@ Plans, not promises: the order can change.
 - **Story cards.** The Stories list shows each story's opening line, its length and number of steps, and a "Mentions deaths" tag on the stories that do; a story picked from the list starts without a second warning. When a story ends: "Replay story" or "Back to map".
 
 ### Data
+- Data version `v20261018-p4n`: the quests' data and the walks' starting points.
 - Data version `v20261018-p4m`: **the first reader's report on the map.** L.M. Ericssons väg 30 in Midsommarkransen, unknown until now, is dated 1938–1939 from construction photos a reader sent (HFH-3). Its card says so: "A reader's report (HFH-3), checked". Reports accepted from the form now reach the map this way, with no name or email.
 - Data version `v20261018-p4l`.
 - **More plaques on the right building**: 130 placed (was 127). The address is read more carefully (number ranges such as 18–24, house letters such as 50A, short street forms such as "g." and "St."), then the building's card name, and Open Plaques positions within 25 m. Five more plaques are placed, among them Hvita Björn and Mariebergs kollektivhus. Plaques from the list's bridge section are no longer put on a house nearby, which took two off the wrong buildings.

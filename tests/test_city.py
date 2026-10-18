@@ -23,7 +23,9 @@ def test_identity():
     assert city.TILE == 1200.0
     assert set(city.HOME) == {"x", "z", "azimuth", "elevation", "span"}
     assert city.FEATURES == {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
-                             "plaques": True, "metro": True}
+                             "plaques": True, "metro": True, "walks": False}
+    # walk starts: (en, sv, x, z), the first Stortorget at ORIGIN
+    assert city.STARTS[0][2:] == (0.0, 0.0) and all(len(s) == 4 for s in city.STARTS)
     assert "_default" in city.STOREY_M
     assert isinstance(city.TIER1, list)
     assert len(city.SALTSJON) == 3

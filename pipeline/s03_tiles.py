@@ -608,6 +608,7 @@ def make_config(df, tiles, packs, version, tile, sources, accuracy, terrain, lan
         "terrain": terrain_config(terrain),
         "links": city.LINKS,
         "landmarks": list(landmarks),
+        "starts": [dict(en=en, sv=sv, x=x, z=z) for en, sv, x, z in city.STARTS],
     }
 
 

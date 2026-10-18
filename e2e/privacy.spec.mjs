@@ -48,3 +48,18 @@ test('every pinned card has "Something wrong?", which opens the report form for 
   await expect(dialog).toBeVisible();
   await expect(dialog.locator('.report-ref')).toContainText('building 0, data v');
 });
+
+test('a pinned card has a Google Maps pin, but never a private house\'s', async ({ page }) => {
+  await open(page);
+  const home = await firstGid(page, b => b.private === 1);
+  const other = await firstGid(page, b => b.private !== 1);
+  test.skip(home < 0 || other < 0, 'this build lacks a private house or another building');
+  await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), other);
+  const pin = page.locator('#card.pinned .gmaps');
+  await expect(pin).toHaveCount(1);
+  await expect(pin).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=59\.\d{6},1[78]\.\d{6}$/);
+  await expect(pin).toHaveAttribute('aria-label', 'Open in Google Maps');
+  await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), home);
+  await expect(page.locator('#card.pinned')).toBeVisible();
+  await expect(page.locator('#card.pinned .gmaps')).toHaveCount(0);
+});

@@ -248,7 +248,7 @@ def test_config_follows_contract_c5(tmp_path):
     assert set(cfg) == {"city", "name", "subtitle", "version", "tileSize", "origin", "crs", "home", "periods",
                         "yearMin", "yearMax", "histogram", "histogramEst", "unknown", "attrStride", "tiles",
                         "packs", "stats", "features", "attribution", "accuracy", "terrain", "links", "landmarks",
-                        "districts", "langFromBrowser", "about", "accuracyLabels"}
+                        "districts", "langFromBrowser", "about", "accuracyLabels", "starts"}
     # About's own numbers, counted over what ships, and who made the map
     assert cfg["about"] == {"privateCategory": 4, "privateDated": 3, "ratings": [2, 1, 1], "protected": 2,
                             "withArchitect": 2, "addressed": 4, "gamla": {"n": 5, "dated": 3},

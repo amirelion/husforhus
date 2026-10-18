@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SITE, shareText, shareLink, parseAt } from '../share.js';
+import { SITE, shareText, shareLink, parseAt, findLayer } from '../share.js';
 
 const at = { x: 12.345, z: -67.891, zoom: 420.4 };
 
@@ -32,4 +32,12 @@ test('?at= reads back, and nonsense is refused', () => {
   assert.equal(parseAt('a,b,c'), null);
   assert.equal(parseAt(null), null);
   assert.equal(parseAt('1,2,-5'), null);
+});
+
+test('?layer= finds a context layer by id and ignores unknown or empty ids', () => {
+  const layers = [{ id: 'residents' }, { id: 'ports' }];
+  assert.equal(findLayer(layers, 'ports'), layers[1]);
+  assert.equal(findLayer(layers, 'nope'), null);
+  assert.equal(findLayer(layers, null), null);
+  assert.equal(findLayer([], 'ports'), null);
 });

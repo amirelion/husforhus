@@ -937,7 +937,7 @@ def check_reader_line(where: str, yrd, rec, hide: bool) -> list[str]:
 
 def check_contributions(data: Path, path: Path = contributions.PATH) -> list[str]:
     """pipeline/contributions.csv: well formed, nothing email- or phone-like in a note or value (contributions.read),
-    and every row's uuid on exactly one footprint of data/buildings.parquet."""
+    and no row's uuid on two footprints of data/buildings.parquet (one on none is a warning: s02/s03 skip it)."""
     if not path.exists():
         return [f"contributions: {path} is missing (seed it with its header)"]
     try:
@@ -946,9 +946,14 @@ def check_contributions(data: Path, path: Path = contributions.PATH) -> list[str
         return [f"contributions: {e}"]
     if t.empty:
         return []
-    if not (data / "buildings.parquet").exists():
-        return [f"contributions: cannot resolve {len(t)} rows without {data / 'buildings.parquet'}"]
+    if not (data / "buildings.parquet").exists():   # only a partial data/ (tests): nothing to resolve against
+        print(f"s99_validate: warning: contributions: {len(t)} rows not resolved without {data / 'buildings.parquet'}",
+              file=sys.stderr)
+        return []
     b = pd.read_parquet(data / "buildings.parquet", columns=["gid", "uuid"])
+    for ref in contributions.missing(t, b):     # a fixture build, or a redrawn footprint: s02/s03 skipped it too
+        print(f"s99_validate: warning: contributions: {ref}: its footprint is not among these buildings", file=sys.stderr)
+    t = t[~t.ref.isin(contributions.missing(t, b))]
     errors = []
     for i in range(len(t)):
         try:

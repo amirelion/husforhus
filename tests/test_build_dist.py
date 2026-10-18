@@ -436,6 +436,16 @@ def test_robots_and_sitemap_ship(bd):
     assert "<loc>https://husforhus.se/</loc>" in sitemap and re.search(r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>", sitemap)
 
 
+def test_the_page_describes_itself_without_javascript():
+    # search engines and no-JS readers: valid JSON-LD on the canonical URL, and a plain-text noscript line
+    html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+    ld = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', html, re.S).group(1))
+    assert ld["@type"] == "WebApplication" and ld["url"] == "https://husforhus.se/"
+    assert ld["image"] == "https://husforhus.se/og.png" and (ROOT / "web" / "og.png").is_file()
+    assert '<link rel="canonical" href="https://husforhus.se/">' in html
+    assert re.search(r"<noscript><p[^>]*>[^<]*Stockholm", html)
+
+
 def test_every_documented_rebuild_runs_the_search_step():
     # final review F4: with config.features.search on, s99 fails on a version without search/ (only s14_search
     # writes it), so every rebuild command that ends in s99_validate runs s14_search first
