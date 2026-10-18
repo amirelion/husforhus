@@ -1724,6 +1724,7 @@ function startQuest(q, n, sc = 0, mk = []) {
   if (walkRoute) closeWalk();
   quest = q; step = n; score = sc; marks = mk;
   document.body.classList.add('questing');
+  if (phone.matches && !creditKept) foldCredit(true);   // the corner steps aside: the credit would sit on the title
   pinCard(-1);
   enterStep(true);
 }
@@ -2840,7 +2841,11 @@ function foldCredit(folded) {
   creditOpen.hidden = !folded;
   creditOpen.setAttribute('aria-expanded', String(!folded));
 }
-function foldCreditSoon() { setTimeout(() => { if (phone.matches) foldCredit(true); }, 5000); }
+// It also folds at the first touch on the map (the licences' attribution may collapse once the map is in use), unless
+// the visitor opened it with (i): then it stays.
+let creditKept = false;
+function foldCreditSoon() { setTimeout(() => { if (phone.matches && !creditKept) foldCredit(true); }, 5000); }
+canvas.addEventListener('pointerdown', () => { if (phone.matches && !creditKept) foldCredit(true); });
 function placeCredit() { credits.style.top = phone.matches ? `${corner.getBoundingClientRect().bottom + 8}px` : ''; }
 new ResizeObserver(() => { placeCredit(); placeSearch(); }).observe(corner);
 addEventListener('resize', placeCredit);   // the corner can move (the safe area) without changing size
@@ -2853,6 +2858,7 @@ phone.addEventListener('change', () => {
 });
 placeCredit();
 creditOpen.onclick = () => {
+  creditKept = true;
   foldCredit(false);
   credits.querySelector('#credit a')?.focus();   // the button goes; focus stays in the credit, not on the page
 };

@@ -2,6 +2,7 @@
 // the phone sheet and ?q=. Runs on whatever web/data/current.json names (the fixture in CI, the whole city on a
 // laptop): it reads an address, a street and a named building from the build's own index.
 import { test, expect } from '@playwright/test';
+import { settled } from './settled.mjs';
 
 function watchErrors(page) {
   const errors = [];
@@ -13,7 +14,7 @@ function watchErrors(page) {
 
 async function open(page, query = '') {
   await page.goto('/' + query);
-  await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
+  await settled(page);
 }
 
 // From the build's index: a street with at least two numbers, one of its addresses, and a named building built after

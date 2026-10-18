@@ -15,6 +15,7 @@ Plans, not promises: the order can change.
 
 ### Features
 - **On a phone, the legend folds** when you touch the map or swipe its handle down, so the city is not half hidden.
+- **On a phone, the sources line folds into its (i)** at your first touch on the map (or after 5 s, as before), and when a quest starts.
 - **Google Maps from a card**: a pin at the end of a pinned card's address line opens the building in Google Maps. Not on private houses.
 - **Station cards** have the same margins as building cards (their text sat on the edge).
 - **For search engines**: a structured description of the map, and a line for browsers without JavaScript.

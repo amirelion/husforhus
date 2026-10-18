@@ -2,10 +2,11 @@
 // fail (3), a card from the keyboard (1), a card shard that fails (6), the loading line as a live region (7), the
 // legend's accessible names (8), the zoom keys (9) and the icons (10). Runs on whatever web/data/current.json names.
 import { test, expect } from '@playwright/test';
+import { settled } from './settled.mjs';
 
 async function open(page, query = '') {
   await page.goto('/' + query);
-  await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
+  await settled(page);
 }
 const frames = page => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 

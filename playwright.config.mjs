@@ -18,7 +18,12 @@ export default defineConfig({
   outputDir: 'data/test-results',
   reporter: 'list',
   use: { baseURL: `http://127.0.0.1:${PORT}/`, trace: 'retain-on-failure' },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1400, height: 900 } } }],
+  // On a Mac the browser draws with the GPU (Metal) instead of SwiftShader, Chromium's CPU renderer: a full map load
+  // took 6.4 s on the CPU and 0.4 s on the GPU (2026-10-18), and the CPU run kept the fans going. CI (Linux, no GPU)
+  // keeps the default.
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1400, height: 900 },
+    ...(process.platform === 'darwin' && !process.env.CI
+      ? { launchOptions: { args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] } } : {}) } }],
   webServer: {
     command: `python3 scripts/serve.py ${PORT}`,
     url: `http://127.0.0.1:${PORT}/`,

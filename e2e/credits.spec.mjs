@@ -50,6 +50,17 @@ test.describe('on a phone', () => {
     expect(box.x + box.width).toBeLessThanOrEqual(390);                      // inside the screen, no sideways scroll
   });
 
+  test('a first touch on the map folds the credit at once; opened with (i), it stays open', async ({ page }) => {
+    await open(page);
+    await expect(page.locator('#credit')).toBeVisible();
+    await page.touchscreen.tap(200, 500);
+    await expect(page.locator('#credit')).toBeHidden({ timeout: 1_000 });
+    await page.locator('.credit-open').click();
+    await expect(page.locator('#credit')).toBeVisible();
+    await page.touchscreen.tap(200, 500);
+    await page.waitForTimeout(500);
+    await expect(page.locator('#credit')).toBeVisible();
+  });
   test('folded, the credit leaves the strip it spans to the map', async ({ page }) => {
     await open(page);
     await expect(page.locator('#credit')).toBeHidden({ timeout: 8_000 });
