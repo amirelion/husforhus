@@ -36,7 +36,8 @@ test('every English text the pure modules hand over has an id whose English is t
   const t = legacy(makeT({ en: EN, sv: SV }, 'sv'));
   assert.equal(t('Today'), 'I dag');
   assert.equal(t('until {year}').replace('{year}', 1610), 'fram till 1610');   // count.js fills it itself
-  assert.equal(t('Play again'), 'Play again');                                   // a v1.1 quest text stays English
+  assert.equal(t('Play again'), 'Spela igen');                                   // the quests speak Swedish since 2026-10-18
+  assert.equal(t('No such text'), 'No such text');                               // a text without an id stays as it is
 });
 
 test('the page opens in ?lang=, else the saved choice, else a Swedish or English browser, else English', () => {

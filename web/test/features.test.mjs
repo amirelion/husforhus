@@ -15,7 +15,13 @@ test('anything else changes nothing, and the build\'s own switches are kept', ()
   assert.deepEqual(withTry(off, '?try=layers,energy,__proto__'), off);
 });
 
-test('quests and walks can be tried (post-v1, off in the build)', () => {
+test('quests and walks can be tried in a build that leaves them off', () => {
   assert.deepEqual(withTry(off, '?try=quests,walks'), { ...off, quests: true, walks: true });
   assert.deepEqual(withTry({ ...off, scenes: true }, '?try='), { ...off, scenes: true });
+});
+
+test('a build with quests and walks on keeps them on, with or without ?try=', () => {
+  const on = { ...off, quests: true, walks: true };
+  assert.deepEqual(withTry(on, ''), on);
+  assert.deepEqual(withTry(on, '?try=quests,walks'), on);
 });

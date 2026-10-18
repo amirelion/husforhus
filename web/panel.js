@@ -34,6 +34,11 @@ export function plaquesHref(href, on) {
   return u.toString();
 }
 
+// The "Quests and walks" switch (features.quests, features.walks), in the Look panel: on by default, so the Quests and
+// Walk buttons show; off hides them. Remembered per device (hfh-quests-walks: 'on' | 'off').
+export const QUESTS_KEY = 'hfh-quests-walks';
+export const questsOnFrom = stored => stored !== 'off';
+
 // The per-building flag the shader reads (float 9 of ATTR_FLOATS = 12, web/worker.js; float 3 is the gid): 1 for a
 // building whose card has a photo. Written once per tile, when it loads or when the list arrives, never per frame.
 export const PHOTO_FLOAT = 9;

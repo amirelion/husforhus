@@ -64,9 +64,9 @@ TIER1 = [
     "Hammarby Sjö", "Saltsjön", "Lilla Värtan", "Djurgårdsbrunnsviken", "Ladugårdslandsviken",
 ]
 SALTSJON = (2050.0, 600.0, 0.0)               # local (x, z, angle°): open water off Fåfängan, 237 m from any shore
-FEATURES = {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
-            "plaques": True, "metro": True, "walks": False}   # lang, search, scenes, plaques: on since 2026-10-17; metro: s16_metro
-# quests and walks (D: post-v1): off for everyone; ?try=quests,walks switches them on for one visit (web/features.js)
+FEATURES = {"quests": True, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
+            "plaques": True, "metro": True, "walks": True}   # lang, search, scenes, plaques: on since 2026-10-17; metro: s16_metro
+# quests and walks: on for everyone since 2026-10-18; the Look panel's "Quests and walks" switch hides their buttons
 # Where a walk can start besides the walker's own location (web/app.js, Walks): (en, sv, x, z) in local metres,
 # from WGS84 via pyproj (2026-10-18). The first is the default; Stortorget is ORIGIN.
 STARTS = [("Stortorget", "Stortorget", 0.0, 0.0), ("Central Station", "Centralstationen", -688.8, -576.4),

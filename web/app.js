@@ -19,7 +19,8 @@ import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
 import { THEMES, SHADING } from './themes.js';
 import { createLooks } from './look.js';
 import { mountSwitcher } from './switcher.js';
-import { initialCollapsed, LEGEND_KEY, photoOnlyFrom, photoOnlyHref, markPhotos, plaquesOnFrom, plaquesHref, PLAQUE_KEY } from './panel.js';
+import { initialCollapsed, LEGEND_KEY, photoOnlyFrom, photoOnlyHref, markPhotos, plaquesOnFrom, plaquesHref, PLAQUE_KEY,
+  questsOnFrom, QUESTS_KEY } from './panel.js';
 import { cityCount, layerCount, tallyTitle, tallyFromAttrs, periodCounts } from './count.js';
 import { placeLabels, labelAt, stepYear } from './timeline.js';
 import { unknownShown, readPref, writePref, prefAfterClick, unknownHint, easeShown } from './unknown.js';
@@ -89,7 +90,7 @@ const FAILED = { en: 'Could not load the city data. Reload the page to try again
 }
 let failedId = null;   // the message a failed start shows, redrawn by a language switch (applyStaticText)
 // t(text): the English text the pure modules hand over (count.js, unknown.js, howto.js, the switcher), by its id
-// (web/i18n.js LEGACY); the v1.1 quests and layers keep their English.
+// (web/i18n.js LEGACY), the quests and layers included.
 const t = s => (T ? legacy(T)(s) : s);
 function loadFailed(e, id = 'ui.failed') {
   console.error(e);
@@ -122,8 +123,11 @@ const layerUi = { ready: false, title: () => T('ui.layers.title'), items: () => 
     hint: { id: 'plaques-hint', cls: 'plaques-hint', text: T('ui.plaques.hint') } },
   { id: 'photo-only', label: T('ui.photoOnly'), on: photoOnly, set: setPhotoOnly,
     hint: { id: 'photo-hint', cls: 'photo-hint', text: T('ui.photoOnly.hint') } }].filter(Boolean) };
+// Under its own heading, the "Quests and walks" switch: shows or hides their buttons (see Walks below), when the build has them.
+const extraUi = { title: () => T('ui.explore.title'), items: () => !layerUi.ready || !(FEATURES.quests || FEATURES.walks) ? [] : [
+  { id: 'quests-walks-on', label: T('ui.questsWalks'), on: questsWalksOn, set: setQuestsWalks }] };
 const switcher = mountSwitcher({ button: document.querySelector('.look-open'), panel: document.getElementById('look'), looks, t,
-  relief: reliefUi, layers: layerUi });
+  relief: reliefUi, layers: layerUi, extras: extraUi });
 const pageLookOnly = looks.subscribe(applyPageLook);
 const { version } = await getJson('data/current.json', { cache: 'no-cache' }).catch(halt);
 const DATA = `data/${version}/`;
@@ -142,6 +146,9 @@ const attrTally = tallyFromAttrs(attrs, config.stats.buildings, config.attrStrid
 // config.features (pipeline/city.py FEATURES); their buttons are hidden, never removed.
 // ?try=stories,plaques (web/features.js) switches one on for this visit only, to try it on the live site.
 const FEATURES = withTry(config.features || {}, location.search);
+// Quests and walks: on for everyone since 2026-10-18; the Look panel's switch hides their buttons, remembered per
+// device (web/panel.js questsOnFrom).
+let questsWalksOn = questsOnFrom((() => { try { return localStorage.getItem(QUESTS_KEY); } catch { return null; } })());
 const layers = FEATURES.layers ? await getJson(`${DATA}layers.json`).catch(halt) : [];
 // Samfundet S:t Erik's blue plaques (web/plaque.js), with features.plaques (or the layers): optional, so a build without
 // them still starts. The legend's switch shows them (markers and the card's section); off by default (web/panel.js).
@@ -167,7 +174,7 @@ LANG = pickLang({ param: QUERY.get('lang'), saved: savedLang(), languages: navig
 const tr = (o, k) => (LANG === 'sv' && o?.[k + '_sv']) || o?.[k];
 T = makeT(I18N, LANG);
 const fmtLocale = () => (LANG === 'sv' ? 'sv-SE' : 'en');
-document.querySelector('.quests-open').hidden = !FEATURES.quests;
+document.querySelector('.quests-open').hidden = !(FEATURES.quests && questsWalksOn);
 document.querySelector('.modes [data-mode="3"]').hidden = !FEATURES.layers;
 document.querySelectorAll('.lang [data-lang]').forEach(b => { b.hidden = !FEATURES.lang; });
 const periods = config.periods.map((p, i) => ({ ...p, color: THEME.periods[i] || p.color }));
@@ -1919,7 +1926,8 @@ addEventListener('keydown', e => { if (e.key === 'Escape' && questsDlg.open) que
 
 // ---------- Walks ----------
 // A walk through the buildings with a story (web/walk.js plans it): the blue plaques and the curated landmarks the
-// build carries, for the interests, start and distance the walker picks. Behind features.walks (?try=walks).
+// build carries, for the interests, start and distance the walker picks. Behind features.walks and the Look panel's
+// "Quests and walks" switch.
 // The walker's location is asked for only on "Share my location", used once in this page to set the start and never
 // stored or sent; the Google Maps link sends the stops' coordinates only when the walker opens it.
 const STARTS = config.starts?.length ? config.starts : [{ en: 'Stortorget', sv: 'Stortorget', x: 0, z: 0 }];
@@ -1927,7 +1935,17 @@ const CITY_REACH_M = 12000;     // a shared location further than this from Stor
 const walkEl = document.getElementById('walk');
 const walksDlg = document.getElementById('walks');
 const walksOpen = document.querySelector('.walks-open');
-walksOpen.hidden = !FEATURES.walks;
+walksOpen.hidden = !(FEATURES.walks && questsWalksOn);
+// The Look panel's "Quests and walks" switch: off hides both buttons and ends a quest or walk under way (a quest's
+// progress is kept, so Continue picks it up again).
+function setQuestsWalks(on) {
+  questsWalksOn = on;
+  try { localStorage.setItem(QUESTS_KEY, on ? 'on' : 'off'); } catch {}
+  document.querySelector('.quests-open').hidden = !(FEATURES.quests && on);
+  walksOpen.hidden = !(FEATURES.walks && on);
+  if (!on) { if (quest) closeQuest(); if (walkRoute) closeWalk(); }
+  switcher.markLayers();
+}
 const walkGroup = new THREE.Group();
 scene.add(walkGroup);
 let walkPrefs = { kinds: [], start: 0, km: 3, loop: true, at: null, atLabel: '', stops: 0 }, walkRoute = null;

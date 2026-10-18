@@ -4,8 +4,9 @@
 // can be compared; Escape, the close button, a click outside or the focus leaving closes it. Tab or the arrow keys
 // move between the cards, Enter or Space picks one. The atmosphere row appears once there is an atmosphere
 // besides 'none'. "Show on the map" holds the map's layer switches (Tunnelbanan, the plaques, the photo highlight);
-// while one is on, a dot on the Look button says so with the panel closed. The Ground row's Hills slider scales the
-// relief; it has the arrow keys while focused.
+// while one is on, a dot on the Look button says so with the panel closed. A second row of switches (extras: the
+// Quests and walks switch) sits under its own heading and never lights the dot. The Ground row's Hills slider scales
+// the relief; it has the arrow keys while focused.
 import { THEMES } from './themes.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -15,25 +16,32 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 // looks once available, from 0 (flat) to max, with its value (label: "Flat", "1×") and its honesty line (what the map
 // shows now); disabled (the terrain did not load) dims it and a move snaps back, changing nothing.
 // layers (optional): {title(), items()}, items() the switches to show, each {id, label, on, set(v), hint?: {id, cls,
-// text}}; the button keeps the id, a hint line shows while on. app.js calls markLayers() after each switch changes.
+// text}}; the button keeps the id, a hint line shows while on. extras (optional): the same shape, its own heading.
+// app.js calls markLayers() after each switch changes.
 // Returns render(), to call again when the language changes, markLayers(), and markRelief(), to call whenever the relief or the
 // terrain's state changes (app.js calls it from setRelief, a move included, so it runs once per change).
-export function mountSwitcher({ button, panel, looks, t, relief = null, layers = null }) {
+export function mountSwitcher({ button, panel, looks, t, relief = null, layers = null, extras = null }) {
   const atmos = looks.atmospheres;
   const layerItems = () => layers?.items() ?? [];
+  const extraItems = () => extras?.items() ?? [];
+  const allItems = () => [...layerItems(), ...extraItems()];
   const dot = document.createElement('i');
   dot.className = 'look-dot';
   dot.hidden = true;
   button.append(dot);
-  // The layer switches change in place (the focus stays), and the button's dot follows them.
+  // The switches change in place (the focus stays), and the button's dot follows the layer switches.
   function markLayers() {
-    const items = layerItems();
-    for (const L of items) {
+    for (const L of allItems()) {
       panel.querySelector(`#${L.id}`)?.setAttribute('aria-pressed', String(L.on));
       if (L.hint) { const h = panel.querySelector(`#${L.hint.id}`); if (h) h.hidden = !L.on; }
     }
-    dot.hidden = !items.some(L => L.on);
+    dot.hidden = !layerItems().some(L => L.on);
   }
+  // A heading and its row of switches, or nothing while the row is empty.
+  const switchRow = (id, cls, group, items) => !items.length ? '' : `<h3 id="${id}">${esc(group.title())}</h3>
+      <div class="${cls}" role="group" aria-labelledby="${id}">${items.map(L => `<div class="est-row">
+        <button class="switch" id="${L.id}" data-layer aria-pressed="${L.on}"${L.hint ? ` aria-describedby="${L.hint.id}"` : ''}><span class="toggle" aria-hidden="true"></span>${
+        esc(L.label)}</button>${L.hint ? `<span class="${L.hint.cls}" id="${L.hint.id}"${L.on ? '' : ' hidden'}>${esc(L.hint.text)}</span>` : ''}</div>`).join('')}</div>`;
   const card = l => {
     const th = THEMES[l.id];
     return `<button class="look-card" data-look="${l.id}" aria-pressed="${l.id === looks.current}"
@@ -53,10 +61,8 @@ export function mountSwitcher({ button, panel, looks, t, relief = null, layers =
       ${atmos.items.length > 1 ? `<h3 id="atmos-title">${t('Atmosphere')}</h3>
       <div class="look-atmos" role="group" aria-labelledby="atmos-title">${atmos.items.map(a =>
         `<button data-atmos="${a.id}" aria-pressed="${a.id === atmos.current}">${esc(t(a.name))}</button>`).join('')}</div>` : ''}
-      ${layerItems().length ? `<h3 id="layers-title">${esc(layers.title())}</h3>
-      <div class="look-layers" role="group" aria-labelledby="layers-title">${layerItems().map(L => `<div class="est-row">
-        <button class="switch" id="${L.id}" data-layer aria-pressed="${L.on}"${L.hint ? ` aria-describedby="${L.hint.id}"` : ''}><span class="toggle" aria-hidden="true"></span>${
-        esc(L.label)}</button>${L.hint ? `<span class="${L.hint.cls}" id="${L.hint.id}"${L.on ? '' : ' hidden'}>${esc(L.hint.text)}</span>` : ''}</div>`).join('')}</div>` : ''}
+      ${switchRow('layers-title', 'look-layers', layers, layerItems())}
+      ${switchRow('extras-title', 'look-layers look-extras', extras, extraItems())}
       ${relief?.available ? `<h3 id="relief-title">${t('Ground')}</h3>
       <div class="look-relief" role="group" aria-labelledby="relief-title"><div class="relief-row">
         <label for="relief-range">${t('Hills')}</label>
@@ -101,7 +107,7 @@ export function mountSwitcher({ button, panel, looks, t, relief = null, layers =
     const b = e.target.closest('button');
     if (!b) return;
     if (b.dataset.look) looks.set(b.dataset.look);
-    else if ('layer' in b.dataset) { const L = layerItems().find(L => L.id === b.id); L?.set(!L.on); }
+    else if ('layer' in b.dataset) { const L = allItems().find(L => L.id === b.id); L?.set(!L.on); }
     else if (b.dataset.atmos) atmos.set(b.dataset.atmos);
     else if (b.classList.contains('look-close')) close(true);
   });

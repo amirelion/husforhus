@@ -22,8 +22,8 @@ def test_identity():
     # if that trap never runs, this fails instead of the next full build quietly using 1500 m.
     assert city.TILE == 1200.0
     assert set(city.HOME) == {"x", "z", "azimuth", "elevation", "span"}
-    assert city.FEATURES == {"quests": False, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
-                             "plaques": True, "metro": True, "walks": False}
+    assert city.FEATURES == {"quests": True, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
+                             "plaques": True, "metro": True, "walks": True}
     # walk starts: (en, sv, x, z), the first Stortorget at ORIGIN
     assert city.STARTS[0][2:] == (0.0, 0.0) and all(len(s) == 4 for s in city.STARTS)
     assert "_default" in city.STOREY_M

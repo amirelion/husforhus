@@ -76,3 +76,10 @@ test('the plaques switch writes and clears ?plaques and keeps the other paramete
   assert.equal(plaquesHref('https://x.se/?plaques=1&lang=sv', false), 'https://x.se/?lang=sv');
   assert.equal(plaquesHref('https://x.se/?plaques=1', true), 'https://x.se/?plaques=1');
 });
+
+test('the quests-and-walks switch is on by default; only a stored "off" turns it off', async () => {
+  const { questsOnFrom, QUESTS_KEY } = await import('../panel.js');
+  assert.equal(QUESTS_KEY, 'hfh-quests-walks');
+  for (const stored of [null, undefined, '', 'on', 'yes']) assert.equal(questsOnFrom(stored), true, String(stored));
+  assert.equal(questsOnFrom('off'), false);
+});

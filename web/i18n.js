@@ -28,6 +28,26 @@ export const LEGACY = {
   'Hidden while one period is shown alone.': 'ui.unknown.solo',
   'Drag to move. Right-drag or ⌘-drag to turn. Scroll or press + / − to zoom.': 'ui.howto.mac',
   'Drag to move. Right-drag or Ctrl-drag to turn. Scroll or press + / − to zoom.': 'ui.howto.other',
+  // The quests (and the context layers) came from upstream in English; Swedish since they went public (2026-10-18).
+  "Quests": 'quest.title', "Find buildings from riddles and old photos, guess their age with the colours switched off. Every answer is worth three crosses; hints and wrong answers cost one.": 'quest.lede',
+  "Your crosses": 'quest.yourCrosses', "Easy": 'quest.easy',
+  "Medium": 'quest.medium', "Hard": 'quest.hard',
+  "Start": 'quest.start', "Continue": 'quest.continue',
+  "Play again": 'quest.again', "More quests": 'quest.more',
+  "Hint": 'quest.hint', "Show me": 'quest.show',
+  "Next": 'quest.next', "Guess": 'quest.guess',
+  "Your guess": 'quest.yourGuess', "Open its card": 'quest.card',
+  "See the result": 'quest.result', "Copy result": 'quest.copy',
+  "Copied": 'quest.copied', "Source": 'quest.source',
+  "Built": 'quest.built', "Exactly right.": 'quest.exact',
+  "Full marks.": 'quest.full', "Find it on the map and click it.": 'quest.findIt',
+  "Look inside the red circle.": 'quest.circle', "Not that one.": 'quest.notThat',
+  "Not this one, but right next to it.": 'quest.nextTo', "Not this one. Very warm.": 'quest.warm',
+  "Not this one. A few streets away.": 'quest.streets', "Not this one. Far off.": 'quest.far',
+  "Shown, not found: no crosses.": 'quest.shown', "A photo of the building to find": 'quest.photo',
+  "Colour by floors": 'quest.byFloors', "Colour by period": 'quest.byPeriod',
+  "Context layers": 'layers.title', "All context layers": 'layers.all',
+  "Buildings and their stories": 'layers.stories', "Find a person": 'layers.person',
 };
 export const legacy = T => s => (LEGACY[s] ? T(LEGACY[s]) : s);
 

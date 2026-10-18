@@ -40,8 +40,10 @@ test('the city loads, switches to Floors, opens a card and plays', async ({ page
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
   await expect(page).toHaveTitle('Hus för hus');
 
-  // v1.1 features stay in the page, hidden by config.features; the language switch is on since 2026-10-17.
-  await expect(page.locator('.quests-open')).toBeHidden();
+  // v1.1 features stay in the page, hidden by config.features; the language switch is on since 2026-10-17, quests and
+  // walks since 2026-10-18 (e2e/quests.spec.mjs has their Look switch).
+  await expect(page.locator('.quests-open')).toBeVisible();
+  await expect(page.locator('.walks-open')).toBeVisible();
   await expect(page.locator('.modes [data-mode="3"]')).toBeHidden();
   await expect(page.locator('.lang [data-lang="sv"]')).toBeVisible();
 
