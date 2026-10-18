@@ -250,7 +250,8 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
              "## In short", "",
              f"This map shows {n:,} buildings in Stockholm. Of them:", "",
              f"- **{rec:,} ({s_rec}) have a year from a record**: RAÄ's building registers (RAÄ is Sweden's National "
-             "Heritage Board), a short hand-checked list of landmarks, Wikidata or OpenStreetMap.",
+             "Heritage Board), a short hand-checked list of landmarks, Wikidata, OpenStreetMap or a reader's report the map's "
+             "maker checked.",
              f"- **{area:,} ({s_area}) have the year of their area**: they stand in a district or an estate that RAÄ "
              "dates as a whole.",
              f"- **{est:,} ({s_est}) are estimated** from similar dated buildings nearby"
