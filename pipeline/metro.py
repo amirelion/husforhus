@@ -39,8 +39,8 @@ DEST = Path("data/metro.json")
 TRACK_RAW = Path("data/raw/osm/metro.json")
 QUERY = Path(__file__).with_name("queries") / "metro_track.overpass"
 OVERPASS = ["https://overpass-api.de/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"]
-RETRIES = 2
-BACKOFF_S = 5
+RETRIES = 4                    # as s00_fetch_osm: Overpass is often busy; on 2026-10-19 both endpoints answered
+BACKOFF_S = (30, 60, 120)      # 502/504 for a minute and the weekly fixture build failed on 5 s waits
 sleep = time.sleep             # module-level so tests can stub the wait
 
 LINES = {"Grön": "green", "Röd": "red", "Blå": "blue"}   # our own colour keys, not SL's styling

@@ -9,6 +9,8 @@ scripts/**
 tests/**
 e2e/**
 .github/workflows/**
+# The weekly Network run (live sources, Overpass) stays private: one alert, not two, when an outside server is down.
+!.github/workflows/network.yml
 .github/ISSUE_TEMPLATE/**
 package.json
 package-lock.json

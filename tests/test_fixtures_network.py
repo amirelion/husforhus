@@ -42,7 +42,9 @@ def test_sources_are_reachable():
     for sid, url in URL.items():
         r = requests.head(url, headers=UA, timeout=60, allow_redirects=True)
         assert r.status_code == 200, sid
-        assert int(r.headers["Content-Length"]) > 100_000, sid
+        # a size only for a data file: the others are web pages (Wikidata's front page shrank to 43 KB, 2026-10-19)
+        if url.lower().endswith((".zip", ".gpkg", ".pdf")):
+            assert int(r.headers["Content-Length"]) > 100_000, sid
 
 
 def test_stadskarta_members_by_range_request(tmp_path):
