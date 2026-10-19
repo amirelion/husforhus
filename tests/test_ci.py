@@ -2,9 +2,12 @@
 import re
 from pathlib import Path
 
+import pytest
 import yaml
 
 WORKFLOWS = Path(__file__).resolve().parents[1] / ".github" / "workflows"
+# The weekly Network run is private (scripts/public/allowlist.txt): the public copy has ci.yml only.
+private_only = pytest.mark.skipif(not (WORKFLOWS / "network.yml").exists(), reason="no network.yml in the public copy")
 
 
 def load(name):
@@ -39,6 +42,9 @@ def test_ci_workflows():
     node = next(s for s in test["steps"] if s.get("uses", "").startswith("actions/setup-node@"))
     assert node["with"]["node-version-file"] == ".nvmrc"
 
+
+@private_only
+def test_network_job():
     net, on = load("network.yml")
     assert set(on) == {"workflow_dispatch", "schedule"} and on["schedule"][0]["cron"]
     job = net["jobs"]["network"]  # the `e2e` job next to it is checked in test_e2e_job
@@ -50,6 +56,7 @@ def test_ci_workflows():
     assert "hashFiles('pipeline/sources.yml')" in caches["data/raw"]
 
 
+@private_only
 def test_e2e_job():
     """The viewer end to end on the fixture, in network.yml (weekly and on demand), with the golden check."""
     net, _ = load("network.yml")
@@ -67,5 +74,8 @@ def test_e2e_job():
     # The search index is rebuilt and compared too (s14_search reads the version's own cards)
     assert "uv run python -m pipeline.run s03_tiles s04_base s07_labels s14_search -- --version" in golden
     assert sum(s.get("env", {}).get("HFH_FIXTURE") == "1" for s in steps) == 2  # the pipeline and the golden check
-    for command in ["uv sync --locked", "npm ci", "npx playwright install --with-deps chromium", "npm run test:e2e"]:
+    # the smoke and launch specs only (2026-10-19): the whole suite needs about 75 min on a runner without a GPU
+    for command in ["uv sync --locked", "npm ci", "npx playwright install --with-deps chromium",
+                    "npx playwright test e2e/smoke.spec.mjs e2e/launch.spec.mjs"]:
         assert command in "\n".join(runs), command
+    assert job["timeout-minutes"] == 90
