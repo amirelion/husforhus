@@ -29,8 +29,8 @@ test('credit: one line linked to the photo page, in both languages', () => {
 
 test('the year strip: Today, the years, Undated; the shown one is current', () => {
   const slides = photoSlides({ photo: TODAY, arch: [OLD, UNDATED] });
-  assert.deepEqual(slides.map(s => slideLabel(s, EN)), ['Today', '1905', 'Undated']);
-  assert.deepEqual(slides.map(s => slideLabel(s, SV)), ['I dag', '1905', 'Odaterat']);
+  assert.deepEqual(slides.map(s => slideLabel(s, EN)), ['Photo', '1905', 'Undated']);
+  assert.deepEqual(slides.map(s => slideLabel(s, SV)), ['Foto', '1905', 'Odaterat']);
   const html = photoFigure(slides, 1, EN, esc, link, () => 'alt');
   assert.match(html, /<nav class="years" aria-label="Photos through the years">/);
   assert.match(html, /<button type="button" data-slide="1" aria-current="true">1905<\/button>/);

@@ -21,7 +21,9 @@ export function archiveCredit(a, T) {
   return [{ text: a.by ? T('card.photo.sm', { by: a.by }) : T('card.photo.sm.unknown'), href: a.page }];
 }
 
-// A slide's tab in the year strip: "Today" for today's photo, else its year, or "Undated".
+// A slide's tab in the year strip: "Photo" for the card's own photo (Wikimedia Commons or a reader's; often recent,
+// but Commons dates are not reliable enough to name a year: a 1909 photo there is dated 2009), else its year, or
+// "Undated".
 export function slideLabel(s, T) {
   return s.today ? T('card.photo.today') : s.y ? String(s.y) : T('card.photo.undated');
 }

@@ -60,7 +60,7 @@
   "card.photo.reader": "Photo: {by}, CC BY 4.0, a reader's photo",
   "card.photo.sm": "Photo: {by}, Stadsmuseet i Stockholm, CC BY 4.0",
   "card.photo.sm.unknown": "Photographer unknown, Stadsmuseet i Stockholm, CC BY 4.0",
-  "card.photo.today": "Today",
+  "card.photo.today": "Photo",
   "card.photo.undated": "Undated",
   "card.photos": "Photos through the years",
   "card.extract.credit": "From {wikipedia}, {licence} (excerpt)",
