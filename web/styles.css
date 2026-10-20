@@ -604,6 +604,21 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
   font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .walk .w-list button span { color: var(--muted); font-size: 12px; }
 .walk .w-list button:hover b { color: var(--accent); }
+/* The walk folds to its header and its Google Maps link (a tap on the header; on a phone it starts folded). */
+.walk header { cursor: pointer; position: relative; padding-right: 76px; }
+.walk header::after { content: ""; position: absolute; right: 52px; top: 50%; width: 7px; height: 7px;
+  border: solid currentColor; border-width: 2px 2px 0 0; transform: translateY(-20%) rotate(135deg); opacity: .8; }
+.walk.folded header::after { transform: translateY(-30%) rotate(-45deg); }   /* folded: it opens upwards */
+.walk.folded > :not(header):not(.q-close):not(.q-actions) { display: none; }
+/* On a phone the walk is a bar above the modes, so the route shows; the legend steps aside while walking, and a
+   pinned card's sheet hides the bar until it closes (2026-10-20: the walk covered the top half and a card the rest). */
+@media (max-width: 720px) {
+  .walk { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 162px); max-height: 45vh; }
+  .walk.folded .q-actions { padding-top: 0; }
+  body.walking .panel { display: none; }
+  .walk.under-card { display: none; }
+  .walk:not(.folded) .q-actions { position: sticky; bottom: 0; background: var(--panel); border-top: 1px solid var(--line); }
+}
 .quest .q-actions a { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px;
   padding: 6px 13px; font-weight: 600; font-size: 12px; color: inherit; }
 .quest .q-actions a.primary { background: var(--ink); border-color: var(--ink); color: var(--panel); }

@@ -1411,6 +1411,7 @@ function pinCard(gid, x, y) {
   pinnedGid = gid;
   hoverGid = -1;
   uniforms.uSelected.value = gid;
+  document.getElementById('walk')?.classList.toggle('under-card', phone.matches && gid >= 0);   // the card's sheet over the walk's bar
   const wasStation = !!pinnedStation;
   pinnedStation = null;
   card.classList.remove('station');
@@ -1464,6 +1465,7 @@ function pinCard(gid, x, y) {
 // A station's small card (web/metro.js stationCard), pinned like a building's: its close button or Escape closes it.
 function pinStation(s, x, y) {
   pinCard(-1);
+  document.getElementById('walk')?.classList.toggle('under-card', phone.matches);
   focusBack = document.activeElement;
   card.innerHTML = stationCard(s, T, esc);
   card.classList.add('pinned', 'station');
@@ -1954,6 +1956,9 @@ function setQuestsWalks(on) {
 const walkGroup = new THREE.Group();
 scene.add(walkGroup);
 let walkPrefs = { kinds: [], start: 0, km: 3, loop: true, at: null, atLabel: '', stops: 0 }, walkRoute = null;
+// On a phone the walk is a bar above the modes, folded to its summary so the route shows; its header opens the stops.
+let walkFolded = false;
+const foldWalk = on => { walkFolded = on; walkEl.classList.toggle('folded', on); };
 let pickingStart = false, locating = false;
 const walkStops = () => [
   ...plaqueList.filter(p => p.gid >= 0 && Number.isFinite(p.x)).map(p => ({ id: `p${p.id}`, gid: p.gid, x: p.x, z: p.z,
@@ -2037,7 +2042,7 @@ function makeWalk() {
   if (!w.stops.length) { renderWalkPlanner(T('walk.none')); return; }
   walksDlg.close();
   if (quest) closeQuest();
-  walkRoute = w; drawWalk(w); renderWalk(w);
+  walkRoute = w; walkFolded = phone.matches; drawWalk(w); renderWalk(w);
   const xs = [w.start, ...w.stops], mx = xs.reduce((a, p) => a + p.x, 0) / xs.length, mz = xs.reduce((a, p) => a + p.z, 0) / xs.length;
   const spread = Math.max(...xs.map(p => Math.hypot(p.x - mx, p.z - mz)));
   flyTo(mx, mz, null, Math.min(6000, Math.max(700, spread * 2.6)));
@@ -2059,10 +2064,13 @@ function renderWalk(w) {
     <div class="q-actions"><a class="primary w-google" href="${esc(walkMapsUrl(w, latLonOf))}" target="_blank" rel="noopener">${esc(T('walk.google'))}</a>
       <button class="w-again">${esc(T('walk.again'))}</button></div>`;
   walkEl.hidden = false;
+  walkEl.classList.toggle('folded', walkFolded);
+  walkEl.querySelector('header').onclick = () => foldWalk(!walkFolded);
   walkEl.querySelector('.q-close').onclick = closeWalk;
   walkEl.querySelector('.w-again').onclick = openWalks;
   walkEl.querySelectorAll('.w-list button').forEach(b => b.onclick = () => {
     const p = w.stops[+b.dataset.i];
+    if (phone.matches) foldWalk(true);
     flyTo(p.x, p.z, () => pinCard(p.gid, innerWidth * 0.3, 120), 380);
   });
 }
@@ -2130,6 +2138,8 @@ sheetHandle.addEventListener('pointerup', e => {
 canvas.addEventListener('pointerdown', () => {
   if (phone.matches && !panelEl.classList.contains('collapsed')) setCollapsed(true);
 });
+// A walk on a phone folds at a touch on the map, like the legend; it closes only by its ×.
+canvas.addEventListener('pointerdown', () => { if (phone.matches && walkRoute && !walkFolded) foldWalk(true); });
 function collapsePanelOnPhone() { if (phone.matches) setCollapsed(true); }
 let storedLegend = null;
 try { storedLegend = localStorage.getItem(LEGEND_KEY); } catch {}

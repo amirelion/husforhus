@@ -2,6 +2,16 @@
   {
     "date": "2026-10-20",
     "kind": "feature",
+    "title": { "en": "Walks on a phone", "sv": "Promenader i mobilen" },
+    "text": {
+      "en": "On a phone, your walk now folds into a bar above the buttons, so the route and its numbered stops stay in view. Tap the bar for the list of stops and the Google Maps link; a touch on the map folds it again.",
+      "sv": "I mobilen fälls din promenad nu ihop till en list ovanför knapparna, så att vägen och de numrerade stoppen syns. Tryck på listen för att se stoppen och länken till Google Maps; en tryckning på kartan fäller ihop den igen."
+    },
+    "action": "walk"
+  },
+  {
+    "date": "2026-10-20",
+    "kind": "feature",
     "title": {
       "en": "Building archaeology from the City Museum",
       "sv": "Byggnadsarkeologi från Stadsmuseet"

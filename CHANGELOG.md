@@ -16,6 +16,8 @@ Plans, not promises: the order can change.
 ## 2026-10-20
 
 ### Features
+- **Walks on a phone** fold into a bar above the modes, so the route stays in view; the bar opens the stops and the Google Maps link, a touch on the map folds it, and a building's card hides it until it closes.
+- **What's new**, a short history of the map in the About panel, in English and Swedish.
 - **Building archaeology from the City Museum.** On 274 buildings in Gamla stan and on Riddarholmen, a pinned card now says what Stadsmuseet i Stockholm's building-archaeology register found: medieval walls documented (227 buildings), timber dated by tree rings, the years of each investigation, and a link to each report in Digitala Stadsmuseet. Used with the museum's permission; the facts are in the map's own words, and the building's year and colour do not change.
 
 - **The archaeology section is shorter, and its link works.** One line sums up the investigations ("Investigated 7 times, 1961–2019"), and one link opens the latest report itself in Digitala Stadsmuseet. Before, each report had a link, and every one opened the archive's front page.
