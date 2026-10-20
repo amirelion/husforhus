@@ -14,7 +14,8 @@ const text = html => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 const LANGS = ['en', 'sv'];
 
 test('news.json: well formed, both languages on every entry, valid dates newest first, the two kinds', () => {
-  assert.ok(Array.isArray(NEWS) && NEWS.length >= 12 && NEWS.length <= 18, `${NEWS.length} entries`);
+  // a short history: one entry per visible change; fold small ones into an existing entry before this grows past 30
+  assert.ok(Array.isArray(NEWS) && NEWS.length >= 12 && NEWS.length <= 30, `${NEWS.length} entries`);
   NEWS.forEach((e, i) => {
     const at = `entry ${i} (${e.date})`;
     assert.deepEqual(Object.keys(e).filter(k => !['date', 'kind', 'title', 'text', 'action'].includes(k)), [], at);

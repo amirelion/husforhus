@@ -14,6 +14,7 @@ import { latLonToLocal, localToLatLon } from './sweref.js';
 import { makeT, legacy, pickLang } from './i18n.js';
 import { plaquesByGid, plaqueSection } from './plaque.js';
 import { archaeologySection } from './archaeology.js';
+import { photoSlides, photoFigure } from './photos.js';
 import { metroOnFrom, metroHref, METRO_KEY, stationCard } from './metro.js';
 import { makeMetroLayer } from './metro-layer.js';
 import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
@@ -1334,15 +1335,12 @@ function cardHtml(gid, pinned) {
     b.rating && [esc(T('card.rating')), `<i class="rating r${b.rating}"></i>${esc(ratingLine(b.rating, T))}`],
     more.prot && [esc(T('card.prot')), esc(protLine(more, T))],
   ].filter(Boolean);
-  // A photo that failed to load stays off this card's redraws; its width and height (when known) keep its room.
-  const ph = more.photo && !failedPhotos.has(more.photo.key) ? more.photo : null;
-  const size = ph && ph.w > 0 && ph.h > 0 ? `width="${+ph.w}" height="${+ph.h}"` : '';
-  // The photo's alt names the building as the card's title does: its name, else its address.
+  // Photos through the years (web/photos.js): today's, then the archive's, oldest first; a photo that failed to load
+  // stays off this card's redraws; its width and height (when known) keep its room.
+  // The photo's alt names the building as the card's title does: its name, else its address; an archive photo its title.
   const what = more.name || placeLine(more, T);
-  const photo = ph && `
-    <figure class="photo"><img src="data/photos/${esc(ph.key)}" ${size}
-      alt="${esc(what ? T('card.photo.alt', { name: what }) : T('card.photo.alt.none'))}" loading="lazy" decoding="async">
-      <figcaption>${photoCredit(ph, T).map(c => (c.href ? link(c.href, c.text) : esc(c.text))).join(' · ')}</figcaption></figure>`;
+  const alt = s => (!s.today && s.t) || (what ? T('card.photo.alt', { name: what }) : T('card.photo.alt.none'));
+  const photo = photoFigure(photoSlides(more, failedPhotos), slideAt, T, esc, link, alt);
   const ex = more.wp ? extractFor(wikiOf(gid), LANG) : null;
   const excerpt = ex && `
     <section class="extract" lang="${ex.lang}"><p>${esc(ex.text)}</p>
@@ -1374,6 +1372,7 @@ let lastPin = [0, 0];
 let focusBack = null;     // where the keyboard focus goes when a pinned card closes
 let pinnedStation = null; // a metro station's card is pinned (pinStation)
 const failedPhotos = new Set();   // photo keys that failed to load: not asked for again on a redraw
+let slideAt = 0;                  // the pinned card's photo in the year strip (web/photos.js); a new pin starts at 0
 // A pinned card on a wide screen stays between the corner (the title, the count and its buttons) and the timeline, so
 // a tall card (a photo and an excerpt) never covers them or a timeline handle; it scrolls inside when it is taller
 // than that room. The hover card follows the pointer anywhere; on a phone the card is a sheet (styles.css).
@@ -1404,8 +1403,8 @@ function showCard(gid, x, y) {
 // A pinned card is a non-modal dialog: it takes the keyboard focus (its close button) when it opens, and gives it
 // back when it closes, by its button or Escape.
 function pinCard(gid, x, y) {
-  if (gid >= 0 && gid !== pinnedGid) pickSeq++;          // a new pin (not a redraw): a street's numbers still coming
-                                                         // no longer move the camera
+  if (gid >= 0 && gid !== pinnedGid) { pickSeq++; slideAt = 0; }   // a new pin (not a redraw): a street's numbers
+                                                         // still coming no longer move the camera; today's photo first
   if (gid !== forcedGid && forcedGid >= 0) force(-1);   // another building or none: the search pick is let go
   const was = pinnedGid;
   pinnedGid = gid;
@@ -1447,10 +1446,14 @@ function pinCard(gid, x, y) {
   card.querySelector('.card-share').onclick = e => shareCard(gid, e.currentTarget);
   card.querySelector('.card-wrong').onclick = () => openReport(reportRefOf(gid));
   card.querySelector('.photo img')?.addEventListener('error', e => {
-    failedPhotos.add(cardOf(gid).photo?.key);
+    failedPhotos.add(e.target.dataset.key);
     if (!e.target.isConnected || pinnedGid !== gid) return;    // a late error from a card drawn over since
-    e.target.closest('.photo')?.remove();
-    placeCard(...lastPin);
+    pinCard(gid, ...lastPin);                                  // drawn again without it (the next photo, or none)
+  });
+  // The year strip: a tab shows its photo, the card drawn again on the same building
+  card.querySelectorAll('.photo .years button').forEach(btn => btn.onclick = () => {
+    slideAt = +btn.dataset.slide;
+    pinCard(gid, ...lastPin);
   });
   placeCard(x, y);
   if (!redraw) close.focus({ preventScroll: true });

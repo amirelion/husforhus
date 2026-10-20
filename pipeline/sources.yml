@@ -200,6 +200,21 @@
   modified: true   # facts drawn from the records' fields and categories, placed on footprints; never their texts
   status: confirmed
 
+# The City Museum's archive photos (s00_fetch_stadsmuseet, s02_stadsmuseet_photos): CC BY photos of Gamla stan and
+# Riddarholmen on the pinned card's "photos through the years", each credited and linked to its own .info page. Only
+# photos whose own licence (field 590) is CC BY ship; NC and ND never do (docs/research/2026-10-19-stadsmuseet-sources.md
+# §5). The files are scaled down, never cropped or retouched.
+- id: stadsmuseet_photos
+  url: https://digitalastadsmuseet.stockholm.se/fotoweb/archives/5000-Alla-fotografier/
+  publisher: Stadsmuseet i Stockholm
+  product: Digitala Stadsmuseet
+  dataset: Digitala Stadsmuseet, fotografier
+  licence: CC-BY-4.0
+  licence_url: https://creativecommons.org/licenses/by/4.0/
+  attribution: Digitala Stadsmuseet, Stadsmuseet i Stockholm, CC BY 4.0
+  modified: false
+  status: confirmed
+
 # Tunnelbanan (behind city.FEATURES metro; s16_metro). The facts were checked against the research CSVs' own sources
 # (sv/en.wikipedia permalinks, Spårvägsmuseet, urbanrail.net: checking only, no text copied;
 # docs/research/2026-10-16-tunnelbanan.md §1). Wikidata's dates are changed in 11 places (§3), so "processed".

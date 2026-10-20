@@ -2,6 +2,15 @@
   {
     "date": "2026-10-20",
     "kind": "feature",
+    "title": { "en": "Old photos from the City Museum", "sv": "Gamla foton från Stadsmuseet" },
+    "text": {
+      "en": "159 buildings now show street views and façades from the City Museum's photo archive, most of them from around 1900, oldest first. For 99 of them it is the first photo on the map. Switch between the years under the picture.",
+      "sv": "159 byggnader visar nu gatubilder och fasader ur Stadsmuseets fotoarkiv, de flesta från omkring 1900, äldst först. För 99 av dem är det kartans första foto. Byt mellan åren under bilden."
+    }
+  },
+  {
+    "date": "2026-10-20",
+    "kind": "feature",
     "title": { "en": "Walks on a phone", "sv": "Promenader i mobilen" },
     "text": {
       "en": "On a phone, your walk now folds into a bar above the buttons, so the route and its numbered stops stay in view. Tap the bar for the list of stops and the Google Maps link; a touch on the map folds it again.",

@@ -5,7 +5,9 @@ Fails (exit 1, with a readable list) on:
   name, text or position, listed twice, or with a text that names an owner or a byggherre (spec §6.3);
 - building archaeology (card `br`, s02_stadsmuseet): on a private house, or not well formed (its own fields, the
   investigations' years, felling years, the credit "Stadsmuseet i Stockholm", a report link that is not https to
-  Digitala Stadsmuseet); and, in the privacy check, any of the City Museum register's property designations
+  Digitala Stadsmuseet); archive photos (card `arch`, s02_stadsmuseet_photos): on a private house, more than three,
+  not oldest first, with a link that is not the photo's own .info page in Digitala Stadsmuseet, or a file missing,
+  too large or not in photos.json; and, in the privacy check, any of the City Museum register's property designations
   (today's and the former ones it names) in any shipped file, as for FASTIGHET;
 - metro (s16_metro, when metro.json is there): a date that does not parse, a segment station not in the stations
   list, a line other than green, red or blue, or a coordinate outside the map;
@@ -106,6 +108,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from . import city, codes, contributions, plaques, stadsmuseet, suppress
+from . import stadsmuseet_photos as sm_photos
 from .estimate import GROUPS
 from .geo import lonlat_to_3011
 from .privacy import mentions, normalise, owner, phrases
@@ -177,7 +180,7 @@ PHOTO_LICENCE = re.compile(r"CC BY(-SA)? \d\.\d( [A-Z]{2})?|CC0|Public domain( \
 OLD_CC = re.compile(r"CC BY(-SA)? [23]\.\d( [A-Z]{2})?")
 COMMONS_PAGE = "https://commons.wikimedia.org/w/index.php?curid="
 COMMONS_PAGE_ID = re.compile(re.escape(COMMONS_PAGE) + r"\d+")   # the page id alone, as wiki.credit requires
-HIDDEN_FIELDS = ("raa", "qid", "wp", "photo", "en")
+HIDDEN_FIELDS = ("raa", "qid", "wp", "photo", "en", "arch")
 # A Wikidata item ("Q10123456"), a Commons page id or a photo's key (16 hex digits of the file's sha1, whose digit runs
 # can be eight long) is an identifier of its own, whose number can equal a property-unit key (FNR, 10,057,056–
 # 10,547,437 on 2026-10-16; Swedish Wikidata items live in that range): the FNR digit test skips a string that is
@@ -1045,7 +1048,8 @@ def check_photo_gids(out: Path, hidden: np.ndarray) -> list[str]:
         return ["photos: photo-gids.json is not a sorted list of gids"]
     n = len(hidden)
     has = {int(k) for _, shard in read_shards(out / "cards") for k, c in shard.items()
-           if k.isascii() and k.isdigit() and isinstance(c, dict) and "photo" in c and not (int(k) < n and hidden[int(k)])}
+           if k.isascii() and k.isdigit() and isinstance(c, dict) and ("photo" in c or "arch" in c)
+           and not (int(k) < n and hidden[int(k)])}
     listed = {int(g) for g in listed}
     return ([f"photos: photo-gids.json lists gid {g}, whose card has no photo" for g in sorted(listed - has)
              if not (g < n and hidden[g])]
@@ -1377,9 +1381,10 @@ def check_privacy(out: Path, uuids: set[str], props: set[str], fnrs: set[int] = 
                      | set(phrases(s.replace("_", " "))))     # a file name in a URL: "Diana_1.jpg"
             if parts & props:
                 errors.append(f"privacy: {rel} {path} holds a property designation (FASTIGHET)")
-            # a report page in Digitala Stadsmuseet is named by the archive's own file number ("10092195.pdf.info"),
+            # a report's or a photo's page in Digitala Stadsmuseet is named by the archive's own number ("10092195.pdf.info"),
             # which can equal an FNR by chance (two did, 2026-10-20); its designations are still checked above
             if (fnrs and not ID_FORMAT.fullmatch(s) and not stadsmuseet.REPORT_RE.fullmatch(s)
+                    and not sm_photos.PHOTO_PAGE.fullmatch(s)
                     and any(int(d) in fnrs for d in DIGITS_RE.findall(s))):
                 errors.append(f"privacy: {rel} {path} holds a property-unit key (FNR)")
             if s.casefold() == "fnr" and not path.startswith("line "):
@@ -1472,6 +1477,59 @@ def check_archaeology(out: Path, hidden: np.ndarray) -> list[str]:
                     errors.append(f"{where} has years out of order or outside {stadsmuseet.YEAR_MIN}..{YEAR_MAX}")
                 if "report" in e and not (isinstance(e["report"], str) and stadsmuseet.REPORT_RE.fullmatch(e["report"])):
                     errors.append(f"{where} report is not an https link to Digitala Stadsmuseet")
+    return errors
+
+
+ARCH_KEYS = {"key", "w", "h", "y", "by", "page", "t"}
+
+
+def check_archive_photos(out: Path, hidden: np.ndarray) -> list[str]:
+    """The City Museum's archive photos (card `arch`, s02_stadsmuseet_photos): never on a hidden card (a private
+    house, raa_hidden); a list of 1..stadsmuseet_photos.MAX_PER_BUILDING photos, oldest first (one without a year
+    last), each with only its own fields, a year from stadsmuseet_photos.YEAR_MIN to 2026 when it has one, its link
+    only as the photo's own .info page in Digitala Stadsmuseet (stadsmuseet_photos.PHOTO_PAGE: never a search or
+    filter address), and its file in web/data/photos/ (at most city.WIKI's photo_bytes) listed in photos.json."""
+    errors = []
+    used_path = out / "photos.json"
+    used = set(json.loads(used_path.read_text(encoding="utf-8"))) if used_path.exists() else set()
+    for p, shard in read_shards(out / "cards"):
+        for i, (key, card) in enumerate(shard.items()):
+            if not isinstance(card, dict) or "arch" not in card or not (key.isascii() and key.isdigit()):
+                continue
+            ref, arch = f"cards: {p.name} gid {shown(key, i)} arch", card["arch"]
+            if int(key) < len(hidden) and hidden[int(key)]:
+                errors.append(f"{ref}: archive photos on a private house")
+            if not (isinstance(arch, list) and 1 <= len(arch) <= sm_photos.MAX_PER_BUILDING
+                    and all(isinstance(e, dict) for e in arch)):
+                errors.append(f"{ref} is not a list of 1 to {sm_photos.MAX_PER_BUILDING} photos")
+                continue
+            order = [(e.get("y") is None, e.get("y") or 0) for e in arch]
+            if order != sorted(order):
+                errors.append(f"{ref} is not oldest first")
+            for k, e in enumerate(arch):
+                where = f"{ref}[{k}]"
+                extra = [shown(f, j, "field") for j, f in enumerate(sorted(set(e) - ARCH_KEYS))]
+                if extra:
+                    errors.append(f"{where} has fields other than its own: {extra}")
+                if "y" in e and not _year(e["y"], sm_photos.YEAR_MIN):
+                    errors.append(f"{where} has a year outside {sm_photos.YEAR_MIN}..{YEAR_MAX}")
+                if not (isinstance(e.get("page"), str) and sm_photos.PHOTO_PAGE.fullmatch(e["page"])):
+                    errors.append(f"{where} page is not the photo's own .info page in Digitala Stadsmuseet")
+                if not (whole(e.get("w")) and whole(e.get("h")) and e["w"] > 0 and e["h"] > 0):
+                    errors.append(f"{where} has no width and height")
+                for f in ("by", "t"):
+                    if f in e and not (isinstance(e[f], str) and e[f].strip()):
+                        errors.append(f"{where} has an empty {f}")
+                if "t" in e and isinstance(e["t"], str) and owner(e["t"]):
+                    errors.append(f"{where} has a title that says who owns the building")
+                pk = str(e.get("key", ""))
+                path = out.parent / "photos" / pk
+                if not re.fullmatch(r"[0-9a-f]{16}-\d+\.jpg", pk) or not path.is_file():
+                    errors.append(f"{where} names a photo that is not in {out.parent.name}/photos")
+                elif path.stat().st_size > city.WIKI["photo_bytes"]:
+                    errors.append(f"{where} names a photo over {city.WIKI['photo_bytes']:,} bytes")
+                if pk not in used:
+                    errors.append(f"{where} names a photo photos.json does not list")
     return errors
 
 
@@ -1593,6 +1651,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     errors += check_search(out, cfg, a, hidden, sets[1] if sets else frozenset(), data)
     errors += check_plaques(out, len(a))
     errors += check_archaeology(out, hidden)
+    errors += check_archive_photos(out, hidden)
     errors += check_metro(out)
     if sets:
         uuids, props, fnrs = sets

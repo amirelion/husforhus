@@ -87,7 +87,7 @@ def register(tmp_path, monkeypatch):
 
 def test_fetch_caches_every_answer_with_the_projects_user_agent(register):
     calls, _ = register
-    s00_fetch_stadsmuseet.main([])
+    s00_fetch_stadsmuseet.main(["--no-photos"])
     urls = [c[0] for c in calls]
     assert urls == [f"{API}/brInvestigations", f"{API}/brCategories", WFS, f"{API}/brInvestigations/285",
                     f"{API}/brInvestigations/492", stadsmuseet.ARCHIVE, stadsmuseet.ARCHIVE]
@@ -103,17 +103,17 @@ def test_fetch_caches_every_answer_with_the_projects_user_agent(register):
     assert str(s00_fetch_stadsmuseet.RAW) == "data/raw/stadsmuseet"
     # a second run asks nothing; --refresh asks again for everything
     calls.clear()
-    s00_fetch_stadsmuseet.main([])
+    s00_fetch_stadsmuseet.main(["--no-photos"])
     assert calls == []
-    s00_fetch_stadsmuseet.main(["--refresh"])
+    s00_fetch_stadsmuseet.main(["--refresh", "--no-photos"])
     assert len(calls) == 7
 
 
 def test_fetch_keeps_the_cache_when_the_register_does_not_answer(register, capsys):
     calls, down = register
-    s00_fetch_stadsmuseet.main([])
+    s00_fetch_stadsmuseet.main(["--no-photos"])
     down.add(f"{API}/brCategories")
-    s00_fetch_stadsmuseet.main(["--refresh"])
+    s00_fetch_stadsmuseet.main(["--refresh", "--no-photos"])
     assert "keeping the cached" in capsys.readouterr().err
     assert s00_fetch_stadsmuseet.CATEGORIES.exists()
 

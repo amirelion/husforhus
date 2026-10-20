@@ -13,7 +13,7 @@ import time
 
 STEPS = ["s00_fetch_city", "s00_fetch_raa", "s00_fetch_raa_old", "s00_fetch_wikidata", "s00_fetch_osm", "s00_fetch_dem",
          "s00_fetch_plaques", "s00_fetch_stadsmuseet", "s01_load", "s08_landmarks", "s02_years", "s02_attributes",
-         "s02_addresses", "s02_stadsmuseet", "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers", "s03_tiles",
+         "s02_addresses", "s02_stadsmuseet", "s02_stadsmuseet_photos", "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers", "s03_tiles",
          "s16_metro", "s04_base", "s07_labels", "s14_search", "s15_plaques", "s13_quests", "s99_validate"]
 
 

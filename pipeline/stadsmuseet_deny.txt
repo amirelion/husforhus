@@ -1,0 +1,3 @@
+# Archive photos from Digitala Stadsmuseet that never go on a card (pipeline/stadsmuseet_photos.py read_deny).
+# One per line: the photo's id (its .info page's file name without the extension), a tab or a space, then why.
+# data/review-stadsmuseet-photos.html gives each picked photo's line to paste here.

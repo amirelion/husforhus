@@ -429,6 +429,7 @@ def test_attribution_credits_each_source_in_the_d44_form():
         # Stadsmuseet's permission (2026-10-19) has no licence name: the credit says it is used with permission
         "stadsmuseet_br": ("Stads- och byggnadsarkeologiskt register: Stadsmuseet i Stockholm, used with permission, processed",
                            "Stads- och byggnadsarkeologiskt register: Stadsmuseet i Stockholm, används med tillstånd, bearbetad"),
+        "stadsmuseet_photos": ("Digitala Stadsmuseet, fotografier: Stadsmuseet i Stockholm, CC BY 4.0",) * 2,
         "metro_stations": both("Tunnelbanestationer: Wikidata, CC0"),
         "metro_track": ("Tunnelbanans spår: © OpenStreetMap contributors, ODbL, processed",
                         "Tunnelbanans spår: © OpenStreetMap-bidragsgivare, ODbL, bearbetad"),

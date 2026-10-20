@@ -42,7 +42,7 @@ def test_repo_sources_file():
     ids = [s["id"] for s in sources]
     assert ids == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse", "raa_old", "wikidata", "osm",
                    "lm_markhojd", "lm_laser", "wikipedia", "samfundet_plaques", "openplaques", "stadsmuseet_br",
-                   "metro_stations", "metro_track"]
+                   "stadsmuseet_photos", "metro_stations", "metro_track"]
     by_id = {s["id"]: s for s in sources}
     # Lantmäteriet's terrain model, CC BY 4.0 with no licence question pending (it never blocks --release)
     # asks for the product name, ©Lantmäteriet, that it was processed and the licence
@@ -122,6 +122,7 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
         "lm_markhojd": "Markhöjdmodell Nedladdning", "lm_laser": "Laserdata Nedladdning, skog", "wikipedia": "Wikipedia",
         "samfundet_plaques": "Kulturhusskyltar", "openplaques": "Open Plaques",
         "stadsmuseet_br": "Stads- och byggnadsarkeologiskt register",
+        "stadsmuseet_photos": "Digitala Stadsmuseet, fotografier",
         "metro_stations": "Tunnelbanestationer", "metro_track": "Tunnelbanans spår"}
     assert {k: s["credit_as"]["sv"] for k, s in by_id.items() if "credit_as" in s} == {
         "city_lod1": "© Stockholms stad, Stadsbyggnadskontoret", "city_stadsdelar": "© Stockholms stad, Stadsbyggnadskontoret",
@@ -137,8 +138,8 @@ def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)  # any working directory
     assert [s["id"] for s in load_sources()] == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse",
                                                   "raa_old", "wikidata", "osm", "lm_markhojd", "lm_laser", "wikipedia",
-                                                  "samfundet_plaques", "openplaques", "stadsmuseet_br", "metro_stations",
-                                                  "metro_track"]
+                                                  "samfundet_plaques", "openplaques", "stadsmuseet_br",
+                                                  "stadsmuseet_photos", "metro_stations", "metro_track"]
 
 
 def test_release_fails_on_pending_sources():

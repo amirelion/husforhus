@@ -20,10 +20,11 @@ def test_steps_contract():
     # s00_fetch_laser picks its candidates from the years, attributes and Wikidata names (so after s06_wiki), and
     # s02_towers' parts go into s03_tiles' tiles. metro: s16_metro writes metro.json into the version s03_tiles made.
     # The City Museum's register: fetched with the other sources, placed by s02_stadsmuseet once s02_addresses' table
-    # is there (its address fallback), and on s03_tiles' cards
+    # is there (its address fallback), and on s03_tiles' cards; its archive photos likewise (s02_stadsmuseet_photos
+    # reads years.parquet for the private houses)
     assert run.STEPS == ["s00_fetch_city", "s00_fetch_raa", "s00_fetch_raa_old", "s00_fetch_wikidata", "s00_fetch_osm",
                          "s00_fetch_dem", "s00_fetch_plaques", "s00_fetch_stadsmuseet", "s01_load", "s08_landmarks",
-                         "s02_years", "s02_attributes", "s02_addresses", "s02_stadsmuseet",
+                         "s02_years", "s02_attributes", "s02_addresses", "s02_stadsmuseet", "s02_stadsmuseet_photos",
                          "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers", "s03_tiles", "s16_metro", "s04_base", "s07_labels",
                          "s14_search", "s15_plaques", "s13_quests", "s99_validate"]
 

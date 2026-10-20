@@ -76,7 +76,9 @@ SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_
 KNOWN_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
 ESTIMATED_FLAGS = (codes.AREA, codes.ESTIMATE, codes.PERIOD)
 CARD_FIELDS = ("name", "en", "architects", "raa", "prot", "since", "qid", "wp", "photo", "nofloors", "rebuilt",
-               "cellars", "addr", "addrn", "tower", "yrd", "br")
+               "cellars", "addr", "addrn", "tower", "yrd", "br", "arch")
+# arch: the City Museum's archive photos (s02_stadsmuseet_photos), oldest first, after the photo as "through the years"
+ARCH_FIELDS = ("key", "w", "h", "y", "by", "page", "t")
 # rd: a reader's photo (pipeline/contributions.py), its report's reference; it has no Commons page or title
 PHOTO_FIELDS = ("key", "w", "h", "by", "lic", "lu", "page", "title", "rd")
 WIKI_LICENCE = "CC BY-SA 4.0"
@@ -205,6 +207,20 @@ def load_archaeology(data: Path = DATA) -> dict[int, dict]:
               "archaeology section (run s02_stadsmuseet again)", file=sys.stderr)
         return {}
     return {int(g): c for g, c in rec.get("cards", {}).items()}
+
+
+def load_archive_photos(data: Path = DATA) -> dict[int, list[dict]]:
+    """s02_stadsmuseet_photos' card entries (data/stadsmuseet-photos.json `cards`): {gid: arch}; none when the file is
+    missing, or when it was placed on another data/buildings.parquet."""
+    path = data / "stadsmuseet-photos.json"
+    if not path.exists():
+        return {}
+    rec = json.loads(path.read_text(encoding="utf-8"))
+    if rec.get("buildings_sha256") != hashlib.sha256((data / "buildings.parquet").read_bytes()).hexdigest():
+        print(f"warning: {path} was placed on another {data / 'buildings.parquet'}, so no card has archive photos "
+              "(run s02_stadsmuseet_photos again)", file=sys.stderr)
+        return {}
+    return {int(g): es for g, es in rec.get("cards", {}).items()}
 
 
 def load_places(data: Path = DATA) -> dict:
@@ -404,7 +420,8 @@ def _text(v) -> str:
 
 
 def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[dict] | None = None,
-                towers: dict[int, float] | None = None, archaeology: dict[int, dict] | None = None) -> list[dict]:
+                towers: dict[int, float] | None = None, archaeology: dict[int, dict] | None = None,
+                archive: dict[int, list[dict]] | None = None) -> list[dict]:
     """64 shards keyed by gid % 64; each holds {gid: card} with only CARD_FIELDS. `df` may carry s06_wiki's columns
     (qid, wname, wname_en, langs, photo), s02_attributes' (prot, since, nofloors) and with_places' (addr, addrn);
     `photos` maps a photo key to its credit (s06_wiki's photos.json). On a `hidden` row: no raa, qid, wp, photo or
@@ -412,8 +429,10 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
     curated row (years.parquet `landmark`) takes its entry's `rebuilt`, by year, and `cellars`; no other
     row does. `towers` maps a gid to its tallest laser part's height (tower_parts): the card's `tower`, whole metres,
     never on a hidden row. `archaeology` maps a gid to its building-archaeology entry (load_archaeology): the card's
-    `br`, never on a hidden row."""
+    `br`, never on a hidden row; `archive` a gid to its archive photos (load_archive_photos): the card's `arch`, never
+    on a hidden row."""
     photos = photos or {}
+    archive = archive or {}
     towers = towers or {}
     archaeology = archaeology or {}
     shards = [{} for _ in range(N_CARD_SHARDS)]
@@ -440,6 +459,8 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
             card["tower"] = int(round(towers[int(gid)]))
         if int(gid) in archaeology and not hide[i]:
             card["br"] = archaeology[int(gid)]
+        if archive.get(int(gid)) and not hide[i]:
+            card["arch"] = [{k: e[k] for k in ARCH_FIELDS if k in e} for e in archive[int(gid)]]
         if col["prot"][i]:
             card["prot"] = int(col["prot"][i])
             if col["since"][i]:
@@ -633,8 +654,14 @@ def make_config(df, tiles, packs, version, tile, sources, accuracy, terrain, lan
 
 
 def photo_gids(cards: list[dict]) -> list[int]:
-    """The sorted gids whose card carries a photo, from the card shards."""
-    return sorted(int(g) for shard in cards for g, c in shard.items() if "photo" in c)
+    """The sorted gids whose card carries a photo (a Commons or reader's photo, or archive photos), from the shards."""
+    return sorted(int(g) for shard in cards for g, c in shard.items() if "photo" in c or "arch" in c)
+
+
+def used_photos(cards: list[dict]) -> list[str]:
+    """photos.json: the sorted keys of every photo the cards show, the archive photos' too (build_dist ships them)."""
+    return sorted({k for shard in cards for c in shard.values()
+                   for k in ([c["photo"]["key"]] if "photo" in c else []) + [e["key"] for e in c.get("arch", [])]})
 
 
 def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = city.TILE,
@@ -642,12 +669,13 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
                   terrain: dict | None = None, wiki: dict | None = None, landmarks: list[dict] | None = None,
                   places: dict | None = None, towers: pd.DataFrame | None = None,
                   fixes: pd.DataFrame | None = None, reader: pd.DataFrame | None = None,
-                  archaeology: dict[int, dict] | None = None) -> dict:
+                  archaeology: dict[int, dict] | None = None, archive: dict[int, list[dict]] | None = None) -> dict:
     """Write packs, attrs, cards, excerpt shards, photos.json, layers.json and stockholm.json into `out`; return a size
     summary. wiki: load_wiki()'s shape (default: read from data/); landmarks: s08_landmarks' entries (likewise);
     places: load_places()'s shape (likewise); towers: s02_towers' parts (load_towers(); default: none); fixes: the
     card-name fixes (default pipeline/name_fixes.csv); reader: the accepted readers' reports (default
-    pipeline/contributions.csv); archaeology: s02_stadsmuseet's entries (load_archaeology(); default: read from data/)."""
+    pipeline/contributions.csv); archaeology: s02_stadsmuseet's entries (load_archaeology(); default: read from data/);
+    archive: s02_stadsmuseet_photos' entries (load_archive_photos(); likewise)."""
     out = Path(out)
     sources = load_sources(SOURCES) if sources is None else sources
     accuracy = load_accuracy() if accuracy is None else accuracy
@@ -658,6 +686,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     fixes = name_fixes.read() if fixes is None else fixes
     reader = contributions.read() if reader is None else reader
     archaeology = load_archaeology() if archaeology is None else archaeology
+    archive = load_archive_photos() if archive is None else archive
     df = with_places(name_fixes.apply(with_wiki(df, wiki["table"]), fixes), places)
     parts = tower_parts(df, towers)
     tiles = build_tiles(df, tile, parts)
@@ -666,7 +695,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     attrs = attrs_array(df)
     attrs_gz = io.write_gz(out / "attrs.bin.gz", attrs.tobytes())
     cards = card_shards(df, wiki["photos"], landmarks, towers={g: max(h for h, _ in ps) for g, ps in parts.items()},
-                        archaeology=archaeology)
+                        archaeology=archaeology, archive=archive)
     shown = shown_addresses(places["addresses"], df)
     addresses = {}
     for g, street, number in zip(shown.gid, shown.street, shown.number):
@@ -679,7 +708,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
         io.write_json(out / "wiki" / f"{k:02d}.json", shard)
     names, dist_bytes = district_codes(df)
     io.write_gz(out / "districts.bin.gz", dist_bytes.tobytes())
-    used = sorted({c["photo"]["key"] for shard in cards for c in shard.values() if "photo" in c})
+    used = used_photos(cards)
     io.write_json(out / "photos.json", used)
     io.write_json(out / "photo-gids.json", photo_gids(cards))
     io.write_json(out / "layers.json", [])

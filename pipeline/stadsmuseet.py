@@ -40,7 +40,7 @@ from .textfold import fold
 CREDIT = "Stadsmuseet i Stockholm"
 # A record's report: its own page in Digitala Stadsmuseet's archive of documents, found by the BR number in field 688
 # (s00_fetch_stadsmuseet asks ARCHIVE?688=<n>). The archive's web page ignores a ?BR=<n> address and shows its first
-# page for every number (found live, 2026-10-20), so the card links the report's own page.
+# page for every number (found live, 2026-10-20), so the card links the report's own page. Photos: stadsmuseet_photos.
 SITE = "https://digitalastadsmuseet.stockholm.se"
 ARCHIVE = f"{SITE}/fotoweb/archives/5004-Dokument-och-publikationer/"
 REPORT_RE = re.compile(re.escape(ARCHIVE) + r"[^\s\"'<>?#]+\.info")
@@ -141,17 +141,28 @@ def parse_address(text: str) -> tuple[list[tuple[str, list[str]]], bool]:
     return out, street_only
 
 
-def by_address(addrs: list[tuple[str, list[str]]], table: pd.DataFrame, streets: set[str]) -> list[int]:
+def address_index(table: pd.DataFrame) -> dict[tuple[str, str], set[int]]:
+    """{(street folded, number): the gids it sits on} over s02_addresses' table: built once, so a lookup is a dict
+    access, not a pass over the table (12,000 archive photos took half an hour that way, 2026-10-20)."""
+    out: dict[tuple[str, str], set[int]] = {}
+    for street, number, gid in zip(table.street.map(fold), table.number.astype(str), table.gid.astype(int)):
+        out.setdefault((street, number), set()).add(int(gid))
+    return out
+
+
+def by_address(addrs: list[tuple[str, list[str]]], table: pd.DataFrame, streets: set[str],
+               index: dict[tuple[str, str], set[int]] | None = None) -> list[int]:
     """The footprints any of the addresses sits on in s02_addresses' table (gid, street, number), the street as the
-    City writes it (plaques.known_street)."""
+    City writes it (plaques.known_street). `index`: address_index(table), when the caller looks up many."""
     if table.empty or not addrs:
         return []
-    folded = table.street.map(fold)
+    index = address_index(table) if index is None else index
     gids = set()
     for street, nums in addrs:
         s = known_street(street, streets)
         if s is not None:
-            gids |= set(table.gid[(folded == s) & table.number.isin(nums)].astype(int))
+            for n in nums:
+                gids |= index.get((s, str(n)), set())
     return sorted(gids)
 
 
