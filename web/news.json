@@ -1,0 +1,167 @@
+[
+  {
+    "date": "2026-10-20",
+    "kind": "feature",
+    "title": {
+      "en": "Building archaeology from the City Museum",
+      "sv": "Byggnadsarkeologi från Stadsmuseet"
+    },
+    "text": {
+      "en": "On 274 buildings in Gamla stan and on Riddarholmen, a pinned card now tells what the City Museum's building archaeologists found: medieval walls, timber dated by its tree rings, and when each building was examined. The latest report is one link away, in the museum's own archive.",
+      "sv": "På 274 byggnader i Gamla stan och på Riddarholmen berättar kortet nu vad Stadsmuseets byggnadsarkeologer har hittat: medeltida murar, virke som daterats med hjälp av årsringarna, och när huset undersöktes. Den senaste rapporten ligger en länk bort, i museets eget arkiv."
+    }
+  },
+  {
+    "date": "2026-10-18",
+    "kind": "feature",
+    "title": { "en": "Quests", "sv": "Uppdrag" },
+    "text": {
+      "en": "Seven quests across the city, from Gamla stan to Bromma: find buildings from riddles and old photos, and guess their age with the colours switched off. Every fact is checked against the building's Wikipedia article.",
+      "sv": "Sju uppdrag runt om i staden, från Gamla stan till Bromma: hitta byggnader utifrån gåtor och gamla foton, och gissa hur gamla de är med färgerna avslagna. Alla fakta är kontrollerade mot byggnadens artikel på Wikipedia."
+    },
+    "action": "quests"
+  },
+  {
+    "date": "2026-10-18",
+    "kind": "feature",
+    "title": { "en": "Walks", "sv": "Promenad" },
+    "text": {
+      "en": "Choose where to start and the map plans a walk past buildings with a story, with the route ready to follow in Google Maps. If you'd rather not see the buttons for quests and walks, hide them under Look.",
+      "sv": "Välj var du vill börja, så planerar kartan en promenad förbi byggnader med en historia, och vägen är klar att följa i Google Maps. Vill du hellre slippa knapparna för uppdrag och promenader döljer du dem under Utseende."
+    },
+    "action": "walk"
+  },
+  {
+    "date": "2026-10-18",
+    "kind": "feature",
+    "title": { "en": "Tell us when something is wrong", "sv": "Säg till när något inte stämmer" },
+    "text": {
+      "en": "“Something wrong?” on a building's card opens a short form: a wrong or missing year, a detail, or a photo of your own. A photo is made smaller and its location data removed in your browser, before it is sent.",
+      "sv": "”Något som inte stämmer?” på en byggnads kort öppnar ett kort formulär: ett felaktigt eller saknat årtal, en detalj eller ett eget foto. Fotot görs mindre och platsuppgifterna tas bort redan i din webbläsare, innan det skickas."
+    },
+    "action": "#about/contact"
+  },
+  {
+    "date": "2026-10-18",
+    "kind": "data",
+    "title": { "en": "Readers' reports on the map", "sv": "Läsarnas rapporter på kartan" },
+    "text": {
+      "en": "A reader's report, once checked, can now date a building, name it or give it a photo. The first one dated a building in Midsommarkransen that had no year, to 1938–1939, from construction photos a reader sent. The card says “a reader's report”, never a name.",
+      "sv": "En läsares rapport kan nu, när den har granskats, ge en byggnad ett årtal, ett namn eller ett foto. Den första gav en byggnad i Midsommarkransen, som saknade årtal, byggåren 1938–1939 utifrån byggfoton som en läsare skickade in. På kortet står ”en läsares rapport”, aldrig något namn."
+    }
+  },
+  {
+    "date": "2026-10-18",
+    "kind": "data",
+    "title": { "en": "More plaques on the right building", "sv": "Fler skyltar på rätt hus" },
+    "text": {
+      "en": "130 blue plaques now sit on their buildings, up from 127. Their addresses are read more carefully, and a plaque that belongs on a bridge is no longer put on a house nearby.",
+      "sv": "130 blå skyltar sitter nu på sina byggnader, mot 127 tidigare. Adresserna läses noggrannare, och en skylt som hör till en bro hamnar inte längre på ett hus i närheten."
+    },
+    "action": "?plaques=1"
+  },
+  {
+    "date": "2026-10-18",
+    "kind": "feature",
+    "title": { "en": "Smaller improvements", "sv": "Mindre förbättringar" },
+    "text": {
+      "en": "On a phone, the legend and the sources line fold away when you touch the map. A pin on a card's address opens the building in Google Maps. The switches for Tunnelbanan, the blue plaques and photos moved into Look, and the Stories list shows how each story begins and how long it is.",
+      "sv": "På mobilen fälls teckenförklaringen och källraden ihop när du rör vid kartan. En nål vid kortets adress öppnar byggnaden i Google Maps. Reglagen för Tunnelbanan, Blå skyltar och foton finns nu under Utseende, och listan med Berättelser visar hur varje berättelse börjar och hur lång den är."
+    }
+  },
+  {
+    "date": "2026-10-17",
+    "kind": "feature",
+    "title": { "en": "The map opens to everyone", "sv": "Kartan öppnar för alla" },
+    "text": {
+      "en": "Hus för hus is public, in English and Swedish (in Swedish for Swedish browsers). No cookies, no tracking.",
+      "sv": "Hus för hus är öppen för alla, på svenska och engelska (på svenska i svenska webbläsare). Inga kakor och ingen spårning."
+    }
+  },
+  {
+    "date": "2026-10-17",
+    "kind": "feature",
+    "title": { "en": "Search", "sv": "Sök" },
+    "text": {
+      "en": "Search for a street, an address, a named building or a district. Search also knows what is inside some buildings: 77 public institutions such as museums, from Wikidata.",
+      "sv": "Sök efter en gata, en adress, en namngiven byggnad eller en stadsdel. Sökningen vet också vad som finns i vissa byggnader: 77 offentliga verksamheter, till exempel museer, från Wikidata."
+    }
+  },
+  {
+    "date": "2026-10-17",
+    "kind": "feature",
+    "title": { "en": "History stories", "sv": "Berättelser" },
+    "text": {
+      "en": "Eleven short tours through the city's past, from the great fire of 1625 and the Vasa to the clearance of Klara and the metro station that never opened. Lost buildings are drawn in sandstone, with period photos and sources on every step.",
+      "sv": "Elva korta turer genom stadens historia, från den stora branden 1625 och Vasa till Klararivningarna och tunnelbanestationen som aldrig öppnade. Försvunna byggnader ritas i sandsten, med samtida bilder och källor i varje steg."
+    },
+    "action": "stories"
+  },
+  {
+    "date": "2026-10-17",
+    "kind": "feature",
+    "title": { "en": "Tunnelbanan", "sv": "Tunnelbanan" },
+    "text": {
+      "en": "Switch on the metro and watch the green, red and blue lines grow with the timeline from 1950. Every station has a card with its opening date and its earlier names.",
+      "sv": "Slå på tunnelbanan och se den gröna, den röda och den blå linjen växa fram längs tidslinjen från 1950. Varje station har ett kort med öppningsdagen och tidigare namn."
+    },
+    "action": "?metro=1"
+  },
+  {
+    "date": "2026-10-17",
+    "kind": "feature",
+    "title": { "en": "Blue plaques", "sv": "Blå skyltar" },
+    "text": {
+      "en": "127 of Samfundet S:t Erik's blue plaques, the ones that tell a building's story on its wall, are on the map, each with its own Swedish text on the card.",
+      "sv": "127 av Samfundet S:t Eriks blå skyltar, de som berättar en byggnads historia på fasaden, finns på kartan, var och en med sin text på kortet."
+    },
+    "action": "?plaques=1"
+  },
+  {
+    "date": "2026-10-17",
+    "kind": "data",
+    "title": { "en": "Real tower heights", "sv": "Tornen i sin rätta höjd" },
+    "text": {
+      "en": "189 buildings with towers and spires now rise to their real height, measured in Lantmäteriet's laser scan of the city: Stadshuset at 103 m, Kaknästornet at 139 m, the churches of Gamla stan and more, instead of flat blocks.",
+      "sv": "189 byggnader med torn och spiror reser sig nu till sin verkliga höjd, uppmätt i Lantmäteriets laserskanning av staden: Stadshuset 103 m, Kaknästornet 139 m, kyrkorna i Gamla stan och fler, i stället för platta block."
+    }
+  },
+  {
+    "date": "2026-10-17",
+    "kind": "feature",
+    "title": { "en": "Share a building", "sv": "Dela en byggnad" },
+    "text": {
+      "en": "Share a pinned card as a link that opens straight to it, or through your phone's share sheet. A switch highlights the buildings that have a photo, and the whole map works with a keyboard and a screen reader.",
+      "sv": "Dela ett kort som en länk som öppnar just det kortet, eller via telefonens delningsmeny. Ett reglage lyfter fram byggnaderna som har ett foto, och hela kartan går att använda med tangentbord och skärmläsare."
+    }
+  },
+  {
+    "date": "2026-10-16",
+    "kind": "feature",
+    "title": { "en": "Building cards", "sv": "Byggnadskort" },
+    "text": {
+      "en": "Click a building for its card: its year and where the year comes from, and for about 900 buildings a photo and a few lines from Wikipedia. A private house shows only its decade.",
+      "sv": "Klicka på en byggnad för att se dess kort: byggåret och var det kommer ifrån, och för ungefär 900 byggnader ett foto och några rader från Wikipedia. Ett privat hus visar bara sitt årtionde."
+    },
+    "action": "#about/privacy"
+  },
+  {
+    "date": "2026-10-16",
+    "kind": "data",
+    "title": { "en": "Where the years come from", "sv": "Var årtalen kommer ifrån" },
+    "text": {
+      "en": "The years come from the National Heritage Board's building registers, a hand-checked list of landmarks, Wikidata and OpenStreetMap. Houses are estimated only where a test showed the estimate works; the rest say “Year unknown”.",
+      "sv": "Årtalen kommer från Riksantikvarieämbetets register över byggnader, en handgranskad lista över landmärken, Wikidata och OpenStreetMap. Hus uppskattas bara där ett test visade att uppskattningen fungerar; övriga står som ”Okänt byggår”."
+    },
+    "action": "#about/years"
+  },
+  {
+    "date": "2026-10-15",
+    "kind": "feature",
+    "title": { "en": "Stockholm, building by building", "sv": "Stockholm, hus för hus" },
+    "text": {
+      "en": "All 77,743 buildings in Stockholm municipality in 3D, coloured by the year they were built. Drag the timeline or play the film to watch the city grow, colour it by Floors instead, choose one of four looks, and see the hills drawn from the City's contour lines.",
+      "sv": "Alla 77 743 byggnader i Stockholms kommun i 3D, färgade efter byggåret. Dra i tidslinjen eller spela filmen och se staden växa, färglägg den efter Våningar i stället, välj ett av fyra utseenden och se höjderna, ritade efter stadens höjdkurvor."
+    }
+  }
+]

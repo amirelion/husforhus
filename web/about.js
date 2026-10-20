@@ -183,8 +183,9 @@ export function aboutHtml(config, T, howto = '') {
     ${P('about.contact.data')}`;
 }
 
-// "#about/privacy" → "privacy"; "#about" → ""; anything else → null.
+// "#about/privacy" → "privacy"; "#about/news" → "news" (the What's new tab, web/news.js); "#about" → "";
+// anything else → null.
 export function aboutTarget(hash) {
   const m = String(hash || '').match(/^#about(?:\/([a-z]+))?$/);
-  return m ? (m[1] && SECTIONS.concat('thanks').includes(m[1]) ? m[1] : '') : null;
+  return m ? (m[1] && SECTIONS.concat('thanks', 'news').includes(m[1]) ? m[1] : '') : null;
 }

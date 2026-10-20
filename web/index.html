@@ -79,7 +79,8 @@
     <!-- History scenes (web/scene-player.js): its list drops below the buttons. -->
     <button class="stories-open" aria-haspopup="true" data-i18n="ui.stories">Stories</button>
     <div class="lang" role="group" aria-label="Language" data-i18n-aria="ui.lang">
-      <button class="about-open" aria-haspopup="dialog" data-i18n="ui.about">About</button>
+      <!-- The dot: a What's new entry this device has not seen yet (web/news.js showDot). -->
+      <button class="about-open" aria-haspopup="dialog"><span data-i18n="ui.about">About</span><i class="news-dot" hidden></i></button>
       <button data-lang="en" lang="en" aria-label="English" aria-pressed="true" hidden>EN</button><button data-lang="sv" lang="sv" aria-label="Svenska" aria-pressed="false" hidden>SV</button>
     </div>
   </div>

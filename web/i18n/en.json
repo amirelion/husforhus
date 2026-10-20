@@ -395,5 +395,18 @@
   "layers.title": "Context layers",
   "layers.all": "All context layers",
   "layers.stories": "Buildings and their stories",
-  "layers.person": "Find a person"
+  "layers.person": "Find a person",
+  "news.tabs": "About the map",
+  "news.tab.about": "About",
+  "news.tab.news": "What's new",
+  "news.title": "What's new on the map",
+  "news.kind.feature": "Feature",
+  "news.kind.data": "Data",
+  "news.action.about": "Read more under {section}",
+  "news.action.metro": "Show Tunnelbanan",
+  "news.action.plaques": "Show the blue plaques",
+  "news.action.stories": "Open Stories",
+  "news.action.quests": "Open Quests",
+  "news.action.walk": "Plan a walk",
+  "news.dot": "new"
 }

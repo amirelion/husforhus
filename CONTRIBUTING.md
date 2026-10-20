@@ -94,6 +94,7 @@ A story is a short camera tour of a past event, kept as CSV files in one folder 
 ## Translations and code
 
 - **Translations.** The whole interface's strings live in `web/i18n/en.json` and `web/i18n/sv.json`, by the same ids in both. Open a pull request fixing a string or adding a language file.
+- **What's new.** A release that changes what a visitor sees adds an entry to `web/news.json` in both languages, newest first: what a visitor can now do or see, in one to three plain sentences, without version strings or other internal names. [`CHANGELOG.md`](CHANGELOG.md) keeps the full detail.
 - **Search names.** The everyday names search knows for districts and landmarks ("Söder", "Slottet", "City Hall") are `DISTRICT_ALIASES` and `BUILDING_ALIASES` in `pipeline/city.py`. A name can point only at a district or a building whose card already carries the target name, never at a private house.
 - **Code.** Fixes are welcome as pull requests; please include a test and run the checks above.
 

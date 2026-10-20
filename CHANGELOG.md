@@ -2,6 +2,8 @@
 
 What changed on [husforhus.se](https://husforhus.se), newest first: the map's features and the data behind it. Each data build has a version (shown in About), such as `v20261017-p4i`.
 
+A shorter, friendly version is in the map's About panel, under What's new.
+
 ## Planned
 
 Plans, not promises: the order can change.

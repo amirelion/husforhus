@@ -395,5 +395,18 @@
   "layers.title": "Sammanhang",
   "layers.all": "Alla sammanhang",
   "layers.stories": "Byggnader och deras historier",
-  "layers.person": "Hitta en person"
+  "layers.person": "Hitta en person",
+  "news.tabs": "Om kartan",
+  "news.tab.about": "Om kartan",
+  "news.tab.news": "Nytt",
+  "news.title": "Nytt på kartan",
+  "news.kind.feature": "Funktion",
+  "news.kind.data": "Data",
+  "news.action.about": "Läs mer under {section}",
+  "news.action.metro": "Visa Tunnelbanan",
+  "news.action.plaques": "Visa Blå skyltar",
+  "news.action.stories": "Öppna Berättelser",
+  "news.action.quests": "Öppna Uppdrag",
+  "news.action.walk": "Planera en promenad",
+  "news.dot": "nytt"
 }

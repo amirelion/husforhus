@@ -33,6 +33,7 @@ import { northTurn, turnAt, needleDeg } from './north.js';
 import { mountSearch } from './searchbox.js';
 import { makeHighlight } from './highlight.js';
 import { aboutHtml, aboutTarget } from './about.js';
+import { tabsHtml, newsHtml, showDot, newestDate, nextTab, NEWS_KEY } from './news.js';
 import { buildingRef } from './report.js';
 import { reportDialog } from './report-form.js';
 import { cornerHtml } from './credits.js';
@@ -135,8 +136,10 @@ const DATA = `data/${version}/`;
 // Load order: config and the hot attributes, then pack0 (see Tiles). The other packs follow the first tile;
 // land, water and labels follow the first frame with buildings.
 // The strings (web/i18n): both languages, a few KB, so the language switches without a reload.
-const [config, attrBuf, I18N_EN, I18N_SV] = await Promise.all([getJson(`${DATA}${CITY}.json`),
-  fetchGz(`${DATA}attrs.bin.gz`), getJson('i18n/en.json'), getJson('i18n/sv.json')]).catch(halt);
+// What's new (web/news.json, About's second tab) is optional: without it the tab is empty, the map starts as before.
+const [config, attrBuf, I18N_EN, I18N_SV, NEWS] = await Promise.all([getJson(`${DATA}${CITY}.json`),
+  fetchGz(`${DATA}attrs.bin.gz`), getJson('i18n/en.json'), getJson('i18n/sv.json'),
+  getJson('news.json').catch(() => [])]).catch(halt);
 const I18N = { en: I18N_EN, sv: I18N_SV };
 const attrs = new DataView(attrBuf);
 // The count's own tally, built once from attrs.bin: the years the shader draws, a private house at its decade start
@@ -2761,18 +2764,66 @@ function applyStaticText() {
 // "Why?" links and the corner credit can point into it; its own section links scroll without changing the address.
 const about = document.getElementById('about');
 const aboutBody = document.getElementById('about-body');
+// Two tabs (web/news.js): About, the page above, and What's new, the timeline from web/news.json. #about/news opens
+// the second; every other #about link the first. The tab survives a language switch, not a close.
+let aboutTab = 'about';
+// An entry's action shows only where this build has what it opens.
+const newsCan = a => a === '?metro=1' ? !!metroData : a === '?plaques=1' ? !!plaqueList.length
+  : a === 'stories' ? !!FEATURES.scenes : a === 'quests' ? !!FEATURES.quests : a === 'walk' ? !!FEATURES.walks : true;
 function renderAbout() {
-  aboutBody.innerHTML = aboutHtml(config, T, t(howto(navigator)));
+  aboutBody.innerHTML = tabsHtml({ about: aboutHtml(config, T, t(howto(navigator))), news: newsHtml(NEWS, T, newsCan), T,
+    tab: aboutTab });
   aboutBody.lang = LANG;
+  markNews();
+}
+// The About button's dot: an entry newer than the newest this device has seen (localStorage NEWS_KEY). A first visit
+// remembers the newest at once and shows none; the What's new tab clears it.
+const newsDot = document.querySelector('.news-dot');
+const newsSeen = () => { try { return localStorage.getItem(NEWS_KEY); } catch { return null; } };
+const seeNews = () => { try { localStorage.setItem(NEWS_KEY, newestDate(NEWS)); } catch {} };
+if (NEWS.length && !newsSeen()) seeNews();
+function markNews() {
+  const on = showDot(NEWS, newsSeen());
+  newsDot.hidden = !on;
+  newsDot.innerHTML = on ? `<span class="visually-hidden"> ${esc(T('news.dot'))}</span>` : '';
+}
+function selectTab(tab, focus = false) {
+  aboutTab = tab;
+  aboutBody.querySelectorAll('[role="tab"]').forEach(b => {
+    const on = b.dataset.tab === tab;
+    b.setAttribute('aria-selected', String(on));
+    b.tabIndex = on ? 0 : -1;
+    if (on && focus) b.focus();
+  });
+  aboutBody.querySelectorAll('[role="tabpanel"]').forEach(p => { p.hidden = p.id !== `about-panel-${tab}`; });
+  about.scrollTop = 0;
+  if (tab === 'news') { seeNews(); markNews(); }
 }
 function openAbout(section = '') {
   if (!about.open) about.showModal();
-  const el = section && document.getElementById(`about-${section}`);
-  if (el) { el.scrollIntoView({ block: 'start' }); el.focus({ preventScroll: true }); } else about.scrollTop = 0;
+  selectTab(section === 'news' ? 'news' : 'about', section === 'news');
+  const el = section && section !== 'news' && document.getElementById(`about-${section}`);
+  if (el) { el.scrollIntoView({ block: 'start' }); el.focus({ preventScroll: true }); }
+}
+// A What's new action: a section of About, the metro or plaques switch, or the Stories, Quests or Walk button.
+function newsAction(a) {
+  if (a.startsWith('#about/')) { openAbout(a.slice(7)); return; }
+  about.close();
+  if (a === '?metro=1') setMetro(true);
+  else if (a === '?plaques=1') setPlaques(true);
+  else document.querySelector({ stories: '.stories-open', quests: '.quests-open', walk: '.walks-open' }[a])?.click();
 }
 function aboutFromHash() { const s = aboutTarget(location.hash); if (s !== null) openAbout(s); }
 addEventListener('hashchange', aboutFromHash);
+aboutBody.addEventListener('keydown', e => {
+  const tab = e.target.closest?.('[role="tab"]'), to = tab && nextTab(e.key, tab.dataset.tab);
+  if (to) { e.preventDefault(); selectTab(to, true); }
+});
 aboutBody.addEventListener('click', e => {
+  const tab = e.target.closest('[role="tab"]');
+  if (tab) { selectTab(tab.dataset.tab); return; }
+  const act = e.target.closest('.news-action');
+  if (act) { e.preventDefault(); newsAction(act.dataset.open || act.getAttribute('href')); return; }
   const a = e.target.closest('a[data-section]');
   if (a) { e.preventDefault(); openAbout(a.dataset.section); }
   if (e.target.closest('.report-open')) openReport(null);   // About's "Suggest something"
