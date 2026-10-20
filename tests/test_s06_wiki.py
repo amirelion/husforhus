@@ -114,6 +114,54 @@ def test_a_curated_landmark_takes_its_own_item_whatever_else_stands_on_it():
     assert (t.qid[0], t.name_en[0], t.placement[0]) == ("Q750444", "Stockholm Palace", "curated")
 
 
+def test_a_pinned_item_moves_to_its_own_footprint_and_leaves_the_one_its_point_falls_in(capsys):
+    # Vindragarlagets hus (Q10715723): its point fell inside the house next door, whose card showed its name, photo
+    # and article (2026-10-20); pipeline/wiki_pins.csv puts it on its own footprint by that footprint's uuid
+    b, years, items = town()
+    neighbour = wiki.items_from([a_row("Q6", 301, 1, BUILDING)], [b_row("Q6", sv="Grannhuset", nsl=9)])
+    items = pd.concat([items, neighbour], ignore_index=True)
+    pins = s06_wiki.pins_of(pd.DataFrame({"qid": ["Q1", "Q99"], "uuid": [b.uuid[3], "00000000-0000-4000-8000-0000000"
+                                                                                     "00099"], "reason": ["x", "y"]}), b)
+    assert pins == {"Q1": 3}
+    assert "wiki_pins: Q99: its footprint is not among these buildings" in capsys.readouterr().err
+    before = s06_wiki.select(b, years, items, ANC)
+    best = s06_wiki.select(b, years, items, ANC, pins=pins)
+    assert before.qid[0] == "Q1" and 0 not in best.index                  # the church's footprint loses it
+    # ... and its own footprint takes it over the item placed there, articles and sitelinks notwithstanding
+    assert (best.qid[3], best.placement[3], best["items"][3]) == ("Q1", "pinned", 3)
+    commons, extracts, thumbs = stubs({})
+    t = s06_wiki.build(b, years, set(), items, ANC, commons=commons, extracts=extracts, thumbs=thumbs,
+                       pins=pins)["table"].set_index("gid")
+    assert (t.qid[3], t.name[3], t.placement[3]) == ("Q1", "Kyrkan", "pinned") and 0 not in t.index
+
+
+def test_the_repo_pin_table_puts_each_item_on_its_own_house():
+    t = s06_wiki.read_pins()
+    assert t.set_index("qid").uuid.to_dict() == {
+        "Q10715723": "5f88e1cb-0b71-4852-9549-132b1970971f",      # Vindragarlagets hus, Stora Hoparegränd 6
+        "Q10505314": "dacaf108-6f9c-4c80-a3b3-53a9cbcadc7f",      # the listed house at Johannesgränd 4
+        "Q10551608": "f71eaa09-dc47-4e2f-9531-095fe5ae3b6e"}      # Källaren Stralsund, across Skottgränd
+
+
+def test_a_pin_on_a_uuid_with_several_footprints_is_refused():
+    # the register gives a few buildings two footprints: which one the item belongs on is a hand check (as cited.rows
+    # refuses such a row), never whichever gid came last
+    b, _, _ = town()
+    b.loc[b.gid == 1, "uuid"] = b.uuid[3]
+    with pytest.raises(ValueError, match="several footprints"):
+        s06_wiki.pins_of(pd.DataFrame({"qid": ["Q1"], "uuid": [b.uuid[3]], "reason": ["x"]}), b)
+
+
+@pytest.mark.parametrize("text", ["qid,uuid,reason\nQx,5f88e1cb-0b71-4852-9549-132b1970971f,why\n",
+                                  "qid,uuid,reason\nQ1,not-a-uuid,why\n",
+                                  "qid,uuid,reason\nQ1,5f88e1cb-0b71-4852-9549-132b1970971f,\n",
+                                  "qid,gid,reason\nQ1,31598,why\n"])
+def test_a_malformed_pin_table_is_refused(tmp_path, text):
+    (tmp_path / "pins.csv").write_text(text, encoding="utf-8")
+    with pytest.raises(ValueError):
+        s06_wiki.read_pins(tmp_path / "pins.csv")
+
+
 def test_a_curated_landmark_without_an_item_keeps_the_item_the_rules_choose_and_no_warning(capsys):
     # A Gamla stan house curated with qid "" has no item of its own to take, so its footprint keeps what the
     # rules place there (as before it was curated), and that is not worth a warning

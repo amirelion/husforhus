@@ -112,7 +112,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from . import city, codes, contributions, ferries, plaques, stadsmuseet, suppress
+from . import cited, city, codes, contributions, ferries, plaques, stadsmuseet, suppress
 from . import stadsmuseet_photos as sm_photos
 from .estimate import GROUPS
 from .geo import lonlat_to_3011
@@ -127,6 +127,7 @@ from . import terrain
 from .tiles_decode import parse
 from .tiles_decode import parts as tile_parts
 from .wiki import beside_private
+from .yearrules import FLOOR_YEAR, LATEST_YEAR
 
 DATA = Path("data")
 MAX_FILE_BYTES = 20 * 1024 * 1024
@@ -151,10 +152,11 @@ FERRY_ID = re.compile(r"[rw]\d+")
 MIN_PRIVATE_OVERLAP = 2  # years a private row's decade must share with its period, or the pair pins the year
 YFLAGS = (codes.EXACT, codes.RANGE, codes.LONG, codes.AREA, codes.ESTIMATE, codes.PERIOD, codes.UNKNOWN)
 YSRCS = (codes.SRC_NONE, codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_AREA, codes.SRC_WIKIDATA, codes.SRC_ESTIMATE,
-         codes.SRC_RAA_OLD, codes.SRC_OSM, codes.SRC_READER)
-# The codes.py pairing: the yflags a source may carry.
+         codes.SRC_RAA_OLD, codes.SRC_OSM, codes.SRC_READER, codes.SRC_CITED)
+# The codes.py pairing: the yflags a source may carry (a cited record may give only a period: the curated PERIOD).
 PAIRS = {codes.SRC_NONE: (codes.UNKNOWN,), codes.SRC_RAA_AREA: (codes.AREA,),
-         codes.SRC_ESTIMATE: (codes.ESTIMATE, codes.PERIOD)}
+         codes.SRC_ESTIMATE: (codes.ESTIMATE, codes.PERIOD),
+         codes.SRC_CITED: (codes.EXACT, codes.RANGE, codes.LONG, codes.PERIOD)}
 DATED_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
 # The accuracy table's keys, a cell's keys and the statuses.
 TABLE_KEYS = {"method", "held_out", "folds", "near_m", "min_cell", "min_right", "max_band", "tested", "cells", "fallback",
@@ -188,7 +190,7 @@ PHOTO_LICENCE = re.compile(r"CC BY(-SA)? \d\.\d( [A-Z]{2})?|CC0|Public domain( \
 OLD_CC = re.compile(r"CC BY(-SA)? [23]\.\d( [A-Z]{2})?")
 COMMONS_PAGE = "https://commons.wikimedia.org/w/index.php?curid="
 COMMONS_PAGE_ID = re.compile(re.escape(COMMONS_PAGE) + r"\d+")   # the page id alone, as wiki.credit requires
-HIDDEN_FIELDS = ("raa", "qid", "wp", "photo", "en", "arch")
+HIDDEN_FIELDS = ("raa", "qid", "wp", "photo", "en", "arch", "yc")
 # A Wikidata item ("Q10123456"), a Commons page id, a photo's key (16 hex digits of the file's sha1, whose digit runs
 # can be eight long) or a ferry route's OpenStreetMap relation or way ("r10234567", s17_ferries; OSM's relations reach
 # 21 million) is an identifier of its own, whose number can equal a property-unit key (FNR, 10,057,056–10,547,437 on
@@ -915,6 +917,8 @@ def check_cards(out: Path, a: np.ndarray, hidden: np.ndarray, allowed_names: set
             errors += check_rebuilds(f"cards: {p.name} {ref}", card, a[int(key)])
             if "yrd" in card:
                 errors += check_reader_line(f"cards: {p.name} {ref}", card["yrd"], a[int(key)], hidden[int(key)])
+            if "yc" in card:
+                errors += check_cited_line(f"cards: {p.name} {ref}", card["yc"], a[int(key)])
             for field in ("name", "en"):   # a register's building code is an internal id
                 if isinstance(card.get(field), str) and REGISTER_CODE.search(card[field]):
                     errors.append(f"cards: {p.name} {ref} {field} carries a register's building code")
@@ -934,6 +938,56 @@ def check_cards(out: Path, a: np.ndarray, hidden: np.ndarray, allowed_names: set
             if rare:
                 errors.append(f"cards: {p.name} {ref} is in a private-house category and names {len(rare)} architect(s) "
                               f"found on {city.ARCHITECT_MAX_RARE} cards or fewer")
+    return errors
+
+
+def check_cited_line(where: str, yc, rec) -> list[str]:
+    """A card's `yc` (the cited records its year comes from, cited.card_entry): on a cited card, or on a "Year unknown"
+    one whose cited span no map period holds 3/4 of (then with the span, `a` and `z`, or an either pair's `e`); its
+    source one of cited.SOURCES, its link a page of that source (cited.place_ok: a Wikipedia revision by its oldid
+    alone, D49: no article title ships), `k` only "rebuilt", `c` (the record says "about") only true; an either pair's
+    `e` two readings {a, z, s, u} and nothing of a single row beside them; `r`, the rebuilds, and `o`, the other houses
+    on the footprint, readings by year; a reading's `c` only true. A hidden card carrying it is check_cards'
+    HIDDEN_FIELDS error."""
+    if not isinstance(yc, dict) or set(yc) - {"s", "u", "k", "a", "z", "e", "r", "o", "c"}:
+        return [f"{where} has a `yc` that is not {{s, u, k, a, z, e, r, o, c}}"]
+    errors = []
+
+    def readings(v, n=None) -> bool:
+        return (isinstance(v, list) and len(v) >= 1 and (n is None or len(v) == n) and all(
+            isinstance(o, dict) and set(o) - {"c"} == {"a", "z", "s", "u"} and o.get("c", True) is True
+            and whole(o["a"]) and whole(o["z"])
+            and FLOOR_YEAR <= o["a"] <= o["z"] <= LATEST_YEAR and isinstance(o["s"], str) and isinstance(o["u"], str)
+            and cited.place_ok(o["s"], o["u"]) for o in v)
+            and [(o["a"], o["z"]) for o in v] == sorted((o["a"], o["z"]) for o in v))
+
+    span = "e" in yc or "a" in yc            # what the card shows where no year ships
+    if rec["ysrc"] != codes.SRC_CITED and not (span and rec["ysrc"] == codes.SRC_NONE):
+        errors.append(f"{where} has `yc` but its year is not a cited record's")
+    if "e" in yc:
+        if set(yc) - {"e", "r", "o"}:
+            errors.append(f"{where} has a `yc` with an either pair and a single row's fields")
+        if not readings(yc["e"], 2):
+            errors.append(f"{where} has a `yc.e` that is not two readings {{a, z, s, u}} by year, each a cited "
+                          "source's page")
+    else:
+        if not (isinstance(yc.get("s"), str) and isinstance(yc.get("u"), str) and cited.place_ok(yc["s"], yc["u"])):
+            errors.append(f"{where} has a `yc` whose source or link is not a cited source's page (a Wikipedia link by "
+                          "its oldid alone)")
+        if "k" in yc and yc["k"] != "rebuilt":
+            errors.append(f"{where} has a `yc` of another kind")
+        if "c" in yc and yc["c"] is not True:
+            errors.append(f"{where} has a `yc.c` that is not true")
+        if ("a" in yc) != ("z" in yc) or ("a" in yc and not (whole(yc["a"]) and whole(yc["z"])
+                                                            and FLOOR_YEAR <= yc["a"] <= yc["z"] <= LATEST_YEAR)):
+            errors.append(f"{where} has a `yc` span that is not two years a..z")
+        elif "a" in yc and rec["ysrc"] == codes.SRC_CITED:
+            errors.append(f"{where} has a `yc` span, but its year ships (the card reads that)")
+    if "r" in yc and not readings(yc["r"]):
+        errors.append(f"{where} has a `yc.r` that is not rebuilds {{a, z, s, u}} by year, each a cited source's page")
+    if "o" in yc and not readings(yc["o"]):
+        errors.append(f"{where} has a `yc.o` that is not other houses {{a, z, s, u}} by year, each a cited source's "
+                      "page")
     return errors
 
 
@@ -980,6 +1034,147 @@ def check_contributions(data: Path, path: Path = contributions.PATH) -> list[str
             contributions.gids(t.iloc[[i]], b)
         except contributions.Refused as e:
             errors.append(f"contributions: {e}")
+    return errors
+
+
+def check_cited(a: np.ndarray, data: Path, takedowns: list[dict] = (), sources: list[dict] | None = None,
+                path: Path | None = None, *, out: Path | None = None, hidden: np.ndarray | None = None,
+                release: bool = False) -> list[str]:
+    """The cited years table (pipeline/cited.py) the caller names: s99's main and build_dist's gate pass the repo's
+    pipeline/gamla_stan_years.csv; None is a build with no table (a fixture's), so no test reads the repo's rows.
+
+    The table: well formed (cited.read: every row cited, its place a page of its source with no Wikipedia article
+    title, an inventory one of the CC BY ones, a quote of at most 25 words where the source is KulturNav or
+    Wikipedia), every source credited in sources.yml, no quote, note or place naming a property designation, and
+    every City Museum report one the museum's register links (stadsmuseet.cached_reports: without the cache, a
+    warning; on a release, an error). On this build, per footprint (a key's rows: a primary row or an either pair,
+    and its rebuilt and also rows, cited.read checks they belong together): its key (a uuid, or "oid:<n>" where the
+    footprint has no uuid) on exactly one footprint and no other key on that one (cited.clashes; one on none is a
+    warning, on a release an error: the City redrew it), never on a takedown (an error:
+    the row would keep the year public in the repository; delete it, docs/privacy.md), carrying the footprint's year
+    as the cited tier writes it (cited.year_of on the primary's span or the either pair's readings; a private house its
+    decade) unless RAÄ or a landmark dates it (a warning), the row is a period around a Wikidata or OSM year (a
+    warning: s02 keeps the more precise record) or no map period holds 3/4 of its span (then no cited year, and no
+    area, Wikidata, OSM or estimated year either: "Year unknown"); its card, unless hidden, carrying the `yc` its rows
+    give (cited.card_entry: none where another tier dates it, the span where no year ships). No building carries a
+    cited year without its row."""
+    errors = []
+    if path is None or not Path(path).exists():
+        t = cited.empty()
+    else:
+        try:
+            t = cited.read(path)
+        except ValueError as e:
+            return [f"cited: {e}"]
+    ids = {s.get("id") for s in (load_sources(SOURCES) if sources is None else sources)}
+    for name in sorted({cited.SOURCES[s]["credit"] for s in t.source} - ids):
+        errors.append(f"cited: source {name} is not in sources.yml (its credit would be missing)")
+    reports = t.place[t.source == "ssm_br"]
+    if len(reports):
+        linked = stadsmuseet.cached_reports(data)
+        if linked is None:
+            msg = (f"cited: cannot check that {len(reports)} City Museum reports are ones the register links without "
+                   f"{data / 'raw' / 'stadsmuseet' / 'reports'} (s00_fetch_stadsmuseet)")
+            if release:
+                errors.append(msg)
+            else:
+                print(f"s99_validate: warning: {msg}", file=sys.stderr)
+        else:
+            for i, (src, place) in enumerate(zip(t.source, t.place)):
+                if src == "ssm_br" and place not in linked:
+                    errors.append(f"cited: row {i + 1} cites a City Museum document the register does not link "
+                                  "(the museum's permission covers the register's reports only)")
+    stray_cited = a["ysrc"] == codes.SRC_CITED
+    bpath = data / "buildings.parquet"
+    if not bpath.exists():
+        if not t.empty:
+            print(f"s99_validate: warning: cited: {len(t)} rows not resolved without {bpath}", file=sys.stderr)
+        return errors
+    names = pq.read_schema(bpath).names
+    b = pd.read_parquet(bpath, columns=[c for c in ("gid", "uuid", "oid", "fastighet", "kategori") if c in names])
+    props = {normalise(f) for f in b.fastighet.dropna() if f.strip()} - {""}
+    props |= register_designations(data)
+    for i, r in enumerate(t.to_dict("records")):
+        if (mentions(r["quote"], props) or mentions(r["note"], props)
+                or mentions(r["place"].replace("_", " "), props)):
+            errors.append(f"cited: row {i + 1} names a property designation in its quote, note or place")
+    withheld, _ = suppress.resolve(b, list(takedowns)) if takedowns else (set(), [])
+    keys = cited.by_key(t)
+    where = cited.footprints(keys, b) if keys else {}
+    # two keys on one footprint, or an oid key where the City gives a UUID (one on several footprints: below, per row)
+    errors += [f"cited: {e}" for e in cited.clashes(where, b) if not e.startswith("keys on several footprints")]
+    shards: dict[int, dict] = {}
+
+    def card_of(g: int) -> dict:
+        k = g % N_CARD_SHARDS
+        if k not in shards:
+            f = out / "cards" / f"{k:02d}.json"
+            shards[k] = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+        c = shards[k].get(str(g)) if isinstance(shards[k], dict) else None
+        return c if isinstance(c, dict) else {}
+
+    # One footprint at a time: a key's rows (a primary row or an either pair, and its rebuilt rows) named by the first
+    # one's row number
+    for key, rs in keys.items():
+        i = rs[0]["_i"]
+        found = where[key]
+        if not found:
+            msg = f"cited: row {i + 1}: its footprint is not among these buildings"
+            if release:
+                errors.append(f"{msg} (the City redrew it?): find the footprint again or hold the row")
+            else:
+                print(f"s99_validate: warning: {msg}", file=sys.stderr)
+            continue
+        if len(found) > 1:
+            errors.append(f"cited: row {i + 1} is on {len(found)} footprints, not exactly one")
+            continue
+        g = int(found[0])
+        if g >= len(a):
+            continue                                   # check_data reports a buildings file of another build
+        stray_cited[g] = False
+        rec = a[g]
+        if g in withheld:
+            errors.append(f"cited: row {i + 1} (gid {g}) is on a takedown: delete the row from "
+                          "pipeline/gamla_stan_years.csv (docs/privacy.md, takedowns)")
+            continue
+        f = cited.footprint(rs)
+        y_from, y_to = f["year_from"], f["year_to"]
+        year, flag = cited.footprint_year(f)
+        if rec["ysrc"] in (codes.SRC_RAA, codes.SRC_RAA_OLD, codes.SRC_CURATED):
+            print(f"s99_validate: warning: cited: row {i + 1} (gid {g}) is dated by a RAÄ record or a landmark; "
+                  "s02 skipped it", file=sys.stderr)
+        elif flag == codes.UNKNOWN:
+            if rec["ysrc"] == codes.SRC_CITED:
+                errors.append(f"cited: row {i + 1} (gid {g}) ships a cited year, but no map period holds 3/4 of its "
+                              "span (cited.year_of): it must stay \"Year unknown\"")
+                continue
+            if rec["ysrc"] in (codes.SRC_RAA_AREA, codes.SRC_WIKIDATA, codes.SRC_OSM, codes.SRC_ESTIMATE):
+                errors.append(f"cited: row {i + 1} (gid {g}) has no map period, but its footprint ships a year from a "
+                              "tier the cited one outranks (area, Wikidata, OSM or the estimate): s02 clears it")
+                continue
+        elif (f["kind"] == "period" and rec["ysrc"] in (codes.SRC_WIKIDATA, codes.SRC_OSM)
+                and y_from <= int(rec["year_from"]) and int(rec["year_to"]) <= y_to):
+            print(f"s99_validate: warning: cited: row {i + 1} (gid {g}) is a period around the footprint's Wikidata or "
+                  "OSM year, which is more precise; s02 kept that (cited_period_vs_record)", file=sys.stderr)
+        else:
+            if rec["private"]:
+                year = year // 10 * 10
+                y_from, y_to = year, year + 9
+            got = (int(rec["ysrc"]), int(rec["yflag"]), int(rec["year"]), int(rec["year_from"]), int(rec["year_to"]))
+            if got != (codes.SRC_CITED, flag, year, y_from, y_to):
+                errors.append(f"cited: row {i + 1} (gid {g}) does not ship as its row says (ysrc, yflag, year, "
+                              f"year_from, year_to: {got}, not {(codes.SRC_CITED, flag, year, y_from, y_to)})")
+                continue
+            if (flag == codes.PERIOD or f["kind"] == "either") and rec["private"]:
+                errors.append(f"cited: row {i + 1} (gid {g}) is a period or an either pair on a private house")
+        # the card: the line the rows give (both readings of an either pair, the rebuilds, a span no year ships), or
+        # none where another tier dates the footprint (cited.card_entry)
+        if (out is not None and not (hidden is not None and hidden[g])
+                and card_of(g).get("yc") != cited.card_entry(rs, int(rec["ysrc"]))):
+            errors.append(f"cited: row {i + 1} (gid {g}): its card does not link the row's source and page (`yc`)")
+    if stray_cited.any():
+        errors.append(f"cited: {int(stray_cited.sum())} buildings carry a cited year without a row "
+                      f"(gids {first_gids(stray_cited)})")
     return errors
 
 
@@ -1392,8 +1587,9 @@ def check_privacy(out: Path, uuids: set[str], props: set[str], fnrs: set[int] = 
                 errors.append(f"privacy: {rel} {path} holds a property designation (FASTIGHET)")
             # a report's or a photo's page in Digitala Stadsmuseet is named by the archive's own number ("10092195.pdf.info"),
             # which can equal an FNR by chance (two did, 2026-10-20); its designations are still checked above
+            # and a cited record's own page (a Wikipedia permalink's oldid, a KulturNav entry) likewise
             if (fnrs and not ID_FORMAT.fullmatch(s) and not stadsmuseet.REPORT_RE.fullmatch(s)
-                    and not sm_photos.PHOTO_PAGE.fullmatch(s)
+                    and not sm_photos.PHOTO_PAGE.fullmatch(s) and not cited.is_place(s)
                     and any(int(d) in fnrs for d in DIGITS_RE.findall(s))):
                 errors.append(f"privacy: {rel} {path} holds a property-unit key (FNR)")
             if s.casefold() == "fnr" and not path.startswith("line "):
@@ -1699,7 +1895,10 @@ def check_ferries(out: Path, cfg: dict | None = None, *, release: bool = False) 
 
 
 def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: list[dict] | None = None,
-             takedowns: list[dict] | None = None) -> list[str]:
+             takedowns: list[dict] | None = None, cited_path: Path | None = None) -> list[str]:
+    """Every check on the build in `out` (web/data/<version>), with data/ for the keys and privacy sets. cited_path:
+    the cited years table this build was made with (pipeline/gamla_stan_years.csv for s99's main and build_dist's
+    gate); None for a build with none (a fixture's)."""
     out, data = Path(out), Path(data)
     sources = load_sources(SOURCES) if sources is None else sources
     takedowns = suppress.load() if takedowns is None else takedowns
@@ -1743,6 +1942,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     errors += check_districts(out, cfg, len(a))
     errors += check_suppressed(out, a, data, takedowns)
     errors += check_contributions(data)
+    errors += check_cited(a, data, takedowns, sources, cited_path, out=out, hidden=hidden, release=release)
     sets = privacy_sets(data) if (data / "buildings.parquet").exists() else None
     errors += check_search(out, cfg, a, hidden, sets[1] if sets else frozenset(), data)
     errors += check_plaques(out, len(a))
@@ -1766,11 +1966,12 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--data", default=str(DATA), help="pipeline data directory (for the privacy sets)")
     ap.add_argument("--release", action="store_true", help="also fail on sources still pending-O1")
     ap.add_argument("--suppress", type=Path, default=None, help="takedowns (default pipeline/suppress.yml)")
+    ap.add_argument("--cited", type=Path, default=cited.PATH, help="the cited building years the build used")
     args = ap.parse_args(argv)
     version = args.version or json.loads(CURRENT.read_text())["version"]
     out = CURRENT.parent / version
     takedowns = suppress.load(args.suppress)
-    errors = validate(out, Path(args.data), release=args.release, takedowns=takedowns)
+    errors = validate(out, Path(args.data), release=args.release, takedowns=takedowns, cited_path=args.cited)
     if errors:
         print(f"s99_validate: {len(errors)} problem(s) in {out}:", file=sys.stderr)
         for e in errors:

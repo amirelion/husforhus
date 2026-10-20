@@ -42,7 +42,8 @@ def test_repo_sources_file():
     ids = [s["id"] for s in sources]
     assert ids == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse", "raa_old", "wikidata", "osm",
                    "lm_markhojd", "lm_laser", "wikipedia", "samfundet_plaques", "openplaques", "stadsmuseet_br",
-                   "stadsmuseet_photos", "metro_stations", "metro_track", "ferry_routes"]
+                   "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories", "metro_stations", "metro_track",
+                   "ferry_routes"]
     by_id = {s["id"]: s for s in sources}
     # Lantmäteriet's terrain model, CC BY 4.0 with no licence question pending (it never blocks --release)
     # asks for the product name, ©Lantmäteriet, that it was processed and the licence
@@ -123,6 +124,7 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
         "samfundet_plaques": "Kulturhusskyltar", "openplaques": "Open Plaques",
         "stadsmuseet_br": "Stads- och byggnadsarkeologiskt register",
         "stadsmuseet_photos": "Digitala Stadsmuseet, fotografier",
+        "kulturnav": "KulturNav, Byggnader i Sverige", "stadsmuseet_inventories": "Byggnadsinventeringar",
         "metro_stations": "Tunnelbanestationer", "metro_track": "Tunnelbanans spår", "ferry_routes": "Båtlinjer"}
     assert {k: s["credit_as"]["sv"] for k, s in by_id.items() if "credit_as" in s} == {
         "city_lod1": "© Stockholms stad, Stadsbyggnadskontoret", "city_stadsdelar": "© Stockholms stad, Stadsbyggnadskontoret",
@@ -133,6 +135,13 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
         "ferry_routes": "© OpenStreetMap-bidragsgivare"}
     # the City's own credit (its licence answer, 2026-10-16): "© Stockholms stad, Stadsbyggnadskontoret, CC BY"
     assert {k for k, s in by_id.items() if "licence_as" in s} == {"city_lod1", "city_stadsdelar", "city_stadskarta"}
+    # the cited years' two new sources (pipeline/cited.py): KulturNav CC0, the museum's inventories CC BY
+    assert credit(by_id["kulturnav"]) == {"en": "KulturNav, Byggnader i Sverige: ArkDes, CC0, processed",
+                                          "sv": "KulturNav, Byggnader i Sverige: ArkDes, CC0, bearbetad"}
+    # ... "CC BY 4.0", as the museum's photos are credited (Digitala Stadsmuseet's field 590 "BY")
+    assert credit(by_id["stadsmuseet_inventories"]) == {
+        "en": "Byggnadsinventeringar: Stadsmuseet i Stockholm, CC BY 4.0, processed",
+        "sv": "Byggnadsinventeringar: Stadsmuseet i Stockholm, CC BY 4.0, bearbetad"}
 
 
 def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
@@ -140,8 +149,8 @@ def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
     assert [s["id"] for s in load_sources()] == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse",
                                                   "raa_old", "wikidata", "osm", "lm_markhojd", "lm_laser", "wikipedia",
                                                   "samfundet_plaques", "openplaques", "stadsmuseet_br",
-                                                  "stadsmuseet_photos", "metro_stations", "metro_track",
-                                                  "ferry_routes"]
+                                                  "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories",
+                                                  "metro_stations", "metro_track", "ferry_routes"]
 
 
 def test_release_fails_on_pending_sources():

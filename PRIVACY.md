@@ -20,7 +20,7 @@ For every building, the map never shows property designations (fastighetsbeteckn
 - **No tracking.** There is no analytics or tracking script.
 - **No accounts.** There is nothing to sign up for or log in to.
 - **Your choices stay in your browser.** The map remembers the look, weather, hills, language, the boats switch and the legend's settings in your browser's local storage. They are never sent anywhere.
-- **No third-party requests.** The map, its data, its fonts and its photos are served from the site itself, so using it, including opening a card or sending the report form, contacts no other service. Links to the heritage register, Wikipedia, Wikidata, Wikimedia Commons and OpenStreetMap open those sites, which have their own privacy policies.
+- **No third-party requests.** The map, its data, its fonts and its photos are served from the site itself, so using it, including opening a card or sending the report form, contacts no other service. Links to the heritage register, Wikipedia, Wikidata, Wikimedia Commons, OpenStreetMap, KulturNav and the City Museum's archive (Digitala Stadsmuseet) open those sites, which have their own privacy policies.
 
 Like any website, the server that delivers the pages handles the technical details of each request, such as your IP address and browser.
 

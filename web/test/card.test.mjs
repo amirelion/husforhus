@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { yearLine, sourceLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
-  decade, band, decadeOnly, isEstimate, rebuildLine, placeLine, whyAnchor } from '../card.js';
+  decade, band, decadeOnly, isEstimate, rebuildLine, placeLine, whyAnchor, citedParts, citedRebuilds, citedShown, citedAlso,
+  citedMore, citedHead } from '../card.js';
 import { makeT } from '../i18n.js';
 import { YFLAG, YSRC, FSRC } from '../codes.js';
 
@@ -154,9 +155,20 @@ test('a decade that starts a century prints as its ten years, in English and Swe
   assert.ok(decadeOnly(b({ year: 1640, yearFrom: 1640, yearTo: 1649, yflag: YFLAG.RANGE })));
 });
 
-// The legend's note promises that "the card says whether from an area or from neighbours" for every estimated year.
-test('the card says area or neighbours for every estimated year, as the legend promises', () => {
+// The legend's note promises that "the card says whether from an area, from neighbours or from a record that gives
+// only a century or a period" for every estimated year (the estimate tone: AREA, ESTIMATE and PERIOD, a cited record's
+// included).
+test('the card says area, neighbours or the record for every estimated year, as the legend promises', () => {
   const area = /area|område/, near = /neighbours|nearby|grannarna|närheten/;
+  const record = /^≈ .*· (KulturNav|Swedish Wikipedia|svenska Wikipedia|City Museum|Stadsmuseet)/;
+  for (const T of [EN, SV]) {
+    for (const [a, z] of [[1600, 1699], [1300, 1399], [1650, 1699], [1000, 1520], [1300, 1499]]) {   // centuries and periods
+      const cited = b({ year: Math.floor((a + z) / 2), yearFrom: a, yearTo: z, yflag: YFLAG.PERIOD, ysrc: YSRC.CITED });
+      assert.match(sourceLine(cited, T, { yc: { s: 'wikipedia_sv', u: 'https://sv.wikipedia.org/w/index.php?oldid=1' } }),
+        record);
+      assert.ok(isEstimate(cited));      // drawn in the estimate tone, left out by the hide-estimates switch
+    }
+  }
   for (const priv of [0, 1]) {
     for (const T of [EN, SV]) {
       const year = { year: 1950, yearFrom: 1950, yearTo: 1959, private: priv };
@@ -250,4 +262,216 @@ test("a reader's photo is credited with the sender's name, CC BY 4.0, as a reade
     lu: 'https://creativecommons.org/licenses/by/4.0/', rd: 'HFH-12' };
   assert.deepEqual(photoCredit(photo, EN), [{ text: "Photo: A. Reader, CC BY 4.0, a reader's photo" }]);
   assert.deepEqual(photoCredit(photo, SV), [{ text: 'Foto: A. Reader, CC BY 4.0, en läsares foto' }]);
+});
+
+test('a cited year: built, a decade, a new house, a period and a medieval house, with its source, in English and Swedish', () => {
+  const c = o => ({ ysrc: YSRC.CITED, yflag: YFLAG.EXACT, ...o });
+  const kn = { s: 'kulturnav', u: 'https://kulturnav.org/74ce2767-f09f-4bdf-b86e-ea22dbd632b6' };
+  const wp = { s: 'wikipedia_sv', u: 'https://sv.wikipedia.org/w/index.php?oldid=1' };
+  const cases = [
+    [c({ year: 1858, yearFrom: 1855, yearTo: 1858, yflag: YFLAG.RANGE }), kn,
+      'Built 1855–1858 · KulturNav (ArkDes)', 'Byggt 1855–1858 · KulturNav (ArkDes)'],
+    [c({ year: 1640, yearFrom: 1640, yearTo: 1649, yflag: YFLAG.RANGE }), wp,
+      'Built in the 1640s · Swedish Wikipedia', 'Byggt på 1640-talet · svenska Wikipedia'],
+    [c({ year: 1854, yearFrom: 1854, yearTo: 1854 }), { ...wp, k: 'rebuilt' },
+      'Built 1854, replacing an older house · Swedish Wikipedia', 'Byggt 1854 och ersatte ett äldre hus · svenska Wikipedia'],
+    [c({ year: 1650, yearFrom: 1650, yearTo: 1659, yflag: YFLAG.RANGE }), { s: 'ssm_inventory', u: 'x' },
+      'Built in the 1650s · City Museum, building inventory', 'Byggt på 1650-talet · Stadsmuseet, byggnadsinventering'],
+    [c({ year: 1655, yearFrom: 1600, yearTo: 1699, yflag: YFLAG.PERIOD }), wp,
+      '≈ built in the 1600s · Swedish Wikipedia', '≈ byggt på 1600-talet · svenska Wikipedia'],
+    [c({ year: 1630, yearFrom: 1600, yearTo: 1649, yflag: YFLAG.PERIOD }), wp,
+      '≈ built in the first half of the 1600s · Swedish Wikipedia', '≈ byggt under 1600-talets första hälft · svenska Wikipedia'],
+    [c({ year: 1674, yearFrom: 1650, yearTo: 1699, yflag: YFLAG.PERIOD }), { s: 'ssm_br', u: 'x' },
+      '≈ built in the second half of the 1600s · City Museum, building archaeology',
+      '≈ byggt under 1600-talets andra hälft · Stadsmuseet, byggnadsarkeologi'],
+    [c({ year: 1550, yearFrom: 1500, yearTo: 1699, yflag: YFLAG.PERIOD }), wp,
+      '≈ built in the 1500s–1600s · Swedish Wikipedia', '≈ byggt på 1500–1600-talet · svenska Wikipedia'],
+    // a century's beginning, middle and end, in the record's words, never as end years no record gives (the review
+    // of 2026-10-20): 1600–1624, 1640–1660, 1675–1699
+    [c({ year: 1617, yearFrom: 1611, yearTo: 1624, yflag: YFLAG.PERIOD }), wp,
+      '≈ built 1611–1624 · Swedish Wikipedia', '≈ byggt 1611–1624 · svenska Wikipedia'],
+    [c({ year: 1612, yearFrom: 1600, yearTo: 1624, yflag: YFLAG.PERIOD }), wp,
+      '≈ built in the early 1600s · Swedish Wikipedia', '≈ byggt i början av 1600-talet · svenska Wikipedia'],
+    [c({ year: 1650, yearFrom: 1640, yearTo: 1660, yflag: YFLAG.PERIOD }), { s: 'ssm_br', u: 'x' },
+      '≈ built around the mid-1600s · City Museum, building archaeology',
+      '≈ byggt kring mitten av 1600-talet · Stadsmuseet, byggnadsarkeologi'],
+    [c({ year: 1687, yearFrom: 1675, yearTo: 1699, yflag: YFLAG.PERIOD }), { s: 'ssm_br', u: 'x' },
+      '≈ built in the late 1600s · City Museum, building archaeology',
+      '≈ byggt i slutet av 1600-talet · Stadsmuseet, byggnadsarkeologi'],
+    // "late 1630s or early 1640s", as the Sparre palace's article says it (the map's year is the span's end)
+    [c({ year: 1644, yearFrom: 1635, yearTo: 1644, yflag: YFLAG.RANGE }), wp,
+      'Built in the late 1630s or early 1640s · Swedish Wikipedia',
+      'Byggt i slutet av 1630-talet eller i början av 1640-talet · svenska Wikipedia'],
+    // a record's "about" (cited.py circa): "about 1640", never a bare 1640 the record does not claim
+    [c({ year: 1640, yearFrom: 1640, yearTo: 1640 }), { ...wp, k: 'rebuilt', c: true },
+      'Built about 1640, replacing an older house · Swedish Wikipedia',
+      'Byggt omkring 1640 och ersatte ett äldre hus · svenska Wikipedia'],
+    [c({ year: 1650, yearFrom: 1650, yearTo: 1650 }), { s: 'ssm_br', u: 'x', c: true },
+      'Built about 1650 · City Museum, building archaeology', 'Byggt omkring 1650 · Stadsmuseet, byggnadsarkeologi'],
+    // medieval: the records date the old fabric a later rebuild kept, so the card says where the house began
+    [c({ year: 1399, yearFrom: 1300, yearTo: 1499, yflag: YFLAG.PERIOD }), wp,
+      '≈ medieval origin · Swedish Wikipedia', '≈ medeltida ursprung · svenska Wikipedia'],
+    [c({ year: 1349, yearFrom: 1300, yearTo: 1399, yflag: YFLAG.PERIOD }), wp,
+      '≈ medieval origin · Swedish Wikipedia', '≈ medeltida ursprung · svenska Wikipedia'],
+    [c({ year: 1260, yearFrom: 1000, yearTo: 1520, yflag: YFLAG.PERIOD }), { s: 'ssm_br', u: 'x' },
+      '≈ medieval origin · City Museum, building archaeology', '≈ medeltida ursprung · Stadsmuseet, byggnadsarkeologi'],
+    [c({ year: 1299, yearFrom: 1000, yearTo: 1599, yflag: YFLAG.PERIOD }), wp,
+      '≈ medieval origin · Swedish Wikipedia', '≈ medeltida ursprung · svenska Wikipedia'],
+    // a card without its shard entry (the hover card before the shard loads) still says it is a record
+    [c({ year: 1643, yearFrom: 1643, yearTo: 1643 }), undefined, 'Built 1643 · a published record', 'Byggt 1643 · en publicerad källa'],
+  ];
+  for (const [bb, yc, en, sv] of cases) {
+    assert.equal(sourceLine(b(bb), EN, { yc }), en);
+    assert.equal(sourceLine(b(bb), SV, { yc }), sv);
+  }
+  // a private house: the source, then the decade rule (or "period only"); never the record's span
+  assert.equal(sourceLine(b(c({ year: 1643, yearFrom: 1643, yearTo: 1643, private: 1 })), EN, {}),
+    'A published record · ' + EN('card.private.rule'));
+  assert.equal(sourceLine(b(c({ year: 1655, yearFrom: 1600, yearTo: 1699, yflag: YFLAG.PERIOD, private: 1 })), SV, {}),
+    'En publicerad källa · småhus: bara perioden');
+  // the header names the period, as for any period-only year; an "about" year stays the record's year there (§14)
+  assert.equal(yearLine(b(c({ year: 1655, yearFrom: 1600, yearTo: 1699, yflag: YFLAG.PERIOD })), 'Stormaktstiden', EN), 'Stormaktstiden');
+  assert.equal(yearLine(b(c({ year: 1640, yearFrom: 1640, yearTo: 1640 })), '', EN, { s: 'wikipedia_sv', u: 'x', c: true }), '1640');
+});
+
+// pipeline/cited.py's either pair (two sources that differ, decided 2026-10-20): both readings, each linked to its record
+test('two sources that differ: both readings on the card, each linked to its source, in English and Swedish', () => {
+  const wp = 'https://sv.wikipedia.org/w/index.php?oldid=1', kn = 'https://kulturnav.org/74ce2767-f09f-4bdf-b86e-ea22dbd632b6';
+  const inv = 'https://digitalastadsmuseet.stockholm.se/fotoweb/archives/5004-Dokument-och-publikationer/Dokument/Byggnadsinventeringar/10043930.pdf.info';
+  const o = (a, z, s = 'wikipedia_sv', u = wp, c = false) => ({ a, z, s, u, ...(c ? { c } : {}) });
+  // coloured: one period holds 3/4 of the readings (PERIOD, the estimate tone); or not: no colour, the line all the same
+  const coloured = (a, z) => b({ year: Math.floor((a + z) / 2), yearFrom: a, yearTo: z, yflag: YFLAG.PERIOD, ysrc: YSRC.CITED });
+  const unknown = b({});
+  const cases = [
+    [coloured(1785, 1798), [o(1785, 1785), o(1798, 1798, 'ssm_inventory', inv)],
+      'Built in 1785 or 1798 (sources differ)', 'Byggt 1785 eller 1798 (källorna går isär)'],
+    [coloured(1630, 1649), [o(1630, 1639), o(1640, 1649)],
+      'Built in the 1630s or the 1640s (sources differ)', 'Byggt på 1630-talet eller 1640-talet (källorna går isär)'],
+    [coloured(1785, 1799), [o(1785, 1785), o(1790, 1799)],
+      'Built in 1785 or the 1790s (sources differ)', 'Byggt 1785 eller på 1790-talet (källorna går isär)'],
+    // the other reading keeps its verb: "…, or built 1650"
+    [coloured(1000, 1699), [o(1000, 1520, 'ssm_br', 'x'), o(1600, 1699, 'kulturnav', kn)],
+      '≈ medieval origin, or built in the 1600s (sources differ)',
+      '≈ medeltida ursprung eller byggt på 1600-talet (källorna går isär)'],
+    [coloured(1300, 1650), [o(1300, 1399), o(1650, 1650)],
+      '≈ medieval origin, or built 1650 (sources differ)', '≈ medeltida ursprung eller byggt 1650 (källorna går isär)'],
+    // Gåsgränd 4: medieval, or the 1500s to the mid-1600s
+    [coloured(1000, 1649), [o(1000, 1520, 'ssm_br', 'x'), o(1500, 1649, 'ssm_br', 'y')],
+      '≈ medieval origin, or built between 1500 and the mid-1600s (sources differ)',
+      '≈ medeltida ursprung eller byggt mellan 1500 och mitten av 1600-talet (källorna går isär)'],
+    [coloured(1600, 1699), [o(1600, 1624), o(1640, 1640, 'wikipedia_sv', wp, true)],
+      'Built in the early 1600s or about 1640 (sources differ)',
+      'Byggt i början av 1600-talet eller omkring 1640 (källorna går isär)'],
+    [coloured(1600, 1699), [o(1600, 1699), o(1643, 1643)],
+      '≈ built in the 1600s or 1643 (sources differ)', '≈ byggt på 1600-talet eller 1643 (källorna går isär)'],
+    [coloured(1600, 1699), [o(1600, 1649), o(1650, 1699)],
+      '≈ built in the first half of the 1600s or the second half of the 1600s (sources differ)',
+      '≈ byggt under 1600-talets första hälft eller 1600-talets andra hälft (källorna går isär)'],
+    [unknown, [o(1580, 1580), o(1650, 1659)],
+      'Built in 1580 or the 1650s (sources differ)', 'Byggt 1580 eller på 1650-talet (källorna går isär)'],
+  ];
+  for (const [bb, e, en, sv] of cases) {
+    assert.ok(citedShown(bb, { e }));
+    assert.equal(sourceLine(bb, EN, { yc: { e } }), en);
+    assert.equal(sourceLine(bb, SV, { yc: { e } }), sv);
+  }
+  // each reading is a link to its own record, the source's name its title, the preposition outside the link
+  assert.deepEqual(citedParts(cases[0][0], EN, { e: cases[0][1] }), [
+    { text: 'Built ' }, { text: 'in ' }, { text: '1785', href: wp, title: 'Swedish Wikipedia' }, { text: ' or ' },
+    { text: '1798', href: inv, title: 'City Museum, building inventory' }, { text: ' (sources differ)' }]);
+  assert.deepEqual(citedParts(cases[3][0], SV, { e: cases[3][1] }).filter(p => p.href), [
+    { text: 'medeltida ursprung', href: 'x', title: 'Stadsmuseet, byggnadsarkeologi' },
+    { text: '1600-talet', href: kn, title: 'KulturNav (ArkDes)' }]);
+  assert.deepEqual(citedParts(cases[3][0], EN, { e: cases[3][1] }), [
+    { text: '≈ ' }, { text: 'medieval origin', href: 'x', title: 'City Museum, building archaeology' },
+    { text: ', or built ' }, { text: 'in ' }, { text: 'the 1600s', href: kn, title: 'KulturNav (ArkDes)' },
+    { text: ' (sources differ)' }]);
+  // the header: the period's name where the readings have one; where none does, that the sources differ (the line
+  // gives both), and "Year unknown" only without the card's records
+  assert.equal(yearLine(cases[0][0], 'Frihetstid & Gustavian', EN), 'Frihetstid & Gustavian');
+  assert.equal(yearLine(unknown, '', EN, { e: cases.at(-1)[1] }), 'Sources differ');
+  assert.equal(yearLine(unknown, '', SV, { e: cases.at(-1)[1] }), 'Källorna går isär');
+  assert.equal(yearLine(unknown, '', EN), 'Year unknown');
+  // an unknown building without the cited line: as before
+  assert.ok(!citedShown(unknown, undefined) && !citedShown(unknown, { e: [o(1580, 1580)] }));
+  assert.equal(sourceLine(unknown, EN, {}), 'No open record dates this building yet.');
+  // a building another source dates never shows a cited line, nor does a private house
+  assert.ok(!citedShown(b({ year: 1700, yflag: YFLAG.EXACT, ysrc: YSRC.RAA }), { e: cases[0][1] }));
+  assert.ok(!citedShown({ ...cases[0][0], private: 1 }, { e: cases[0][1] }));
+});
+
+test('a cited period no map period holds 3/4 of: no colour, but its header and line give the record', () => {
+  const wp = 'https://sv.wikipedia.org/w/index.php?oldid=54474172';
+  const yc = { s: 'wikipedia_sv', u: wp, a: 1600, z: 1624 };
+  const unknown = b({});
+  assert.ok(citedShown(unknown, yc));
+  assert.equal(sourceLine(unknown, EN, { yc }), '≈ built in the early 1600s · Swedish Wikipedia');
+  assert.equal(sourceLine(unknown, SV, { yc }), '≈ byggt i början av 1600-talet · svenska Wikipedia');
+  assert.deepEqual(citedParts(unknown, EN, yc), [{ text: '≈ built in the early 1600s · Swedish Wikipedia', href: wp }]);
+  assert.equal(sourceLine(unknown, EN, { yc: { ...yc, a: 1580, z: 1650 } }), '≈ built 1580–1650 · Swedish Wikipedia');
+  // the header says what the record gives, not "Year unknown" over a dated line (the review of 2026-10-20)
+  assert.equal(yearLine(unknown, '', EN, yc), '≈ early 1600s');
+  assert.equal(yearLine(unknown, '', SV, yc), '≈ början av 1600-talet');
+  assert.equal(yearLine(unknown, '', EN, { ...yc, a: 1580, z: 1649 }), '≈ 1580–1649');
+  assert.equal(citedHead({ ...yc, a: 1580, z: 1649 }, SV), '≈ 1580–1649');
+  assert.equal(yearLine(unknown, '', EN), 'Year unknown');
+  assert.equal(yearLine({ ...unknown, private: 1 }, '', EN, yc), 'Year unknown');      // never a private house's
+  // the span is only read where no year ships: a span on an area-dated building is no cited line
+  assert.ok(!citedShown(b({ year: 1650, yflag: YFLAG.AREA, ysrc: YSRC.RAA_AREA }), yc));
+});
+
+test('the rebuilds a cited record names: the pinned card\'s second line, each year linked to its record', () => {
+  const wp = 'https://sv.wikipedia.org/w/index.php?oldid=53738008', ssm = 'x';
+  const o = (a, z, s = 'wikipedia_sv', u = wp) => ({ a, z, s, u });
+  // "Rebuilt or extended": a rebuild, an extension, a raised storey or a new facade (the review of 2026-10-20)
+  const cases = [
+    [[o(1780, 1780)], 'Rebuilt or extended 1780', 'Om- eller tillbyggt 1780'],
+    [[o(1907, 1907), o(1947, 1947, 'ssm_br', ssm)], 'Rebuilt or extended 1907 and 1947', 'Om- eller tillbyggt 1907 och 1947'],
+    [[o(1877, 1888), o(1902, 1902), o(1940, 1949)], 'Rebuilt or extended 1877–1888, 1902 and in the 1940s',
+      'Om- eller tillbyggt 1877–1888, 1902 och på 1940-talet'],
+    [[o(1910, 1919), o(1940, 1949)], 'Rebuilt or extended in the 1910s and the 1940s',
+      'Om- eller tillbyggt på 1910-talet och 1940-talet'],
+    [[o(1600, 1699), o(1780, 1780)], 'Rebuilt or extended in the 1600s and 1780', 'Om- eller tillbyggt på 1600-talet och 1780'],
+    // two centuries as one span, so "and" never reads as part of an "or" (Didrik Ficks gränd 6)
+    [[o(1600, 1799, 'ssm_br', ssm), o(1884, 1884)], 'Rebuilt or extended in the 1600s–1700s and 1884',
+      'Om- eller tillbyggt på 1600–1700-talet och 1884'],
+    [[o(1640, 1660), o(1780, 1780)], 'Rebuilt or extended around the mid-1600s and 1780',
+      'Om- eller tillbyggt kring mitten av 1600-talet och 1780'],
+    [[{ ...o(1774, 1774), c: true }], 'Rebuilt or extended about 1774', 'Om- eller tillbyggt omkring 1774'],
+  ];
+  for (const [r, en, sv] of cases) {
+    assert.equal(citedRebuilds({ s: 'wikipedia_sv', u: wp, r }, EN).map(p => p.text).join(''), en);
+    assert.equal(citedRebuilds({ s: 'wikipedia_sv', u: wp, r }, SV).map(p => p.text).join(''), sv);
+  }
+  assert.deepEqual(citedRebuilds({ e: [o(1785, 1785), o(1798, 1798)], r: cases[1][0] }, EN), [
+    { text: 'Rebuilt or extended ' }, { text: '1907', href: wp, title: 'Swedish Wikipedia' }, { text: ' and ' },
+    { text: '1947', href: ssm, title: 'City Museum, building archaeology' }]);
+  assert.deepEqual(citedRebuilds({ s: 'wikipedia_sv', u: wp }, EN), []);
+  assert.deepEqual(citedRebuilds(undefined, EN), []);
+  // a rebuild never changes the dating line: the year stays the standing house's
+  const built = b({ year: 1798, yearFrom: 1798, yearTo: 1798, yflag: YFLAG.EXACT, ysrc: YSRC.CITED });
+  assert.equal(sourceLine(built, EN, { yc: { s: 'wikipedia_sv', u: wp, r: cases[0][0] } }), 'Built 1798 · Swedish Wikipedia');
+});
+
+test('another house the footprint holds: its own line, never a rebuild of the house the card names', () => {
+  const wp = 'https://sv.wikipedia.org/w/index.php?oldid=55158130', kn = 'https://kulturnav.org/d76c01a0-4062-4b29-8dbb-9d6fdbc00fb7';
+  const o = (a, z, s = 'wikipedia_sv', u = wp) => ({ a, z, s, u });
+  const text = parts => parts.map(p => p.text).join('');
+  // Stortorget 20, Schantzska huset (1650), and the 1520s Seyfridtz house beside it on one footprint
+  assert.equal(text(citedAlso({ s: 'wikipedia_sv', u: wp, o: [o(1520, 1529)] }, EN)),
+    'Also part of this building: a house built in the 1520s');
+  assert.equal(text(citedAlso({ s: 'wikipedia_sv', u: wp, o: [o(1520, 1529)] }, SV)),
+    'I byggnaden ingår också ett hus byggt på 1520-talet');
+  assert.equal(text(citedAlso({ o: [o(1700, 1724), o(1785, 1785)] }, EN)),
+    'Also part of this building: houses built in the early 1700s and 1785');
+  assert.equal(text(citedAlso({ o: [o(1700, 1724), o(1785, 1785)] }, SV)),
+    'I byggnaden ingår också hus byggda i början av 1700-talet och 1785');
+  assert.deepEqual(citedAlso({ s: 'wikipedia_sv', u: wp }, EN), []);
+  // the Sparre palace: its own raised storey, then Kammarrätten's house; the Stenbock palace's archive, linked
+  const sparre = { s: 'wikipedia_sv', u: wp, r: [o(1807, 1808)], o: [o(1804, 1804)] };
+  assert.equal(text(citedMore(sparre, EN)), 'Rebuilt or extended 1807–1808 · Also part of this building: a house built 1804');
+  assert.equal(text(citedMore(sparre, SV)), 'Om- eller tillbyggt 1807–1808 · I byggnaden ingår också ett hus byggt 1804');
+  assert.deepEqual(citedMore({ s: 'wikipedia_sv', u: wp, o: [o(1887, 1890, 'kulturnav', kn)] }, EN), [
+    { text: 'Also part of this building: a house built ' }, { text: '1887–1890', href: kn, title: 'KulturNav (ArkDes)' }]);
+  assert.deepEqual(citedMore({ s: 'wikipedia_sv', u: wp }, EN), []);
 });

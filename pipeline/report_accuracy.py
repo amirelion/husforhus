@@ -25,7 +25,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from . import city
-from .codes import ESTIMATE, PERIOD
+from .codes import ESTIMATE, PERIOD, SRC_CITED
 from .estimate import stadsdel_of
 from .s01_load import STADSDELAR
 from .s02_years import ACCURACY, BUILDINGS, MIN_PRIVATE_OVERLAP, OUT as YEARS, REVIEW
@@ -36,6 +36,7 @@ NAMES = Path("data/review-years.md")
 GAMLA_STAN = "GAMLA STAN"
 # Where the years come from, in tier order, in words (the source names of SRC_NAMES never appear on the page).
 SOURCES = [("curated", "A hand-checked list of landmarks"),
+           ("cited", "A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum)"),
            ("raa", "RAÄ's building register (Bebyggelseregistret)"),
            ("raa_old", "RAÄ's older register file (years the current register dropped)"),
            ("raa_area", "RAÄ, for a whole area (a district or an estate)"),
@@ -82,16 +83,18 @@ def shares(counts: list[int], decimals: int = 1) -> list[str]:
     return ["–"] * len(counts) if units is None else [f"{v / 10 ** decimals:.{decimals}f}%" for v in units]
 
 
-# The summary's four kinds as the table's sources (codes.py pairs each yflag with its ysrc)
-KIND_SOURCES = [("curated", "raa", "raa_old", "wikidata", "osm", "reader"), ("raa_area",), ("estimate",), ("none",)]
+# The summary's four kinds as the table's sources (codes.py pairs each yflag with its ysrc; a cited record's century
+# or period is PERIOD but from a record, cited_periods)
+KIND_SOURCES = [("curated", "cited", "raa", "raa_old", "wikidata", "osm", "reader"), ("raa_area",), ("estimate",),
+                ("none",)]
 
 
-def kind_shares(by_flag: dict, by_src: dict) -> tuple[list[str], list[str]]:
+def kind_shares(by_flag: dict, by_src: dict, cited_period: int = 0) -> tuple[list[str], list[str]]:
     """(the four kinds' shares, the sources' shares): the kinds rounded together, then each kind's share split among
     its sources, so a kind and its sources never disagree (a review found one count at 8.0% and
-    8.1%) and the summary, the figure people quote, is the closest rounding."""
+    8.1%) and the summary, the figure people quote, is the closest rounding. cited_period: cited_periods(y)."""
     src = [by_src.get(key, 0) for key, _ in SOURCES]
-    kind_counts = list(kinds(by_flag))
+    kind_counts = list(kinds(by_flag, cited_period))
     if [sum(by_src.get(k, 0) for k in ks) for ks in KIND_SOURCES] != kind_counts:
         raise ValueError("the yflag counts and the ysrc counts disagree: rebuild the years")
     units = share_units(kind_counts)
@@ -116,10 +119,17 @@ def counts(y: pd.DataFrame) -> tuple[dict, dict]:
     return by_flag, by_src
 
 
-def kinds(by_flag: dict) -> tuple[int, int, int, int]:
-    """(from a record, by area, estimated, unknown): the four ways the map knows a year."""
-    return (by_flag["exact"] + by_flag["range"] + by_flag["long"], by_flag["area"],
-            by_flag["estimate"] + by_flag["period"], by_flag["unknown"])
+def cited_periods(y: pd.DataFrame) -> int:
+    """How many buildings carry a cited record's century or period (pipeline/cited.py: ysrc cited, yflag PERIOD):
+    from a record, though PERIOD like the estimate's period-only years."""
+    return int(((y.ysrc == SRC_CITED) & (y.yflag == PERIOD)).sum()) if "ysrc" in y else 0
+
+
+def kinds(by_flag: dict, cited_period: int = 0) -> tuple[int, int, int, int]:
+    """(from a record, by area, estimated, unknown): the four ways the map knows a year. cited_period: the PERIOD
+    rows that come from a cited record (cited_periods), counted as from a record."""
+    return (by_flag["exact"] + by_flag["range"] + by_flag["long"] + cited_period, by_flag["area"],
+            by_flag["estimate"] + by_flag["period"] - cited_period, by_flag["unknown"])
 
 
 def period_years(i: int) -> str:
@@ -219,14 +229,15 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
     (no_key); None states the rule without a count."""
     p = city.ESTIMATE if p is None else p
     by_flag, by_src = counts(y)
+    cp = cited_periods(y)
     n = len(y)
     min_cell = acc["min_cell"]
-    rec, area, est, unk = kinds(by_flag)
-    (s_rec, s_area, s_est, s_unk), src_shares = kind_shares(by_flag, by_src)
+    rec, area, est, unk = kinds(by_flag, cp)
+    (s_rec, s_area, s_est, s_unk), src_shares = kind_shares(by_flag, by_src, cp)
     houses = group_words(p["estimate_groups"])
     noun = "houses" if set(p["estimate_groups"]) == {"house"} else "buildings"
     late = p["late_prod_year"]
-    only_period = by_flag["period"]
+    only_period = by_flag["period"] - cp          # the estimate's period-only years, not a record's
     decades = decade_only(p)
     cells = acc.get("cells", [])
     used = [c for c in cells if c["status"] == "estimate"]
@@ -250,8 +261,10 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
              "## In short", "",
              f"This map shows {n:,} buildings in Stockholm. Of them:", "",
              f"- **{rec:,} ({s_rec}) have a year from a record**: RAÄ's building registers (RAÄ is Sweden's National "
-             "Heritage Board), a short hand-checked list of landmarks, Wikidata, OpenStreetMap or a reader's report the map's "
-             "maker checked.",
+             "Heritage Board), a short hand-checked list of landmarks, a published record checked by hand (KulturNav, "
+             "Swedish Wikipedia or the City Museum), Wikidata, OpenStreetMap or a reader's report the map's maker checked"
+             + (f" ({cp:,} of them only to a century or a period, or to two readings where sources differ, shown "
+                "with ≈)" if cp else "") + ".",
              f"- **{area:,} ({s_area}) have the year of their area**: they stand in a district or an estate that RAÄ "
              "dates as a whole.",
              f"- **{est:,} ({s_est}) are estimated** from similar dated buildings nearby"
@@ -276,7 +289,11 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
     lines += [f"| **All buildings** | **{n:,}** | **{'100.0%' if n else '–'}** |", "",
               f"A year from a record is shown as the record gives it: an exact year ({by_flag['exact']:,} buildings), "
               f"the year a building was finished when the record gives a span of up to 15 years ({by_flag['range']:,}), "
-              f"or the first year of a longer span ({by_flag['long']:,}). A private house (a villa, a row or chain "
+              f"or the first year of a longer span ({by_flag['long']:,})"
+              + (f"; where a published record gives only a century or a period, or two records give different years, "
+                 f"the map shows that period with ≈ ({cp:,}), when one of its 12 periods holds at least three quarters "
+                 "of it (of the span between them, for two records)" if cp else "")
+              + ". A private house (a villa, a row or chain "
               "house, or an allotment cottage) shows only its decade, never its exact year. Its colour still shows "
               "its period, so when a period begins or ends within the decade, the colour narrows the decade to the "
               f"part inside that period, never to fewer than {fewest_private_years()} years.", ""]
@@ -413,7 +430,7 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
     lines.append("")
 
     if gamla is not None:
-        g_rec, g_area, g_est, g_unk = kinds(counts(gamla)[0])
+        g_rec, g_area, g_est, g_unk = kinds(counts(gamla)[0], cited_periods(gamla))
         lines += ["## Gamla stan", "",
                   "Gamla stan, the old town, is shown on its own because it is the oldest part of the city and where "
                   f"many visitors look first. Of its {len(gamla):,} buildings, {g_rec:,} have a year from a record, "

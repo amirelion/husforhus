@@ -145,10 +145,11 @@ def test_s99_main_checks_the_list_it_is_given(site, monkeypatch, capsys, tmp_pat
     monkeypatch.setattr(s99_validate, "CURRENT", site.parent / "current.json")
     monkeypatch.setattr(s99_validate, "load_sources", lambda path: SOURCES)
     taken = write(tmp_path / "taken.yml", "- oid: 1000\n  date: 2026-11-02\n")
-    s99_validate.main(["--data", str(site.parents[2] / "data"), "--suppress", str(taken)])
+    none = ["--cited", str(tmp_path / "no-cited-years.csv")]    # the fixture has no cited years table
+    s99_validate.main(["--data", str(site.parents[2] / "data"), "--suppress", str(taken), *none])
     assert "OK; 1 takedowns checked" in capsys.readouterr().out
     with pytest.raises(SystemExit):                     # the same build, checked against a key it did not take down
-        s99_validate.main(["--data", str(site.parents[2] / "data"),
+        s99_validate.main(["--data", str(site.parents[2] / "data"), *none,
                            "--suppress", str(write(tmp_path / "other.yml", "- oid: 1001\n  date: 2026-11-02\n"))])
 
 

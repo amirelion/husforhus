@@ -5,7 +5,7 @@ import { readAttrs, ATTR_FLOATS } from './tile.js';
 import { liftBounds } from './bounds.js';
 import { YFLAG, YSRC } from './codes.js';
 import { yearLine, sourceLine, rebuildLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
-  isEstimate, placeLine, whyAnchor } from './card.js';
+  isEstimate, placeLine, whyAnchor, citedShown, citedParts, citedMore } from './card.js';
 import { shareText, shareLink, parseAt, findLayer } from './share.js';
 import { googleMapsUrl } from './geo.js';
 import { withTry } from './features.js';
@@ -1396,6 +1396,11 @@ const link = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopen
 // The self-hosted latin font subsets lack "≈" (U+2248); the span gives it the system font on purpose (W7). The card
 // and the legend's note use it.
 const approx = s => esc(s).replace(/≈/g, '<span class="approx">≈</span>');
+// A cited line's parts (web/card.js citedParts, citedRebuilds), each linked to the record it cites, the source's name
+// as its title, its "≈" styled like approx's
+const citedHtml = parts => parts.map(p => (p.href
+  ? `<a class="cited" href="${esc(p.href)}" target="_blank" rel="noopener"${p.title ? ` title="${esc(p.title)}"` : ''}>${approx(p.text)}</a>`
+  : approx(p.text))).join('');
 // One lazy family of shards (cards/ or wiki/): a shard that fails is forgotten, so the next card asks again, and the
 // card shows what it has meanwhile (optional fetches fail soft). `failed(gid)`: its shard's last fetch
 // failed, so the card says so instead of reading as a building with no details (the audit's finding 6).
@@ -1454,22 +1459,26 @@ function cardHtml(gid, pinned) {
       ${more.name ? `<h3 id="card-title">${esc(more.name)}</h3>` : ''}
       ${more.en && LANG === 'en' ? `<p class="en">${esc(more.en)}</p>` : ''}
       ${place || (pinned && !b.private) ? `<p class="place" id="card-place">${place ? `<span>${esc(place)}</span>` : ''}${pinned && !b.private ? mapsPin(b) : ''}</p>` : ''}
-      <div class="when"><span class="y" ${more.name ? '' : 'id="card-title"'}>${approx(yearLine(b, label, T))}</span>
+      <div class="when"><span class="y" ${more.name ? '' : 'id="card-title"'}>${approx(yearLine(b, label, T, more.yc))}</span>
         ${unknown || b.yflag === YFLAG.PERIOD ? '' : `<span class="period">${esc(label)}</span>`}</div>
     </header>`;
   const why = pinned && whyAnchor(b);   // the pinned card links About's explanation of its year
   // A shard that failed: say so, in place of "No open record dates this building yet", which it cannot tell
   const failed = pinned && cardOf.failed(gid);
   const dating = failed && unknown ? `<p class="dating card-failed">${esc(T('card.failed'))}</p>`
-    : `<p class="dating">${more?.yrd?.url && b.ysrc === YSRC.READER ? link(more.yrd.url, sourceLine(b, T, more)) : approx(sourceLine(b, T, more))}${why ? ` <a class="why" href="#about/${why}">${esc(T('card.why'))}</a>` : ''}</p>${
+    : `<p class="dating">${more?.yrd?.url && b.ysrc === YSRC.READER ? link(more.yrd.url, sourceLine(b, T, more))
+      : more?.yc && citedShown(b, more.yc) ? citedHtml(citedParts(b, T, more.yc)) : approx(sourceLine(b, T, more))}${why ? ` <a class="why" href="#about/${why}">${esc(T('card.why'))}</a>` : ''}</p>${
       failed ? `<p class="dating card-failed">${esc(T('card.failed'))}</p>` : ''}`;
   if (!pinned) return `${head}${dating}<p class="hint">${esc(T('card.hint'))}</p>`;
-  // A curated building's rebuilds, raised storeys and extensions, on a second line under the dating line;
-  // never on the hover card. Its class is its own (an e2e's `.dating` stays one line); its rules are the dating
-  // line's, inline, with no top padding so it reads as that line's second (its rules are inline too).
+  // A curated building's rebuilds, raised storeys and extensions, or the rebuilds and other houses cited records name
+  // (each linked to its record), on a second line under the dating line; never on the hover card. Its class is its own (an e2e's
+  // `.dating` stays one line); its rules are the dating line's, inline, with no top padding so it reads as that line's
+  // second (its rules are inline too).
   const rebuilt = rebuildLine(more, T);
+  const citedRebuilt = more?.yc && citedShown(b, more.yc) ? citedMore(more.yc, T) : [];
   const rebuiltStyle = 'margin:0;padding:0 16px 8px;color:var(--muted);font-size:12px;line-height:1.45';
-  const rebuiltHtml = rebuilt ? `<p class="rebuilt" style="${rebuiltStyle}">${esc(rebuilt)}</p>` : '';
+  const rebuiltHtml = rebuilt ? `<p class="rebuilt" style="${rebuiltStyle}">${esc(rebuilt)}</p>`
+    : citedRebuilt.length ? `<p class="rebuilt" style="${rebuiltStyle}">${citedHtml(citedRebuilt)}</p>` : '';
   const architects = more.architects || [];
   const floors = floorsLine(b, T, more);
   const facts = [
@@ -1640,7 +1649,7 @@ const openReport = reportDialog(document.getElementById('report'), () => T);
 function reportRefOf(gid) {
   const b = building(gid), more = cardOf(gid) || {}, p = periods[b.period] || periods[0];
   return buildingRef({ gid, b, card: more, district: districtOf(gid), version: config.version,
-    year: yearLine(b, tr(p, 'label') || `${p.from}–${p.to}`, T), source: sourceLine(b, T, more),
+    year: yearLine(b, tr(p, 'label') || `${p.from}–${p.to}`, T, more.yc), source: sourceLine(b, T, more),
     link: shareLink({ text: '', resolves: false, x: b.x, z: b.z, zoom: 400 }),
     hideAddress: !!b.private && config.about?.privateAddresses === false });
 }

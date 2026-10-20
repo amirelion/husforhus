@@ -688,7 +688,7 @@ test('the hide-estimates switch takes the estimated years off the map, the count
   // The product default (decision 3) is whatever app.js starts with; the test starts from "shown" either way.
   if (await estHidden(page) === 1) await sw.click();
   await expect(sw).toHaveAttribute('aria-pressed', 'false');
-  await expect(sw).toHaveText(`Hide the ${est.toLocaleString('en')} estimated years`);
+  await expect(sw).toHaveText(`Hide the ${est.toLocaleString('en')} approximate years (≈)`);
   await expect.poll(() => shownCount(page)).toBe(config.stats.buildings);
   expect(await legendSum(page)).toBe(known + est);
   // Its own row: not part of "Year unknown", its track at the legend's left edge (under the period chips), not
@@ -698,7 +698,8 @@ test('the hide-estimates switch takes the estimated years off the map, the count
   expect(await left(`${HIDE_EST} .toggle`)).toBe(await left('#panel-body .swatch[data-i="0"] > i'));
   expect(await left(`${HIDE_EST} .toggle`)).toBeLessThan(await left(`${SWITCH} .toggle`));
   await expect(page.locator('#panel-body .note')).toHaveText(
-    'Click a period to see it alone. Muted, darker colours are estimates (≈): the card says whether from an area or from neighbours.');
+    'Click a period to see it alone. Muted, darker colours are estimates (≈): the card says whether from an area, from neighbours, ' +
+    'from a record that gives only a century or a period, or from records that differ.');
   await expect(page.locator('#about-body')).toContainText('houses are estimated from similar dated buildings nearby');
 
   // On the map: the tallest estimated buildings, flown to one by one, until one is picked at the middle of the screen
@@ -881,8 +882,9 @@ test('the hide-estimates switch and the legend note are Swedish too', async ({ p
   const config = await cityConfig(page);
   const f = config.stats.byFlag, est = f.area + f.estimate + f.period;
   await expect(page.locator('#panel-body .note')).toHaveText('Klicka på en period för att se den ensam. Dämpade, mörkare ' +
-    'färger är uppskattningar (≈): kortet visar om de bygger på ett helt område eller på grannarna.');
-  if (est) await expect(page.locator(HIDE_EST)).toHaveText(`Dölj de ${est.toLocaleString('sv-SE')} uppskattade åren`);
+    'färger är uppskattningar (≈): kortet visar om de bygger på ett helt område, på grannarna, på en källa som bara ' +
+    'anger ett århundrade eller en period, eller på källor som går isär.');
+  if (est) await expect(page.locator(HIDE_EST)).toHaveText(`Dölj de ${est.toLocaleString('sv-SE')} ungefärliga åren (≈)`);
   else await expect(page.locator(HIDE_EST)).toHaveCount(0); // no estimated years, no switch
   expect(errors).toEqual([]);
 });

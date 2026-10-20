@@ -17,13 +17,15 @@ export const band = b => Math.max(b.year - b.yearFrom, b.yearTo - b.year);
 // completion-year ranges have year = yearTo, so they never match.
 export const decadeOnly = b => b.yflag === YFLAG.RANGE && b.year === b.yearFrom && b.yearTo === b.yearFrom + 9
   && b.yearFrom % 10 === 0;
-const SRC = { [YSRC.RAA]: 'raa', [YSRC.RAA_OLD]: 'raa_old', [YSRC.WIKIDATA]: 'wikidata', [YSRC.OSM]: 'osm', [YSRC.READER]: 'reader' };
+const SRC = { [YSRC.RAA]: 'raa', [YSRC.RAA_OLD]: 'raa_old', [YSRC.WIKIDATA]: 'wikidata', [YSRC.OSM]: 'osm', [YSRC.READER]: 'reader',
+  [YSRC.CITED]: 'cited' };
 const EST_FLAGS = [YFLAG.AREA, YFLAG.ESTIMATE, YFLAG.PERIOD];
 export const isEstimate = b => EST_FLAGS.includes(b.yflag);
 
-// The big line in the card's header band.
-export function yearLine(b, periodLabel, T) {
-  if (b.yflag === YFLAG.UNKNOWN) return T('card.unknown');
+// The big line in the card's header band. A building no period colours but a cited record dates all the same (its
+// card's `yc`, citedShown) shows what the record gives, "≈ early 1600s", "≈ 1580–1649" (citedHead), not "Year unknown".
+export function yearLine(b, periodLabel, T, yc) {
+  if (b.yflag === YFLAG.UNKNOWN) return citedShown(b, yc) ? citedHead(yc, T) : T('card.unknown');
   // Period only, private house or not: the estimate's band is wider than a decade, so a decade would claim too much.
   if (b.yflag === YFLAG.PERIOD) return periodLabel || T('card.unknown');
   // A private house shows only its decade, whatever its yflag; an estimated or area-dated one says "≈".
@@ -36,8 +38,13 @@ export function yearLine(b, periodLabel, T) {
 // its line names the source, then the decade rule, never a span or a band. A curated building rebuilt from new on
 // older cellars says so (`card.cellars`); the year stays the standing building's.
 export function sourceLine(b, T, card = {}) {
-  if (b.yflag === YFLAG.UNKNOWN) return T('card.src.unknown');
-  if (b.yflag === YFLAG.PERIOD) return b.private ? T('card.private.period') : T('card.src.period');
+  // a cited span no map period holds 3/4 of (or an either pair's union): no colour, but the card says what the records
+  // give (citedShown)
+  if (b.yflag === YFLAG.UNKNOWN) return citedShown(b, card?.yc) ? citedLine(b, T, card.yc) : T('card.src.unknown');
+  if (b.yflag === YFLAG.PERIOD) {
+    if (b.ysrc === YSRC.CITED) return b.private ? T('card.private.cited.period') : citedLine(b, T, card?.yc);
+    return b.private ? T('card.private.period') : T('card.src.period');
+  }
   if (b.private) {
     const how = b.ysrc === YSRC.ESTIMATE ? 'estimate' : b.ysrc === YSRC.RAA_AREA ? 'area' : SRC[b.ysrc];
     return [how && T(`card.private.${how}`), T('card.private.rule')].filter(Boolean).join(' · ');
@@ -47,6 +54,7 @@ export function sourceLine(b, T, card = {}) {
   }
   // A reader's report the owner checked (pipeline/contributions.py): its reference and the owner's note, card `yrd`
   // (app.js links the line to the report's issue, `yrd.url`, when there is one).
+  if (b.ysrc === YSRC.CITED) return citedLine(b, T, card?.yc);
   if (b.ysrc === YSRC.READER) return card?.yrd ? T('card.src.reader', { ref: card.yrd.ref, note: card.yrd.note }) : T('card.private.reader');
   if (b.ysrc === YSRC.RAA_AREA) return T('card.src.area');
   if (b.ysrc === YSRC.ESTIMATE) return T('card.src.estimate', { n: band(b) });
@@ -57,6 +65,136 @@ export function sourceLine(b, T, card = {}) {
     if (!d.includes('–')) return T(`card.src.${key}.decade`, { decade: d });
   }
   return T(b.yflag === YFLAG.LONG ? `card.src.${key}.long` : `card.src.${key}`, { span: span(b.yearFrom, b.yearTo) });
+}
+
+// A cited record's line (pipeline/cited.py; card `yc`, its source `s`, its page `u`, `k` "rebuilt" for a new house
+// that replaced an older one, `c` where the record says "about"), as §14 of the Gamla stan research words it: "Built
+// 1855–1858 · KulturNav (ArkDes)", "Built in the 1640s · …", "Built about 1640, replacing an older house · …". A PERIOD
+// row (the record gives only a century, a half-century or a span; its colour is the map period holding at least 3/4
+// of it) says "≈", like every year the map shows in the estimate tone: "≈ built in the 1600s · …", or "≈ medieval
+// origin · …" for a medieval one (no earlier bound than FLOOR_YEAR, or ending by MEDIEVAL_END: the records date the old
+// fabric, which later rebuilds kept). A period no map period holds 3/4 of ships no year (no colour): its card carries
+// the span, `a`..`z`, and says the same. Two sources that differ (an either pair, `e`: two readings {a, z, s, u},
+// earliest first) read "Built in 1785 or 1798 (sources differ)", "≈ medieval origin, or built in the 1600s (sources
+// differ)", each reading linked to its source; and `r`, the rebuilds and extensions the records name, and `o`, the other
+// houses the footprint holds, make the pinned card's second line, "Rebuilt or extended 1780 and 1906 · Also part of
+// this building: a house built 1804". app.js links each part (citedParts, citedMore) to its record.
+const CITED_SRCS = ['kulturnav', 'wikipedia_sv', 'ssm_inventory', 'ssm_br'];
+const FLOOR_YEAR = 1000;   // pipeline/yearrules.py: a row from it has no earlier bound ("medieval")
+const MEDIEVAL_END = 1520; // the Swedish Middle Ages end with the 1520s; a span ending by then is medieval
+const BUILT_MAX = 100;     // pipeline/cited.py: a span over 100 years is a period
+// pipeline/cited.py century_like: a century or half-century (both ends on a 50-year boundary) or a span over BUILT_MAX
+// years is a period, never a construction window; a reading from FLOOR_YEAR is one too ("medieval")
+const periodLike = (a, z) => {
+  const n = z - a + 1;
+  return a === FLOOR_YEAR || n > BUILT_MAX || (n >= 50 && a % 50 === 0 && (z % 50 === 0 || z % 50 === 49));
+};
+const medieval = (a, z) => a === FLOOR_YEAR || z <= MEDIEVAL_END;
+const srcName = (s, T) => T(CITED_SRCS.includes(s) ? `card.cited.src.${s}` : 'card.cited.src.none');
+// When a span was, in the words its record uses (pipeline/cited.py stores each as a span): "1643", "1855–1858", "in
+// the 1640s", "in the 1600s", "in the first half of the 1600s", "in the early 1600s" (c..c+24), "around the mid-1600s"
+// (c+40..c+60), "in the late 1600s" (c+75..c+99), "in the 1600s–1700s" (two centuries), "between 1500 and the mid-1600s"
+// (c..c+149), "in the late 1630s or early 1640s" (d+5..d+14), "about 1640" (`circa`, one year); any other span as its
+// years. `year`: a year or a span takes the language's preposition too ("in 1785"; Swedish none), for a line that
+// lists two.
+function when(a, z, T, year = false, circa = false) {
+  if (circa) return T('card.cited.when.about', { y: span(a, z) });
+  const c = Math.floor(a / 100) * 100;
+  if (a === c && z === c + 99) return T('card.cited.when.century', { c });
+  if (a === c && z === c + 49) return T('card.cited.when.half1', { c });
+  if (a === c + 50 && z === c + 99) return T('card.cited.when.half2', { c });
+  if (a === c && z === c + 199) return T('card.cited.when.centuries', { a: c, b: c + 100 });
+  if (a === c && z === c + 149) return T('card.cited.when.between', { c, d: c + 100 });
+  if (a === c && z === c + 24) return T('card.cited.when.early', { c });
+  if (a === c + 40 && z === c + 60) return T('card.cited.when.mid', { c });
+  if (a === c + 75 && z === c + 99) return T('card.cited.when.late', { c });
+  if (a % 10 === 5 && z === a + 9) return T('card.cited.when.decades', { a: a - 5, b: a + 5 });
+  const d = a % 10 === 0 && z === a + 9 ? decade(a, T.lang) : '';
+  if (d && !d.includes('–')) return T('card.cited.when.decade', { decade: d });
+  return year ? T('card.cited.when.year', { y: span(a, z) }) : span(a, z);
+}
+// A phrase's leading preposition ("in", "på", "under", "around", "about"; '' before a year), and the phrase without
+// it: two phrases in a row share it, "in 1785 or 1798", "på 1630-talet eller 1640-talet".
+const lead = s => { const w = s.split(' ')[0]; return /\d/.test(w) ? '' : w; };
+const bare = s => (lead(s) ? s.slice(lead(s).length + 1) : s);
+// A template's {a} and {b} (or {list}) filled with parts: [{text, href?, title?}], the rest as plain text.
+const MARK = { a: '\u0001', b: '\u0002', list: '\u0003' };
+function parts(template, fills) {
+  return template.split(/([\u0001-\u0003])/).flatMap(p => fills[p] || (p ? [{ text: p }] : []));
+}
+// A reading linked to its record, the source's name as its title; `prep`, its phrase's preposition, outside the link
+// ("in [1785]", "in [the 1630s] or [the 1640s]").
+const linked = (o, text, T, prep = '') => [...(prep ? [{ text: `${prep} ` }] : []),
+  { text: prep ? text.slice(prep.length + 1) : text, href: o.u, title: srcName(o.s, T) }];
+// True where the card's dating line is a cited one: the year is a cited record's, or none ships and the card carries
+// what the records give (a span no map period holds 3/4 of, `a`..`z`, or an either pair). Never a private house's.
+export function citedShown(b, yc) {
+  if (b.private) return false;
+  if (b.ysrc === YSRC.CITED) return true;
+  return b.yflag === YFLAG.UNKNOWN && b.ysrc === YSRC.NONE && !!(yc?.e?.length === 2 || (yc?.a && yc?.z));
+}
+// The dating line as parts, each a record's link where it has one.
+export function citedParts(b, T, yc) {
+  if (yc?.e?.length === 2) {
+    const [p, q] = yc.e;
+    let key, a, z, pa = '', pz = '';
+    if (periodLike(p.a, p.z) && medieval(p.a, p.z)) {
+      // "≈ medieval origin, or built 1650", "…, or built in the 1600s": the other reading keeps its verb
+      key = 'card.cited.either.medieval';
+      a = T('card.cited.either.origin');
+      z = when(q.a, q.z, T, false, q.c);
+      pz = lead(z);
+    } else {
+      key = periodLike(p.a, p.z) || periodLike(q.a, q.z) ? 'card.cited.either.period' : 'card.cited.either';
+      a = when(p.a, p.z, T, true, p.c);
+      z = when(q.a, q.z, T, true, q.c);
+      [pa, pz] = [lead(a), lead(z)];
+      if (pa && pa === pz) [z, pz] = [bare(z), ''];
+    }
+    return parts(T(key, { a: MARK.a, b: MARK.b }), { [MARK.a]: linked(p, a, T, pa), [MARK.b]: linked(q, z, T, pz) });
+  }
+  // a span no year ships: read as the period the record gives
+  const r = yc?.a && yc?.z ? { ...b, yflag: YFLAG.PERIOD, yearFrom: yc.a, yearTo: yc.z } : b;
+  const src = srcName(yc?.s, T);
+  const text = r.yflag === YFLAG.PERIOD && medieval(r.yearFrom, r.yearTo) ? T('card.cited.medieval', { src })
+    : T(`card.cited.${r.yflag === YFLAG.PERIOD ? 'period' : yc?.k === 'rebuilt' ? 'rebuilt' : 'built'}`,
+      { when: when(r.yearFrom, r.yearTo, T, false, yc?.c && r.yflag !== YFLAG.PERIOD), src });
+  return [yc?.u ? { text, href: yc.u } : { text }];
+}
+export const citedLine = (b, T, yc) => citedParts(b, T, yc).map(p => p.text).join('');
+// The header's big line for a building no period colours that a cited record dates all the same (yearLine): the
+// record's span in its own words without the preposition, "≈ early 1600s", "≈ 1580–1649" (English drops "the"), or,
+// for two readings, that the sources differ.
+export function citedHead(yc, T) {
+  if (yc?.e?.length === 2) return T('card.cited.head.either');
+  return `≈ ${bare(when(yc.a, yc.z, T)).replace(/^the /, '')}`;
+}
+// Readings ({a, z, s, u, c?}, earliest first) as one linked list under a template's {list}: "1780 and 1906", "in the
+// 1910s and the 1940s", each linked to its record; [] without any.
+function citedList(rs, key, T) {
+  if (!rs.length) return [];
+  const first = lead(when(rs[0].a, rs[0].z, T, false, rs[0].c));
+  const list = rs.flatMap((o, i) => {
+    const w = when(o.a, o.z, T, false, o.c), shared = i && first && lead(w) === first;
+    const sep = !i ? [] : [{ text: i === rs.length - 1 ? ` ${T('card.cited.and')} ` : ', ' }];
+    return [...sep, ...linked(o, shared ? bare(w) : w, T, shared ? '' : lead(w))];
+  });
+  return parts(T(key, { list: MARK.list }), { [MARK.list]: list });
+}
+// The rebuilds, extensions and raised storeys the records name (`yc.r`): "Rebuilt or extended 1780 and 1906",
+// "Rebuilt or extended in the 1900s and the 1940s", each year linked to its record; [] without any. They never set the
+// year or the colour.
+export const citedRebuilds = (yc, T) => citedList(Array.isArray(yc?.r) ? yc.r : [], 'card.cited.rebuilds', T);
+// The other houses the footprint holds, which their records date on their own (`yc.o`): "Also part of this building: a
+// house built 1804" ("…: houses built 1700 and 1785" for two); [] without any. Never the year or the colour.
+export function citedAlso(yc, T) {
+  const os = Array.isArray(yc?.o) ? yc.o : [];
+  return citedList(os, os.length > 1 ? 'card.cited.also.more' : 'card.cited.also', T);
+}
+// The pinned card's second line: the rebuilds, then the other houses, " · " between.
+export function citedMore(yc, T) {
+  const r = citedRebuilds(yc, T), o = citedAlso(yc, T);
+  return r.length && o.length ? [...r, { text: ' · ' }, ...o] : [...r, ...o];
 }
 
 // Where the building is: its first address, how many more it has, and its stadsdel, "Hornsgatan 30 (and 2

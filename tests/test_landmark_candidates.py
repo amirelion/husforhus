@@ -20,3 +20,12 @@ def test_candidates_put_unknown_and_disagreeing_first_and_gamla_stan_first_withi
     assert c.source.tolist() == ["none", "none", "raa", "raa"]
     md = lc.render(c)
     assert md.startswith("# Landmark candidates") and "## unknown (2)" in md and "| p1 | A | Q3 | sv:A |" in md
+
+
+def test_candidates_name_every_source_and_leave_out_the_cited_records_too():
+    # pipeline/codes.py: SRC_READER 8 and SRC_CITED 9 (a cited footprint is hand-checked already, like a curated one)
+    wiki = pd.DataFrame({"gid": [0, 1, 2], "qid": ["Q0", "Q1", "Q2"], "label": ["A", "B", "C"],
+                         "wp_sv": ["A", "B", "C"], "wp_en": ["", "", ""], "lon": [18.07] * 3, "lat": [59.32] * 3})
+    years = pd.DataFrame({"gid": [0, 1, 2], "year": [1650, 1938, 1700], "ysrc": [9, 8, 7], "period": [1, 7, 2]})
+    c = lc.candidates(wiki, years, {}, pd.Series(["GAMLA STAN"] * 3, index=range(3)))
+    assert c.gid.tolist() == [2, 1] and c.source.tolist() == ["osm", "reader"]

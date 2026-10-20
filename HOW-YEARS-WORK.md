@@ -11,19 +11,22 @@ A building can be dated by several sources. The pipeline (`s02_years`) takes the
 | 1. Curated | A hand-checked list of landmarks (`pipeline/landmarks.py`) | Notable buildings whose year we state ourselves, each tied to a Wikipedia article that is checked automatically before every build. |
 | 2. RAÄ | The National Heritage Board's building register (Bebyggelseregistret) | The main source: a surveyed construction year or span for about 22,000 buildings. |
 | 3. RAÄ, older file | An older release of the same register | Years the current register no longer carries, for about 800 buildings. |
-| 4. RAÄ, area | The same register, for a whole district or estate | Buildings inside an area that RAÄ dates as a whole take the area's year. |
-| 5. Wikidata | The "inception" or "opening" date of a building item | Matched to a footprint by the item's coordinates. |
-| 6. OpenStreetMap | The `start_date` tag and its variants | Matched to a footprint by position. |
-| 7. Estimate | Similar dated buildings nearby | Houses only, and only where the method is measured to work. See below. |
+| 4. Cited record | Published records checked by hand (`pipeline/gamla_stan_years.csv`): KulturNav, Swedish Wikipedia, the City Museum's building inventories and the reports its register links | A year, a decade, or the century or period the record gives, in its own words ("about 1640", "the late 1600s", "medieval origin"); where two records differ, the card shows both ("Built in 1785 or 1798 (sources differ)"), each linked, and the building gets a period's colour only where that period holds three quarters of the two readings, each counting the same; a pinned card adds the rebuilds and extensions the records name, and any other house the footprint holds ("Also part of this building: a house built 1804"); so far about 160 buildings, in Gamla stan and on Riddarholmen. Each is matched to its footprint by hand, and the card links the record. It gives way to the curated list and RAÄ, and replaces an area, Wikidata or OpenStreetMap year, except that a century or period never replaces a Wikidata or OpenStreetMap year that falls inside it. |
+| 5. RAÄ, area | The same register, for a whole district or estate | Buildings inside an area that RAÄ dates as a whole take the area's year. |
+| 6. Wikidata | The "inception" or "opening" date of a building item | Matched to a footprint by the item's coordinates, or by a hand-checked pin where the coordinates fall in the house next door. |
+| 7. OpenStreetMap | The `start_date` tag and its variants | Matched to a footprint by position. |
+| 8. Estimate | Similar dated buildings nearby | Houses only, and only where the method is measured to work. See below. |
 | — | None | "Year unknown". |
 
 The curated list comes first because a register can date the *site* rather than the building standing today: RAÄ dates the Royal Palace (Stockholms slott) to the 1100s, while the palace you see was completed in 1754.
 
-Roughly: 30% of buildings have a year from a record (tiers 1–3, 5, 6), 8% the year of their area, 6% are estimated, and about 56% stay unknown.
+Roughly: 30% of buildings have a year from a record (tiers 1–4, 6, 7), 8% the year of their area, 6% are estimated, and about 56% stay unknown.
 
 ### Which year, when the record gives a span
 
 A record may give one year or a span of construction years. The map shows the exact year when there is one, the last year of the span when the span is 15 years or shorter (roughly, when the building was finished), and the first year of a longer span.
+
+A record checked by hand may give only a century or a period ("built in the 1600s", "medieval"). The map then shows that period with "≈", in the muted colour of the estimates, but only when one of the twelve periods below holds at least three quarters of the record's span: "the 1600s" is 89% Stormaktstiden, while "the beginning of the 1600s" straddles the 1610/1611 boundary, so that building gets no colour, and its card gives what the record says. A medieval cellar under a house counts as a medieval origin, shown with the later rebuilds the records name. On the timeline such a building appears in the middle of that period's part of the span (a house of the 1600s in 1655); a medieval one, whose record gives no earliest year, appears in 1520, by when it stood.
 
 ## The twelve periods
 
@@ -61,7 +64,7 @@ Only when all of these hold:
 - the City first mapped it before 2008, and its property unit was not formed late (both are signs of new development);
 - its cell has at least 30 test buildings, at least 70% of them in the right period, and a band of ±15 years or less.
 
-Everything else stays unknown. The map never paints a period it cannot back with a year.
+Everything else stays unknown. The map never paints a period it cannot back with a year, or with a published record's century or span that one period holds at least three quarters of.
 
 ### Why so strict
 
@@ -71,7 +74,7 @@ An independent check runs the same rule on buildings dated only by Wikidata or O
 
 ### How estimates look
 
-Estimated years, and area years, are drawn in a duller, darker version of their period's colour, and the card shows "≈" before the decade. A switch in the legend hides them.
+Estimated years, area years and a record's century or period are drawn in a duller, darker version of their period's colour, and the card shows "≈" before the decade, the century or the period. A switch in the legend hides them all.
 
 ## Private houses show only a decade
 

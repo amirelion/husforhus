@@ -82,7 +82,7 @@ def test_the_sources_are_named_in_words_and_their_shares_add_up_to_100():
     md = page()
     table = section(md, "Where the years come from")
     shares = [float(s) for s in re.findall(r"\| ([\d.]+)% \|", table)]
-    assert len(shares) == 9 and round(sum(shares), 1) == 100.0
+    assert len(shares) == 10 and round(sum(shares), 1) == 100.0
     assert "| **All buildings** | **11** | **100.0%** |" in table
     for name in ("RAÄ's building register", "RAÄ's older register file", "Wikidata", "OpenStreetMap",
                  "A hand-checked list of landmarks", "No source: the year stays unknown"):
@@ -113,6 +113,31 @@ def test_the_summary_and_the_table_give_one_share_for_one_count():
     assert round(record, 1) == 30.2 and round(sum(float(x[:-1]) for x in table), 1) == 100.0
     with pytest.raises(ValueError, match="ysrc counts disagree"):
         report_accuracy.kind_shares({**by_flag, "area": 6_262, "unknown": 43_454}, by_src)
+
+
+def test_a_cited_record_counts_as_a_record_even_with_a_century_only():
+    # pipeline/cited.py: a published record checked by hand; a century or a period only is PERIOD, from a record
+    from pipeline.codes import EXACT, PERIOD, SRC_CITED
+    _, y, _ = tiny_city()
+    y.loc[7, ["year", "year_from", "year_to", "ysrc", "yflag"]] = [1655, 1600, 1699, SRC_CITED, PERIOD]
+    y.loc[5, ["year", "year_from", "year_to", "ysrc", "yflag"]] = [1643, 1643, 1643, SRC_CITED, EXACT]
+    acc = accuracy()
+    acc["result"]["period"] = 2
+    md = report_accuracy.render(acc, y, REVIEW, y[y.gid.isin([5, 7, 10])], "2026-10-20", "v20261020-m3b")
+    short = section(md, "In short")
+    # 6 + the two cited; still 2 estimated (the kNN's estimate and its one period-only year), none unknown
+    assert "**8 (72.7%) have a year from a record**" in short
+    assert "a published record checked by hand (KulturNav, Swedish Wikipedia or the City Museum)" in short
+    assert "(1 of them only to a century or a period, or to two readings where sources differ, shown with ≈)" in short
+    assert "**2 (18.2%) are estimated** from similar dated buildings nearby (1 of them with the period only)" in short
+    table = section(md, "Where the years come from")
+    assert "| A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum) | 2 | 18.2% |" in table
+    assert ("where a published record gives only a century or a period, or two records give different years, the map "
+            "shows that period with ≈ (1)") in table
+    assert "and 1 get the period only." in md
+    assert "Of its 3 buildings, 3 have a year from a record, 0 the year of their area, 0 are estimated" in md
+    by_flag, by_src = report_accuracy.counts(y)
+    assert report_accuracy.kinds(by_flag, report_accuracy.cited_periods(y)) == (8, 1, 2, 0)
 
 
 def test_the_terms_and_the_method_are_explained_without_jargon():

@@ -128,6 +128,24 @@ def test_match_places_items_inside_in_a_courtyard_or_nearby_and_one_to_one(tmp_p
     assert m.placement.tolist() == ["courtyard", "inside", "nearest"]
 
 
+def test_a_pinned_item_dates_its_own_footprint_not_the_one_its_point_falls_in(tmp_path):
+    # pipeline/wiki_pins.csv moves the card's item (s06_wiki); the year goes with it, so the two never part
+    b = synth.buildings(rows=[{"geometry": synth.square(0, 0)}, {"geometry": synth.square(200, 0)},
+                              {"geometry": synth.square(400, 0)}])
+    dated, classes = write(tmp_path, [
+        binding("Q1", "Q41176", "P571", "1640-01-01T00:00:00Z", 9, dx=0, dz=0),          # falls in the house next door
+        binding("Q2", "Q41176", "P571", "1700-01-01T00:00:00Z", 9, dx=400, dz=0),        # already on gid 2
+        binding("Q3", "Q41176", "P571", "1800-01-01T00:00:00Z", 9, dx=5000, dz=0),       # no footprint within 30 m
+    ])
+    items = wd.load(dated, classes)
+    assert wd.match(b, items).qid.to_dict() == {0: "Q1", 2: "Q2"}
+    m = wd.match(b, items, pins={"Q1": 1, "Q3": 0})
+    assert m.qid.to_dict() == {0: "Q3", 1: "Q1", 2: "Q2"}
+    assert m.placement.to_dict() == {0: "pinned", 1: "pinned", 2: "inside"}
+    # a pin onto a footprint another item reaches: two items there, so neither dates it (the tier's one-item rule)
+    assert 2 not in wd.match(b, items, pins={"Q1": 2}).index
+
+
 def test_an_item_between_two_footprints_goes_to_the_nearest_then_the_lowest_gid(tmp_path):
     # Review Focus #7: the reverse of two items on one footprint. Footprints A (gid 0) and B (gid 1) are 10 m squares
     # 32 m apart edge to edge; Q1 is 10 m from A's wall and 22 m from B's; Q2 is exactly equidistant (16 m) from

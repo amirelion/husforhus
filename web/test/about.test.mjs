@@ -99,7 +99,26 @@ test('the source table\'s shares are the accuracy page\'s: the kinds rounded tog
   const bySrc = { none: 43453, curated: 72, raa: 22039, raa_area: 6263, wikidata: 131, estimate: 4558, raa_old: 809, osm: 418 };
   const html = aboutHtml({ ...CONFIG, stats: { ...CONFIG.stats, bySrc } }, EN);
   const shares = [...html.matchAll(/<tr><td>[^<]+<\/td><td>[\d,]+<\/td>\s*<td>([\d.]+%)<\/td>/g)].map(m => m[1]);
-  assert.deepEqual(shares, ['0.1%', '28.4%', '1.0%', '8.0%', '0.2%', '0.5%', '0.0%', '5.9%', '55.9%']);   // reader: none yet
+  // cited and reader: none yet
+  assert.deepEqual(shares, ['0.1%', '0.0%', '28.4%', '1.0%', '8.0%', '0.2%', '0.5%', '0.0%', '5.9%', '55.9%']);
+});
+
+test('About: the cited records count as records, their row in the years table, and the century-only rule when some ship', () => {
+  const bySrc = { ...CONFIG.stats.bySrc, none: CONFIG.stats.bySrc.none - 24, cited: 24 };
+  const config = { ...CONFIG, stats: { ...CONFIG.stats, bySrc }, about: { ...CONFIG.about, citedPeriod: 13 } };
+  const html = aboutHtml(config, EN);
+  assert.match(html, /<tr><td>A published record checked by hand \(KulturNav, Swedish Wikipedia, the City Museum\)<\/td><td>24<\/td>/);
+  const en = text(html);
+  assert.match(en, /23,445 come from a record: RAÄ's heritage register, a short hand-checked list of landmarks, published records checked by hand \(KulturNav, Swedish Wikipedia and the City Museum's building inventories and reports\)/);
+  assert.match(en, /Where a published record gives only a century or a period, or two records give different years \(13 buildings\), the map shows that period with ≈/);
+  // two records that differ: each counts the same and the card gives both; a span no period holds has no colour, but
+  // its card says it; a medieval house stands on the timeline by 1520, the latest its record allows
+  assert.match(en, /where two records differ, of both, each counting the same however long its span; the card gives both/);
+  assert.match(en, /when none does, the building is drawn without a colour, and its card gives what the records say/);
+  assert.match(en, /where the record gives no earliest year, at its latest \(a medieval house in 1520, by when it stood\)/);
+  assert.doesNotMatch(en, /until it is checked by hand/);
+  assert.match(text(aboutHtml(config, SV)), /Där en publicerad källa bara anger ett århundrade eller en period, eller två källor anger olika år \(13 byggnader\)/);
+  assert.doesNotMatch(text(aboutHtml(CONFIG, EN)), /gives only a century/);      // a build without them: no sentence
 });
 
 test('About: the readers\' reports row in the years table, and in Sources with the count of applied contributions', () => {

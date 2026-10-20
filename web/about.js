@@ -4,8 +4,8 @@
 // opens it at a section for a link to #about/<section>.
 
 export const SECTIONS = ['years', 'accuracy', 'limits', 'privacy', 'sources', 'contact'];
-const RECORD = ['curated', 'raa', 'raa_old', 'wikidata', 'osm', 'reader'];
-const SOURCE_ROWS = ['curated', 'raa', 'raa_old', 'raa_area', 'wikidata', 'osm', 'reader', 'estimate', 'none'];
+const RECORD = ['curated', 'cited', 'raa', 'raa_old', 'wikidata', 'osm', 'reader'];
+const SOURCE_ROWS = ['curated', 'cited', 'raa', 'raa_old', 'raa_area', 'wikidata', 'osm', 'reader', 'estimate', 'none'];
 const AMSTERDAM = 'https://github.com/alexbarakov/amsterdam-by-building';
 const PARIS = 'https://paris.bogachev.fr/';
 const REPO = 'https://github.com/amirelion/husforhus';
@@ -64,6 +64,7 @@ export function aboutTokens(config, T) {
     buildings: num(n), with_year: num(withYear), with_year_pct: share(withYear), record: num(record),
     area: num(src.raa_area || 0), estimated: num(src.estimate || 0), unknown: num(src.none || 0),
     exact: num(s.byFlag?.exact || 0), range: num(s.byFlag?.range || 0), long: num(s.byFlag?.long || 0),
+    cited_period: num(a.citedPeriod || 0),
     private_cat: num(a.privateCategory || 0), private_dated: num(a.privateDated || 0), fewest: esc(a.fewestPrivateYears ?? ''),
     near: num(a.nearM ?? acc.near_m ?? 0), late: esc(a.lateYear ?? ''), min_cell: num(acc.min_cell ?? 0),
     min_right: pct(acc.min_right ?? 0, T.lang, 0), max_band: num(acc.max_band ?? 0),
@@ -137,6 +138,7 @@ export function aboutHtml(config, T, howto = '') {
       <th>${esc(T('about.table.share'))}</th></tr></thead><tbody>${sourceRows}
       <tr class="total"><td>${esc(T('about.table.all'))}</td><td>${k.buildings}</td><td>${pct(1, T.lang)}</td></tr></tbody></table></div>
     ${P('about.years.kinds')}
+    ${a.citedPeriod ? P('about.years.cited') : ''}
     ${has ? P('about.years.private') : ''}
     ${h3('about.acc.title', 'accuracy')}
     ${P('about.acc.how')}

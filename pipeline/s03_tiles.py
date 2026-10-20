@@ -30,8 +30,12 @@ building-archaeology facts (`br`, s02_stadsmuseet: what was documented, the inve
 never a private house's. No private house that is not curated carries a RAÄ link, a
 Wikidata item, an article, a photo or an excerpt. Readers' reports the owner accepted (pipeline/contributions.csv)
 then set a card's name, first address or photo, and `yrd` (reference, the owner's note, the issue) on a card whose year
-is a reader's (contributions.apply_cards); About counts them (`about.readers`). stockholm.json gains the link templates (city.LINKS) and
-the timeline's landmarks.
+is a reader's (contributions.apply_cards); About counts them (`about.readers`). A card whose year is a cited record
+(pipeline/gamla_stan_years.csv) carries `yc`, the source and the page the card's source line links, both readings of an
+either pair, the rebuilds and other houses the records name and whether a record says "about" (cited.card_entry); so
+does a "Year unknown" one whose cited period no map period holds 3/4 of, with the record's span; never a hidden row or
+a takedown. stockholm.json gains the link templates
+(city.LINKS) and the timeline's landmarks.
 """
 import argparse
 import hashlib
@@ -46,7 +50,8 @@ import pandas as pd
 import pyarrow.parquet as pq
 import shapely
 
-from . import city, codes, contributions, io, name_fixes
+from . import cited as cited_mod
+from . import city, codes, contributions, io, name_fixes, suppress
 from .addresses import sharing
 from .sources import credit, load_sources
 from .tiles_decode import MAGIC
@@ -71,12 +76,14 @@ assert ATTR_DTYPE.itemsize == 24
 # stats.byFlag names by yflag code; 5 (once DECADE) is retired and refused.
 FLAG_NAMES = {codes.EXACT: "exact", codes.RANGE: "range", codes.LONG: "long", codes.AREA: "area",
               codes.ESTIMATE: "estimate", codes.PERIOD: "period", codes.UNKNOWN: "unknown"}
-SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_old", "osm", "reader"]  # index = codes ysrc
-# histogram holds the building-level years; histogramEst the area and kNN years (PERIOD rows are kNN products too).
+SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_old", "osm", "reader",
+             "cited"]  # index = codes ysrc
+# histogram holds the building-level years; histogramEst the area and kNN years and the PERIOD rows (the kNN's
+# period-only years and a cited record's century or period: both shown with "≈").
 KNOWN_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
 ESTIMATED_FLAGS = (codes.AREA, codes.ESTIMATE, codes.PERIOD)
 CARD_FIELDS = ("name", "en", "architects", "raa", "prot", "since", "qid", "wp", "photo", "nofloors", "rebuilt",
-               "cellars", "addr", "addrn", "tower", "yrd", "br", "arch")
+               "cellars", "addr", "addrn", "tower", "yrd", "br", "arch", "yc")
 # arch: the City Museum's archive photos (s02_stadsmuseet_photos), oldest first, after the photo as "through the years"
 ARCH_FIELDS = ("key", "w", "h", "y", "by", "page", "t")
 # rd: a reader's photo (pipeline/contributions.py), its report's reference; it has no Commons page or title
@@ -527,7 +534,8 @@ def with_wiki(df: pd.DataFrame, table: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-RECORD_SRCS = (codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_OLD, codes.SRC_WIKIDATA, codes.SRC_OSM, codes.SRC_READER)
+RECORD_SRCS = (codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_OLD, codes.SRC_WIKIDATA, codes.SRC_OSM, codes.SRC_READER,
+               codes.SRC_CITED)
 
 
 def about_stats(df: pd.DataFrame, cards: list[dict]) -> dict:
@@ -547,6 +555,8 @@ def about_stats(df: pd.DataFrame, cards: list[dict]) -> dict:
         "withArchitect": int(sum(1 for c in shipped if c.get("architects"))),
         "addressed": int(sum(1 for c in shipped if c.get("addr"))),
         "gamla": {"n": int(gamla.sum()), "dated": int((gamla & record).sum())},
+        # a cited record that gives only a century or a period (pipeline/cited.py): from a record, shown with "≈"
+        "citedPeriod": int(((df.ysrc == codes.SRC_CITED) & (df.yflag == codes.PERIOD)).sum()),
         "fewestPrivateYears": fewest_private_years(),
         "lateYear": int(city.ESTIMATE["late_prod_year"]),
         "nearM": int(city.ESTIMATE["near_m"]),
@@ -669,13 +679,17 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
                   terrain: dict | None = None, wiki: dict | None = None, landmarks: list[dict] | None = None,
                   places: dict | None = None, towers: pd.DataFrame | None = None,
                   fixes: pd.DataFrame | None = None, reader: pd.DataFrame | None = None,
-                  archaeology: dict[int, dict] | None = None, archive: dict[int, list[dict]] | None = None) -> dict:
+                  archaeology: dict[int, dict] | None = None, archive: dict[int, list[dict]] | None = None,
+                  cited: pd.DataFrame | None = None, withheld: set[int] | None = None) -> dict:
     """Write packs, attrs, cards, excerpt shards, photos.json, layers.json and stockholm.json into `out`; return a size
     summary. wiki: load_wiki()'s shape (default: read from data/); landmarks: s08_landmarks' entries (likewise);
     places: load_places()'s shape (likewise); towers: s02_towers' parts (load_towers(); default: none); fixes: the
     card-name fixes (default pipeline/name_fixes.csv); reader: the accepted readers' reports (default
     pipeline/contributions.csv); archaeology: s02_stadsmuseet's entries (load_archaeology(); default: read from data/);
-    archive: s02_stadsmuseet_photos' entries (load_archive_photos(); likewise)."""
+    archive: s02_stadsmuseet_photos' entries (load_archive_photos(); likewise); cited: the cited years
+    (cited.read() of the table main is given, pipeline/gamla_stan_years.csv by default), whose source and page a
+    cited card links (`yc`); default none, so a fixture build never reads the repo's table. withheld: the takedowns'
+    gids (suppress.gids_of), which no cited line reaches; default none."""
     out = Path(out)
     sources = load_sources(SOURCES) if sources is None else sources
     accuracy = load_accuracy() if accuracy is None else accuracy
@@ -687,6 +701,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     reader = contributions.read() if reader is None else reader
     archaeology = load_archaeology() if archaeology is None else archaeology
     archive = load_archive_photos() if archive is None else archive
+    cited = cited_mod.empty() if cited is None else cited
     df = with_places(name_fixes.apply(with_wiki(df, wiki["table"]), fixes), places)
     parts = tower_parts(df, towers)
     tiles = build_tiles(df, tile, parts)
@@ -701,6 +716,8 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     for g, street, number in zip(shown.gid, shown.street, shown.number):
         addresses.setdefault(int(g), []).append(f"{street} {number}")
     n_reader = contributions.apply_cards(cards, df, reader, hidden(df), addresses) if len(reader) else 0
+    if len(cited):
+        cited_mod.cards(cards, df, cited, hidden(df), withheld=withheld or set())
     for k, shard in enumerate(cards):
         io.write_json(out / "cards" / f"{k:02d}.json", shard)
     texts = wiki_shards(df, wiki["extracts"])
@@ -751,10 +768,13 @@ def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="s03_tiles", description=__doc__.splitlines()[0])
     ap.add_argument("--version", help="output version vYYYYMMDD or vYYYYMMDD-tag (default: today)")
     ap.add_argument("--tile", type=float, default=city.TILE, help="tile size in metres")
+    ap.add_argument("--cited", type=Path, default=cited_mod.PATH, help="the cited building years (pipeline/cited.py)")
     args = ap.parse_args(argv)
+    cited = cited_mod.read(args.cited) if args.cited.exists() else cited_mod.empty()
     out = io.version_dir(args.version)
     version = out.name
-    s = write_outputs(load(), out, version, tile=args.tile, towers=load_towers())
+    s = write_outputs(load(), out, version, tile=args.tile, towers=load_towers(), cited=cited,
+                      withheld=suppress.gids_of(DATA / "buildings.parquet") if len(cited) else set())
     io.write_json(CURRENT, {"version": version})
     keep_keys(DATA / "buildings.parquet", DATA / "keys", version)
     mb = 1e6

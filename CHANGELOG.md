@@ -16,6 +16,7 @@ Plans, not promises: the order can change.
 ## 2026-10-20
 
 ### Features
+- **Gamla stan, house by house.** A card can now show a year from a cited source with its link (Swedish Wikipedia, KulturNav, the City Museum's reports and inventories), both readings where sources differ ("built in the 1630s or the 1640s (sources differ)"), and when a house was rebuilt or extended.
 - **Weather.** Look has a Weather row: Clear, Snow, Rain and Fog. Snow settles on the roofs and the ground and falls past the camera, rain streaks down and darkens the roofs, and fog closes in on the far shore. The choice is remembered, and a `?weather=snow` link shows a snowy map.
 - **Moving water.** The water ripples gently close up and stays calm far away. It stands still for anyone who asks their device to reduce motion.
 - **Boats.** At Today, the city's ferries (Djurgårdsfärjan, SL's boats 80, 80X, 84 and 89, Sjöstadstrafiken, Cityline and the boat from Riddarholmen to Solna strand) and the Baltic ships (Viking Line, Silja Line, Tallink) sail their real routes from OpenStreetMap. They are an illustration, not live positions, and sail faster than in life. A Boats switch in Look turns them off.
@@ -32,6 +33,7 @@ Plans, not promises: the order can change.
 - Data version `v20261020-p4s`: 269 archive photos from Digitala Stadsmuseet, chosen by address, licence and subject.
 - Data version `v20261020-p4t`: 146 archive photos on 111 buildings. A photo now needs the archive's own keyword for a building, a street or a view, and none for people, an event or a room (press photos of people indoors had passed the title check).
 - Data version `v20261020-p4u`: archive photos from every stadsdel (75,978 harvested; 860 on 825 buildings), with the ferry routes of `v20261020-fx1`.
+- Data version `v20261020-fx4`: 159 more buildings in Gamla stan and on Riddarholmen dated from cited sources (254 rows on 161 footprints; Gamla stan's "Year unknown" falls from 332 to 175 of 430). Three Wikidata items that sat on the house next door are pinned to their own houses (Vindragarlagets hus, Johannesgränd 4, Källaren Stralsund). Otherwise as `v20261020-p4w`.
 - Data version `v20261020-fx3`: the boats' stops and destinations from OpenStreetMap's ferry routes, for the boat tooltips. Otherwise as `v20261020-p4v`.
 - Data version `v20261020-p4v`: a better photo matcher, which reads today's address when the title gives one ("Nuv. Åsögatan 90"), a block designation, and the title's own address when the photo has none. A view taken from an address no longer counts as a photo of it, and a photo whose title says the building was demolished or moved is left out: 987 photos on 946 buildings.
 - Data version `v20261020-p4w`: two archive photos a building outside Gamla stan and Riddarholmen (one before): 1,261 photos on 948 buildings, 302 of them with more than one; the boats' stops of `v20261020-fx3`.

@@ -391,7 +391,8 @@ def test_main_fails_when_no_building_gets_a_raa_year(tmp_path, monkeypatch, ysrc
     monkeypatch.setattr(s02_years.est, "stadsdel_of", lambda *_: None)
     for name in ("dated.json", "classes.json", "osm.json"):
         (tmp_path / name).write_text("{}")
-    report = {"raa_rejected": [], "landmarks_dropped": [], "landmarks": 0, "review": {}, "accuracy": {}}
+    report = {"raa_rejected": [], "landmarks_dropped": [], "landmarks": 0, "review": {}, "accuracy": {}, "cited": 0,
+              "cited_skipped": []}
     monkeypatch.setattr(s02_years, "assign_years", lambda *_, **__: (fake_years(ysrc, yflag), report))
     args = ["--buildings", str(tmp_path / "buildings.parquet"), "--out", str(tmp_path / "years.parquet"),
             "--raa-old", str(tmp_path / "missing.gpkg"), "--wikidata", str(tmp_path / "dated.json"),

@@ -210,6 +210,73 @@ test('a curated card shows its rebuilds when pinned, never on hover, and its old
   expect(errors).toEqual([]);
 });
 
+// A cited record where two sources differ (pipeline/cited.py's either pair), the rebuilds and other houses the records
+// name, and a cited period no map period holds 3/4 of (decided 2026-10-20: shown, not held). No build carries them yet,
+// so the test adds them to two "Year unknown" buildings' cards as their shards reach the page: the uncoloured case,
+// where the card still gives what the records say, its header too. The coloured one (one period holding the readings,
+// PERIOD) and Swedish are web/test/card.test.mjs's.
+test('a cited card gives both readings where sources differ, its rebuilds when pinned, and a span no period holds', async ({ page }) => {
+  const errors = watchErrors(page);
+  const WP = 'https://sv.wikipedia.org/w/index.php?oldid=53738008', WP2 = 'https://sv.wikipedia.org/w/index.php?oldid=55051795';
+  const KN = 'https://kulturnav.org/74ce2767-f09f-4bdf-b86e-ea22dbd632b6';
+  const add = {};
+  await page.route('**/cards/*.json', async route => {
+    const r = await route.fetch();
+    const shard = await r.json();
+    for (const [g, yc] of Object.entries(add)) {
+      if (route.request().url().endsWith(`/${String(g % 64).padStart(2, '0')}.json`)) shard[g] = { ...shard[g], yc };
+    }
+    await route.fulfill({ response: r, json: shard });
+  });
+  await open(page);
+  // two "Year unknown" buildings that are no private house, in two shards
+  const [g1, g2] = await page.evaluate(async () => {
+    const { version } = await (await fetch('data/current.json')).json();
+    const n = (await (await fetch(`data/${version}/stockholm.json`)).json()).stats.buildings;
+    const out = [];
+    for (let g = 0; g < n && out.length < 2; g++) {
+      const b = window.__dbg.building(g);
+      if (b.yflag === 7 && b.ysrc === 0 && !b.private && (!out.length || out[0] % 64 !== g % 64)) out.push(g);
+    }
+    return out;
+  });
+  test.skip(g2 === undefined, 'this build has no two "Year unknown" buildings');
+  add[g1] = { e: [{ a: 1785, z: 1785, s: 'wikipedia_sv', u: WP }, { a: 1798, z: 1798, s: 'kulturnav', u: KN }],
+    r: [{ a: 1907, z: 1907, s: 'wikipedia_sv', u: WP }, { a: 1947, z: 1947, s: 'wikipedia_sv', u: WP2 }],
+    o: [{ a: 1804, z: 1804, s: 'kulturnav', u: KN }] };
+  add[g2] = { s: 'wikipedia_sv', u: WP2, a: 1600, z: 1624 };
+  const links = l => l.evaluateAll(as => as.map(a => [a.textContent, a.href, a.title, a.target]));
+
+  await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), g1);
+  const card = page.locator('#card.pinned');
+  await expect(card.locator('.dating')).toHaveText(/^Built in 1785 or 1798 \(sources differ\)/);
+  // each reading links its own record, the source named in its title; no colour, and the header says the sources differ
+  expect(await links(card.locator('.dating a.cited'))).toEqual([
+    ['1785', WP, 'Swedish Wikipedia', '_blank'], ['1798', KN, 'KulturNav (ArkDes)', '_blank']]);
+  await expect(card.locator('.when .y')).toHaveText('Sources differ');
+  // the rebuilds and the other house: the second line, each year linked to its record
+  await expect(card.locator('.rebuilt')).toHaveText('Rebuilt or extended 1907 and 1947 · Also part of this building: a house built 1804');
+  expect(await links(card.locator('.rebuilt a.cited'))).toEqual([
+    ['1907', WP, 'Swedish Wikipedia', '_blank'], ['1947', WP2, 'Swedish Wikipedia', '_blank'],
+    ['1804', KN, 'KulturNav (ArkDes)', '_blank']]);
+  // the hover card: the line, never the rebuilds
+  await page.evaluate(() => window.__dbg.pinCard(-1));
+  await expect(page.locator('#card.pinned')).toHaveCount(0);
+  await page.evaluate(g => window.__dbg.showCard(g, 300, 300), g1);
+  await expect(page.locator('#card .hint')).toBeVisible();
+  await expect(page.locator('#card .dating')).toHaveText('Built in 1785 or 1798 (sources differ)');
+  await expect(page.locator('#card .rebuilt')).toHaveCount(0);
+
+  // a cited period no map period holds 3/4 of: no colour on the map, the record's words on the card, linked, and in
+  // the header ("the beginning of the 1600s", 1600–1624)
+  await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), g2);
+  await expect(card.locator('.dating')).toHaveText(/^≈ built in the early 1600s · Swedish Wikipedia/);
+  expect(await links(card.locator('.dating a.cited'))).toEqual([['≈ built in the early 1600s · Swedish Wikipedia', WP2, '', '_blank']]);
+  await expect(card.locator('.when .y')).toHaveText('≈ early 1600s');
+  await expect(card.locator('.rebuilt')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
 // The City Museum's building-archaeology register (PR 57): a pinned card of a building it covers shows the section,
 // with its report links to Digitala Stadsmuseet and the credit; the hover card and a building it does not cover never do.
 test('a building the City Museum documented shows its building archaeology when pinned, never on hover', async ({ page }) => {

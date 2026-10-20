@@ -5,9 +5,9 @@ the municipality's box, its P31 classes, P18 images and whether it has a P576 (i
 sv/en article titles and sitelink count. building_items keeps an item only under the year tier's class rules
 (years_wikidata.classify: a building, P31/P279* Q41176, and not an organisation, museum, gallery, destroyed building
 or work of art) and without P576, so a fountain's photo never lands on the building beside it. place() puts each on a
-footprint as the year tier does (inside, courtyard, else the nearest within city.WIKI's max_m), and best() keeps one
-item per footprint for the card: one with an article first, then the one with most sitelinks, then the lowest Q
-number. (The year tier keeps its one-item rule: a footprint that two items reach is dated by neither.)
+footprint as the year tier does (inside, courtyard, else the nearest within city.WIKI's max_m), pin() moves an item
+the hand-checked table pipeline/wiki_pins.csv puts on another footprint, and best() keeps one item per footprint for
+the card: a pinned one first, then one with an article, then the one with most sitelinks, then the lowest Q number. (The year tier keeps its one-item rule: a footprint that two items reach is dated by neither. It reads the same pin table, years_wikidata.match, so a pinned item's year goes where its card goes.)
 
 Photos: credit() turns a Commons page (imageinfo with extmetadata) into the credit the card shows, or refuses it.
 Only CC BY, CC BY-SA, CC0 and public-domain files pass; a file with a restriction, or a CC file whose author is
@@ -155,17 +155,29 @@ def beside_private(b, curated, gids, xs, ys, metres: float | None = None) -> np.
     return out
 
 
+def pin(placed: pd.DataFrame, items: pd.DataFrame, pins: dict[str, int]) -> pd.DataFrame:
+    """placed with each pinned item ({qid: gid}, s06_wiki's pin table) on its own footprint, placement "pinned",
+    instead of wherever its point put it: an item whose coordinate falls in the house next door (Vindragarlagets hus,
+    2026-10-20). `items`: building_items' rows, so a pinned item still has to pass the class rules."""
+    if not pins:
+        return placed
+    rows = items[items.qid.isin(list(pins))].copy()
+    rows["gid"] = rows.qid.map(pins).astype("int64")
+    rows["placement"] = "pinned"
+    return pd.concat([placed[~placed.qid.isin(list(pins))], rows[placed.columns]], ignore_index=True)
+
+
 def best(placed: pd.DataFrame) -> pd.DataFrame:
-    """One item per footprint, indexed by gid: an article (sv or en) first, then most sitelinks, then the lowest Q
-    number; `items` counts the building items that reached the footprint."""
+    """One item per footprint, indexed by gid: a pinned item first (pin), then one with an article (sv or en), then
+    most sitelinks, then the lowest Q number; `items` counts the building items that reached the footprint."""
     if placed.empty:
         return placed.assign(items=pd.Series([], dtype="int64")).set_index("gid")
-    p = placed.assign(article=(placed.wp_sv != "") | (placed.wp_en != ""),
+    p = placed.assign(pinned=placed.placement == "pinned", article=(placed.wp_sv != "") | (placed.wp_en != ""),
                       qnum=placed.qid.str[1:].astype("int64"))
-    p = p.sort_values(["gid", "article", "nsl", "qnum"], ascending=[True, False, False, True])
+    p = p.sort_values(["gid", "pinned", "article", "nsl", "qnum"], ascending=[True, False, False, False, True])
     out = p.groupby("gid").head(1).set_index("gid")
     out["items"] = p.groupby("gid").size()
-    return out.drop(columns=["article", "qnum"]).sort_index()
+    return out.drop(columns=["pinned", "article", "qnum"]).sort_index()
 
 
 def card_name(label: str, districts: set[str]) -> str:

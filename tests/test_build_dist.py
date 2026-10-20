@@ -350,12 +350,14 @@ def test_refuses_to_replace_a_folder_it_did_not_build(bd, web, tmp_path):
 
 def test_gate_is_s99_validate(monkeypatch, tmp_path):
     import pipeline.s99_validate
+    from pipeline import cited
 
     seen = []
     monkeypatch.setattr(pipeline.s99_validate, "validate",
-                        lambda out, data, *, release: seen.append((out, data, release)) or ["x"])
+                        lambda out, data, *, release, cited_path: seen.append((out, data, release, cited_path)) or ["x"])
     assert load_build_dist().gate(tmp_path / VERSION, tmp_path / "data", True) == ["x"]
-    assert seen == [(tmp_path / VERSION, tmp_path / "data", True)]
+    # the gate checks the build against the repo's cited years table (a fixture test passes none)
+    assert seen == [(tmp_path / VERSION, tmp_path / "data", True, cited.PATH)]
 
 
 def test_wrangler_config():

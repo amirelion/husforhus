@@ -152,6 +152,18 @@ def test_wikidata_and_osm_publish_the_stated_year_and_spans_follow_the_display_r
     assert y.period.tolist() == [city.period_index(v) for v in (1640, 1571, 1920, 1878)]
 
 
+def test_a_pinned_wikidata_item_dates_the_footprint_its_card_goes_to():
+    # pipeline/wiki_pins.csv: the item whose point falls in the house next door dates its own house, as s06 puts the
+    # card's item there; the house next door is dated by nothing
+    b = buildings(("u0", "Flerbostadshus", sq(0)), ("u1", "Flerbostadshus", sq(1)))
+    items = wikidata(("Q0", 0, 1643, 1643, False))
+    y, _ = run(b, no_raa(), wikidata=items)
+    assert (y.ysrc[0], y.ysrc[1]) == (SRC_WIKIDATA, SRC_NONE)
+    y, report = run(b, no_raa(), wikidata=items, wiki_pins={"Q0": 1})
+    assert (y.ysrc[0], y.ysrc[1], y.year[1]) == (SRC_NONE, SRC_WIKIDATA, 1643)
+    assert [(e["gid"], e["placement"]) for e in report["review"]["wikidata_gains"]] == [(1, "pinned")]
+
+
 def test_a_private_house_dated_by_wikidata_or_osm_publishes_its_decade_only():
     # The decade rule: the Wikipedia-article exception is not implemented yet; every non-curated private house rounds.
     b = buildings(("u0", "Enbostadshus", sq(0)), ("u1", "Enbostadshus", sq(1)), ("u2", "Enbostadshus", sq(2)))
@@ -414,15 +426,16 @@ def test_estimates_off_leaves_an_empty_table_that_still_describes_the_data():
     assert acc["cells"] == [] and acc["tested"] == 1 and acc["result"] == {"estimate": 0, "period": 0, "unknown": 1}
     assert acc["area"] == {"n": 0, "status": "not measurable"} and acc["external"] == NO_EXTERNAL
     assert set(report["review"]) == {"wikidata_vs_raa", "wikidata_vs_area", "wikidata_vs_curated", "osm_vs_raa",
-                                     "wikidata_century", "wikidata_gains"}
+                                     "wikidata_century", "wikidata_gains", "cited_vs_raa", "cited_vs_wikidata",
+                                     "cited_vs_osm", "cited_no_period", "cited_period_vs_record"}
 
 
 def test_summary_counts_every_tier():
     b = buildings(("u0", "Flerbostadshus", sq(0)), ("u1", "Flerbostadshus", sq(1)), ("u2", "Flerbostadshus", sq(2)))
     y, _ = run(b, no_raa(), wikidata=wikidata(("Q0", 0, 1700, 1700, False)), osm=osm(("way/1", 1, 1800, 1800)))
     s = s02_years.summary(y.reset_index())
-    assert set(s) == {"buildings", "curated", "raa", "raa_old", "raa_area", "wikidata", "osm", "reader", "estimate", "period",
-                      "private", "unknown", "byFlag", "with_raa_id"}
+    assert set(s) == {"buildings", "curated", "cited", "raa", "raa_old", "raa_area", "wikidata", "osm", "reader", "estimate",
+                      "period", "private", "unknown", "byFlag", "with_raa_id"}
     assert (s["wikidata"], s["osm"], s["unknown"], s["estimate"], s["period"]) == (1, 1, 1, 0, 0)
 
 

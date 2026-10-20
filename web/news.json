@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-10-20",
+    "kind": "data",
+    "title": { "en": "Gamla stan, house by house", "sv": "Gamla stan, hus för hus" },
+    "text": {
+      "en": "159 more houses in Gamla stan and on Riddarholmen now have a year or a period, from Swedish Wikipedia, KulturNav and the City Museum's reports and building inventories. Many are medieval at heart. Where sources differ, the card shows both readings, and where a house was rebuilt or extended, the card says when.",
+      "sv": "159 fler hus i Gamla stan och på Riddarholmen har nu ett årtal eller en tidsperiod, ur svenska Wikipedia, KulturNav och Stadsmuseets rapporter och byggnadsinventeringar. Många är medeltida i grunden. Där källorna går isär visar kortet båda uppgifterna, och där ett hus har byggts om eller till står det när."
+    }
+  },
+  {
+    "date": "2026-10-20",
     "kind": "feature",
     "title": { "en": "Snow, boats and postcards", "sv": "Snö, båtar och vykort" },
     "text": {

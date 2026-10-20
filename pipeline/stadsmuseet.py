@@ -35,15 +35,14 @@ import shapely
 
 from .plaques import house_numbers, known_street
 from .privacy import normalise, phrases
+from .ssm_archive import ARCHIVE, REPORT_RE, SITE  # noqa: F401  (the archive's pages; re-exported for callers)
 from .textfold import fold
 
 CREDIT = "Stadsmuseet i Stockholm"
 # A record's report: its own page in Digitala Stadsmuseet's archive of documents, found by the BR number in field 688
 # (s00_fetch_stadsmuseet asks ARCHIVE?688=<n>). The archive's web page ignores a ?BR=<n> address and shows its first
-# page for every number (found live, 2026-10-20), so the card links the report's own page. Photos: stadsmuseet_photos.
-SITE = "https://digitalastadsmuseet.stockholm.se"
-ARCHIVE = f"{SITE}/fotoweb/archives/5004-Dokument-och-publikationer/"
-REPORT_RE = re.compile(re.escape(ARCHIVE) + r"[^\s\"'<>?#]+\.info")
+# page for every number (found live, 2026-10-20), so the card links the report's own page (ssm_archive.REPORT_RE).
+# Photos: stadsmuseet_photos.
 MEDIEVAL = "1100-1400-talet"     # the register's category labels (/api/brCategories), matched by label, not id
 DENDRO = "Dendrokronologi"
 COVER = 0.5      # a footprint at least half inside a record's polygon is one the record covers
@@ -268,3 +267,20 @@ def cached_designations(raw=None) -> set[str]:
     if not path.exists():
         return set()
     return designations(json.loads(path.read_text(encoding="utf-8"))["brInvestigations"])
+
+
+def cached_reports(raw=None) -> set[str] | None:
+    """Every report page the register links: report_pages() of s00_fetch_stadsmuseet's cached answers
+    (data/raw/stadsmuseet/reports/<BR number>.json), or None when this machine has no cache. A cited year from a City
+    Museum report (pipeline/cited.py, source ssm_br) must cite one of them: the museum's permission of 2026-10-19
+    covers the register and the reports it links, not every item in the archive."""
+    import json
+    from pathlib import Path
+    folder = (Path("data") if raw is None else Path(raw)) / "raw" / "stadsmuseet" / "reports"
+    if not folder.is_dir():
+        return None
+    pages = set()
+    for f in folder.glob("*.json"):
+        if f.stem.isdigit():
+            pages |= set(report_pages(json.loads(f.read_text(encoding="utf-8")), int(f.stem)))
+    return pages

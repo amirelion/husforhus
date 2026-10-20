@@ -2,11 +2,26 @@
 
 The first tier that applies wins:
   curated   pipeline/landmarks.py as s08_landmarks verified it (data/landmarks.json), placed by its coordinate
+  cited     a cited record (pipeline/gamla_stan_years.csv, pipeline/cited.py) by footprint key (its uuid, or its oid
+            where it has none), hand-checked like the landmarks: a year, span or decade, or a PERIOD (a century,
+            half-century or period the record gives, or the union of two readings where sources differ, an either
+            pair, when one map period holds at least 3/4 of it; one no period holds that much of is listed,
+            cited_no_period, with the year it cleared: the footprint loses an area, Wikidata or OSM year and is kept
+            from the estimate, so it stays unknown). A rebuilt row never sets a year (only the card shows it). It
+            fills a footprint no building-level record dates (unknown, area, Wikidata, OSM), except that a period row
+            leaves a Wikidata or OSM year lying inside its span alone (the record is the more precise; listed,
+            cited_period_vs_record); on one RAÄ, RAÄ's old register or a landmark
+            dates, the row is skipped with a warning (report cited_skipped) and listed where the two disagree. Every
+            Wikidata or OSM year a cited PERIOD replaces is listed (cited_vs_wikidata, cited_vs_osm), as is any other
+            one more than DISAGREE_YEARS outside the cited span. A PERIOD row never trains or tests the estimate tier;
+            private houses keep their decade rule
   raa       a RAÄ Byggnad record joined by registerbyggnad_id == LOD1 UUID; RAÄ polygons that join no
             UUID may still date a footprint they cover by at least half
   raa_old   RAÄ's OLD register file (pipeline/years_raa_old.py), joined by UUID: years the 2025 register dropped
   raa_area  the footprint's centroid lies in a dated RAÄ Område polygon (the smallest one wins)
-  wikidata  a Wikidata building item placed on exactly one footprint (pipeline/years_wikidata.py)
+  wikidata  a Wikidata building item placed on exactly one footprint (pipeline/years_wikidata.py); an item the
+            hand-checked pin table (pipeline/wiki_pins.csv, pipeline/pins.py) puts on its own footprint is placed there,
+            as the card's item is (s06_wiki), never where its point falls
   osm       an OpenStreetMap building with a start_date placed on exactly one footprint (pipeline/years_osm.py)
   estimate  the kNN estimate from dated neighbours (pipeline/estimate.py): ESTIMATE with a ±band for a house in a
             cell the table vouches for, else the building stays UNKNOWN (year 0; Ärg draws it hatched). PERIOD (the
@@ -50,11 +65,12 @@ import pandas as pd
 import pyogrio
 import shapely
 
+from . import cited as cited_mod
 from . import city
 from . import estimate as est
-from . import contributions, suppress, years_osm, years_raa_old, years_wikidata
-from .codes import (AREA, ESTIMATE, EXACT, LONG, PERIOD, RANGE, SRC_CURATED, SRC_ESTIMATE, SRC_NONE, SRC_OSM, SRC_RAA,
-                    SRC_RAA_AREA, SRC_RAA_OLD, SRC_READER, SRC_WIKIDATA, UNKNOWN)
+from . import contributions, pins, suppress, years_osm, years_raa_old, years_wikidata
+from .codes import (AREA, ESTIMATE, EXACT, LONG, PERIOD, RANGE, SRC_CITED, SRC_CURATED, SRC_ESTIMATE, SRC_NONE, SRC_OSM,
+                    SRC_RAA, SRC_RAA_AREA, SRC_RAA_OLD, SRC_READER, SRC_WIKIDATA, UNKNOWN)
 from .geo import LANDMARK_MAX_M, lonlat_to_3011, resolve_points  # noqa: F401  (re-exported for callers and tests)
 from .s00_fetch_raa import DEST as RAA_GPKG
 from .s00_fetch_raa import LAYER as RAA_LAYER
@@ -79,6 +95,9 @@ MIN_PRIVATE_OVERLAP = 2        # years a private decade must share with its peri
 BUILDING_COLUMNS = ["gid", "uuid", "kategori", "fastighet", "height", "area", "prod_year", "fnr", "geometry"]
 PERIOD_FROM = np.array([p[3] for p in city.PERIODS], dtype=np.int64)
 PERIOD_TO = np.minimum(np.array([p[4] for p in city.PERIODS], dtype=np.int64), LATEST_YEAR)
+# ysrc as the review list names it (cited_no_period, cited_period_vs_record)
+SRC_NAMES = {SRC_NONE: "", SRC_CURATED: "curated", SRC_RAA: "raa", SRC_RAA_AREA: "raa_area", SRC_WIKIDATA: "wikidata",
+             SRC_ESTIMATE: "estimate", SRC_RAA_OLD: "raa_old", SRC_OSM: "osm", SRC_READER: "reader", SRC_CITED: "cited"}
 
 
 def raa_id_from_url(url) -> str:
@@ -205,7 +224,8 @@ def disagree(src: pd.DataFrame, y_from, y_to, pos, years: int = DISAGREE_YEARS) 
 
 def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dict], *, raa_old=None, wikidata=None,
                  osm=None, stadsdel=None, estimates: bool = True, params: dict | None = None,
-                 exclude: set[int] = frozenset(), reader: pd.DataFrame | None = None) -> tuple[pd.DataFrame, dict]:
+                 exclude: set[int] = frozenset(), reader: pd.DataFrame | None = None,
+                 cited: pd.DataFrame | None = None, wiki_pins: dict[str, int] | None = None) -> tuple[pd.DataFrame, dict]:
     """years.parquet rows for buildings b (gid, uuid, kategori, geometry and, for the estimate tier,
     fastighet, height, area, prod_year, fnr; EPSG:3011), plus a report (raa_rejected, landmarks, review, accuracy).
 
@@ -216,6 +236,14 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     test the estimate tier or the area check: an objection stops that use too (GDPR Art. 21), not only the display.
     reader: contributions.reader_years' rows (gid: ref, year_from, year_to, replaces), applied after every other tier,
     so they neither train nor test the estimate; a row the tier refuses stops the step (contributions.Refused).
+    cited: cited.rows' rows (gid: year, year_from, year_to, yflag, kind, source, place; an either pair is one row, its
+    union span), written after RAÄ and before the landmarks; a PERIOD row or an either pair on a private-house category
+    stops the step (cited.Refused: its decade would hide the period or the two readings); a row with yflag UNKNOWN (a
+    period or an either pair no map period holds 3/4 of) is not written: it is listed (review cited_no_period), and its
+    footprint, unless RAÄ dates it, loses an area, Wikidata or OSM year and stays unknown rather than estimated. A
+    period row on a footprint whose Wikidata or OSM year lies inside its span is not written either (review
+    cited_period_vs_record). wiki_pins: {qid: gid} (pins.pins_of), the items the pin table
+    puts on their own footprint, for the Wikidata tier.
     """
     p = city.ESTIMATE if params is None else params
     n = len(b)
@@ -251,7 +279,7 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     o = years_osm.match(b, osm) if osm is not None else None
     if o is not None:
         write(o, SRC_OSM)
-    w = years_wikidata.match(b, wikidata) if wikidata is not None else None
+    w = years_wikidata.match(b, wikidata, pins=wiki_pins) if wikidata is not None else None
     if w is not None:
         write(w, SRC_WIKIDATA)
 
@@ -272,6 +300,56 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     ysrc[i] = SRC_RAA
     raa_id[pos[link.index].to_numpy()] = link.to_numpy()
 
+    # The cited tier: hand-checked records, on footprints no building-level record dates (RAÄ's are skipped).
+    report["cited"], report["cited_skipped"] = 0, []
+    cited_review = {"cited_vs_raa": [], "cited_no_period": [], "cited_period_vs_record": []}
+    no_period = np.zeros(n, bool)          # a period row no map period holds 3/4 of: listed, never estimated over
+    if cited is not None and len(cited):
+        cited = cited[~cited.index.isin(list(exclude))]                  # a takedown: no tier dates it
+        k = pos[cited.index].to_numpy()
+        on_private = b.kategori.isin(city.PRIVATE_HOUSE_KATEGORI).to_numpy()[k] & (
+            (cited.yflag.to_numpy() == PERIOD) | (cited.kind.to_numpy() == "either"))
+        if on_private.any():
+            raise cited_mod.Refused(f"a cited period or either pair on a private house (gids "
+                                    f"{sorted(cited.index[on_private])}): its decade would hide the period, or the "
+                                    "two readings")
+        # A period (or an either pair's union) no map period holds 3/4 of: no colour. The cited tier outranks the
+        # area, Wikidata and OSM years, so the one such a tier wrote goes too (listed with the row: a conflict to look
+        # at); RAÄ's stays. The card still gives what the records say (cited.card_entry).
+        unplaced = cited.yflag.to_numpy() == UNKNOWN
+        ku = k[unplaced]
+        lower = np.isin(ysrc[ku], (SRC_RAA_AREA, SRC_WIKIDATA, SRC_OSM))
+        cited_review["cited_no_period"] = [
+            {"gid": int(g), "kind": str(r.kind), "year_from": int(r.year_from), "year_to": int(r.year_to),
+             "source": str(r.source), "place": str(r.place), "before_src": SRC_NAMES.get(int(ysrc[i]), ""),
+             "before_year": int(year[i]), "cleared": bool(c)}
+            for (g, r), i, c in zip(cited[unplaced].iterrows(), ku, lower)]
+        gone_lower = ku[lower]
+        year[gone_lower], y_from[gone_lower], y_to[gone_lower] = 0, 0, 0
+        ysrc[gone_lower], yflag[gone_lower] = SRC_NONE, UNKNOWN
+        no_period[ku] = True
+        cited, k = cited[~unplaced], k[~unplaced]
+        # A period over a Wikidata or OSM year inside its span: the record is the more precise and agrees; it stays.
+        # Not an either pair: its two readings are the hand-checked answer, and a third year inside them is none.
+        inside = ((cited.kind.to_numpy() == "period") & np.isin(ysrc[k], (SRC_WIKIDATA, SRC_OSM))
+                  & (y_from[k] >= cited.year_from.to_numpy()) & (y_to[k] <= cited.year_to.to_numpy()))
+        cited_review["cited_period_vs_record"] = [
+            {"gid": int(g), "year_from": int(r.year_from), "year_to": int(r.year_to), "source": str(r.source),
+             "place": str(r.place), "record_src": SRC_NAMES[int(ysrc[i])], "record_year": int(year[i]),
+             "record_from": int(y_from[i]), "record_to": int(y_to[i])}
+            for (g, r), i in zip(cited[inside].iterrows(), k[inside])]
+        cited, k = cited[~inside], k[~inside]
+        taken = np.isin(ysrc[k], (SRC_RAA, SRC_RAA_OLD))
+        report["cited_skipped"] = [int(g) for g in cited.index[taken]]
+        bad = disagree(cited[taken], y_from, y_to, pos)
+        cited_review["cited_vs_raa"] = _entries(bad, pos, lambda g: "", cited, year, y_from, y_to,
+                                                lambda g: {"kind": str(cited.kind[g]), "source": str(cited.source[g]),
+                                                           "place": str(cited.place[g])})
+        c, k = cited[~taken], k[~taken]
+        year[k], y_from[k], y_to[k], yflag[k] = c.year, c.year_from, c.year_to, c.yflag
+        ysrc[k] = SRC_CITED
+        report["cited"] = len(c)
+
     report["landmarks_dropped"], report["landmarks"] = [], {}
     if landmarks:
         xs, ys = lonlat_to_3011([L["lon"] for L in landmarks], [L["lat"] for L in landmarks])
@@ -280,6 +358,9 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
                 report["landmarks_dropped"].append(L["name"])
                 continue
             k = pos[g]
+            if ysrc[k] == SRC_CITED:          # the landmark wins; its entry has its own check strings
+                report["cited_skipped"].append(int(g))
+                report["cited"] -= 1
             year[k], y_from[k], y_to[k] = L["year"], L["year_from"], L["year_to"]
             ysrc[k] = SRC_CURATED
             yflag[k] = EXACT if L["year_from"] == L["year_to"] else RANGE
@@ -295,7 +376,7 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     # The curated review list: a Wikidata or OSM year more than DISAGREE_YEARS outside the winning
     # RAÄ, area or curated span; century-precision Wikidata items; and every Wikidata gain, so the owner can scan them.
     review = {"wikidata_vs_raa": [], "wikidata_vs_area": [], "wikidata_vs_curated": [], "osm_vs_raa": [],
-              "wikidata_century": [], "wikidata_gains": []}
+              "wikidata_century": [], "wikidata_gains": [], **cited_review, "cited_vs_wikidata": [], "cited_vs_osm": []}
     if w is not None and len(w):
         def name_w(g):
             return str(w.name[g])
@@ -319,13 +400,24 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
         bad = bad[np.isin(ysrc[pos[bad].to_numpy()], (SRC_RAA, SRC_RAA_OLD))]
         review["osm_vs_raa"] = _entries(bad, pos, lambda g: str(o.name[g]), o, year, y_from, y_to,
                                         lambda g: {"osm_id": str(o.osm_id[g])})
+    # A Wikidata or OSM year the cited tier replaced: more than DISAGREE_YEARS outside the cited span, or replaced by a
+    # cited PERIOD at all (a precise year giving way to a century is worth a look even when the two agree)
+    for key, t, extra in (("cited_vs_wikidata", w, lambda g: {"qid": str(w.qid[g])}),
+                          ("cited_vs_osm", o, lambda g: {"osm_id": str(o.osm_id[g])})):
+        if t is not None and len(t):
+            k = pos[t.index].to_numpy()
+            on = t[ysrc[k] == SRC_CITED]
+            by_period = on.index.to_numpy()[yflag[pos[on.index].to_numpy()] == PERIOD]
+            listed = np.union1d(disagree(on, y_from, y_to, pos), by_period).astype(np.int64)
+            review[key] = _entries(listed, pos, lambda g, t=t: str(t.name[g]), on, year, y_from, y_to, extra)
     report["review"] = review
 
     # The estimate tier, on everything still without a year. Training and testing use the in-memory exact years
     # (private houses are rounded to their decade only below) of every building-level tier, never area years (they are not
-    # building-level anchors).
-    train = (ysrc != SRC_NONE) & (ysrc != SRC_RAA_AREA)
-    query = ysrc == SRC_NONE
+    # building-level anchors) and never a cited PERIOD (a century is no anchor either).
+    train = (ysrc != SRC_NONE) & (ysrc != SRC_RAA_AREA) & (yflag != PERIOD)
+    cited_years = (ysrc == SRC_CITED) & (yflag != PERIOD)     # building-level, as curated years are
+    query = (ysrc == SRC_NONE) & ~no_period
     accuracy = {"method": "knn", "held_out": "kvarter", "folds": p["folds"], "near_m": p["near_m"],
                 "min_cell": p["min_cell"], "min_right": p["min_right"], "max_band": p["max_band"],
                 "tested": int(train.sum()), "cells": [], "fallback": [], "band_coverage": None, "by_true_period": [],
@@ -348,13 +440,13 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
         # on curated + raa + raa_old alone, run on the rows only Wikidata or OSM dated (RAÄ never did) as if they had
         # no year, and counted per map state. The years are the in-memory ones, before private houses are rounded to their decade.
         ext = np.isin(ysrc, (SRC_WIKIDATA, SRC_OSM))
-        core = np.isin(ysrc, (SRC_CURATED, SRC_RAA, SRC_RAA_OLD))
+        core = np.isin(ysrc, (SRC_CURATED, SRC_RAA, SRC_RAA_OLD)) | cited_years
         external = est.check_external(f, year, core, ext, accuracy, p, stadsdel)
     # The area tier's accuracy: area years against the building-level years inside the same polygons.
     # A building's level year is the winner's when a higher tier won (curated, raa, raa_old), else the Wikidata or
     # OSM year the area tier outranked (Wikidata first): written below the area tier, they never win inside a
     # polygon. The years are unrounded (private houses are rounded below); scored by est.score, like the cells and the external check.
-    level = np.where(np.isin(ysrc, (SRC_CURATED, SRC_RAA, SRC_RAA_OLD)), year, 0)
+    level = np.where(np.isin(ysrc, (SRC_CURATED, SRC_RAA, SRC_RAA_OLD)) | cited_years, year, 0)
     for t in (w, o):
         if t is not None and len(t):
             k = pos[t.index].to_numpy()
@@ -368,6 +460,10 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
         area_acc.update(status="measured", **est.score(a.year.to_numpy(dtype=np.int64)[both], level[ka][both]))
     accuracy["area"] = area_acc
     accuracy["external"] = external
+    if report["cited"] or no_period.any():
+        # the table describes what ships (s99 ties result to stats.byFlag): the cited PERIODs count as periods
+        accuracy["result"] = {**accuracy["result"], "estimate": int((yflag == ESTIMATE).sum()),
+                              "period": int((yflag == PERIOD).sum()), "unknown": int((yflag == UNKNOWN).sum())}
     report["accuracy"] = accuracy
 
     # The reader tier, last: a checked report on top of what the sources and the estimate gave.
@@ -407,6 +503,7 @@ def summary(y: pd.DataFrame) -> dict:
     return {
         "buildings": len(y),
         "curated": int((y.ysrc == SRC_CURATED).sum()),
+        "cited": int((y.ysrc == SRC_CITED).sum()),
         "raa": int((y.ysrc == SRC_RAA).sum()),
         "raa_old": int((y.ysrc == SRC_RAA_OLD).sum()),
         "raa_area": int((y.ysrc == SRC_RAA_AREA).sum()),
@@ -439,12 +536,22 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--no-estimates", action="store_true", help="skip the estimate tier (a quick build)")
     ap.add_argument("--suppress", type=Path, default=None, help="takedowns (default pipeline/suppress.yml)")
     ap.add_argument("--contributions", type=Path, default=contributions.PATH, help="accepted readers' reports")
+    ap.add_argument("--cited", type=Path, default=cited_mod.PATH, help="cited building years")
+    ap.add_argument("--pins", type=Path, default=pins.PATH, help="Wikidata items pinned to their own footprint")
     a = ap.parse_args(argv or [])
     b = gpd.read_parquet(a.buildings)
     try:
         reader = contributions.reader_years(contributions.read(a.contributions), b) if a.contributions.exists() else None
     except ValueError as e:
         raise SystemExit(f"contributions: {e}; {a.out} is unchanged")
+    try:
+        cited = cited_mod.rows(cited_mod.read(a.cited), b) if a.cited.exists() else None
+    except ValueError as e:
+        raise SystemExit(f"cited: {e}; {a.out} is unchanged")
+    try:
+        wiki_pins = pins.pins_of(pins.read(a.pins), b) if a.pins.exists() else None
+    except ValueError as e:
+        raise SystemExit(f"wiki_pins: {e}; {a.out} is unchanged")
     if "fnr" not in b.columns and not a.no_estimates:
         # Without the property-unit key the estimate tier's late-unit guard would be off without a word
         raise SystemExit(f"run s01_load first ({a.buildings} has no fnr, the property-unit key the estimate tier's "
@@ -467,9 +574,11 @@ def main(argv: list[str] | None = None) -> None:
             b, load_raa(a.raa), load_landmarks(a.landmarks), raa_old=raa_old,
             wikidata=years_wikidata.load(a.wikidata, a.wikidata_classes),
             osm=years_osm.load(a.osm), stadsdel=est.stadsdel_of(b, a.stadsdelar), estimates=not a.no_estimates,
-            exclude=hidden, reader=reader)
+            exclude=hidden, reader=reader, cited=cited, wiki_pins=wiki_pins)
     except contributions.Refused as e:
         raise SystemExit(f"contributions: {e}; {a.out} is unchanged")
+    except cited_mod.Refused as e:
+        raise SystemExit(f"cited: {e}; {a.out} is unchanged")
     if hidden:
         before, years = years, suppress.years(years, hidden)
         report["accuracy"] = suppress.accuracy(report["accuracy"], before, years)
@@ -493,6 +602,17 @@ def main(argv: list[str] | None = None) -> None:
     for name in report["landmarks_dropped"]:
         print("landmark dropped (no footprint within 15 m, or one already taken):", name)
     print("landmarks placed:", report["landmarks"])
+    for g in report["cited_skipped"]:
+        print(f"warning: cited row on gid {g} skipped: a RAÄ record or a landmark dates it", file=sys.stderr)
+    for e in report["review"].get("cited_no_period", []):
+        cleared = f"; its {e['before_src']} year {e['before_year']} cleared" if e["cleared"] else ""
+        print(f"warning: cited row on gid {e['gid']} ({e['year_from']}–{e['year_to']}) skipped: no map period holds "
+              f"3/4 of its span{cleared}; listed in the review file for a hand check", file=sys.stderr)
+    for e in report["review"].get("cited_period_vs_record", []):
+        print(f"warning: cited period on gid {e['gid']} ({e['year_from']}–{e['year_to']}) skipped: its "
+              f"{e['record_src']} year {e['record_year']} lies inside it and is more precise; listed in the review file",
+              file=sys.stderr)
+    print("cited:", report["cited"])
     print("review list:", {k: len(v) for k, v in report["review"].items()}, "->", a.review_out)
     print("estimate tier:", report["accuracy"].get("result"), "area tier:", report["accuracy"].get("area"),
           "->", a.accuracy_out)

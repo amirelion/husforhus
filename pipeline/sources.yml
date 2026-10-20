@@ -141,6 +141,9 @@
   status: confirmed
   corner: {en: "© Lantmäteriet", sv: "© Lantmäteriet"}
 
+# Wikipedia: the card's excerpts (s06_wiki), the citations behind the curated landmarks (pipeline/landmarks.py) and the
+# cited years' Wikipedia rows (pipeline/gamla_stan_years.csv: a quotation of at most 25 words, CC BY-SA 4.0, linked to
+# its revision by oldid; it never reaches the map, the card links the revision).
 - id: wikipedia
   url: https://www.wikipedia.org/
   publisher: Wikipedia contributors
@@ -184,7 +187,10 @@
 
 # The City Museum's building-archaeology register (BR): s00_fetch_stadsmuseet, s02_stadsmuseet, the pinned card's
 # "Building archaeology" section. The card states facts in our own words (never the register's descriptions) and
-# links each record's report in Digitala Stadsmuseet; property designations are only a join key, never shipped.
+# links each record's report in Digitala Stadsmuseet; property designations are only a join key, never shipped. The
+# register's records never set a year. A report it links may: a year we read in it and cite by hand
+# (pipeline/gamla_stan_years.csv, source ssm_br; s99 checks the register links it), a period shown with "≈" and the
+# report linked on the card; the report's text never enters the repository.
 - id: stadsmuseet_br
   url: https://stadsarkeologisktregister.stockholm.se/
   api_url: https://stadsarkeologisktregister.stockholm.se/api      # brInvestigations, brInvestigations/{id}, brCategories
@@ -197,7 +203,7 @@
   licence_url: https://stadsarkeologisktregister.stockholm.se/
   terms: "written permission from Stadsmuseet, 2026-10-19: free use with the source credited"
   attribution: Stads- och byggnadsarkeologiskt register, Stadsmuseet i Stockholm (bearbetad / modified)
-  modified: true   # facts drawn from the records' fields and categories, placed on footprints; never their texts
+  modified: true   # facts from the records' fields and categories, years cited from its reports; never their texts
   status: confirmed
 
 # The City Museum's archive photos (s00_fetch_stadsmuseet, s02_stadsmuseet_photos): CC BY photos of Gamla stan and
@@ -213,6 +219,36 @@
   licence_url: https://creativecommons.org/licenses/by/4.0/
   attribution: Digitala Stadsmuseet, Stadsmuseet i Stockholm, CC BY 4.0
   modified: false
+  status: confirmed
+
+# The cited years (pipeline/gamla_stan_years.csv, pipeline/cited.py): construction years checked by hand, mostly in Gamla
+# stan, from KulturNav's construction events (ArkDes' "Byggnader i Sverige", CC0) and the City Museum's building
+# inventories in Digitala Stadsmuseet (only the 32 whose own licence, field 590, is CC BY: cited.CC_BY_INVENTORIES;
+# eight more are CC BY-NC-SA and never used as inventories). A card's source line links the row's record; the years
+# are placed on footprints, so "processed". The table keeps a short quotation (at most 25 words) of each KulturNav
+# entry or Wikipedia sentence a row relies on (the article's own words, never a passage it quotes from another work),
+# never the museum's text. Rows from the reports the register links are covered by stadsmuseet_br's permission, rows
+# from Wikipedia by wikipedia.
+- id: kulturnav
+  url: https://kulturnav.org/1f23ddae-5579-4e3e-bf59-a29524e4f926
+  publisher: ArkDes
+  product: KulturNav, Byggnader i Sverige
+  dataset: KulturNav, Byggnader i Sverige
+  licence: CC0-1.0
+  licence_url: https://creativecommons.org/publicdomain/zero/1.0/
+  attribution: KulturNav, Byggnader i Sverige, ArkDes (CC0)
+  modified: true
+  status: confirmed
+
+- id: stadsmuseet_inventories
+  url: https://digitalastadsmuseet.stockholm.se/fotoweb/archives/5004-Dokument-och-publikationer/
+  publisher: Stadsmuseet i Stockholm
+  product: Byggnadsinventeringar
+  dataset: Byggnadsinventeringar
+  licence: CC-BY-4.0   # Digitala Stadsmuseet marks each item "BY" (field 590): read as CC BY 4.0, as stadsmuseet_photos
+  licence_url: https://creativecommons.org/licenses/by/4.0/
+  attribution: Byggnadsinventeringar, Stadsmuseet i Stockholm, CC BY 4.0 (bearbetad / modified)
+  modified: true   # a year read from the inventory, placed on a footprint; never the inventory's text
   status: confirmed
 
 # Tunnelbanan (behind city.FEATURES metro; s16_metro). The facts were checked against the research CSVs' own sources

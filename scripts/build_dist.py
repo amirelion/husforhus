@@ -112,12 +112,14 @@ def current_version(web: Path) -> str:
 
 
 def gate(version_dir: Path, data: Path, release: bool) -> list[str]:
-    """The release gate: s99_validate's problems for this version (with release=True, pending-O1 sources too)."""
+    """The release gate: s99_validate's problems for this version (with release=True, pending-O1 sources too), with
+    the cited years table the build used (pipeline/gamla_stan_years.csv)."""
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
+    from pipeline import cited
     from pipeline.s99_validate import validate
 
-    return validate(version_dir, data, release=release)
+    return validate(version_dir, data, release=release, cited_path=cited.PATH)
 
 
 def photo_files(web: Path, version: str) -> list[str]:

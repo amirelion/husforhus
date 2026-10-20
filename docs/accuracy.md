@@ -1,21 +1,22 @@
-# How the years are known, and how good the estimates are (build v20261020-p4w of 2026-10-20)
+# How the years are known, and how good the estimates are (build v20261020-fx4 of 2026-10-20)
 
 ## In short
 
 This map shows 77,743 buildings in Stockholm. Of them:
 
-- **23,470 (30.2%) have a year from a record**: RAÄ's building registers (RAÄ is Sweden's National Heritage Board), a short hand-checked list of landmarks, Wikidata, OpenStreetMap or a reader's report the map's maker checked.
+- **23,629 (30.4%) have a year from a record**: RAÄ's building registers (RAÄ is Sweden's National Heritage Board), a short hand-checked list of landmarks, a published record checked by hand (KulturNav, Swedish Wikipedia or the City Museum), Wikidata, OpenStreetMap or a reader's report the map's maker checked (113 of them only to a century or a period, or to two readings where sources differ, shown with ≈).
 - **6,263 (8.0%) have the year of their area**: they stand in a district or an estate that RAÄ dates as a whole.
 - **4,558 (5.9%) are estimated** from similar dated buildings nearby, shown as an estimated decade ("≈ 1950s"), because every estimated house is a private house, which shows only its decade. Only houses (villa, row, chain) are estimated: for apartment blocks, a new building among older ones too often takes its neighbours' age, and the other types are below 70% right in the test itself.
-- **43,452 (55.9%) stay unknown** and are shown as "Year unknown" (pale and hatched in the default look).
+- **43,293 (55.7%) stay unknown** and are shown as "Year unknown" (pale and hatched in the default look).
 
-How far to trust the estimates: in the test, 82% of the test houses in the cells the map uses were estimated in the right period (6,111 of 7,450), but the test can only use buildings that already have a year, and those are mostly older. A new building among older neighbours is the estimate's blind spot, because it gets its neighbours' age. So the map estimates only houses (villa, row, chain), and none on property units formed late or first mapped by the City in 2008 or later. The independent check further down shows the rule keeping every building from 1990 or later in it off the map, but it is too small to confirm the test's figure.
+How far to trust the estimates: in the test, 82% of the test houses in the cells the map uses were estimated in the right period (6,091 of 7,404), but the test can only use buildings that already have a year, and those are mostly older. A new building among older neighbours is the estimate's blind spot, because it gets its neighbours' age. So the map estimates only houses (villa, row, chain), and none on property units formed late or first mapped by the City in 2008 or later. The independent check further down shows the rule keeping every building from 1990 or later in it off the map, but it is too small to confirm the test's figure.
 
 ## Where the years come from
 
 | Source | Buildings | Share |
 |---|---:|---:|
 | A hand-checked list of landmarks | 72 | 0.1% |
+| A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum) | 159 | 0.2% |
 | RAÄ's building register (Bebyggelseregistret) | 22,039 | 28.4% |
 | RAÄ's older register file (years the current register dropped) | 809 | 1.0% |
 | RAÄ, for a whole area (a district or an estate) | 6,263 | 8.0% |
@@ -23,10 +24,10 @@ How far to trust the estimates: in the test, 82% of the test houses in the cells
 | OpenStreetMap | 418 | 0.5% |
 | A reader's report, checked by the map's maker | 1 | 0.0% |
 | Estimated from similar dated buildings nearby | 4,558 | 5.9% |
-| No source: the year stays unknown, shown as "Year unknown" | 43,452 | 55.9% |
+| No source: the year stays unknown, shown as "Year unknown" | 43,293 | 55.7% |
 | **All buildings** | **77,743** | **100.0%** |
 
-A year from a record is shown as the record gives it: an exact year (4,416 buildings), the year a building was finished when the record gives a span of up to 15 years (18,031), or the first year of a longer span (1,023). A private house (a villa, a row or chain house, or an allotment cottage) shows only its decade, never its exact year. Its colour still shows its period, so when a period begins or ends within the decade, the colour narrows the decade to the part inside that period, never to fewer than 4 years.
+A year from a record is shown as the record gives it: an exact year (4,438 buildings), the year a building was finished when the record gives a span of up to 15 years (18,053), or the first year of a longer span (1,025); where a published record gives only a century or a period, or two records give different years, the map shows that period with ≈ (113), when one of its 12 periods holds at least three quarters of it (of the span between them, for two records). A private house (a villa, a row or chain house, or an allotment cottage) shows only its decade, never its exact year. Its colour still shows its period, so when a period begins or ends within the decade, the colour narrows the decade to the part inside that period, never to fewer than 4 years.
 
 ## What the words mean
 
@@ -39,19 +40,19 @@ A year from a record is shown as the record gives it: an exact year (4,416 build
 
 For a house with no year, the map looks at the 20 most similar dated buildings nearby: similar in where they stand, how tall they are, how big their footprint is and what kind of building they are, with those in the same city block counting a little extra. It takes their typical year, the closest and most similar weighing most.
 
-To test this, every dated building was estimated as if it had no year, from the others, with whole city blocks left out together, in 5 rounds. The results are grouped into cells by building type, by the era the estimate falls in and by inner or outer city. A cell's band is the ± range that 8 in 10 true years fall inside, rounded up to a multiple of 5 years. Checked on buildings kept out of the band's own calculation, the true year fell inside the band 83% of the time (over every building type's measured cells, not houses alone).
+To test this, every dated building was estimated as if it had no year, from the others, with whole city blocks left out together, in 5 rounds. The results are grouped into cells by building type, by the era the estimate falls in and by inner or outer city. A cell's band is the ± range that 8 in 10 true years fall inside, rounded up to a multiple of 5 years. Checked on buildings kept out of the band's own calculation, the true year fell inside the band 82% of the time (over every building type's measured cells, not houses alone).
 
 The map shows an estimated decade ("≈ 1950s") only when all of these hold:
 
 - it is of a type the map estimates: houses (villa, row, chain);
 - a dated building stands within 100 m;
 - the City first mapped it before 2008 (a building first mapped later is probably new);
-- its property unit was not formed late (such units are mostly new development); a house with no property-unit key passes this check (estimated houses with no key: 167 of 4,558, all of them first mapped before 2008);
+- its property unit was not formed late (such units are mostly new development); a house with no property-unit key passes this check (estimated houses with no key: 167 of 4,671, all of them first mapped before 2008);
 - its cell has at least 30 test buildings, puts at least 70% of them in the right period, and has a band of ±15 years or less.
 
 Every other building stays unknown: the map never shows a period on its own. Buildings the map would never estimate (first mapped in 2008 or later, on a property unit formed late, or allotment cottages) still help estimate the others, but the test does not score them.
 
-**Result:** 4,558 houses are estimated. 82% of the test houses in the cells the map uses were estimated in the right period (6,111 of 7,450), and 96% within one period.
+**Result:** 4,558 houses are estimated. 82% of the test houses in the cells the map uses were estimated in the right period (6,091 of 7,404), and 96% within one period.
 
 ### The houses the map estimates, cell by cell
 
@@ -59,13 +60,14 @@ The era is the era the estimate falls in; the city is the inner city (the centra
 
 | Building type | Estimated era | City | Test buildings | Median error | Right period | Within one period | Band | What the map does |
 |---|---|---|---:|---:|---:|---:|---:|---|
-| Houses (villa, row, chain) | before 1866 | inner | 6 | – | – | – | – | stays unknown: too few to measure |
-| Houses (villa, row, chain) | 1866–1919 | outer | 709 | 1 y | 81% | 94% | ±5 | estimated (decade shown) |
-| Houses (villa, row, chain) | 1866–1919 | inner | 1 | – | – | – | – | stays unknown: too few to measure |
-| Houses (villa, row, chain) | 1920–1945 | outer | 3,469 | 1 y | 84% | 95% | ±5 | estimated (decade shown) |
+| Houses (villa, row, chain) | before 1866 | outer | 1 | – | – | – | – | stays unknown: too few to measure |
+| Houses (villa, row, chain) | before 1866 | inner | 4 | – | – | – | – | stays unknown: too few to measure |
+| Houses (villa, row, chain) | 1866–1919 | outer | 698 | 1 y | 82% | 94% | ±5 | estimated (decade shown) |
+| Houses (villa, row, chain) | 1866–1919 | inner | 3 | – | – | – | – | stays unknown: too few to measure |
+| Houses (villa, row, chain) | 1920–1945 | outer | 3,485 | 1 y | 84% | 95% | ±5 | estimated (decade shown) |
 | Houses (villa, row, chain) | 1920–1945 | inner | 1 | – | – | – | – | stays unknown: too few to measure |
-| Houses (villa, row, chain) | 1946–1975 | outer | 3,272 | 1 y | 80% | 98% | ±5 | estimated (decade shown) |
-| Houses (villa, row, chain) | 1976–1993 | outer | 175 | 4 y | 58% | 91% | ±10 | stays unknown: too few right |
+| Houses (villa, row, chain) | 1946–1975 | outer | 3,221 | 1 y | 80% | 98% | ±5 | estimated (decade shown) |
+| Houses (villa, row, chain) | 1976–1993 | outer | 179 | 4 y | 57% | 90% | ±10 | stays unknown: too few right |
 
 ### The other building types: measured, not estimated
 
@@ -73,63 +75,60 @@ The same test for every other type. The map leaves all of them unknown.
 
 | Building type | Estimated era | City | Test buildings | Median error | Right period | Within one period | Band | What the map does |
 |---|---|---|---:|---:|---:|---:|---:|---|
-| Apartment blocks | before 1866 | inner | 120 | 84 y | 25% | 69% | ±145 | stays unknown: type not estimated |
-| Apartment blocks | 1866–1919 | outer | 53 | 4 y | 58% | 60% | ±35 | stays unknown: type not estimated |
-| Apartment blocks | 1866–1919 | inner | 3,200 | 10 y | 52% | 78% | ±30 | stays unknown: type not estimated |
-| Apartment blocks | 1920–1945 | outer | 1,809 | 1 y | 75% | 92% | ±5 | stays unknown: type not estimated |
-| Apartment blocks | 1920–1945 | inner | 2,199 | 3 y | 55% | 83% | ±20 | stays unknown: type not estimated |
-| Apartment blocks | 1946–1975 | outer | 2,578 | 2 y | 81% | 96% | ±10 | stays unknown: type not estimated |
-| Apartment blocks | 1946–1975 | inner | 65 | 7 y | 58% | 83% | ±25 | stays unknown: type not estimated |
-| Apartment blocks | 1976–1993 | outer | 91 | 0 y | 88% | 96% | ±5 | stays unknown: type not estimated |
-| Apartment blocks | 1994 on | outer | 1 | – | – | – | – | stays unknown: too few to measure |
-| Outbuildings | before 1866 | inner | 12 | – | – | – | – | stays unknown: too few to measure |
-| Outbuildings | 1866–1919 | inner | 1 | – | – | – | – | stays unknown: too few to measure |
-| Outbuildings | 1920–1945 | outer | 9 | – | – | – | – | stays unknown: too few to measure |
-| Outbuildings | 1946–1975 | outer | 132 | 2 y | 66% | 98% | ±10 | stays unknown: type not estimated |
-| Outbuildings | 1946–1975 | inner | 1 | – | – | – | – | stays unknown: too few to measure |
-| Outbuildings | 1976–1993 | outer | 1 | – | – | – | – | stays unknown: too few to measure |
-| Public (school, care, sport, church) | before 1866 | inner | 24 | – | – | – | – | stays unknown: too few to measure |
-| Public (school, care, sport, church) | 1866–1919 | outer | 8 | – | – | – | – | stays unknown: too few to measure |
-| Public (school, care, sport, church) | 1866–1919 | inner | 104 | 27 y | 27% | 54% | ±115 | stays unknown: type not estimated |
-| Public (school, care, sport, church) | 1920–1945 | outer | 51 | 19 y | 31% | 57% | ±45 | stays unknown: type not estimated |
-| Public (school, care, sport, church) | 1920–1945 | inner | 45 | 28 y | 13% | 56% | ±45 | stays unknown: type not estimated |
-| Public (school, care, sport, church) | 1946–1975 | outer | 152 | 7 y | 53% | 89% | ±15 | stays unknown: type not estimated |
-| Public (school, care, sport, church) | 1946–1975 | inner | 6 | – | – | – | – | stays unknown: too few to measure |
+| Apartment blocks | before 1866 | inner | 144 | 79 y | 32% | 71% | ±155 | stays unknown: type not estimated |
+| Apartment blocks | 1866–1919 | outer | 57 | 3 y | 70% | 72% | ±25 | stays unknown: type not estimated |
+| Apartment blocks | 1866–1919 | inner | 3,199 | 10 y | 53% | 78% | ±30 | stays unknown: type not estimated |
+| Apartment blocks | 1920–1945 | outer | 1,799 | 1 y | 76% | 94% | ±5 | stays unknown: type not estimated |
+| Apartment blocks | 1920–1945 | inner | 2,250 | 3 y | 55% | 84% | ±25 | stays unknown: type not estimated |
+| Apartment blocks | 1946–1975 | outer | 2,597 | 2 y | 81% | 95% | ±5 | stays unknown: type not estimated |
+| Apartment blocks | 1946–1975 | inner | 69 | 7 y | 58% | 86% | ±15 | stays unknown: type not estimated |
+| Apartment blocks | 1976–1993 | outer | 98 | 0 y | 79% | 92% | ±5 | stays unknown: type not estimated |
+| Outbuildings | before 1866 | inner | 8 | – | – | – | – | stays unknown: too few to measure |
+| Outbuildings | 1866–1919 | inner | 5 | – | – | – | – | stays unknown: too few to measure |
+| Outbuildings | 1920–1945 | outer | 7 | – | – | – | – | stays unknown: too few to measure |
+| Outbuildings | 1946–1975 | outer | 137 | 3 y | 65% | 96% | ±10 | stays unknown: type not estimated |
+| Public (school, care, sport, church) | before 1866 | inner | 23 | – | – | – | – | stays unknown: too few to measure |
+| Public (school, care, sport, church) | 1866–1919 | outer | 5 | – | – | – | – | stays unknown: too few to measure |
+| Public (school, care, sport, church) | 1866–1919 | inner | 112 | 26 y | 30% | 53% | ±115 | stays unknown: type not estimated |
+| Public (school, care, sport, church) | 1920–1945 | outer | 46 | 16 y | 28% | 63% | ±45 | stays unknown: type not estimated |
+| Public (school, care, sport, church) | 1920–1945 | inner | 46 | 26 y | 13% | 50% | ±40 | stays unknown: type not estimated |
+| Public (school, care, sport, church) | 1946–1975 | outer | 164 | 8 y | 50% | 88% | ±20 | stays unknown: type not estimated |
+| Public (school, care, sport, church) | 1946–1975 | inner | 3 | – | – | – | – | stays unknown: too few to measure |
 | Public (school, care, sport, church) | 1976–1993 | outer | 11 | – | – | – | – | stays unknown: too few to measure |
-| Unspecified | before 1866 | inner | 11 | – | – | – | – | stays unknown: too few to measure |
-| Unspecified | 1866–1919 | outer | 4 | – | – | – | – | stays unknown: too few to measure |
-| Unspecified | 1866–1919 | inner | 31 | 22 y | 42% | 64% | ±115 | stays unknown: type not estimated |
-| Unspecified | 1920–1945 | outer | 22 | – | – | – | – | stays unknown: too few to measure |
-| Unspecified | 1920–1945 | inner | 17 | – | – | – | – | stays unknown: too few to measure |
-| Unspecified | 1946–1975 | outer | 31 | 23 y | 39% | 52% | ±50 | stays unknown: type not estimated |
-| Unspecified | 1976–1993 | outer | 3 | – | – | – | – | stays unknown: too few to measure |
-| Work (office, shop, industry, utility) | before 1866 | inner | 16 | – | – | – | – | stays unknown: too few to measure |
-| Work (office, shop, industry, utility) | 1866–1919 | outer | 7 | – | – | – | – | stays unknown: too few to measure |
-| Work (office, shop, industry, utility) | 1866–1919 | inner | 80 | 36 y | 21% | 45% | ±80 | stays unknown: type not estimated |
-| Work (office, shop, industry, utility) | 1920–1945 | outer | 69 | 30 y | 19% | 45% | ±50 | stays unknown: type not estimated |
-| Work (office, shop, industry, utility) | 1920–1945 | inner | 53 | 25 y | 9% | 49% | ±40 | stays unknown: type not estimated |
-| Work (office, shop, industry, utility) | 1946–1975 | outer | 434 | 10 y | 41% | 81% | ±25 | stays unknown: type not estimated |
-| Work (office, shop, industry, utility) | 1946–1975 | inner | 42 | 10 y | 43% | 76% | ±20 | stays unknown: type not estimated |
-| Work (office, shop, industry, utility) | 1976–1993 | outer | 43 | 9 y | 46% | 70% | ±35 | stays unknown: type not estimated |
+| Unspecified | before 1866 | inner | 14 | – | – | – | – | stays unknown: too few to measure |
+| Unspecified | 1866–1919 | outer | 3 | – | – | – | – | stays unknown: too few to measure |
+| Unspecified | 1866–1919 | inner | 29 | – | – | – | – | stays unknown: too few to measure |
+| Unspecified | 1920–1945 | outer | 24 | – | – | – | – | stays unknown: too few to measure |
+| Unspecified | 1920–1945 | inner | 19 | – | – | – | – | stays unknown: too few to measure |
+| Unspecified | 1946–1975 | outer | 30 | 23 y | 37% | 53% | ±60 | stays unknown: type not estimated |
+| Unspecified | 1976–1993 | outer | 1 | – | – | – | – | stays unknown: too few to measure |
+| Work (office, shop, industry, utility) | before 1866 | inner | 19 | – | – | – | – | stays unknown: too few to measure |
+| Work (office, shop, industry, utility) | 1866–1919 | outer | 5 | – | – | – | – | stays unknown: too few to measure |
+| Work (office, shop, industry, utility) | 1866–1919 | inner | 80 | 36 y | 21% | 48% | ±75 | stays unknown: type not estimated |
+| Work (office, shop, industry, utility) | 1920–1945 | outer | 65 | 29 y | 23% | 43% | ±55 | stays unknown: type not estimated |
+| Work (office, shop, industry, utility) | 1920–1945 | inner | 61 | 29 y | 13% | 46% | ±50 | stays unknown: type not estimated |
+| Work (office, shop, industry, utility) | 1946–1975 | outer | 442 | 9 y | 43% | 83% | ±20 | stays unknown: type not estimated |
+| Work (office, shop, industry, utility) | 1946–1975 | inner | 28 | – | – | – | – | stays unknown: too few to measure |
+| Work (office, shop, industry, utility) | 1976–1993 | outer | 42 | 7 y | 55% | 86% | ±20 | stays unknown: type not estimated |
 
 ## Where the test is weak
 
-The cells mix buildings of many ages. Counted by the period each test building was really built in, the estimate is weakest for the oldest and the newest buildings, which the dated buildings include few of. Built 1994 or later: 0% in the right period (70 test buildings).
+The cells mix buildings of many ages. Counted by the period each test building was really built in, the estimate is weakest for the oldest and the newest buildings, which the dated buildings include few of. Built 1994 or later: 0% in the right period (73 test buildings).
 
 | Really built | Test buildings | In the right period | Of them in the cells the map uses | In the right period there |
 |---|---:|---:|---:|---:|
-| Medieval & early Vasa (until 1610) | 12 | 0 of 12 | 1 | 0 of 1 |
-| Stormaktstiden (1611–1718) | 108 | 13% | 11 | 0 of 11 |
-| Frihetstid & Gustavian (1719–1809) | 132 | 16% | 7 | 0 of 7 |
-| Early 1800s (1810–1865) | 160 | 8% | 5 | 0 of 5 |
-| Stenstaden (1866–1889) | 879 | 39% | 6 | 2 of 6 |
-| Jugend & national romanticism (1890–1919) | 2,796 | 71% | 652 | 87% |
-| Swedish Grace (1920–1929) | 1,738 | 63% | 822 | 75% |
-| Funkis (1930–1945) | 5,422 | 82% | 2,550 | 90% |
-| Folkhem & ABC towns (1946–1964) | 5,121 | 80% | 2,245 | 85% |
-| Million Programme & city clearance (1965–1975) | 2,071 | 49% | 1,068 | 67% |
-| Postmodern & infill (1976–1993) | 660 | 31% | 71 | 0% |
-| Waterfront districts (1994 on) | 70 | 0% | 12 | 0 of 12 |
+| Medieval & early Vasa (until 1610) | 13 | 0 of 13 | 1 | 0 of 1 |
+| Stormaktstiden (1611–1718) | 133 | 28% | 11 | 0 of 11 |
+| Frihetstid & Gustavian (1719–1809) | 139 | 9% | 7 | 0 of 7 |
+| Early 1800s (1810–1865) | 160 | 9% | 4 | 0 of 4 |
+| Stenstaden (1866–1889) | 881 | 43% | 6 | 1 of 6 |
+| Jugend & national romanticism (1890–1919) | 2,791 | 71% | 649 | 88% |
+| Swedish Grace (1920–1929) | 1,758 | 62% | 822 | 76% |
+| Funkis (1930–1945) | 5,460 | 82% | 2,538 | 91% |
+| Folkhem & ABC towns (1946–1964) | 5,120 | 81% | 2,239 | 85% |
+| Million Programme & city clearance (1965–1975) | 2,035 | 48% | 1,044 | 65% |
+| Postmodern & infill (1976–1993) | 671 | 31% | 71 | 0% |
+| Waterfront districts (1994 on) | 73 | 0% | 12 | 0 of 12 |
 
 ## The independent check
 
@@ -146,7 +145,7 @@ Where a building in a RAÄ-dated area also has a year of its own, the two can be
 
 ## Gamla stan
 
-Gamla stan, the old town, is shown on its own because it is the oldest part of the city and where many visitors look first. Of its 430 buildings, 98 have a year from a record, 0 the year of their area, 0 are estimated and 332 stay unknown.
+Gamla stan, the old town, is shown on its own because it is the oldest part of the city and where many visitors look first. Of its 430 buildings, 255 have a year from a record, 0 the year of their area, 0 are estimated and 175 stay unknown.
 
 ## Wikidata and OpenStreetMap: the hand-check list
 
@@ -181,4 +180,4 @@ Some years from Wikidata and OpenStreetMap are listed for a hand check:
 
 ---
 
-Generated by `pipeline/report_accuracy.py` from build v20261020-p4w; do not edit by hand. The first measurements of the method are in [the estimates prototype note](research/2026-10-15-estimates-prototype.md).
+Generated by `pipeline/report_accuracy.py` from build v20261020-fx4; do not edit by hand. The first measurements of the method are in [the estimates prototype note](research/2026-10-15-estimates-prototype.md).

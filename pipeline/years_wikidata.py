@@ -17,9 +17,10 @@ name them; `kept` rows have dropped == "". The box query's points are not clippe
 only matters when it lands on one of our footprints (match()).
 
 match(): resolve_points with MAX_M, so a point inside a footprint, inside its outer ring (a courtyard) or within
-30 m of one dates it (the nearest, then the lowest gid, when several are within reach); a footprint that receives
-two kept items gets nothing (LOD1 sometimes merges neighbours). `placement` (geo.placement) says which of the
-three it was, for the review list. Labels (CC0) and article links stay internal: the review list uses them, the
+30 m of one dates it (the nearest, then the lowest gid, when several are within reach); an item the pin table
+(pipeline/wiki_pins.csv) puts on its own footprint dates that one instead; a footprint that receives two kept items
+gets nothing (LOD1 sometimes merges neighbours). `placement` (geo.placement, or "pinned") says which it was, for the
+review list. Labels (CC0) and article links stay internal: the review list uses them, the
 web data gets only the year.
 
 DATED and CLASSES, qid() and rows() belong to s00_fetch_wikidata and are imported from there, not copied.
@@ -161,16 +162,23 @@ def load(dated: Path = DATED, classes: Path = CLASSES) -> pd.DataFrame:
     return df[["qid", "name", "x", "y", "year", "year_from", "year_to", "precision", "article", "dropped"]].sort_values("qid").reset_index(drop=True)
 
 
-def match(b, items: pd.DataFrame, max_dist: float = MAX_M) -> pd.DataFrame:
+def match(b, items: pd.DataFrame, max_dist: float = MAX_M, pins: dict[str, int] | None = None) -> pd.DataFrame:
     """One row per footprint that receives exactly one kept item: year, year_from, year_to, qid, name, article,
-    placement; indexed by gid, sorted."""
+    placement; indexed by gid, sorted. pins: {qid: gid} (pipeline/pins.py, the hand-checked pin table): a pinned item
+    is placed on its pinned footprint (placement "pinned"), not where its point falls, before the one-item rule, so
+    its year goes where the card's item goes (s06_wiki)."""
     cols = ["year", "year_from", "year_to", "qid", "name", "article", "placement"]
     kept = items[(items.dropped == "") & items.x.notna()] if len(items) else items
     if kept.empty:
         return pd.DataFrame(columns=cols, index=pd.Index([], name="gid"))
     xs, ys = kept.x.to_numpy(), kept.y.to_numpy()
     gids = resolve_points(b, xs, ys, max_dist)
-    hit = kept.assign(gid=gids, placement=placement(b, gids, xs, ys))
+    places = placement(b, gids, xs, ys)
+    if pins:
+        pinned = kept.qid.isin(list(pins)).to_numpy()
+        gids = np.where(pinned, kept.qid.map(pins).fillna(-1).to_numpy(dtype=np.int64), gids)
+        places = np.where(pinned, "pinned", places)
+    hit = kept.assign(gid=gids, placement=places)
     hit = hit[hit.gid >= 0]
     counts = hit.groupby("gid").size()
     one = hit[hit.gid.map(counts) == 1].set_index("gid")

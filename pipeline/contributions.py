@@ -14,7 +14,8 @@ uuid and the photo); the pipeline reads it keyed by uuid, so a row survives renu
 
 What each kind does:
   year          s02_years: fills a building whose year is unknown, area-based or estimated (the "reader" tier,
-                codes.SRC_READER); a record year only with replaces_register yes; refuses a curated or withheld one
+                codes.SRC_READER); a record year only with replaces_register yes; refuses a curated, cited or
+                withheld one
   main_address  s03_tiles: the card's first address; refused unless it is among the building's shown addresses
   name          s03_tiles: the card's name; refused on a private house (s03_tiles.hidden)
   photo         s03_tiles: the card's photo, "Photo: <credit>, CC BY 4.0, a reader's photo"; refused on a private house
@@ -183,6 +184,8 @@ def apply_years(rows: pd.DataFrame, pos: pd.Series, year, y_from, y_to, ysrc, yf
             raise Refused(f"{r.ref}: the building is withheld (pipeline/suppress.yml)")
         if src == codes.SRC_CURATED:
             raise Refused(f"{r.ref}: the building has a hand-checked year; change pipeline/landmarks.py instead")
+        if src == codes.SRC_CITED:
+            raise Refused(f"{r.ref}: the building has a cited year; change pipeline/gamla_stan_years.csv instead")
         if src in REPLACES and not r.replaces:
             raise Refused(f"{r.ref}: the building has a record year; set replaces_register to yes to replace it")
         yr, fl = display(np.array([r.year_from]), np.array([r.year_to]))

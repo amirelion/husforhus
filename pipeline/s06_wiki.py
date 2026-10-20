@@ -14,6 +14,9 @@ ratelimited, an answer that is not JSON) comes with HTTP 200, so it is retried a
      per request, data/raw/wiki/occupants_NNN.json), then its classes' subclass graph (occupant_classes.json); the
      public institutions (pipeline/occupants.py) go to data/occupants.json ({building qid: [{qid, sv, en, alt}]}),
      which s14_search adds to the search index for the buildings that have a card.
+An item whose coordinate falls in the wrong footprint is pinned to its own by the hand-checked table
+pipeline/wiki_pins.csv (qid, the footprint's uuid, the reason; pipeline/pins.py), placement "pinned"; s02_years
+places the item's year by the same table.
 The photo: an item in the curated pick table pipeline/photo_picks.csv (qid, commons_file, decision; added
 2026-10-16 from a hand review of the landmark photos) takes its pick instead of its Wikidata image
 (P18), "none" no photo at all; any other item keeps its first P18. A pick goes through the same checks as a P18 file
@@ -47,6 +50,7 @@ import pandas as pd
 import requests
 
 from . import city, occupants, stadsmuseet, suppress, wiki
+from . import pins as pin_table
 from .codes import SRC_CURATED
 from .fetch import UA, TIMEOUT, post_query_retrying, query_cached, retry_after
 from .privacy import normalise
@@ -69,6 +73,7 @@ COMMONS = Path("data/raw/commons")
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 WIKIPEDIA_API = "https://{lang}.wikipedia.org/w/api.php"
 PICKS = Path(__file__).with_name("photo_picks.csv")
+PINS = pin_table.PATH
 TABLE = Path("data/wiki.parquet")
 PHOTOS = Path("data/photos.json")
 EXTRACTS = Path("data/extracts.json")
@@ -233,11 +238,17 @@ def picks_of(t: pd.DataFrame) -> dict[str, str]:
     return {q: "" if f == "none" else f for q, f in zip(t.qid, t.commons_file)}
 
 
+# The pin table lives in pipeline/pins.py (s02_years reads it too, for the Wikidata year): its names here as before
+read_pins, pins_of = pin_table.read, pin_table.pins_of
+
+
 def select(b: gpd.GeoDataFrame, years: pd.DataFrame, items: pd.DataFrame, anc: dict,
-           landmarks: list[dict] = ()) -> pd.DataFrame:
-    """The best building item per footprint, private houses left out unless curated; a curated landmark's
-    footprint (years.parquet `landmark`) takes its own item, placement "curated"."""
-    best = wiki.best(wiki.place(b, wiki.building_items(items, anc)))
+           landmarks: list[dict] = (), pins: dict[str, int] | None = None) -> pd.DataFrame:
+    """The best building item per footprint, private houses left out unless curated; a pinned item (pins: {qid: gid},
+    pins_of) on its own footprint, placement "pinned"; a curated landmark's footprint (years.parquet `landmark`) takes
+    its own item, placement "curated"."""
+    found = wiki.building_items(items, anc)
+    best = wiki.best(wiki.pin(wiki.place(b, found), found, pins or {}))
     qid_of = {L["name"]: L["qid"] for L in landmarks if L["qid"]}     # an entry without an item keeps the rules' one
     by_qid = items.set_index("qid")
     named = years[years.landmark != ""] if "landmark" in years else pd.DataFrame({"gid": [], "landmark": []})
@@ -263,14 +274,15 @@ def select(b: gpd.GeoDataFrame, years: pd.DataFrame, items: pd.DataFrame, anc: d
 
 
 def build(b, years, districts, items, anc, *, commons, extracts, thumbs, landmarks=(), picks=None,
-          more_designations=frozenset()) -> dict:
+          more_designations=frozenset(), pins: dict[str, int] | None = None) -> dict:
     """The outputs from the selected items. commons(files) -> pages, extracts(titles, lang) -> {title: page},
     thumbs(photos) -> keys left out: the fetchers (tests pass stubs). landmarks: s08_landmarks' verified entries.
-    picks: {qid: file, or "" for no photo} (picks_of), in place of the item's P18. more_designations: property
+    picks: {qid: file, or "" for no photo} (picks_of), in place of the item's P18. pins: {qid: gid} (pins_of), an
+    item on its own footprint instead of the one its point falls in. more_designations: property
     designations other sources name (the City Museum's register, former ones included), left out like FASTIGHET's:
     a Wikipedia article can be titled with one the City's table does not hold (Skravelberget större 13, 2026-10-20)."""
     picks = picks or {}
-    best = select(b, years, items, anc, landmarks)
+    best = select(b, years, items, anc, landmarks, pins)
     designations = ({normalise(f) for f in b.fastighet if isinstance(f, str) and f.strip()} | set(more_designations)) - {""}
     first, picked = {}, set()
     for g, r in best.iterrows():
@@ -349,15 +361,19 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--landmarks", type=Path, default=LANDMARKS_JSON)
     ap.add_argument("--suppress", type=Path, default=None, help="takedowns (default pipeline/suppress.yml)")
     args = ap.parse_args([] if argv is None else argv)
-    b = gpd.read_parquet(args.buildings, columns=["gid", "kategori", "fastighet", "geometry"])
+    b = gpd.read_parquet(args.buildings, columns=["gid", "uuid", "kategori", "fastighet", "geometry"])
     years = pd.read_parquet(args.years, columns=["gid", "ysrc", "landmark"])
     picks = read_picks(PICKS)
+    try:
+        pinned = pins_of(read_pins(), b)
+    except ValueError as e:
+        raise SystemExit(f"wiki_pins: {e}; nothing written")
     items, anc = fetch_items(args.refresh)
     out = build(b, years, load_districts(args.stadsdelar), items, anc,
                 commons=lambda files: fetch_commons(files, args.refresh),
                 extracts=lambda titles, lang: fetch_extracts(titles, lang, args.refresh),
                 thumbs=fetch_thumbs, landmarks=load_landmarks(args.landmarks), picks=picks_of(picks),
-                more_designations=stadsmuseet.cached_designations())
+                more_designations=stadsmuseet.cached_designations(), pins=pinned)
     hidden = suppress.gids_of(args.buildings, args.suppress)       # a takedown's item, photo and excerpt go
     out["table"], out["extracts"] = suppress.rows(out["table"], hidden), suppress.keyed(out["extracts"], hidden)
     TABLE.parent.mkdir(parents=True, exist_ok=True)
