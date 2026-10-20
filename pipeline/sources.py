@@ -8,7 +8,9 @@ from pathlib import Path
 import yaml
 
 REQUIRED = ["id", "url", "publisher", "product", "dataset", "licence", "licence_url", "attribution", "status"]
-LICENCES = {"CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0", "ODbL-1.0", "LicenseRef-PublicDomain"}   # the last: Open Plaques
+# LicenseRef-PublicDomain: Open Plaques. LicenseRef-Permission: a publisher's written permission, its terms in the
+# entry's `terms` (the City Museum's building-archaeology register: free use with the source credited).
+LICENCES = {"CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0", "ODbL-1.0", "LicenseRef-PublicDomain", "LicenseRef-Permission"}
 # Licences that oblige an attribution line. For these, check_sources requires:
 #   - `modified` is a real true/false;
 #   - `attribution` contains the entry's `product` string;
@@ -21,14 +23,18 @@ STATUSES = ("confirmed", "pending-O1")
 # The standard credit line: "Dataset: publisher, licence", plus PROCESSED when `modified` is true. The licence
 # reads as CREDIT_LICENCES says, or as the source's own `licence_as`, which may only drop the version ("CC BY").
 CREDIT_LICENCES = {"CC-BY-4.0": "CC BY 4.0", "CC-BY-SA-4.0": "CC BY-SA 4.0", "CC0-1.0": "CC0", "ODbL-1.0": "ODbL",
-                   "LicenseRef-PublicDomain": "Public Domain"}
+                   "LicenseRef-PublicDomain": "Public Domain",
+                   "LicenseRef-Permission": {"en": "used with permission", "sv": "används med tillstånd"}}
 PROCESSED = {"en": "processed", "sv": "bearbetad"}
 
 
-def licence_names(licence: str) -> tuple[str, ...]:
-    """The words a credit may name a licence by: its full name, or its name without the version ("CC BY")."""
+def licence_names(licence: str, lang: str | None = None) -> tuple[str, ...]:
+    """The words a credit may name a licence by: its full name, or its name without the version ("CC BY"). A licence
+    with words per language (a permission) has only those, in `lang`; none without a `lang`."""
     full = CREDIT_LICENCES.get(licence)
-    if not full:
+    if isinstance(full, dict):
+        return (full[lang],) if lang in full else ()
+    if not isinstance(full, str):
         return ()
     name, _, version = full.rpartition(" ")
     return (full, name) if name and version[:1].isdigit() else (full,)
@@ -38,7 +44,8 @@ def credit(s: dict) -> dict[str, str]:
     """The standard credit line for a source in each language: "Dataset: publisher, licence", the source's own words (credit_as) in
     the publisher's place, and ", processed" / ", bearbetad" when the map changes the data."""
     licence = s.get("licence_as") or CREDIT_LICENCES[s["licence"]]
-    return {lang: f"{s['dataset']}: {(s.get('credit_as') or {}).get(lang) or s['publisher']}, {licence}"
+    words = licence if isinstance(licence, dict) else {"en": licence, "sv": licence}
+    return {lang: f"{s['dataset']}: {(s.get('credit_as') or {}).get(lang) or s['publisher']}, {words[lang]}"
                   + (f", {PROCESSED[lang]}" if s.get("modified") is True else "") for lang in ("en", "sv")}
 
 
@@ -86,6 +93,8 @@ def check_sources(sources: list[dict], *, release: bool) -> list[str]:
         licence = s.get("licence")
         if licence and licence not in LICENCES:
             errors.append(f"{sid}: licence '{licence}' is not one of {', '.join(sorted(LICENCES))}")
+        if licence == "LicenseRef-Permission" and not str(s.get("terms") or "").strip():
+            errors.append(f"{sid}: licence LicenseRef-Permission needs the permission's 'terms'")
         url = s.get("licence_url")
         if url and not str(url).startswith(("http://", "https://")):
             errors.append(f"{sid}: licence_url must start with http:// or https://")

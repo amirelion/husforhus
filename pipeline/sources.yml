@@ -1,5 +1,6 @@
 # Every dataset the pipeline uses (contract C6). Checked by pipeline/sources.py and by s99_validate.
-# licence: SPDX id, one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, ODbL-1.0, LicenseRef-PublicDomain.
+# licence: SPDX id, one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, ODbL-1.0, LicenseRef-PublicDomain, or
+#         LicenseRef-Permission (a publisher's written permission; its terms in `terms`, required then).
 # feature (optional): a city.FEATURES switch; the source is credited (About, the corner) only while it is on.
 # modified: required for CC-BY* and ODbL; true when we reproject, clip, simplify or join the data.
 # attribution: for CC-BY*, ODbL it must contain the `product` string and the licence marker ("CC BY 4.0",
@@ -180,6 +181,24 @@
   modified: true
   status: confirmed
   feature: plaques
+
+# The City Museum's building-archaeology register (BR): s00_fetch_stadsmuseet, s02_stadsmuseet, the pinned card's
+# "Building archaeology" section. The card states facts in our own words (never the register's descriptions) and
+# links each record's report in Digitala Stadsmuseet; property designations are only a join key, never shipped.
+- id: stadsmuseet_br
+  url: https://stadsarkeologisktregister.stockholm.se/
+  api_url: https://stadsarkeologisktregister.stockholm.se/api      # brInvestigations, brInvestigations/{id}, brCategories
+  wfs_url: https://stadsarkeologisktregister.stockholm.se/geoserver/sr/ows   # layer sr:v_area_br, EPSG:3011
+  report_url: https://digitalastadsmuseet.stockholm.se/fotoweb/archives/5004-Dokument-och-publikationer/?BR={n}
+  publisher: Stadsmuseet i Stockholm
+  product: Stads- och byggnadsarkeologiskt register
+  dataset: Stads- och byggnadsarkeologiskt register
+  licence: LicenseRef-Permission
+  licence_url: https://stadsarkeologisktregister.stockholm.se/
+  terms: "written permission from Stadsmuseet, 2026-10-19: free use with the source credited"
+  attribution: Stads- och byggnadsarkeologiskt register, Stadsmuseet i Stockholm (bearbetad / modified)
+  modified: true   # facts drawn from the records' fields and categories, placed on footprints; never their texts
+  status: confirmed
 
 # Tunnelbanan (behind city.FEATURES metro; s16_metro). The facts were checked against the research CSVs' own sources
 # (sv/en.wikipedia permalinks, Spårvägsmuseet, urbanrail.net: checking only, no text copied;

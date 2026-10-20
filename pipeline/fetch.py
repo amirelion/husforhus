@@ -171,13 +171,30 @@ def post_query(url: str, data: dict, dest: Path, *, manifest: Path | None = None
     check(body), when given, says what is wrong with an answer the service sent with HTTP 200 (or None): such an
     answer raises BadAnswer before anything is written, and the cached file, if any, stays as it was.
     """
+    return _query("POST", url, data, dest, manifest=manifest, refresh=refresh, headers=headers, check=check)
+
+
+def get_query(url: str, params: dict, dest: Path, *, manifest: Path | None = None, refresh: bool = False,
+              headers: dict | None = None, check: Callable[[bytes], str | None] | None = None) -> dict:
+    """post_query's GET twin, for a JSON API or a WFS (s00_fetch_stadsmuseet): `params` go in the query string, and
+    the cache, the manifest entry and `check` work as post_query's. The query hash covers the url too, as a GET's
+    url is most of its query."""
+    return _query("GET", url, params, dest, manifest=manifest, refresh=refresh, headers=headers, check=check)
+
+
+def _query(method: str, url: str, data: dict, dest: Path, *, manifest: Path | None, refresh: bool,
+           headers: dict | None, check: Callable[[bytes], str | None] | None) -> dict:
     dest, manifest = Path(dest), _manifest_path(manifest)
     key = _key(dest, manifest)
-    qhash = _query_hash(data)
+    hashed = data if method == "POST" else {"GET": url, **data}
+    qhash = _query_hash(hashed)
     old = read_manifest(manifest).get(key)
-    if not refresh and query_cached(data, dest, manifest=manifest):
+    if not refresh and query_cached(hashed, dest, manifest=manifest):
         return old
-    r = requests.post(url, data=data, headers={**UA, **(headers or {})}, timeout=TIMEOUT)
+    if method == "POST":
+        r = requests.post(url, data=data, headers={**UA, **(headers or {})}, timeout=TIMEOUT)
+    else:
+        r = requests.get(url, params=data or None, headers={**UA, **(headers or {})}, timeout=TIMEOUT)
     r.raise_for_status()
     body = r.content
     why = check(body) if check else None
@@ -227,6 +244,20 @@ def post_query_retrying(endpoints: list[str], data: dict, dest: Path, *, retries
     A cache hit in post_query (file matches the manifest and the query, no refresh) returns before anything is sent,
     so none of this applies to it. Returns post_query's manifest entry on success.
     """
+    return _retrying(post_query, endpoints, data, dest, retries=retries, backoff_s=backoff_s, sleep=sleep,
+                     manifest=manifest, refresh=refresh, headers=headers, check=check)
+
+
+def get_query_retrying(endpoints: list[str], params: dict, dest: Path, *, retries: int = 2,
+                       backoff_s: float | tuple[float, ...] = 5, sleep: Callable[[float], None] = time.sleep,
+                       manifest: Path | None = None, refresh: bool = False, headers: dict | None = None,
+                       check: Callable[[bytes], str | None] | None = None) -> dict:
+    """get_query with post_query_retrying's retry, backoff and keep-the-cache policy (s00_fetch_stadsmuseet)."""
+    return _retrying(get_query, endpoints, params, dest, retries=retries, backoff_s=backoff_s, sleep=sleep,
+                     manifest=manifest, refresh=refresh, headers=headers, check=check)
+
+
+def _retrying(query, endpoints, data, dest, *, retries, backoff_s, sleep, manifest, refresh, headers, check) -> dict:
     if not endpoints:
         raise ValueError("post_query_retrying needs at least one endpoint")
     if retries < 1:
@@ -237,7 +268,7 @@ def post_query_retrying(endpoints: list[str], data: dict, dest: Path, *, retries
     for url in endpoints:
         for attempt in range(retries):
             try:
-                return post_query(url, data, dest, manifest=manifest, refresh=refresh, headers=headers, check=check)
+                return query(url, data, dest, manifest=manifest, refresh=refresh, headers=headers, check=check)
             except requests.RequestException as e:
                 again = attempt + 1 < retries
                 wait = max(waits[min(attempt, len(waits) - 1)], retry_after(e))

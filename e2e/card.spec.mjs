@@ -209,3 +209,33 @@ test('a curated card shows its rebuilds when pinned, never on hover, and its old
   await expect(page.locator('#card .rebuilt')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+// The City Museum's building-archaeology register (PR 57): a pinned card of a building it covers shows the section,
+// with its report links to Digitala Stadsmuseet and the credit; the hover card and a building it does not cover never do.
+test('a building the City Museum documented shows its building archaeology when pinned, never on hover', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
+  const [withBr, without] = await page.evaluate(async () => {
+    const { version } = await (await fetch('data/current.json')).json();
+    let a = -1, b = -1;
+    for (let k = 0; k < 64 && (a < 0 || b < 0); k++) {
+      const shard = await (await fetch(`data/${version}/cards/${String(k).padStart(2, '0')}.json`)).json();
+      for (const [g, c] of Object.entries(shard)) {
+        if (a < 0 && c.br?.inv?.some(e => e.report)) a = +g;
+        if (b < 0 && !c.br && c.name) b = +g;
+      }
+    }
+    return [a, b];
+  });
+  test.skip(withBr < 0, 'this build has no City Museum register');
+  await page.evaluate(g => window.__dbg.showCard(g, 400, 300), withBr);
+  await expect(page.locator('#card .archaeology')).toHaveCount(0);
+  await page.evaluate(g => window.__dbg.pinCard(g, 400, 300), withBr);
+  const s = page.locator('#card.pinned .archaeology');
+  await expect(s.locator('h4')).toHaveText('Building archaeology');
+  await expect(s.locator('.reports a').first()).toHaveAttribute('href', /^https:\/\/digitalastadsmuseet\.stockholm\.se\//);
+  await expect(s.locator('.credit')).toHaveText('Stadsmuseet i Stockholm');
+  await page.evaluate(g => window.__dbg.pinCard(g, 400, 300), without);
+  await expect(page.locator('#card.pinned')).toBeVisible();
+  await expect(page.locator('#card .archaeology')).toHaveCount(0);
+});

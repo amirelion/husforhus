@@ -86,6 +86,7 @@ None. Boverket's register API is restricted to companies under agreement (BankID
 | Wikidata | CC0 | 2,232 buildings, 864 with architect; 750 streets (434 with "named after"); 103 churches; 69 demolished buildings; 19 Nobel laureates | verified |
 | Swedish Wikipedia | CC BY-SA | story text, residents (text mining), fires (40 articles), walls and tolls, malmgårdar, Norrmalmsregleringen | verified |
 | Stockholmskällan (incl. Samfundet S:t Erik blue-plaque texts) | per item; the site default is non-commercial. A post's CC BY label covers its photograph, not the plaque text (data-layers note §1.6) | plaque texts sv/en with property name; no API | verified; texts wait for O4 |
+| Stadsmuseet, Stads- och byggnadsarkeologiskt register (BR), and its reports in Digitala Stadsmuseet | written permission from Stadsmuseet, 2026-10-19: free use with the source credited | ~250 properties in Gamla stan and Riddarholmen: investigations' years, categories (medieval masonry, dendro), polygons (WFS sr:v_area_br, EPSG:3011), report links; the pinned card's "Building archaeology" (s02_stadsmuseet) | in use |
 | SKBL (Svenskt kvinnobiografiskt lexikon) | CC BY | ~2,000 women's biographies, JSON with geocoded places | fact-checker find, not yet examined |
 
 ## Photos

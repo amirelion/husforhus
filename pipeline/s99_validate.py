@@ -3,6 +3,10 @@
 Fails (exit 1, with a readable list) on:
 - plaques (s15_plaques, when plaques.json is there): a plaque on no building of the version, without its credit,
   name, text or position, listed twice, or with a text that names an owner or a byggherre (spec §6.3);
+- building archaeology (card `br`, s02_stadsmuseet): on a private house, or not well formed (its own fields, the
+  investigations' years, felling years, the credit "Stadsmuseet i Stockholm", a report link that is not https to
+  Digitala Stadsmuseet); and, in the privacy check, any of the City Museum register's property designations
+  (today's and the former ones it names) in any shipped file, as for FASTIGHET;
 - metro (s16_metro, when metro.json is there): a date that does not parse, a segment station not in the stations
   list, a line other than green, red or blue, or a coordinate outside the map;
 - stockholm.json naming another version than its folder;
@@ -101,7 +105,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from . import city, codes, contributions, plaques, suppress
+from . import city, codes, contributions, plaques, stadsmuseet, suppress
 from .estimate import GROUPS
 from .geo import lonlat_to_3011
 from .privacy import mentions, normalise, owner, phrases
@@ -373,11 +377,15 @@ def check_attribution(cfg: dict) -> list[str]:
     errors = []
     for i, a in enumerate(cfg.get("attribution", [])):
         sid, c = a.get("id", f"#{i}"), a.get("credit")
-        names = "|".join(re.escape(n) for n in licence_names(a.get("licence")))
-        found = {lang: re.fullmatch(rf"(?P<dataset>[^:\s][^:]*): [^\s,].*, (?P<licence>{names})(?P<p>, {PROCESSED[lang]})?",
-                                    c[lang]) if names and isinstance(c, dict) and isinstance(c.get(lang), str) else None
+        # a permission's words differ per language ("used with permission", "används med tillstånd"): the same
+        # licence is the same entry of its names in both
+        names = {lang: licence_names(a.get("licence"), lang) for lang in PROCESSED}
+        found = {lang: re.fullmatch(rf"(?P<dataset>[^:\s][^:]*): [^\s,].*, (?P<licence>{'|'.join(map(re.escape, names[lang]))})"
+                                    rf"(?P<p>, {PROCESSED[lang]})?", c[lang])
+                 if names[lang] and isinstance(c, dict) and isinstance(c.get(lang), str) else None
                  for lang in PROCESSED}
-        if not all(found.values()) or len({(m["dataset"], m["licence"], bool(m["p"])) for m in found.values()}) != 1:
+        if not all(found.values()) or len({(m["dataset"], names[lang].index(m["licence"]), bool(m["p"]))
+                                           for lang, m in found.items()}) != 1:
             errors.append(f"attribution: {sid}: its credit must read \"Dataset: publisher, licence\" (plus \", processed\" "
                           f"/ \", bearbetad\") in en and sv, naming {a.get('licence')}: {c!r}")
     return errors
@@ -1410,6 +1418,66 @@ def check_plaques(out: Path, n_buildings: int) -> list[str]:
     return errors
 
 
+BR_KEYS = {"medieval", "felled", "inv", "credit"}
+BR_INV_KEYS = {"from", "to", "report"}
+
+
+def _year(v, lo: int) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool) and lo <= v <= YEAR_MAX
+
+
+def check_archaeology(out: Path, hidden: np.ndarray) -> list[str]:
+    """The City Museum's building-archaeology section (card `br`, s02_stadsmuseet): never on a hidden card (a private
+    house, raa_hidden); only its own fields; `medieval` true when there, `felled` sorted distinct years 1000..2026,
+    `inv` a non-empty list of investigations, each with its years from YEAR_MIN (1900) to 2026 in order (or none)
+    and a report only as an https link to the record in Digitala Stadsmuseet (stadsmuseet.REPORT_RE); the credit
+    stadsmuseet.CREDIT."""
+    errors = []
+    for p, shard in read_shards(out / "cards"):
+        for i, (key, card) in enumerate(shard.items()):
+            if not isinstance(card, dict) or "br" not in card or not (key.isascii() and key.isdigit()):
+                continue
+            ref, br = f"cards: {p.name} gid {shown(key, i)} br", card["br"]
+            if int(key) < len(hidden) and hidden[int(key)]:
+                errors.append(f"{ref}: building archaeology on a private house")
+            if not isinstance(br, dict):
+                errors.append(f"{ref} is not an object")
+                continue
+            extra = [shown(f, j, "field") for j, f in enumerate(sorted(set(br) - BR_KEYS))]
+            if extra:
+                errors.append(f"{ref} has fields other than its own: {extra}")
+            if br.get("credit") != stadsmuseet.CREDIT:
+                errors.append(f"{ref} lacks its credit ({stadsmuseet.CREDIT!r})")
+            if "medieval" in br and br["medieval"] is not True:
+                errors.append(f"{ref} medieval is not true")
+            felled = br.get("felled", [])
+            if not (isinstance(felled, list) and (felled or "felled" not in br) and all(_year(y, 1000) for y in felled)
+                    and felled == sorted(set(felled))):
+                errors.append(f"{ref} felled is not a sorted list of distinct years")
+            inv = br.get("inv")
+            if not isinstance(inv, list) or not inv:
+                errors.append(f"{ref} has no investigations")
+                continue
+            for k, e in enumerate(inv):
+                where = f"{ref} inv[{k}]"
+                if not isinstance(e, dict) or set(e) - BR_INV_KEYS:
+                    errors.append(f"{where} is not an investigation ({sorted(BR_INV_KEYS)})")
+                    continue
+                if ("from" in e) != ("to" in e) or ("from" in e and not (
+                        _year(e["from"], stadsmuseet.YEAR_MIN) and _year(e["to"], stadsmuseet.YEAR_MIN)
+                        and e["from"] <= e["to"])):
+                    errors.append(f"{where} has years out of order or outside {stadsmuseet.YEAR_MIN}..{YEAR_MAX}")
+                if "report" in e and not (isinstance(e["report"], str) and stadsmuseet.REPORT_RE.fullmatch(e["report"])):
+                    errors.append(f"{where} report is not an https link to Digitala Stadsmuseet")
+    return errors
+
+
+def register_designations(data: Path) -> set[str]:
+    """The City Museum's register's property designations (stadsmuseet.cached_designations): checked like FASTIGHET in
+    every shipped file."""
+    return stadsmuseet.cached_designations(data)
+
+
 def check_metro(out: Path) -> list[str]:
     """Tunnelbanan (s16_metro), when the version has it: every date parses, every segment's stations are in the
     stations list, the lines are green, red or blue, and every coordinate is finite and inside the map."""
@@ -1521,9 +1589,11 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     sets = privacy_sets(data) if (data / "buildings.parquet").exists() else None
     errors += check_search(out, cfg, a, hidden, sets[1] if sets else frozenset(), data)
     errors += check_plaques(out, len(a))
+    errors += check_archaeology(out, hidden)
     errors += check_metro(out)
     if sets:
-        errors += check_privacy(out, *sets)
+        uuids, props, fnrs = sets
+        errors += check_privacy(out, uuids, props | register_designations(data), fnrs)
     else:
         errors.append(f"privacy: cannot check without {data / 'buildings.parquet'}")
     if not errors:

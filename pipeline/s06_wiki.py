@@ -46,7 +46,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from . import city, occupants, suppress, wiki
+from . import city, occupants, stadsmuseet, suppress, wiki
 from .codes import SRC_CURATED
 from .fetch import UA, TIMEOUT, post_query_retrying, query_cached, retry_after
 from .privacy import normalise
@@ -262,13 +262,16 @@ def select(b: gpd.GeoDataFrame, years: pd.DataFrame, items: pd.DataFrame, anc: d
     return best[~house.to_numpy() & ~beside]
 
 
-def build(b, years, districts, items, anc, *, commons, extracts, thumbs, landmarks=(), picks=None) -> dict:
+def build(b, years, districts, items, anc, *, commons, extracts, thumbs, landmarks=(), picks=None,
+          more_designations=frozenset()) -> dict:
     """The outputs from the selected items. commons(files) -> pages, extracts(titles, lang) -> {title: page},
     thumbs(photos) -> keys left out: the fetchers (tests pass stubs). landmarks: s08_landmarks' verified entries.
-    picks: {qid: file, or "" for no photo} (picks_of), in place of the item's P18."""
+    picks: {qid: file, or "" for no photo} (picks_of), in place of the item's P18. more_designations: property
+    designations other sources name (the City Museum's register, former ones included), left out like FASTIGHET's:
+    a Wikipedia article can be titled with one the City's table does not hold (Skravelberget större 13, 2026-10-20)."""
     picks = picks or {}
     best = select(b, years, items, anc, landmarks)
-    designations = {normalise(f) for f in b.fastighet if isinstance(f, str) and f.strip()} - {""}
+    designations = ({normalise(f) for f in b.fastighet if isinstance(f, str) and f.strip()} | set(more_designations)) - {""}
     first, picked = {}, set()
     for g, r in best.iterrows():
         if r.qid in picks:
@@ -353,7 +356,8 @@ def main(argv: list[str] | None = None) -> None:
     out = build(b, years, load_districts(args.stadsdelar), items, anc,
                 commons=lambda files: fetch_commons(files, args.refresh),
                 extracts=lambda titles, lang: fetch_extracts(titles, lang, args.refresh),
-                thumbs=fetch_thumbs, landmarks=load_landmarks(args.landmarks), picks=picks_of(picks))
+                thumbs=fetch_thumbs, landmarks=load_landmarks(args.landmarks), picks=picks_of(picks),
+                more_designations=stadsmuseet.cached_designations())
     hidden = suppress.gids_of(args.buildings, args.suppress)       # a takedown's item, photo and excerpt go
     out["table"], out["extracts"] = suppress.rows(out["table"], hidden), suppress.keyed(out["extracts"], hidden)
     TABLE.parent.mkdir(parents=True, exist_ok=True)

@@ -25,7 +25,9 @@ item, the languages with an article, the photo's credit and whether to leave the
 s06_wiki); a curated card also its rebuilds and older cellars (s08_landmarks' entries); Wikipedia excerpts
 go to their own shards wiki/NN.json (CC BY-SA 4.0), and photos.json lists the photos this version uses
 (scripts/build_dist.py ships them from web/data/photos/); photo-gids.json the sorted gids whose card has a photo
-(the legend's "Highlight buildings with a photo" switch). No private house that is not curated carries a RAÄ link, a
+(the legend's "Highlight buildings with a photo" switch). A card also carries the City Museum's
+building-archaeology facts (`br`, s02_stadsmuseet: what was documented, the investigations' years, the reports),
+never a private house's. No private house that is not curated carries a RAÄ link, a
 Wikidata item, an article, a photo or an excerpt. Readers' reports the owner accepted (pipeline/contributions.csv)
 then set a card's name, first address or photo, and `yrd` (reference, the owner's note, the issue) on a card whose year
 is a reader's (contributions.apply_cards); About counts them (`about.readers`). stockholm.json gains the link templates (city.LINKS) and
@@ -74,7 +76,7 @@ SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_
 KNOWN_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
 ESTIMATED_FLAGS = (codes.AREA, codes.ESTIMATE, codes.PERIOD)
 CARD_FIELDS = ("name", "en", "architects", "raa", "prot", "since", "qid", "wp", "photo", "nofloors", "rebuilt",
-               "cellars", "addr", "addrn", "tower", "yrd")
+               "cellars", "addr", "addrn", "tower", "yrd", "br")
 # rd: a reader's photo (pipeline/contributions.py), its report's reference; it has no Commons page or title
 PHOTO_FIELDS = ("key", "w", "h", "by", "lic", "lu", "page", "title", "rd")
 WIKI_LICENCE = "CC BY-SA 4.0"
@@ -189,6 +191,20 @@ def load_landmarks(data: Path = DATA) -> list[dict]:
     if not path.exists():
         raise SystemExit(f"{path} is missing: run s08_landmarks")
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_archaeology(data: Path = DATA) -> dict[int, dict]:
+    """s02_stadsmuseet's card entries (data/stadsmuseet.json `cards`): {gid: br}; none when the file is missing, or
+    when it was placed on another data/buildings.parquet (its gids would point at other footprints)."""
+    path = data / "stadsmuseet.json"
+    if not path.exists():
+        return {}
+    rec = json.loads(path.read_text(encoding="utf-8"))
+    if rec.get("buildings_sha256") != hashlib.sha256((data / "buildings.parquet").read_bytes()).hexdigest():
+        print(f"warning: {path} was placed on another {data / 'buildings.parquet'}, so no card has the building "
+              "archaeology section (run s02_stadsmuseet again)", file=sys.stderr)
+        return {}
+    return {int(g): c for g, c in rec.get("cards", {}).items()}
 
 
 def load_places(data: Path = DATA) -> dict:
@@ -388,16 +404,18 @@ def _text(v) -> str:
 
 
 def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[dict] | None = None,
-                towers: dict[int, float] | None = None) -> list[dict]:
+                towers: dict[int, float] | None = None, archaeology: dict[int, dict] | None = None) -> list[dict]:
     """64 shards keyed by gid % 64; each holds {gid: card} with only CARD_FIELDS. `df` may carry s06_wiki's columns
     (qid, wname, wname_en, langs, photo), s02_attributes' (prot, since, nofloors) and with_places' (addr, addrn);
     `photos` maps a photo key to its credit (s06_wiki's photos.json). On a `hidden` row: no raa, qid, wp, photo or
     English label, and no address when city.PRIVATE_ADDRESSES is False. `landmarks` are s08_landmarks' entries: a
     curated row (years.parquet `landmark`) takes its entry's `rebuilt`, by year, and `cellars`; no other
     row does. `towers` maps a gid to its tallest laser part's height (tower_parts): the card's `tower`, whole metres,
-    never on a hidden row."""
+    never on a hidden row. `archaeology` maps a gid to its building-archaeology entry (load_archaeology): the card's
+    `br`, never on a hidden row."""
     photos = photos or {}
     towers = towers or {}
+    archaeology = archaeology or {}
     shards = [{} for _ in range(N_CARD_SHARDS)]
     hide = hidden(df)
     entries = {L["name"]: L for L in landmarks or ()}
@@ -420,6 +438,8 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
             card["raa"] = raa
         if int(gid) in towers and not hide[i]:
             card["tower"] = int(round(towers[int(gid)]))
+        if int(gid) in archaeology and not hide[i]:
+            card["br"] = archaeology[int(gid)]
         if col["prot"][i]:
             card["prot"] = int(col["prot"][i])
             if col["since"][i]:
@@ -621,12 +641,13 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
                   n_packs: int = city.N_PACKS, sources: list[dict] | None = None, accuracy: dict | None = None,
                   terrain: dict | None = None, wiki: dict | None = None, landmarks: list[dict] | None = None,
                   places: dict | None = None, towers: pd.DataFrame | None = None,
-                  fixes: pd.DataFrame | None = None, reader: pd.DataFrame | None = None) -> dict:
+                  fixes: pd.DataFrame | None = None, reader: pd.DataFrame | None = None,
+                  archaeology: dict[int, dict] | None = None) -> dict:
     """Write packs, attrs, cards, excerpt shards, photos.json, layers.json and stockholm.json into `out`; return a size
     summary. wiki: load_wiki()'s shape (default: read from data/); landmarks: s08_landmarks' entries (likewise);
     places: load_places()'s shape (likewise); towers: s02_towers' parts (load_towers(); default: none); fixes: the
     card-name fixes (default pipeline/name_fixes.csv); reader: the accepted readers' reports (default
-    pipeline/contributions.csv)."""
+    pipeline/contributions.csv); archaeology: s02_stadsmuseet's entries (load_archaeology(); default: read from data/)."""
     out = Path(out)
     sources = load_sources(SOURCES) if sources is None else sources
     accuracy = load_accuracy() if accuracy is None else accuracy
@@ -636,6 +657,7 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     places = load_places() if places is None else places
     fixes = name_fixes.read() if fixes is None else fixes
     reader = contributions.read() if reader is None else reader
+    archaeology = load_archaeology() if archaeology is None else archaeology
     df = with_places(name_fixes.apply(with_wiki(df, wiki["table"]), fixes), places)
     parts = tower_parts(df, towers)
     tiles = build_tiles(df, tile, parts)
@@ -643,7 +665,8 @@ def write_outputs(df: pd.DataFrame, out: Path, version: str, *, tile: float = ci
     gz = [io.write_gz(out / f"pack{k}.bin.gz", p) for k, p in enumerate(packs)]
     attrs = attrs_array(df)
     attrs_gz = io.write_gz(out / "attrs.bin.gz", attrs.tobytes())
-    cards = card_shards(df, wiki["photos"], landmarks, towers={g: max(h for h, _ in ps) for g, ps in parts.items()})
+    cards = card_shards(df, wiki["photos"], landmarks, towers={g: max(h for h, _ in ps) for g, ps in parts.items()},
+                        archaeology=archaeology)
     shown = shown_addresses(places["addresses"], df)
     addresses = {}
     for g, street, number in zip(shown.gid, shown.street, shown.number):

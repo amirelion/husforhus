@@ -11,6 +11,14 @@ Plans, not promises: the order can change.
 - **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 17 plaques not yet placed on a building (the other 17 unplaced are on bridges).
 - **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
 
+## 2026-10-20
+
+### Features
+- **Building archaeology from the City Museum.** On 274 buildings in Gamla stan and on Riddarholmen, a pinned card now says what Stadsmuseet i Stockholm's building-archaeology register found: medieval walls documented (227 buildings), timber dated by tree rings, the years of each investigation, and a link to each report in Digitala Stadsmuseet. Used with the museum's permission; the facts are in the map's own words, and the building's year and colour do not change.
+
+### Data
+- Data version `v20261020-p4q`: the register, placed on the footprints by its own map areas and addresses (546 of 549 records). One Wikipedia excerpt no longer names a property designation.
+
 ## 2026-10-18
 
 ### Features

@@ -13,6 +13,7 @@ import { planWalk, walkMapsUrl, walkMinutes } from './walk.js';
 import { latLonToLocal, localToLatLon } from './sweref.js';
 import { makeT, legacy, pickLang } from './i18n.js';
 import { plaquesByGid, plaqueSection } from './plaque.js';
+import { archaeologySection } from './archaeology.js';
 import { metroOnFrom, metroHref, METRO_KEY, stationCard } from './metro.js';
 import { makeMetroLayer } from './metro-layer.js';
 import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
@@ -1356,6 +1357,7 @@ function cardHtml(gid, pinned) {
     <section><dl>${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
       ${b.rating ? `<p class="why">${esc(T('card.rating.why'))}</p>` : ''}</section>
     ${plaquesOn ? plaqueSection(plaquesOf.get(gid), T, esc) : ''}
+    ${archaeologySection(more.br, T, esc, b.private)}
     ${excerpt || ''}
     ${links.length ? `<section class="sources"><h4>${esc(T('card.readmore'))}</h4><p>${links.map(l => link(l.href, l.text)).join(' · ')}</p></section>` : ''}
     <p class="share"><button class="card-share">${esc(T('card.share'))}</button></p>

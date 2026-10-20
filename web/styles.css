@@ -767,6 +767,10 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .card .plaque .plaque-name { font-weight: 600; }
 .card .plaque .credit { margin: 0; color: var(--muted); font-size: 11px; }
 .card .plaque .plaque-note { color: var(--muted); font-size: 11px; font-style: italic; }
+/* The City Museum's building-archaeology register (card `br`): facts in a short list, the reports and the credit. */
+.card .archaeology ul { margin: 0 0 6px; padding-left: 18px; line-height: 1.5; }
+.card .archaeology .reports { margin: 0 0 6px; }
+.card .archaeology .credit { margin: 0; color: var(--muted); font-size: 11px; }
 /* The top-right labels stay on one line ("Om kartan", "Berättelser" on a 375 px phone fit in one row). */
 .about-open, .stories-open, .look-open { white-space: nowrap; }
 
