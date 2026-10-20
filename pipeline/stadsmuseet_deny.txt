@@ -1,3 +1,10 @@
 # Archive photos from Digitala Stadsmuseet that never go on a card (pipeline/stadsmuseet_photos.py read_deny).
 # One per line: the photo's id (its .info page's file name without the extension), a tab or a space, then why.
 # data/review-stadsmuseet-photos.html gives each picked photo's line to paste here.
+SvD_35973_0_0S	people: a traffic lesson for children
+SvD_26493_0_0S	people: a queue to vote at a school
+SvD_21112_0_0S	an event: a school bus hit by a car
+SvD_38426_0_0S	people: a queue outside the housing office
+F_52525_0_0S	people: police with a man they have taken in
+SvD_32038_0_0S	people: sunbathers on a roof terrace
+ASW_1475_0_0S	people: two men outside the house

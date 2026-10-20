@@ -124,7 +124,7 @@ def test_read_deny(tmp_path):
     p.write_text("SSMF001 a\nSSMF001 b\n", encoding="utf-8")
     with pytest.raises(ValueError, match="twice"):
         sp.read_deny(p)
-    assert sp.read_deny(sp.DENY) == {}            # the repo's list parses (and is empty for now)
+    assert all(sp.read_deny(sp.DENY).values())    # the repo's list parses, each id with its reason
 
 
 def test_entry_and_its_title():
