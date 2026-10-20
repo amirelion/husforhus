@@ -16,6 +16,7 @@ s03_tiles puts it on the card unless the building is `hidden`. A takedown's buil
 import argparse
 import hashlib
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
@@ -74,7 +75,8 @@ def main(argv: list[str] | None = None) -> None:
     taken = suppress.gids_of(BUILDINGS, a.suppress)
     # Any building in the city a harvested photo's address leads to (the owner, 2026-10-20: as many buildings with a
     # photo as possible); the harvest itself decides which areas are asked for.
-    placed = sp.place(its, table)
+    how: dict[str, str] = {}
+    placed = sp.place(its, table, b, how)
     d = pd.read_parquet(DISTRICTS)
     full = set(d.gid[d.district.isin(sp.FULL_AREAS)].astype(int))
     picks, n = sp.choose(its, placed, private=sp.private_gids(b, years) | set(taken),
@@ -82,13 +84,16 @@ def main(argv: list[str] | None = None) -> None:
     cards, missing = files(picks)
     first = table.sort_values(["gid", "street", "number"]).groupby("gid").first()
     rows = [{"gid": g, "address": f"{first.street[g]} {first.number[g]}" if g in first.index else "",
-             "year": e.get("y"), "title": e.get("t"), **e} for g, es in cards.items() for e in es]
+             "year": e.get("y"), "title": e.get("t"), "how": how.get(e["id"], ""), **e}
+            for g, es in cards.items() for e in es]
     io.write_json(OUT, {"buildings_sha256": hashlib.sha256(BUILDINGS.read_bytes()).hexdigest(),
                         "cards": {str(g): [{k: v for k, v in e.items() if k != "id"} for e in es]
                                   for g, es in cards.items()}})
     REVIEW.parent.mkdir(parents=True, exist_ok=True)
     REVIEW.write_text(sp.review_html(rows), encoding="utf-8")
-    print(summary(n, cards, missing) + f" → {OUT}, {REVIEW}")
+    by = Counter(how[e["id"]] for es in cards.values() for e in es)
+    print(summary(n, cards, missing) + f" → {OUT}, {REVIEW}; placed by "
+          + ", ".join(f"{v} {k}" for k, v in by.most_common()))
 
 
 if __name__ == "__main__":

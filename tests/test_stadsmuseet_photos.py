@@ -70,8 +70,66 @@ def test_credited_names():
 
 
 def test_place_needs_exactly_one_footprint():
-    its = sp.items([asset("one"), asset("two", address="Exempelgatan 1, Exempelgatan 3"), asset("none", address="")])
+    its = sp.items([asset("one"), asset("two", address="Exempelgatan 1, Exempelgatan 3", title="Gatan mot norr"),
+                    asset("none", address="", title="Utsikt över staden")])
     assert sp.place(its, TABLE) == {"one": 1}
+
+
+BUILDINGS = pd.DataFrame({"gid": [1, 2, 3, 4], "fastighet": ["EXEMPEL 12", "PROVET 3", "PARKEN 1:40", "PARKEN 1:40"]})
+
+
+@pytest.mark.parametrize("kw, gid, how", [
+    # today's address in the title wins over the field's old number (Exempelgatan 1 is another building today)
+    (dict(title="Exempelgatan 1 mot norr. Nuv. Exempelgatan 3.", address="Exempelgatan 1"), 2, "now"),
+    (dict(title="Gården (nuvarande Provgränd 2)", address=""), 3, "now"),
+    # a letter the City does not list: the bare number
+    (dict(address="Exempelgatan 3 B"), 2, "address"),
+    # the field names two footprints; the title opens with one of them
+    (dict(title="Exempelgatan 3, fasad. I fonden Exempelgatan 1.", address="Exempelgatan 1, Exempelgatan 3"), 2,
+     "address+title"),
+    # no address that works: the block designation
+    (dict(title="Villa i Ålsten.", address="", designation=("Provet 3",)), 2, "designation"),
+    # no address field at all: the title's first address
+    (dict(title="Provgränd 2 från söder.", address=""), 3, "title"),
+])
+def test_place_methods(kw, gid, how):
+    got = {}
+    assert sp.place(sp.items([asset("p", **kw)]), TABLE, BUILDINGS, got) == {"p": gid} and got == {"p": how}
+
+
+@pytest.mark.parametrize("title", ["Holländargatan 13, gård. Fastigheten revs januari 1975.",
+                                   "Götgatan 82 norrut. Här ligger nu Åhléns varuhus på Södermalm.",
+                                   "Kungsholmsgatan 21. Motsvarar nu norra delen av Kronobergsparken.",
+                                   "Trähuset som låg vid Artillerigatan 17 och Linnégatan 42.",
+                                   "Långholmsgatan 18. Byggnaden uppfördes på Skansen 1936."])
+def test_gone(title):
+    assert sp.gone(title)
+
+
+def test_not_gone():
+    for title in ("Åsögatan 2-10, nuv. Åsögatan 90.", "Brahegatan 39 i hörnet av Östermalmsgatan 35 vintertid.",
+                  "Roddargatan 6, gårdssidan. Fasad i mycket dåligt skick."):
+        assert not sp.gone(title), title
+
+
+def test_title_skips_the_address_a_view_is_taken_from():
+    assert sp.title_addresses("Utsikt från Norr Mälarstrand 12 mot Södermalm.") == []
+    assert sp.title_addresses("Gårdsutsikt österut från Provgränd 2, mot Exempelgatan 3.") == [("Exempelgatan", ["3"])]
+
+
+def test_place_never_on_a_parcel_or_a_far_now():
+    # a parcel with a colon is a park or a field: never one building, even when it has one footprint
+    one = pd.DataFrame({"gid": [3], "fastighet": ["PARKEN 1:40"]})
+    assert sp.place(sp.items([asset("p", title="Vy mot bron.", address="", designation=("Parken 1:40",))]),
+                    TABLE, one) == {}
+    # "nu" far from the address does not make it today's address; the title opens with the field's own
+    its = sp.items([asset("p", title="Här låg nu en gång en krog, sedd mot väster från Exempelgatan 3.",
+                          address="Exempelgatan 1")])
+    how = {}
+    assert sp.place(its, TABLE, BUILDINGS, how) == {"p": 1} and how == {"p": "address"}
+    # the title's address is only read when the photo has no address field
+    its = sp.items([asset("p", title="Provgränd 2.", address="Okändagatan 9")])
+    assert sp.place(its, TABLE, BUILDINGS) == {}
 
 
 def test_choose_applies_every_rule_oldest_first_and_caps():
@@ -80,14 +138,15 @@ def test_choose_applies_every_rule_oldest_first_and_caps():
               asset("ev", title="Exempelgatan 1. Kungen inviger huset."),
               asset("priv", address="Exempelgatan 3"), asset("des", title="Exempel 12 från gatan"),
               asset("deny"), asset("norend", rendition=False), asset("far", address="Ingenstans 9"),
-              asset("grp", keywords=("GatorStreets", "GrupporträttGroup portraits")), asset("nokw", keywords=())]
+              asset("grp", keywords=("GatorStreets", "GrupporträttGroup portraits")), asset("nokw", keywords=()),
+              asset("gone", title="Exempelgatan 1. Fastigheten revs januari 1975.")]
     its = sp.items(assets)
     picks, n = sp.choose(its, sp.place(its, TABLE), private={2}, designations={"exempel 12"},
                          deny={"deny": "not this building"})
     assert [p["id"] for p in picks[1]] == ["p3", "p4", "p1"]          # oldest first, the undated one over the cap
     assert set(picks) == {1}
     assert n == {"unplaced": 1, "licence": 1, "interior or detail": 1, "people or event": 2, "no building keyword": 1,
-                 "private house": 1, "designation": 1, "deny list": 1, "no rendition": 1, "over the cap": 1}
+                 "building gone": 1, "private house": 1, "designation": 1, "deny list": 1, "no rendition": 1, "over the cap": 1}
     # outside FULL_AREAS a building gets MAX_ELSEWHERE photos: the oldest
     picks, n = sp.choose(its, sp.place(its, TABLE), private={2}, designations={"exempel 12"},
                          deny={"deny": "not this building"}, full={3})

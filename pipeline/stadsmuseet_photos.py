@@ -7,8 +7,8 @@ s00_fetch_stadsmuseet caches it) carries its metadata by field number: 5 title, 
 507 property designation, 510 address, 516 kvarter, 539 year, 576 stadsdel, 590 licence.
 
 The rules (choose):
-- placed by address (field 510, read as PR 57's register addresses are: stadsmuseet.parse_address and by_address on
-  s02_addresses' table) onto exactly one footprint; a photo whose addresses reach two footprints is left out;
+- placed onto exactly one footprint by Places.locate (today's address in the title, field 510, the block
+  designation in field 507, the title's first address); a photo it cannot put on one footprint is left out;
 - CC BY only (field 590 "BY"): NC and ND photos never ship, as the register's permission does not cover them;
 - exteriors only (exterior()): no interior, wall or cellar detail, doorway or fragment, by the title and keywords;
 - a building or a street, not people (people_or_event(), building_view()): by the title and the keywords;
@@ -184,16 +184,135 @@ def credited(names: list[str]) -> list[str]:
     return [s for s, _ in out.values()]
 
 
-def place(its: list[dict], table: pd.DataFrame) -> dict[str, int]:
-    """{photo id: gid} for the photos whose addresses (field 510) all lead to exactly one footprint."""
-    streets = {fold(s) for s in table.street.unique()} if len(table) else set()
-    index = stadsmuseet.address_index(table) if len(table) else {}
+# Where a photo is (the owner, 2026-10-20: "try to create a better matcher"). The archive gives no coordinates, so
+# place() reads, in this order, and takes the first that leads to exactly one footprint:
+# 1. "now": the address the title gives as today's ("Nuv. Åsögatan 102", "nuvarande Hornsgatan 91", "nu
+#    Malmgårdsvägen 59"): the field's own number is often the old one, which may be another building today;
+# 2. "address": field 510, a number with a letter the City does not list read as the bare number ("21 B" on 21);
+# 3. "address+title": field 510 names several footprints, and the title opens with one of them;
+# 4. "designation": field 507, a block designation ("Sparbössan 1") on the City's buildings' own (a parcel with a colon,
+#    "Ladugårdsgärdet 1:40", is a park or a field, never one building); or one of several that field 510 also names;
+# 5. "title": no field 510, and the title's first address. Checked against the photos field 510 places alone
+#    (2026-10-20): the designation agreed on 399 of 405, the title's first address on 838 of 854.
+STREET_END = (r"gatan|gata|vägen|väg|gränd|gränden|backe|backen|brinken|torg|torget|plan|platsen|stigen|allé|allén|"
+              r"kajen|strand|bron|hamnen|lid|liden|terrassen|esplanaden|trappan|slingan|gången|ringen|kroken|höjden|"
+              r"stråket|parken|udden")
+TITLE_ADDRESS = re.compile(r"((?:[A-ZÅÄÖ][\wåäöéü.-]*\s){0,3}[\wåäöéü-]*(?:" + STREET_END + r"))\s+"
+                           r"(\d+(?:\s?[A-Ha-h]\b)?(?:\s?[-–]\s?\d+)?)")
+NOW = re.compile(r"\b(?:nuv\.?|nuvarande|numera|nu|idag|i dag)\s+", re.I)
+NOW_GAP = 12                # today's address starts at most this many characters after the word that says so
+BLOCK_DESIGNATION = re.compile(r"[^\W\d][\w\s-]*?\s\d+$")   # "Sparbössan 1", "Vintertullen Större 18"
+
+
+FROM = re.compile(r"\b(?:från|fr\.)\s*$", re.I)
+
+
+def title_addresses(text: str) -> list[tuple[str, list[str]]]:
+    """[(street, [numbers])] the text names, in order ("Upplandsgatan 9 och 11" gives the first only); an address the
+    photo was taken from ("Utsikt från Norr Mälarstrand 12 mot Södermalm") is not one it shows, so it is skipped."""
+    from .plaques import house_numbers
+    text = text or ""
+    return [(m.group(1).strip(), house_numbers(m.group(2).replace("–", "-").split()))
+            for m in TITLE_ADDRESS.finditer(text) if not FROM.search(text[max(0, m.start() - 8):m.start()])]
+
+
+# The title says the building in the photo is gone ("Fastigheten revs januari 1975", "Här ligger nu Åhléns varuhus",
+# "Motsvarar nu norra delen av Kronobergsparken", "uppfördes på Skansen"): whatever stands at the address today is
+# another building, so the photo is not this one's.
+GONE = re.compile(
+    r"\b(revs|rivs|riven|rivet|rivna|rivits|rivning\w*|nedrivn\w*|som låg|låg här|här ligger (?:nu|idag|i dag)|"
+    r"här (?:står|finns) (?:nu|idag|i dag)|på platsen (?:ligger|står|finns)|motsvarar (?:nu|idag|i dag)|"
+    r"motsvarande plats|flyttad\w* till|uppfördes på skansen|numera park|ungefär)\b", re.I)
+
+
+def gone(title: str) -> bool:
+    """True when the title says the building it shows no longer stands there (GONE)."""
+    return bool(GONE.search(title or ""))
+
+
+def now_addresses(title: str) -> list[tuple[str, list[str]]]:
+    """The addresses the title gives as today's: the first right after "nuv.", "nuvarande", "nu" or "idag"."""
+    out = []
+    for m in NOW.finditer(title or ""):
+        rest = title[m.end():m.end() + NOW_GAP + 60]
+        first = next(TITLE_ADDRESS.finditer(rest), None)
+        if first and first.start() <= NOW_GAP:
+            out += title_addresses(first.group(0))
+    return out
+
+
+class Places:
+    """The lookups place() needs, built once over s02_addresses' table (gid, street, number) and the buildings
+    (gid, fastighet)."""
+    def __init__(self, table: pd.DataFrame, buildings: pd.DataFrame | None = None):
+        self.streets = {fold(s) for s in table.street.unique()} if len(table) else set()
+        self.index = stadsmuseet.address_index(table) if len(table) else {}
+        self.bare: dict[tuple[str, str], set[int]] = {}           # (street, "21") → the gids of 21, 21A, 21B …
+        for (st, n), gids in self.index.items():
+            m = re.match(r"\d+", n)
+            if m:
+                self.bare.setdefault((st, m.group(0)), set()).update(gids)
+        self.parcels: dict[str, set[int]] = {}
+        if buildings is not None:
+            for g, f in zip(buildings.gid, buildings.fastighet):
+                if isinstance(f, str) and BLOCK_DESIGNATION.fullmatch(" ".join(f.split())):
+                    self.parcels.setdefault(normalise(f), set()).add(int(g))
+
+    def address(self, addrs: list[tuple[str, list[str]]]) -> set[int]:
+        from .plaques import known_street
+        gids: set[int] = set()
+        for street, nums in addrs:
+            st = known_street(street, self.streets)
+            if st is None:
+                continue
+            for n in nums:
+                hit = self.index.get((st, str(n)))
+                if not hit and (m := re.match(r"\d+", str(n))):
+                    hit = self.bare.get((st, m.group(0)))
+                gids |= hit or set()
+        return gids
+
+    def designation(self, names: list[str]) -> set[int]:
+        out: set[int] = set()
+        for d in names:
+            if BLOCK_DESIGNATION.fullmatch(" ".join(d.split())):
+                out |= self.parcels.get(normalise(d), set())
+        return out
+
+    def locate(self, it: dict) -> tuple[int | None, str]:
+        """(the photo's one footprint or None, how: "now", "address", "address+title", "designation", "title")."""
+        def one(gids):
+            return next(iter(gids)) if len(gids) == 1 else None
+        if (g := one(self.address(now_addresses(it["title"])))) is not None:
+            return g, "now"
+        fields = [a for text in it["addresses"] for a in stadsmuseet.parse_address(text)[0]]
+        listed = self.address(fields)
+        if (g := one(listed)) is not None:
+            return g, "address"
+        titled = title_addresses(it["title"])
+        opens = bool(titled) and TITLE_ADDRESS.match(it["title"] or "") is not None
+        if len(listed) > 1 and opens and (g := one(self.address(titled[:1]) & listed)) is not None:
+            return g, "address+title"
+        named = self.designation(it["designations"])
+        if (g := one(named)) is not None or (listed and (g := one(named & listed)) is not None):
+            return g, "designation"
+        if not fields and titled and (g := one(self.address(titled[:1]))) is not None:
+            return g, "title"
+        return None, ""
+
+
+def place(its: list[dict], table: pd.DataFrame, buildings: pd.DataFrame | None = None,
+          how: dict[str, str] | None = None) -> dict[str, int]:
+    """{photo id: gid} for the photos Places.locate puts on exactly one footprint; `how` (when given) gets each
+    placed photo's method. `buildings` (gid, fastighet) adds the designation; without it, addresses only."""
+    places = Places(table, buildings)
     out = {}
     for it in its:
-        addrs = [a for text in it["addresses"] for a in stadsmuseet.parse_address(text)[0]]
-        gids = stadsmuseet.by_address(addrs, table, streets, index)
-        if len(gids) == 1:
-            out[it["id"]] = int(gids[0])
+        g, why = places.locate(it)
+        if g is not None:
+            out[it["id"]] = int(g)
+            if how is not None:
+                how[it["id"]] = why
     return out
 
 
@@ -248,7 +367,7 @@ def choose(its: list[dict], placed: dict[str, int], *, private: set[int] = froze
     footprints; None: every building) and MAX_ELSEWHERE on any other}, {why: how many photos were left out})."""
     deny = deny or {}
     n = {"unplaced": 0, "licence": 0, "interior or detail": 0, "people or event": 0, "no building keyword": 0,
-         "private house": 0,
+         "building gone": 0, "private house": 0,
          "designation": 0, "deny list": 0,
          "no rendition": 0, "over the cap": 0}
     on: dict[int, list[dict]] = {}
@@ -258,6 +377,7 @@ def choose(its: list[dict], placed: dict[str, int], *, private: set[int] = froze
                else "interior or detail" if not exterior(it["title"], it["keywords"])
                else "people or event" if people_or_event(it["title"], it["keywords"])
                else "no building keyword" if not building_view(it["keywords"])
+               else "building gone" if gone(it["title"])
                else "private house" if g in private
                else "designation" if any(mentions(s.replace("_", " "), designations) for s in [it["title"], *it["by"]])
                else "deny list" if it["id"] in deny
@@ -316,13 +436,16 @@ def review_html(rows: list[dict]) -> str:
     by_gid: dict[int, list[dict]] = {}
     for r in rows:
         by_gid.setdefault(int(r["gid"]), []).append(r)
+    def placed_by(r):
+        return f" · placed by {e(r['how'])}" if r.get("how") else ""
+
     parts = []
     for g in sorted(by_gid):
         rs = by_gid[g]
         figs = "".join(
             f'<figure><a href="{e(r["page"])}"><img src="../web/data/photos/{e(r["key"])}" loading="lazy" alt=""></a>'
             f'<figcaption><b>{e(str(r.get("year") or "no year"))}</b> {e(r.get("title") or "")}<br>'
-            f'{e(r.get("by") or "photographer unknown")}<br><code>{e(r["id"])}\tnot this building: '
+            f'{e(r.get("by") or "photographer unknown")}{placed_by(r)}<br><code>{e(r["id"])}\tnot this building: '
             f'</code></figcaption></figure>' for r in rs)
         parts.append(f'<section><h2>{e(rs[0].get("address") or "")} <small>gid {g}</small></h2>{figs}</section>')
     return ("<!doctype html><meta charset=utf-8><title>Stadsmuseet photos to review</title><style>"
