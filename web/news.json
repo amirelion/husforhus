@@ -13,8 +13,8 @@
     "kind": "feature",
     "title": { "en": "Old photos from the City Museum", "sv": "Gamla foton från Stadsmuseet" },
     "text": {
-      "en": "946 buildings across the city now show street views and façades from the City Museum's photo archive, most of them from around 1900. For 753 of them it is the first photo on the map. In Gamla stan a building can have up to three: switch between the years under the picture.",
-      "sv": "946 byggnader runt om i staden visar nu gatubilder och fasader ur Stadsmuseets fotoarkiv, de flesta från omkring 1900. För 753 av dem är det kartans första foto. I Gamla stan kan en byggnad ha upp till tre: byt mellan åren under bilden."
+      "en": "948 buildings across the city now show street views and façades from the City Museum's photo archive, most of them from around 1900. For 755 of them it is the first photo on the map. Where a building has more than one, switch between the years under the picture.",
+      "sv": "948 byggnader runt om i staden visar nu gatubilder och fasader ur Stadsmuseets fotoarkiv, de flesta från omkring 1900. För 755 av dem är det kartans första foto. Har en byggnad fler än ett, byt mellan åren under bilden."
     }
   },
   {
