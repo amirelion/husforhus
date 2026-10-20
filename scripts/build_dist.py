@@ -185,7 +185,8 @@ def check_unchanged(version: str, prints: dict[str, str], web: Path) -> None:
         f"build_dist: web/data/{version} has changed since it was built ({', '.join(changed[:5])}{more}). Browsers "
         f"keep /data/{version}/ for a year, so a version name must never change content. Rebuild the web data under "
         f"a new name (s03_tiles points current.json at it), then build again:\n"
-        f"  uv run python -m pipeline.run s03_tiles s04_base s07_labels s14_search s99_validate -- --version {base}-{n}\n"
+        f"  uv run python -m pipeline.run s03_tiles s04_base s17_ferries s07_labels s14_search s99_validate -- "
+        f"--version {base}-{n}\n"
         f"What each version held when it was built: {RECORD}")
 
 

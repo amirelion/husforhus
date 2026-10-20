@@ -1,0 +1,4 @@
+[out:json][timeout:180];
+area["admin_level"="7"]["ref:scb"="0180"]->.k;
+(relation["route"="ferry"](area.k); way["route"="ferry"](area.k););
+out body geom;

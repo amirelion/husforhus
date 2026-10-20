@@ -11,6 +11,10 @@ Fails (exit 1, with a readable list) on:
   (today's and the former ones it names) in any shipped file, as for FASTIGHET;
 - metro (s16_metro, when metro.json is there): a date that does not parse, a segment station not in the stations
   list, a line other than green, red or blue, or a coordinate outside the map;
+- ferries (s17_ferries, when ferries.json is there): not version 1, or a route without its id ("r" or "w" and a
+  number, once), its kind (ferry or ship), a name or two ends (pier or edge), or with a path of fewer than two points,
+  of no length, outside the map, with a point off the version's water (more than ferries.ON_WATER_M from it) or a
+  segment off the map; with --release and features.ferries on, ferries.json missing or without a route;
 - stockholm.json naming another version than its folder;
 - any file over 20 MiB; first-load or whole-city transferred bytes over budget;
 - base: land.bin.gz or water.bin.gz missing, not decoding or without a polygon; labels.json missing or not a
@@ -107,7 +111,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from . import city, codes, contributions, plaques, stadsmuseet, suppress
+from . import city, codes, contributions, ferries, plaques, stadsmuseet, suppress
 from . import stadsmuseet_photos as sm_photos
 from .estimate import GROUPS
 from .geo import lonlat_to_3011
@@ -140,6 +144,9 @@ TOWER_INSIDE_M = 0.2           # ... and how far past its footprint its outline 
 TOWER_OUTSIDE_M2 = 0.5
 MAX_LOCAL_M = 30_000  # the municipality spans about ±16 km around Stortorget
 METRO_LINES = {"green", "red", "blue"}  # s16_metro (pipeline/metro.py LINES)
+FERRY_KINDS = {"ferry", "ship"}         # s17_ferries (pipeline/ferries.py kind)
+FERRY_ENDS = {"pier", "edge"}
+FERRY_ID = re.compile(r"[rw]\d+")
 MIN_PRIVATE_OVERLAP = 2  # years a private row's decade must share with its period, or the pair pins the year
 YFLAGS = (codes.EXACT, codes.RANGE, codes.LONG, codes.AREA, codes.ESTIMATE, codes.PERIOD, codes.UNKNOWN)
 YSRCS = (codes.SRC_NONE, codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_AREA, codes.SRC_WIKIDATA, codes.SRC_ESTIMATE,
@@ -181,11 +188,12 @@ OLD_CC = re.compile(r"CC BY(-SA)? [23]\.\d( [A-Z]{2})?")
 COMMONS_PAGE = "https://commons.wikimedia.org/w/index.php?curid="
 COMMONS_PAGE_ID = re.compile(re.escape(COMMONS_PAGE) + r"\d+")   # the page id alone, as wiki.credit requires
 HIDDEN_FIELDS = ("raa", "qid", "wp", "photo", "en", "arch")
-# A Wikidata item ("Q10123456"), a Commons page id or a photo's key (16 hex digits of the file's sha1, whose digit runs
-# can be eight long) is an identifier of its own, whose number can equal a property-unit key (FNR, 10,057,056–
-# 10,547,437 on 2026-10-16; Swedish Wikidata items live in that range): the FNR digit test skips a string that is
-# exactly one of them, and every other test still applies.
-ID_FORMAT = re.compile(r"Q\d+|" + re.escape(COMMONS_PAGE) + r"\d+|[0-9a-f]{16}-\d+\.(?:jpg|png|webp)")
+# A Wikidata item ("Q10123456"), a Commons page id, a photo's key (16 hex digits of the file's sha1, whose digit runs
+# can be eight long) or a ferry route's OpenStreetMap relation or way ("r10234567", s17_ferries; OSM's relations reach
+# 21 million) is an identifier of its own, whose number can equal a property-unit key (FNR, 10,057,056–10,547,437 on
+# 2026-10-16; Swedish Wikidata items live in that range): the FNR digit test skips a string that is exactly one of them,
+# and every other test still applies.
+ID_FORMAT = re.compile(r"Q\d+|" + re.escape(COMMONS_PAGE) + r"\d+|[0-9a-f]{16}-\d+\.(?:jpg|png|webp)|[rw]\d+")
 
 
 def shown(key: str, i: int, what: str = "key") -> str:
@@ -1602,6 +1610,74 @@ def check_metro(out: Path) -> list[str]:
     return errors
 
 
+def check_ferries(out: Path, cfg: dict | None = None, *, release: bool = False) -> list[str]:
+    """The boats' routes (s17_ferries), when the version has them: ferries.json's version, each route's id, kind, name
+    and ends, and a path of at least two points inside the map, every one of them on the version's water and no
+    segment off the map. A release with config.features.ferries on (`cfg`, stockholm.json) also needs the file and a
+    route in it: s17_ferries writes none when Overpass cannot be reached and nothing is cached, and the viewer would
+    quietly show no boats while About credits them."""
+    path = out / "ferries.json"
+    on = release and bool(((cfg or {}).get("features") or {}).get("ferries"))
+    if not path.exists():
+        return ["ferries: ferries.json is missing while features.ferries is on (run s17_ferries)"] if on else []
+    try:
+        f = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return ["ferries: ferries.json is not JSON"]
+    if not isinstance(f, dict) or f.get("version") != ferries.VERSION or not isinstance(f.get("routes"), list):
+        return [f"ferries: ferries.json needs version {ferries.VERSION} and a routes list"]
+    water = ground = None
+    if (out / "water.bin.gz").exists() and (out / "land.bin.gz").exists():
+        try:
+            water, land = ferries.load_base(out)
+            if water.is_empty:                    # check_base says the water holds no polygon
+                water = None
+            else:
+                ground = ferries.the_map(water, land)
+        except (OSError, EOFError, ValueError, struct.error):
+            pass                                  # check_base says the base does not decode
+    errors, ids = [], set()
+    if on and not f["routes"]:
+        errors.append("ferries: ferries.json has no routes while features.ferries is on (s17_ferries found none, or "
+                      "could not reach Overpass with nothing cached: run it again)")
+    for i, r in enumerate(f["routes"]):
+        if not isinstance(r, dict):
+            errors.append(f"ferries: route #{i} is not an object")
+            continue
+        rid = r.get("id")
+        if not isinstance(rid, str) or not FERRY_ID.fullmatch(rid):
+            errors.append(f"ferries: route #{i} has id {rid!r}, not r or w and a number")
+            rid = f"#{i}"
+        elif rid in ids:
+            errors.append(f"ferries: route {rid} twice")
+        ids.add(rid)
+        if not isinstance(r.get("kind"), str) or r["kind"] not in FERRY_KINDS:
+            errors.append(f"ferries: route {rid} has kind {r.get('kind')!r}")
+        if not isinstance(r.get("name"), str) or not r["name"].strip() or not isinstance(r.get("ref"), str):
+            errors.append(f"ferries: route {rid} has no name or no ref")
+        ends = r.get("ends")
+        if not (isinstance(ends, list) and len(ends) == 2
+                and all(isinstance(e, str) and e in FERRY_ENDS for e in ends)):
+            errors.append(f"ferries: route {rid} has ends {ends!r}, not two of pier and edge")
+        pts = r.get("path")
+        if not isinstance(pts, list) or len(pts) < 2 or not all(isinstance(p, list) and len(p) == 2 for p in pts):
+            errors.append(f"ferries: route {rid} has no path")
+            continue
+        if not all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+                   and abs(v) <= MAX_LOCAL_M for p in pts for v in p):
+            errors.append(f"ferries: route {rid} has a path outside the map")
+            continue
+        if ferries.length(pts) <= 0:
+            errors.append(f"ferries: route {rid} has a path of no length")
+        off = ferries.off_water(pts, water) if water is not None else 0
+        if off:
+            errors.append(f"ferries: route {rid} has {off} point(s) off the water")
+        cut = ferries.off_map(pts, ground) if ground is not None else 0
+        if cut:
+            errors.append(f"ferries: route {rid} has {cut} segment(s) off the map")
+    return errors
+
+
 def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: list[dict] | None = None,
              takedowns: list[dict] | None = None) -> list[str]:
     out, data = Path(out), Path(data)
@@ -1653,6 +1729,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     errors += check_archaeology(out, hidden)
     errors += check_archive_photos(out, hidden)
     errors += check_metro(out)
+    errors += check_ferries(out, cfg, release=release)
     if sets:
         uuids, props, fnrs = sets
         errors += check_privacy(out, uuids, props | register_designations(data), fnrs)

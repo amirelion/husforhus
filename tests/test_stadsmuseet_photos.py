@@ -18,7 +18,7 @@ SITE = "https://digitalastadsmuseet.stockholm.se"
 
 
 def asset(pid, *, title="Exempelgatan 1, fasad mot gatan", year="1925", licence="BY", address="Exempelgatan 1",
-          by=("Larsson, Erik",), keywords=(), designation=(), rendition=True):
+          by=("Larsson, Erik",), keywords=("FasaderFacades",), designation=(), rendition=True):
     md = {"5": {"value": title}, "510": {"value": address}, "539": {"value": year}, "590": {"value": licence},
           "80": {"value": list(by)}, "25": {"value": list(keywords)}, "507": {"value": list(designation)},
           "516": {"value": "EXEMPEL"}, "576": {"value": "GAMLA STAN"}}
@@ -79,14 +79,39 @@ def test_choose_applies_every_rule_oldest_first_and_caps():
               asset("nc", licence="BY-NC-ND"), asset("in", title="Interiör, salen"),
               asset("ev", title="Exempelgatan 1. Kungen inviger huset."),
               asset("priv", address="Exempelgatan 3"), asset("des", title="Exempel 12 från gatan"),
-              asset("deny"), asset("norend", rendition=False), asset("far", address="Ingenstans 9")]
+              asset("deny"), asset("norend", rendition=False), asset("far", address="Ingenstans 9"),
+              asset("grp", keywords=("GatorStreets", "GrupporträttGroup portraits")), asset("nokw", keywords=())]
     its = sp.items(assets)
     picks, n = sp.choose(its, sp.place(its, TABLE), private={2}, designations={"exempel 12"},
                          deny={"deny": "not this building"})
     assert [p["id"] for p in picks[1]] == ["p3", "p4", "p1"]          # oldest first, the undated one over the cap
     assert set(picks) == {1}
-    assert n == {"unplaced": 1, "licence": 1, "interior or detail": 1, "people or event": 1, "private house": 1,
-                 "designation": 1, "deny list": 1, "no rendition": 1, "over the cap": 1}
+    assert n == {"unplaced": 1, "licence": 1, "interior or detail": 1, "people or event": 2, "no building keyword": 1,
+                 "private house": 1, "designation": 1, "deny list": 1, "no rendition": 1, "over the cap": 1}
+    # outside FULL_AREAS a building gets MAX_ELSEWHERE photos: the oldest
+    picks, n = sp.choose(its, sp.place(its, TABLE), private={2}, designations={"exempel 12"},
+                         deny={"deny": "not this building"}, full={3})
+    assert [p["id"] for p in picks[1]] == ["p3"] and n["over the cap"] == 3
+
+
+@pytest.mark.parametrize("title, keywords", [
+    ("Operans balettskola har uppvisning.", ["BarnChildren", "BalettBallet"]),
+    ("Beredskapsträff på restaurang.", ["GrupporträttGroup portraits"]),
+    ("Myntgatan 5. Civildepartementet.", ["KontorOffices", "PolitikerPoliticians"]),
+    ("Stadshusbygget. Portvakt Widmark med sin hund Lord.", ["Offentliga byggnaderPublic buildings"]),
+    ("Stadshusbygget. En grupp med Torngrundsarbetare.", ["ByggnadsarbetareConstruction worker"]),
+    ("Silverutställning.", ["UtställningarExhibitions"]),
+])
+def test_people_or_event_by_keywords_too(title, keywords):
+    assert sp.people_or_event(title, keywords)
+
+
+def test_building_view_needs_a_place_keyword():
+    for kws in (["FasaderFacades"], ["Gatumiljöer"], ["Offentliga byggnaderPublic buildings"], ["TorgSquares"],
+                ["KontorsbyggnaderOffice buildings"], ["Allmänna utsikter"], ["Gårdar (gårdsmiljöer)Yards"]):
+        assert sp.building_view(kws) and not sp.people_or_event("Skeppsbron 10.", kws), kws
+    for kws in ([], ["Renoveringar"], ["Torghandel"], ["FängelserPrisons"], ["MuseerMuseums"]):
+        assert not sp.building_view(kws), kws
 
 
 def test_read_deny(tmp_path):
@@ -202,6 +227,25 @@ def test_fetch_photos_keeps_only_items_that_hold_the_value(archive):
     calls.clear()
     s00.fetch_photos(refresh=False)                        # a second run asks nothing
     assert calls == []
+
+
+def test_fetch_photos_asks_every_stadsdel_and_the_kvarter_of_gamla_stan_only(archive):
+    s00, answers, calls = archive
+    answers[("576", "SÖDERMALM", 0)] = [placed("s1", "SÖDERMALM", "ANNAT")]
+    s00.fetch_photos(refresh=False, areas=["GAMLA STAN", "RIDDARHOLMEN", "SÖDERMALM"])
+    ids = sorted(sp.item(a)["id"] for a in s00.read_photo_assets())
+    assert ids == ["a1", "a2", "a3", "a4", "s1"] and ("516", "ANNAT", 0) not in calls
+
+
+def test_stadsdelar_gamla_stan_first(tmp_path):
+    import geopandas as gpd
+    from shapely.geometry import Point
+    from pipeline import s00_fetch_stadsmuseet as s00
+    shp = tmp_path / "Stadsdel.shp"
+    gpd.GeoDataFrame({"NAMN": ["ÖSTERMALM", "GAMLA STAN", "AKALLA", "RIDDARHOLMEN"]},
+                     geometry=[Point(0, 0)] * 4, crs="EPSG:3011").to_file(shp)
+    assert s00.stadsdelar(shp) == ["GAMLA STAN", "RIDDARHOLMEN", "AKALLA", "ÖSTERMALM"]
+    assert s00.stadsdelar(tmp_path / "none.shp") == ["GAMLA STAN", "RIDDARHOLMEN"]
 
 
 def test_fetch_photos_refuses_an_archive_that_does_not_filter(archive):

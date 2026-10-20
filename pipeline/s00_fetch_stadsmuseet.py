@@ -15,8 +15,9 @@ answer). A cached file is used as it is; --refresh asks the register again for a
 
 The archive photos (sources.yml stadsmuseet_photos; s02_stadsmuseet_photos picks them), from Digitala Stadsmuseet's
 FotoWeb API (archive 5000-Alla-fotografier, Accept ASSETLIST), PHOTO_PAUSE_S apart:
-- photos/<field>-<value>/NNN.json: every page of the queries on field 576 (stadsdel) for STADSDELAR, then on field
-  516 (kvarter) for each kvarter those photos name (photos of the area whose stadsdel field is empty);
+- photos/<field>-<value>/NNN.json: every page of the queries on field 576 (stadsdel) for every stadsdel in the city
+  (stadsdelar(): Stadsdel.shp's NAMN, GAMLA STAN and RIDDARHOLMEN first), then on field 516 (kvarter) for each
+  kvarter the KVARTER_AREAS photos name (photos of Gamla stan whose stadsdel field is empty);
 - photo-assets.json: the photos those pages hold, once each, with only the fields stadsmuseet_photos reads. A query
   answers items that do not hold its value too (the register's report lookups found that for field 688), so an item
   is kept only when its field holds the value asked for;
@@ -61,7 +62,8 @@ PHOTO_ASSETS = RAW / "photo-assets.json"
 RENDITIONS = RAW / "renditions"
 PHOTO_PAUSE_S = 1.0
 STADSDEL, KVARTER = "576", "516"
-STADSDELAR = ("GAMLA STAN", "RIDDARHOLMEN")
+KVARTER_AREAS = ("GAMLA STAN", "RIDDARHOLMEN")   # asked first, and their kvarter asked one by one too
+DISTRICTS = Path("data/raw/city/stadsdelar/Stadsdel.shp")
 PROBE = "CEPHEUS"                     # a Gamla stan kvarter with about 300 photos
 NO_SUCH = "HUSFORHUS INGET KVARTER"
 KEEP = ("5", "25", "80", "507", "510", "516", "539", "576", "590")   # the fields stadsmuseet_photos reads
@@ -149,7 +151,7 @@ def check_filters(refresh: bool) -> None:
     from .stadsmuseet_photos import holds
     probe = asset_page(KVARTER, PROBE, 0, refresh)
     own = [a for a in probe.get("data") or [] if holds(a, KVARTER, PROBE)]
-    whole = asset_page(STADSDEL, STADSDELAR[0], 0, refresh)
+    whole = asset_page(STADSDEL, KVARTER_AREAS[0], 0, refresh)
     none = asset_page(KVARTER, NO_SUCH, 0, refresh)
     why = ("the known kvarter answered no photo" if not own
            else "the known kvarter answered photos of other kvarter" if len(own) < len(probe["data"])
@@ -169,8 +171,22 @@ def slim(asset: dict) -> dict:
                          for p in asset.get("previews") or [] if not p.get("square")]}
 
 
-def fetch_photos(refresh: bool) -> dict:
-    """Harvest the area's photo metadata into photo-assets.json; {queries, assets} (the counts)."""
+def stadsdelar(path: Path = DISTRICTS) -> list[str]:
+    """Every stadsdel the archive is asked for: KVARTER_AREAS, then the city's other stadsdelar (Stadsdel.shp's NAMN,
+    sorted; the owner, 2026-10-20: as many buildings with a photo as possible). KVARTER_AREAS alone when the file is
+    missing (s00_fetch_city fetches it)."""
+    if not path.exists():
+        print(f"warning: {path} is missing; only {', '.join(KVARTER_AREAS)} are asked for", file=sys.stderr)
+        return list(KVARTER_AREAS)
+    import pyogrio
+    names = pyogrio.read_dataframe(path, columns=["NAMN"], read_geometry=False).NAMN
+    rest = sorted({" ".join(str(n).split()).upper() for n in names if isinstance(n, str) and n.strip()}
+                  - set(KVARTER_AREAS))
+    return [*KVARTER_AREAS, *rest]
+
+
+def fetch_photos(refresh: bool, areas: list[str] | None = None) -> dict:
+    """Harvest the city's photo metadata into photo-assets.json; {queries, assets} (the counts)."""
     from .stadsmuseet_photos import values
     check_filters(refresh)
     assets, queries = {}, []
@@ -183,9 +199,9 @@ def fetch_photos(refresh: bool) -> dict:
         return kept
 
     named = {}
-    for s in STADSDELAR:
+    for s in stadsdelar() if areas is None else areas:
         for a in ask(STADSDEL, s):
-            for k in values(a, KVARTER):
+            for k in values(a, KVARTER) if s in KVARTER_AREAS else []:
                 named.setdefault(k.casefold(), k.upper())
     for k in sorted(named.values()):
         ask(KVARTER, k)

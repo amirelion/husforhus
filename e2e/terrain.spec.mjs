@@ -523,6 +523,8 @@ test('on a touch screen the Hills slider takes a tap in a 44 px band, its row at
   await page.locator('.look-open').tap();
   const slider = page.locator('#look [data-relief]');
   await expect(slider).toHaveValue('1');
+  // the sheet scrolls once its rows outgrow it (Weather and Boats made it taller): bring the Ground row into view
+  await slider.scrollIntoViewIfNeeded();
   const hit = await slider.evaluate(s => {
     const r = s.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
     const at = dy => document.elementFromPoint(x, y + dy) === s;
@@ -836,7 +838,8 @@ test('with reduced motion the ground is there at once; names keep their depth te
   expect(gap).toBeLessThanOrEqual(0.001);
   expect(await page.evaluate(() => window.__dbg.uniforms.uEdgeBuildings.value)).toBe(0);
   await page.goto('/?labels=top&edgebuildings=1');
-  await expect.poll(() => page.evaluate(() => window.__dbg.labels.filter(l => l.mesh).length), { timeout: 60_000 })
+  // __dbg is set once the page has its data, so the first polls after the reload may find none yet
+  await expect.poll(() => page.evaluate(() => window.__dbg?.labels.filter(l => l.mesh).length ?? 0), { timeout: 60_000 })
     .toBeGreaterThan(0);
   expect(await page.evaluate(() => window.__dbg.labels.find(l => l.mesh).mesh.material.depthTest)).toBe(false);
   expect(await page.evaluate(() => window.__dbg.uniforms.uEdgeBuildings.value)).toBe(1);

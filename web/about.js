@@ -101,7 +101,8 @@ function cellTable(cells, config, T, withGroup) {
     <tbody>${cells.map(c => `<tr>${row(c).map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 
-// The whole About, as HTML for the dialog's <article>. howto: the drag hint in the page's language.
+// The whole About, as HTML for the dialog's <article>. howto: the drag hint in the page's language. The limits name
+// the boats while config.features.ferries is set; app.js sets it from whether their routes loaded, not the build's flag.
 export function aboutHtml(config, T, howto = '') {
   const k = aboutTokens(config, T), s = config.stats, a = config.about || {}, acc = config.accuracy || {};
   const P = (id, vars = k) => `<p>${T(id, vars)}</p>`;
@@ -149,7 +150,8 @@ export function aboutHtml(config, T, howto = '') {
     ${acc.area?.n ? P('about.acc.area') : ''}
     ${h3('about.limits.title', 'limits')}
     <ul>${['standing', ...(has ? ['snapshot'] : []), 'one', ...(has ? ['gamla', 'new'] : []), 'height', 'colour', 'private',
-      ...(config.terrain ? [config.terrain.relief === 1 ? 'terrain' : 'terrain.scaled'] : [])]
+      ...(config.terrain ? [config.terrain.relief === 1 ? 'terrain' : 'terrain.scaled'] : []),
+      ...(config.features?.ferries ? ['boats'] : [])]
       .map(i => `<li>${T(`about.limits.${i}`, k)}</li>`).join('')}</ul>
     ${h3('about.privacy.title', 'privacy')}
     <p class="lead">${esc(T('about.privacy.lead'))}</p>

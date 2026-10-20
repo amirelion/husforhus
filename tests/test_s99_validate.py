@@ -17,7 +17,8 @@ VERSION = "v20990101"
 def site(tmp_path, monkeypatch):
     """A clean tiny build: data/ parquet files and web/data/<VERSION>/ written by s03's writers (with the grounds
     s02_terrain settles), plus the land, water, terrain and labels that s04_base and s07_labels add (run.py's order: s03_tiles
-    never ships alone), and the photo s06_wiki would have copied to web/data/photos/."""
+    never ships alone), a boat route as s17_ferries writes it (a release with features.ferries on needs one), and the
+    photo s06_wiki would have copied to web/data/photos/."""
     monkeypatch.chdir(tmp_path)
     write_data(tmp_path / "data")
     out = tmp_path / "web" / "data" / VERSION
@@ -34,6 +35,9 @@ def site(tmp_path, monkeypatch):
     io.write_gz(out / "terrain.bin.gz", tiny_terrain())
     strommen = {"name": "Strömmen", "water": True, "tier": 1, "pts": [[1100, 0, 0, 300, 80]]}
     io.write_json(out / "labels.json", [strommen])
+    io.write_json(out / "ferries.json", {"version": 1, "routes": [
+        {"id": "r1", "ref": "82", "name": "Djurgårdsfärjan 82", "kind": "ferry", "ends": ["pier", "pier"],
+         "path": [[1000.0, 0.0], [1300.0, 0.0]]}]})
     io.write_json(tmp_path / "web" / "data" / "current.json", {"version": VERSION})
     return out
 
@@ -298,6 +302,14 @@ def test_sources_pending_fail_only_a_release(site, monkeypatch):
     monkeypatch.setattr(city, "RELEASE_WAITS_FOR", ())     # ... and the answers to the decisions it waits for
     errors = check(site, sources=pending, release=True)
     assert len(errors) == 1 and errors[0].startswith("sources:") and "pending-O1" in errors[0]
+
+
+def test_a_release_needs_the_boats_it_switches_on(site):
+    # stockholm.json's features.ferries is on: a release without the routes (s17_ferries not run, or offline with
+    # nothing cached) would show no boats while About credits them; a preview may go without
+    (site / "ferries.json").unlink()
+    assert check(site) == []
+    assert "ferries: ferries.json is missing while features.ferries is on (run s17_ferries)" in check(site, release=True)
 
 
 def test_uuid_in_a_card_fails(site):

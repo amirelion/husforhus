@@ -547,7 +547,10 @@ test('the look switcher changes the look in place and remembers it', async ({ pa
   await expect(panel.locator('.look-card')).toHaveCount(Object.keys(THEMES).length);
   await expect(panel.locator('.look-card[aria-pressed="true"]')).toHaveAttribute('data-look', 'arg');
   await expect(panel.locator('.look-card[aria-pressed="true"]')).toBeFocused();
-  await expect(panel.locator('.look-atmos')).toHaveCount(0); // no atmosphere besides 'none' yet
+  // The weather row (web/weather.js; e2e/weather.spec.mjs switches it): Clear, Snow, Rain and Fog, Clear pressed.
+  await expect(panel.locator('#atmos-title')).toHaveText('Weather');
+  await expect(panel.locator('.look-atmos button')).toHaveText(['Clear', 'Snow', 'Rain', 'Fog']);
+  await expect(panel.locator('.look-atmos [aria-pressed="true"]')).toHaveAttribute('data-atmos', 'none');
 
   const rgbOf = hex => `rgb(${[1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
   for (const id of ['kalk', 'paper', 'arg', 'blatimme']) {
@@ -1278,7 +1281,7 @@ test('on a touch screen the top-right buttons take a tap just outside their edge
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
   expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
-  const hits = await page.evaluate(() => ['.north-open', '.look-open', '.about-open'].map(sel => {
+  const hits = await page.evaluate(() => ['.north-open', '.look-open', '.about-open', '.postcard-open'].map(sel => {
     const b = document.querySelector(sel), r = b.getBoundingClientRect(), x = r.left + r.width / 2;
     const at = y => document.elementFromPoint(x, y)?.closest('button') === b;
     return { sel, above: at(r.top - 7), below: at(r.bottom + 7), size: [Math.round(r.width), Math.round(r.height)] };
@@ -1286,6 +1289,7 @@ test('on a touch screen the top-right buttons take a tap just outside their edge
   for (const h of hits) expect(h, h.sel).toMatchObject({ above: true, below: true });
   expect(hits[0].size).toEqual([28, 28]);
   expect(hits[1].size[1]).toBe(28);
+  expect(hits[3].size).toEqual([28, 28]);                          // the postcard's camera, drawn as north is
   // A tap just under the north button turns the map.
   await turnTo(page, 2);
   const north = await page.locator(NORTH).boundingBox();

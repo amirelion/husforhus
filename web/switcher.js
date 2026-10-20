@@ -2,11 +2,12 @@
 // a strip of its twelve period colours on its own ground, the current one pressed. A popover under the button on
 // a desktop, a bottom sheet on a phone (styles.css). A tap switches at once and the panel stays open, so the looks
 // can be compared; Escape, the close button, a click outside or the focus leaving closes it. Tab or the arrow keys
-// move between the cards, Enter or Space picks one. The atmosphere row appears once there is an atmosphere
-// besides 'none'. "Show on the map" holds the map's layer switches (Tunnelbanan, the plaques, the photo highlight);
-// while one is on, a dot on the Look button says so with the panel closed. A second row of switches (extras: the
-// Quests and walks switch) sits under its own heading and never lights the dot. The Ground row's Hills slider scales
-// the relief; it has the arrow keys while focused.
+// move between the cards, Enter or Space picks one. The atmosphere row, headed Weather (Clear, Snow, Rain, Fog: app.js
+// adds them from web/weather.js), appears once there is an atmosphere besides 'none'. "Show on the map" holds the
+// map's layer switches (Tunnelbanan, the boats, the plaques, the photo highlight); while one differs from its default
+// (most are off by default, the boats on), a dot on the Look button says so with the panel closed. A second row of
+// switches (extras: the Quests and walks switch) sits under its own heading and never lights the dot. The Ground row's
+// Hills slider scales the relief; it has the arrow keys while focused.
 import { THEMES } from './themes.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -15,8 +16,9 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 // optional): {available, value, max, step, disabled, choose(v), label(v), note()}, the Hills slider, a row under the
 // looks once available, from 0 (flat) to max, with its value (label: "Flat", "1×") and its honesty line (what the map
 // shows now); disabled (the terrain did not load) dims it and a move snaps back, changing nothing.
-// layers (optional): {title(), items()}, items() the switches to show, each {id, label, on, set(v), hint?: {id, cls,
-// text}}; the button keeps the id, a hint line shows while on. extras (optional): the same shape, its own heading.
+// layers (optional): {title(), items()}, items() the switches to show, each {id, label, on, set(v), default?, hint?:
+// {id, cls, text}}; the button keeps the id, a hint line shows while on; default (false unless given) is the switch's
+// state on a fresh visit. extras (optional): the same shape, its own heading.
 // app.js calls markLayers() after each switch changes.
 // Returns render(), to call again when the language changes, markLayers(), and markRelief(), to call whenever the relief or the
 // terrain's state changes (app.js calls it from setRelief, a move included, so it runs once per change).
@@ -29,13 +31,14 @@ export function mountSwitcher({ button, panel, looks, t, relief = null, layers =
   dot.className = 'look-dot';
   dot.hidden = true;
   button.append(dot);
-  // The switches change in place (the focus stays), and the button's dot follows the layer switches.
+  // The switches change in place (the focus stays), and the button's dot follows the layer switches: it shows while
+  // one of them is not as a fresh visit has it.
   function markLayers() {
     for (const L of allItems()) {
       panel.querySelector(`#${L.id}`)?.setAttribute('aria-pressed', String(L.on));
       if (L.hint) { const h = panel.querySelector(`#${L.hint.id}`); if (h) h.hidden = !L.on; }
     }
-    dot.hidden = !layerItems().some(L => L.on);
+    dot.hidden = !layerItems().some(L => !!L.on !== !!L.default);
   }
   // A heading and its row of switches, or nothing while the row is empty.
   const switchRow = (id, cls, group, items) => !items.length ? '' : `<h3 id="${id}">${esc(group.title())}</h3>
@@ -58,7 +61,7 @@ export function mountSwitcher({ button, panel, looks, t, relief = null, layers =
     panel.innerHTML = `
       <header><h2 id="look-title">${t('Look')}</h2><button class="look-close" aria-label="${t('Close')}">×</button></header>
       <div class="look-cards" role="group" aria-labelledby="look-title">${looks.items.map(card).join('')}</div>
-      ${atmos.items.length > 1 ? `<h3 id="atmos-title">${t('Atmosphere')}</h3>
+      ${atmos.items.length > 1 ? `<h3 id="atmos-title">${t('Weather')}</h3>
       <div class="look-atmos" role="group" aria-labelledby="atmos-title">${atmos.items.map(a =>
         `<button data-atmos="${a.id}" aria-pressed="${a.id === atmos.current}">${esc(t(a.name))}</button>`).join('')}</div>` : ''}
       ${switchRow('layers-title', 'look-layers', layers, layerItems())}

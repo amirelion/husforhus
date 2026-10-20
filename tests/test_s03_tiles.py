@@ -433,6 +433,8 @@ def test_attribution_credits_each_source_in_the_d44_form():
         "metro_stations": both("Tunnelbanestationer: Wikidata, CC0"),
         "metro_track": ("Tunnelbanans spår: © OpenStreetMap contributors, ODbL, processed",
                         "Tunnelbanans spår: © OpenStreetMap-bidragsgivare, ODbL, bearbetad"),
+        "ferry_routes": ("Båtlinjer: © OpenStreetMap contributors, ODbL, processed",
+                         "Båtlinjer: © OpenStreetMap-bidragsgivare, ODbL, bearbetad"),
         "lm_markhojd": both("Markhöjdmodell Nedladdning: © Lantmäteriet, CC BY 4.0"),
         "wikipedia": ("Wikipedia: Wikipedia contributors, CC BY-SA 4.0, processed",
                       "Wikipedia: Wikipedias bidragsgivare, CC BY-SA 4.0, bearbetad")}

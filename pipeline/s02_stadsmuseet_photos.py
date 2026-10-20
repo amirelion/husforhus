@@ -3,7 +3,8 @@ data/stadsmuseet-photos.json, data/review-stadsmuseet-photos.html (both internal
 picked files in web/data/photos/.
 
 Reads s00_fetch_stadsmuseet's photo-assets.json, data/buildings.parquet, data/years.parquet (which houses are
-private) and s02_addresses' data/addresses.parquet. Each picked photo's rendition is fetched once
+private) and s02_addresses' data/addresses.parquet and data/districts.parquet (which buildings are in
+stadsmuseet_photos.FULL_AREAS). Each picked photo's rendition is fetched once
 (s00_fetch_stadsmuseet.fetch_rendition, cached under data/raw/stadsmuseet/renditions/), fitted to
 stadsmuseet_photos.MAX_WIDTH and city.WIKI's photo_bytes, and copied to web/data/photos/<key> under s06_wiki's
 content-addressed names, so a card asks no other host for it. stadsmuseet-photos.json holds {"buildings_sha256": the
@@ -22,7 +23,7 @@ import pandas as pd
 from . import io, stadsmuseet, stadsmuseet_photos as sp, suppress
 from .privacy import normalise
 from .s00_fetch_stadsmuseet import PHOTO_ASSETS, fetch_rendition, read_photo_assets
-from .s02_addresses import OUT as ADDRESSES
+from .s02_addresses import DISTRICTS, OUT as ADDRESSES
 from .s02_years import BUILDINGS
 
 OUT = Path("data/stadsmuseet-photos.json")
@@ -74,8 +75,10 @@ def main(argv: list[str] | None = None) -> None:
     # Any building in the city a harvested photo's address leads to (the owner, 2026-10-20: as many buildings with a
     # photo as possible); the harvest itself decides which areas are asked for.
     placed = sp.place(its, table)
+    d = pd.read_parquet(DISTRICTS)
+    full = set(d.gid[d.district.isin(sp.FULL_AREAS)].astype(int))
     picks, n = sp.choose(its, placed, private=sp.private_gids(b, years) | set(taken),
-                         designations=designations, deny=sp.read_deny())
+                         designations=designations, deny=sp.read_deny(), full=full)
     cards, missing = files(picks)
     first = table.sort_values(["gid", "street", "number"]).groupby("gid").first()
     rows = [{"gid": g, "address": f"{first.street[g]} {first.number[g]}" if g in first.index else "",

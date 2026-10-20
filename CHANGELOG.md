@@ -16,6 +16,10 @@ Plans, not promises: the order can change.
 ## 2026-10-20
 
 ### Features
+- **Weather.** Look has a Weather row: Clear, Snow, Rain and Fog. Snow settles on the roofs and the ground and falls past the camera, rain streaks down and darkens the roofs, and fog closes in on the far shore. The choice is remembered, and a `?weather=snow` link shows a snowy map.
+- **Moving water.** The water ripples gently close up and stays calm far away. It stands still for anyone who asks their device to reduce motion.
+- **Boats.** At Today, the city's ferries (Djurgårdsfärjan, SL's boats 80, 80X, 84 and 89, Sjöstadstrafiken, Cityline and the boat from Riddarholmen to Solna strand) and the Baltic ships (Viking Line, Silja Line, Tallink) sail their real routes from OpenStreetMap. They are an illustration, not live positions, and sail faster than in life. A Boats switch in Look turns them off.
+- **Postcards.** The camera button (or P) hides the page around the map so you can frame a view, then saves it as a picture, as it is, as a tilt-shift miniature or in sepia, stamped with husforhus.se and the data credits. On a phone it opens the share sheet.
 - **Old photos from the City Museum** on 159 buildings, 99 of which had no photo before: street views and façades from Digitala Stadsmuseet (CC BY), up to three a building, oldest first, with a year strip to switch between them and today's photo. Portraits, events and interiors are left out.
 - **Walks on a phone** fold into a bar above the modes, so the route stays in view; the bar opens the stops and the Google Maps link, a touch on the map folds it, and a building's card hides it until it closes.
 - **What's new**, a short history of the map in the About panel, in English and Swedish.
@@ -25,6 +29,8 @@ Plans, not promises: the order can change.
 
 ### Data
 - Data version `v20261020-p4s`: 269 archive photos from Digitala Stadsmuseet, chosen by address, licence and subject.
+- Data version `v20261020-p4t`: 146 archive photos on 111 buildings. A photo now needs the archive's own keyword for a building, a street or a view, and none for people, an event or a room (press photos of people indoors had passed the title check).
+- Data version `v20261020-fx1`: the boats' routes, from OpenStreetMap's ferry routes (ODbL): 8 city boat lines and 3 ship lanes, cut to the map's water. Otherwise as `v20261020-p4t`.
 - Data version `v20261020-p4r`: each record's report found by its number in Digitala Stadsmuseet (518 of 533).
 - Data version `v20261020-p4q`: the register, placed on the footprints by its own map areas and addresses (546 of 549 records). One Wikipedia excerpt no longer names a property designation.
 

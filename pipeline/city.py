@@ -65,7 +65,9 @@ TIER1 = [
 ]
 SALTSJON = (2050.0, 600.0, 0.0)               # local (x, z, angle°): open water off Fåfängan, 237 m from any shore
 FEATURES = {"quests": True, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
-            "plaques": True, "metro": True, "walks": True}   # lang, search, scenes, plaques: on since 2026-10-17; metro: s16_metro
+            "plaques": True, "metro": True, "walks": True, "ferries": True}   # lang, search, scenes, plaques: on since
+# 2026-10-17; metro: s16_metro; ferries: s17_ferries, the boats (decided 2026-10-20), shown while the timeline is at
+# today unless the viewer's Boats switch turns them off
 # quests and walks: on for everyone since 2026-10-18; the Look panel's "Quests and walks" switch hides their buttons
 # Where a walk can start besides the walker's own location (web/app.js, Walks): (en, sv, x, z) in local metres,
 # from WGS84 via pyproj (2026-10-18). The first is the default; Stortorget is ORIGIN.

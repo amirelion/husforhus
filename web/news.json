@@ -2,6 +2,15 @@
   {
     "date": "2026-10-20",
     "kind": "feature",
+    "title": { "en": "Snow, boats and postcards", "sv": "Snö, båtar och vykort" },
+    "text": {
+      "en": "Open Look and pick the weather: snow settles on the roofs, rain streaks past and fog hides the far shore. The water ripples, and at Today the city's ferries and the Baltic ships sail their real routes (Look can turn them off). The camera button turns your view into a postcard to save, as it is, as a miniature or in sepia.",
+      "sv": "Öppna Utseende och välj väder: snön lägger sig på taken, regnet piskar förbi och dimman döljer den bortre stranden. Vattnet krusar sig, och vid ”I dag” går stadens färjor och Östersjöbåtarna sina riktiga rutter (i Utseende kan du stänga av dem). Kameraknappen gör din vy till ett vykort att spara, som den är, som miniatyr eller i sepiaton."
+    }
+  },
+  {
+    "date": "2026-10-20",
+    "kind": "feature",
     "title": { "en": "Old photos from the City Museum", "sv": "Gamla foton från Stadsmuseet" },
     "text": {
       "en": "159 buildings now show street views and façades from the City Museum's photo archive, most of them from around 1900, oldest first. For 99 of them it is the first photo on the map. Switch between the years under the picture.",

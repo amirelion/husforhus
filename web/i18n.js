@@ -22,7 +22,8 @@ export function makeT(tables, lang) {
 // §2.1) passes through unchanged. web/test/i18n.test.mjs holds every entry to en.json's text.
 export const LEGACY = {
   'Today': 'ui.today', '{year}–Today': 'ui.fromToday', 'until {year}': 'ui.until',
-  'Look': 'ui.look', 'Classic': 'ui.classic', 'Atmosphere': 'ui.atmosphere', 'None': 'ui.none', 'Close': 'ui.close',
+  'Look': 'ui.look', 'Classic': 'ui.classic', 'None': 'ui.none', 'Close': 'ui.close',
+  'Weather': 'ui.weather', 'Clear': 'ui.weather.clear', 'Snow': 'ui.weather.snow', 'Rain': 'ui.weather.rain', 'Fog': 'ui.weather.fog',
   'Ground': 'ui.relief.title', 'Hills': 'ui.hills',
   'Shown at “Today”, hidden in the past.': 'ui.unknown.auto', 'Your choice is remembered.': 'ui.unknown.chosen',
   'Hidden while one period is shown alone.': 'ui.unknown.solo',

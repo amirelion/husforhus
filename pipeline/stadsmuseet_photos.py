@@ -1,5 +1,5 @@
 """Archive photos from Digitala Stadsmuseet (archive 5000-Alla-fotografier; sources.yml stadsmuseet_photos) on the
-cards of Gamla stan and Riddarholmen: which photos, on which footprint, in which order.
+cards: which photos, on which footprint, in which order.
 
 The register does not link these photos, so each keeps its own licence (research:
 docs/research/2026-10-19-stadsmuseet-sources.md §5). An item (an entry of the archive's asset list, as
@@ -11,10 +11,12 @@ The rules (choose):
   s02_addresses' table) onto exactly one footprint; a photo whose addresses reach two footprints is left out;
 - CC BY only (field 590 "BY"): NC and ND photos never ship, as the register's permission does not cover them;
 - exteriors only (exterior()): no interior, wall or cellar detail, doorway or fragment, by the title and keywords;
+- a building or a street, not people (people_or_event(), building_view()): by the title and the keywords;
 - never on a private house (a footprint s03_tiles would hide: marked private, or an uncurated house in
   city.PRIVATE_HOUSE_KATEGORI); never one whose title or photographer names a property designation (the City's,
   the register's or the archive's own field 507); never one in pipeline/stadsmuseet_deny.txt;
-- oldest first (by year; a photo without a year after those with one), at most MAX_PER_BUILDING per building.
+- oldest first (by year; a photo without a year after those with one), at most MAX_PER_BUILDING per building in
+  FULL_AREAS and MAX_ELSEWHERE on any other.
 A photographer "Okänd" (unknown) is allowed: the card credits "Photographer unknown / Fotograf okänd", the museum
 being the named holder (the research note's decision 3).
 
@@ -42,7 +44,9 @@ PREVIEW = re.compile(r"/fotoweb/cache/v2/[A-Za-z0-9_.~/-]+\.jpg")
 PREVIEW_SIZE, PREVIEW_MIN, PREVIEW_MAX = 1200, 800, 1600
 DENY = Path(__file__).with_name("stadsmuseet_deny.txt")
 LICENCE = "CC BY 4.0"
-MAX_PER_BUILDING = 3
+MAX_PER_BUILDING = 3        # in FULL_AREAS
+MAX_ELSEWHERE = 1           # anywhere else: a photo on as many buildings as possible within the host's file limit
+FULL_AREAS = ("GAMLA STAN", "RIDDARHOLMEN")
 MAX_WIDTH = 1200            # the file's width at most (the archive's sketches are 800-1,280 px; never the original)
 YEAR_MIN, YEAR_MAX = 1840, 2026
 UNKNOWN = "okänd"
@@ -120,12 +124,39 @@ PEOPLE_OR_EVENT = re.compile(
     r"\b(portratt\w*|pa bilden|ser vi\b|hyllas|hyllning\w*|firar|firande|jubile\w*|invig\w*|eskorter\w*|konsert\w*|"
     r"gudstjanst\w*|mottagning\w*|middag\w*|fest(?:en|ligheter\w*)?\b|besok(?:er|et)?\b|prinsess\w*|prins(?:en)?\b|"
     r"kung(?:en)?\b|drottning\w*|biskop\w*|pastor\w*|general\b|overstathallar\w*|foredrag\w*|sammantrade\w*|"
-    r"brollop\w*|begravning\w*|intervju\w*|utdelning\w*|prisutdelning\w*|demonstration\w*|tal(?:ar|aren)\b)")
+    r"brollop\w*|begravning\w*|intervju\w*|utdelning\w*|prisutdelning\w*|demonstration\w*|tal(?:ar|aren)\b|"
+    r"portvakt\w*|med sin(?:a)?\b|med maka\b|med make\b|med fru\b|en grupp\b|grupp med\b)")
 
 
-def people_or_event(title: str) -> bool:
-    """True when the title says the photo is of people or an event (PEOPLE_OR_EVENT), not of the building."""
-    return bool(PEOPLE_OR_EVENT.search(fold(title)))
+# The archive's subject keywords (field 25, the Swedish and English labels run together: "FasaderFacades") decide
+# the rest (the owner, 2026-10-20: press photos of people indoors still showed). A photo ships only with a keyword
+# that shows a building, a street or a view (BUILDING_KEYWORD), and with none that shows people, an event or a room
+# (PEOPLE_KEYWORD); a photo without keywords says nothing about what it shows, so it is left out. Matched on the
+# folded keyword from its start.
+BUILDING_KEYWORD = re.compile(
+    r"(fasad|byggnader|gatumiljo|gator|grander|torg(?!handel)|offentliga byggnader|palats|kyrkor|slott|"
+    r"stenhusbebyggelse|trahusbebyggelse|flerbostadshus|kontorsbyggnader|tegelbyggnader|villor|radhus|smahus|"
+    r"allmanna utsikter|utsikter|stadsvyer|broar|kajer|kanaler|hamnar|gardar|bakgardar|parker|torn|exterior|hotell|"
+    r"banker|bostadshus|hyreshus|kvarter|stadsdelar|stadsmiljo|gatuhorn|gatukorsning)")
+PEOPLE_KEYWORD = re.compile(
+    r"(portratt|grupportratt|interior|inredning|utstallning|skolutstallning|salar|kok|kontor(?!s)|bibliotek|innertak|"
+    r"tak(?=ceilings)|laboratori|skolavslutning|middag|fest|mottagning|folksamling|publik|kungahuset|butiksbitrade|"
+    r"kassaapparat|politiker|balett|teater|opera|konsert|militarparad|parad|brandman|brander|strejk|uniform|"
+    r"fangelse|sammantrade|mote|kongress|konferens|kurs|undervisning|lektion|bal\b|dans|bankett|servering|"
+    r"restauranggaster|pressvisning|vernissage|invigning|jubileum|firande|ceremoni|begravning|brollop|dop\b|"
+    r"skolbarn|elever|personal|anstallda|arbetare|hantverkare|yrken|kokspersonal|fabriksarbeterskor|"
+    r"byggnadsarbetare|arbetsklader)")
+
+
+def people_or_event(title: str, keywords: list[str] = ()) -> bool:
+    """True when the title (PEOPLE_OR_EVENT) or a keyword (PEOPLE_KEYWORD) says the photo is of people, an event or
+    a room, not of the building."""
+    return bool(PEOPLE_OR_EVENT.search(fold(title))) or any(PEOPLE_KEYWORD.match(fold(k)) for k in keywords)
+
+
+def building_view(keywords: list[str]) -> bool:
+    """True when a keyword says the photo shows a building, a street or a view (BUILDING_KEYWORD)."""
+    return any(BUILDING_KEYWORD.match(fold(k)) for k in keywords)
 
 
 def exterior(title: str, keywords: list[str] = ()) -> bool:
@@ -211,10 +242,13 @@ def order(it: dict) -> tuple:
 
 
 def choose(its: list[dict], placed: dict[str, int], *, private: set[int] = frozenset(),
-           designations: set[str] = frozenset(), deny: dict[str, str] | None = None) -> tuple[dict[int, list[dict]], dict]:
-    """({gid: its photos, oldest first, at most MAX_PER_BUILDING}, {why: how many photos were left out})."""
+           designations: set[str] = frozenset(), deny: dict[str, str] | None = None,
+           full: set[int] | None = None) -> tuple[dict[int, list[dict]], dict]:
+    """({gid: its photos, oldest first, at most MAX_PER_BUILDING on a building in `full` (the FULL_AREAS
+    footprints; None: every building) and MAX_ELSEWHERE on any other}, {why: how many photos were left out})."""
     deny = deny or {}
-    n = {"unplaced": 0, "licence": 0, "interior or detail": 0, "people or event": 0, "private house": 0,
+    n = {"unplaced": 0, "licence": 0, "interior or detail": 0, "people or event": 0, "no building keyword": 0,
+         "private house": 0,
          "designation": 0, "deny list": 0,
          "no rendition": 0, "over the cap": 0}
     on: dict[int, list[dict]] = {}
@@ -222,7 +256,8 @@ def choose(its: list[dict], placed: dict[str, int], *, private: set[int] = froze
         g = placed.get(it["id"])
         why = ("unplaced" if g is None else "licence" if not cc_by(it)
                else "interior or detail" if not exterior(it["title"], it["keywords"])
-               else "people or event" if people_or_event(it["title"])
+               else "people or event" if people_or_event(it["title"], it["keywords"])
+               else "no building keyword" if not building_view(it["keywords"])
                else "private house" if g in private
                else "designation" if any(mentions(s.replace("_", " "), designations) for s in [it["title"], *it["by"]])
                else "deny list" if it["id"] in deny
@@ -234,8 +269,9 @@ def choose(its: list[dict], placed: dict[str, int], *, private: set[int] = froze
     picks = {}
     for g in sorted(on):
         ps = sorted(on[g], key=order)
-        n["over the cap"] += max(0, len(ps) - MAX_PER_BUILDING)
-        picks[g] = ps[:MAX_PER_BUILDING]
+        cap = MAX_PER_BUILDING if full is None or g in full else MAX_ELSEWHERE
+        n["over the cap"] += max(0, len(ps) - cap)
+        picks[g] = ps[:cap]
     return picks, n
 
 

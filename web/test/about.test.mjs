@@ -207,3 +207,12 @@ test('the sources list names Samfundet S:t Erik\'s plaques with their credit and
     assert.match(html, /<a href="https:\/\/openplaques\.org\/[^"]*"[^>]*>Open Plaques: /);
   }
 });
+
+// app.js sets features.ferries from whether the boats' routes loaded, so the line goes with a missing or empty file.
+test('with boats on the map, the limits say they sail real routes, faster and larger, not live, and which are left out', () => {
+  const boats = { ...CONFIG, features: { ferries: true } };
+  assert.match(text(aboutHtml(boats, EN)), /The boats are an illustration: the city's ferries and the big Baltic ships sail their real routes from OpenStreetMap, several times as fast as in life and drawn larger when the map is zoomed out, but they do not show where any boat is right now\. Archipelago and sightseeing boats are left out\./);
+  assert.match(text(aboutHtml(boats, SV)), /Båtarna är en illustration: stadens färjor och de stora Östersjöfartygen följer sina verkliga rutter från OpenStreetMap, flera gånger så fort som i verkligheten och större när kartan är utzoomad, men de visar inte var någon båt är just nu\. Skärgårdsbåtar och sightseeingbåtar är inte med\./);
+  assert.doesNotMatch(text(aboutHtml(CONFIG, EN)), /The boats are an illustration/);
+  assert.doesNotMatch(text(aboutHtml({ ...CONFIG, features: { ferries: false } }, SV)), /Båtarna/);
+});

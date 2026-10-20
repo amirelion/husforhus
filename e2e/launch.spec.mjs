@@ -28,15 +28,29 @@ test('without WebGL the page says plainly that the map needs it, in English and 
     { timeout: 30_000 });
 });
 
-for (const file of ['labels.json', 'land.bin.gz', 'water.bin.gz', 'terrain.bin.gz']) {
+for (const file of ['labels.json', 'land.bin.gz', 'water.bin.gz', 'terrain.bin.gz', 'ferries.json']) {
   test(`a failed ${file} leaves a working map without the fatal message`, async ({ page }) => {
     let asked = false;
     await page.route(`**/${file}`, r => { asked = true; return r.abort(); });
+    // ferries.json (the boats) is asked only by a build with features.ferries, so its case switches that on, as
+    // e2e/ferries.spec.mjs does: the failure is then always exercised, whatever the data says
+    const boats = file === 'ferries.json';
+    if (boats) await page.route('**/stockholm.json', async route => {
+      const r = await route.fetch();
+      const config = await r.json();
+      config.features = { ...config.features, ferries: true };
+      await route.fulfill({ response: r, json: config });
+    });
     const warned = [];
     page.on('console', m => { if (m.type() === 'warning') warned.push(m.text()); });
     await open(page);
     await page.waitForTimeout(1500);                                 // the deferred files are asked after the first frame
     await expect(page.locator('#loading')).toBeHidden();
+    if (boats) {
+      expect(asked).toBe(true);
+      await expect.poll(() => warned.join('\n')).toMatch(/The boats did not load/);
+      expect(await page.evaluate(() => window.__dbg.ferries)).toBeNull();
+    }
     // the flat land is asked only for a build without terrain, or after the terrain failed
     if (asked) expect(warned.join('\n')).toMatch(/did not load/);
   });

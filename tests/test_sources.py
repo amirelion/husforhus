@@ -42,7 +42,7 @@ def test_repo_sources_file():
     ids = [s["id"] for s in sources]
     assert ids == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse", "raa_old", "wikidata", "osm",
                    "lm_markhojd", "lm_laser", "wikipedia", "samfundet_plaques", "openplaques", "stadsmuseet_br",
-                   "stadsmuseet_photos", "metro_stations", "metro_track"]
+                   "stadsmuseet_photos", "metro_stations", "metro_track", "ferry_routes"]
     by_id = {s["id"]: s for s in sources}
     # Lantmäteriet's terrain model, CC BY 4.0 with no licence question pending (it never blocks --release)
     # asks for the product name, ©Lantmäteriet, that it was processed and the licence
@@ -123,13 +123,14 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
         "samfundet_plaques": "Kulturhusskyltar", "openplaques": "Open Plaques",
         "stadsmuseet_br": "Stads- och byggnadsarkeologiskt register",
         "stadsmuseet_photos": "Digitala Stadsmuseet, fotografier",
-        "metro_stations": "Tunnelbanestationer", "metro_track": "Tunnelbanans spår"}
+        "metro_stations": "Tunnelbanestationer", "metro_track": "Tunnelbanans spår", "ferry_routes": "Båtlinjer"}
     assert {k: s["credit_as"]["sv"] for k, s in by_id.items() if "credit_as" in s} == {
         "city_lod1": "© Stockholms stad, Stadsbyggnadskontoret", "city_stadsdelar": "© Stockholms stad, Stadsbyggnadskontoret",
         "city_stadskarta": "© Stockholms stad, Stadsbyggnadskontoret", "wikidata": "Wikidatas bidragsgivare",
         "osm": "© OpenStreetMap-bidragsgivare", "lm_markhojd": "© Lantmäteriet", "lm_laser": "© Lantmäteriet",
         "wikipedia": "Wikipedias bidragsgivare",
-        "samfundet_plaques": "Samfundet S:t Erik", "metro_stations": "Wikidata", "metro_track": "© OpenStreetMap-bidragsgivare"}
+        "samfundet_plaques": "Samfundet S:t Erik", "metro_stations": "Wikidata", "metro_track": "© OpenStreetMap-bidragsgivare",
+        "ferry_routes": "© OpenStreetMap-bidragsgivare"}
     # the City's own credit (its licence answer, 2026-10-16): "© Stockholms stad, Stadsbyggnadskontoret, CC BY"
     assert {k for k, s in by_id.items() if "licence_as" in s} == {"city_lod1", "city_stadsdelar", "city_stadskarta"}
 
@@ -139,7 +140,8 @@ def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
     assert [s["id"] for s in load_sources()] == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse",
                                                   "raa_old", "wikidata", "osm", "lm_markhojd", "lm_laser", "wikipedia",
                                                   "samfundet_plaques", "openplaques", "stadsmuseet_br",
-                                                  "stadsmuseet_photos", "metro_stations", "metro_track"]
+                                                  "stadsmuseet_photos", "metro_stations", "metro_track",
+                                                  "ferry_routes"]
 
 
 def test_release_fails_on_pending_sources():

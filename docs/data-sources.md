@@ -89,6 +89,14 @@ None. Boverket's register API is restricted to companies under agreement (BankID
 | Stadsmuseet, Stads- och byggnadsarkeologiskt register (BR), and its reports in Digitala Stadsmuseet | written permission from Stadsmuseet, 2026-10-19: free use with the source credited | ~250 properties in Gamla stan and Riddarholmen: investigations' years, categories (medieval masonry, dendro), polygons (WFS sr:v_area_br, EPSG:3011), report links; the pinned card's "Building archaeology" (s02_stadsmuseet) | in use |
 | SKBL (Svenskt kvinnobiografiskt lexikon) | CC BY | ~2,000 women's biographies, JSON with geocoded places | fact-checker find, not yet examined |
 
+## Boats (ferry routes)
+
+| Source | Licence | Coverage | Use |
+|---|---|---|---|
+| OSM `route=ferry` relations and ways in the kommun (Overpass, `pipeline/queries/ferry_routes.overpass`, cached in `data/raw/osm/ferries.json`, 2.1 MB) | ODbL 1.0, `sources.yml` `ferry_routes` | 138 relations and 95 ways on 2026-10-20, 11 routes kept: SL's 80, 80X, 82, 84 and 89, Sjöstadstrafiken and Cityline, E/S Movitz (Riddarholmen–Solna strand); Viking Line from Stadsgården, Silja Line and Tallink from Värtahamnen | `s17_ferries` writes `ferries.json`: each route cut to the map's water (`s04_base`), one per line and one per ship operator and terminal (`pipeline/ferries.py`). The boats are illustration, real routes and not live positions. Left out: Waxholmsbolaget's archipelago lines, Strömma's and the other sightseeing boats, the E 20's road ferries |
+
+The kommun's border runs down Saltsjön and Lilla Värtan, so most lanes leave the map's water soon. A city boat's lane up to 150 m outside it, and a Baltic ship's up to 250 m, is drawn along its edge: Viking Line's keeps to Saltsjön's south side, up to 114 m outside the kommun, which gives Viking Line about 4.3 km from Stadsgården; Silja Line's and Tallink's run 100–215 m outside it down Lilla Värtan, which gives them about 2.9 km from Värtahamnen, to where the lane bears away from the kommun's water. Where a lane drawn along the edge turns away to a pier in another kommun (Pendelbåt 80 in Nacka, E/S Movitz at Solna strand), the route ends where its points along the edge would turn back, so the boat does not double back along the border. The paths stay on the map's water and never cross off the map; the stretches along the edge are simplified to 40 m, as the border is jagged where the lanes run straight.
+
 ## Photos
 
 | Source | Licence | Access | Status |

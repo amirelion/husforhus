@@ -17,6 +17,8 @@ import { archaeologySection } from './archaeology.js';
 import { photoSlides, photoFigure } from './photos.js';
 import { metroOnFrom, metroHref, METRO_KEY, stationCard } from './metro.js';
 import { makeMetroLayer } from './metro-layer.js';
+import { BOATS_KEY, boatsOnFrom, boatsShown, parseFerries } from './ferries.js';
+import { makeFerries } from './ferries-layer.js';
 import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
 import { THEMES, SHADING } from './themes.js';
 import { createLooks } from './look.js';
@@ -37,8 +39,11 @@ import { aboutHtml, aboutTarget } from './about.js';
 import { tabsHtml, newsHtml, showDot, newestDate, nextTab, NEWS_KEY } from './news.js';
 import { buildingRef } from './report.js';
 import { reportDialog } from './report-form.js';
-import { cornerHtml } from './credits.js';
+import { cornerHtml, cornerParts } from './credits.js';
 import { mountScenePlayer } from './scene-player.js';
+import { makeWeather, initialWeather, weatherHref, frameRate, WEATHER_KEY, NAMES as WEATHER_NAMES, SNOW, WET, SHIMMER,
+  snowInk } from './weather.js';
+import { mountPostcard } from './postcard.js';
 
 // Colours are authored in sRGB and drawn as they are.
 THREE.ColorManagement.enabled = false;
@@ -119,9 +124,13 @@ const reliefUi = { available: false, step: RELIEF_STEP, get value() { return rel
   get disabled() { return terrainState === 'failed'; }, choose: v => chooseRelief(v), label: v => reliefValue(v, LANG),
   note: () => reliefNote(relief, LANG, terrainState) };
 // The map's layer switches sit in the Look panel under "Show on the map"; the list is empty until the data says
-// which layers this build has (layerUi.ready, below).
+// which layers this build has (layerUi.ready, below). The boats' switch is on by default (`default`, so the Look
+// button's dot stays off until it is switched off) and appears once their routes are in (loadFerries). On, it lets
+// them show only at Today, and its hint says so, since at an earlier year it reads on over a map without boats.
 const layerUi = { ready: false, title: () => T('ui.layers.title'), items: () => !layerUi.ready ? [] : [
   metroData && { id: 'metro-on', label: T('ui.metro'), on: metroOn, set: setMetro },
+  ferryRoutes.length && { id: 'boats-on', label: T('ui.boats'), on: boatsOn, set: setBoats, default: true,
+    hint: { id: 'boats-hint', cls: 'boats-hint', text: T('ui.boats.hint') } },
   plaqueList.length && { id: 'plaques-on', label: T('ui.plaques'), on: plaquesOn, set: setPlaques,
     hint: { id: 'plaques-hint', cls: 'plaques-hint', text: T('ui.plaques.hint') } },
   { id: 'photo-only', label: T('ui.photoOnly'), on: photoOnly, set: setPhotoOnly,
@@ -166,6 +175,12 @@ if (plaquesOn) history.replaceState(history.state, '', plaquesHref(location.href
 const metroData = FEATURES.metro ? await getJson(`${DATA}metro.json`).catch(() => null) : null;
 let metroOn = !!metroData && metroOnFrom(location.search, (() => { try { return localStorage.getItem(METRO_KEY); } catch { return null; } })());
 if (metroOn) history.replaceState(history.state, '', metroHref(location.href, true));
+// Boats (web/ferries.js; s17_ferries' ferries.json), with features.ferries: the city's ferries and the Baltic ships on
+// their real routes, as illustration. On by default, shown only at Today (not for an earlier year, while the film plays
+// or during a story); the Look panel's switch turns them off, remembered per device. The file is optional and loads
+// after the first frame with buildings (loadFerries), so it never holds up the city.
+let ferryRoutes = [];
+let boatsOn = boatsOnFrom((() => { try { return localStorage.getItem(BOATS_KEY); } catch { return null; } })());
 layerUi.ready = true;
 
 // ---------- Language ----------
@@ -310,11 +325,15 @@ const land = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMater
 const water = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: THEME.water }));
 land.position.y = -0.05;
 water.position.y = -0.4;
+// Whether the water's polygons are in: showFlat adds the water mesh even when water.bin failed, as an empty mesh, and
+// the boats sail only on water that is drawn (boatsNow).
+let waterDrawn = false;
 // Requested after the first frame with buildings (see the loop), so they never compete with pack0. Resolves with
 // water.bin, which the terrain worker needs too.
 async function loadBase() {
   const waterBuf = await fetchGz(`${DATA}water.bin.gz`);
   water.geometry = polygonGeometry(waterBuf);
+  waterDrawn = true;
   if (!TERRAIN) await showFlat();
   return waterBuf;
 }
@@ -367,7 +386,8 @@ labelPlane.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1);
 // hEff there (the cell's twist, doubled for the name's own straight spans, and LOD_TOL at the relief), so the pixel
 // stays where it is but the name never sinks into a slope; a water name, flat at its level, moves 0.5 m. Hills and
 // buildings in front still hide them (depth test on). ?labels=top turns the depth test off, as first specified,
-// for the M4 comparison.
+// for the M4 comparison. A name fades into the fog (uFog) as the ground under it does, so in the weather's Fog the far
+// names go grey with the city rather than lying crisp over it.
 const TERRAIN_UNIFORMS = ['uTerrain', 'uGridO', 'uGridN', 'uCell', 'uRelief', 'uCutK'];
 function labelMaterial(map, onWater) {
   const m = new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, depthTest: !LABELS_ON_TOP });
@@ -376,8 +396,10 @@ function labelMaterial(map, onWater) {
     for (const k of TERRAIN_UNIFORMS) s.uniforms[k] = uniforms[k];
     s.uniforms.uLevel = m.userData.level;
     s.uniforms.uOnWater = { value: onWater ? 1 : 0 };
+    s.uniforms.uFog = uniforms.uFog;
     s.vertexShader = GRID_GLSL + TERRAIN_GLSL + `
       uniform float uLevel, uOnWater;
+      varying float vDEye;
       float hTwist(vec2 w) {
         ivec2 i = ivec2(floor((w - uGridO) / uCell));
         return 0.25 * abs(hNode(i) - hNode(i + ivec2(1, 0)) - hNode(i + ivec2(0, 1)) + hNode(i + ivec2(1, 1)));
@@ -387,10 +409,16 @@ function labelMaterial(map, onWater) {
       wpos.y = uOnWater > 0.5 ? uLevel * uRelief + 0.4 : hEff(wpos.xz) + 0.6;
       vec4 mvPosition = viewMatrix * wpos;
       float dEye = length(mvPosition.xyz);
+      vDEye = dEye;
       float bias = 0.5 + ${LOD_TOL.toFixed(1)} * uRelief + 2.0 * hTwist(wpos.xz);
       bias = uOnWater > 0.5 ? 0.5 : bias;   // water is flat at its level: the ground's error is not its own
       mvPosition.xyz *= max(dEye - bias, 1.0) / dEye;
       gl_Position = projectionMatrix * mvPosition;`);
+    s.fragmentShader = `
+      uniform vec2 uFog;
+      varying float vDEye;
+` + s.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      diffuseColor.a *= 1.0 - smoothstep(uFog.x, uFog.y, vDEye);`);
   };
   m.customProgramCacheKey = () => 'hfh-label';
   return m;
@@ -455,6 +483,24 @@ function updateMetro(dist) {
   const y = uniforms.uYear.value;
   metroLayer.update(Math.floor(y), y >= config.yearMax ? todayIso() : null, dist);
 }
+// The boats (web/ferries-layer.js), once ferries.json is in; step() moves them every frame while they show.
+let ferries = null;
+async function loadFerries() {
+  ferryRoutes = parseFerries(await getJson(`${DATA}ferries.json`));
+  if (!ferryRoutes.length) return;
+  ferries = makeFerries(THREE, { routes: ferryRoutes, uniforms, fadeGlsl: GRID_GLSL + FADE_GLSL, look: () => THEME_NAME, calm });
+  scene.add(ferries.group);
+  // The switch and About's line on the boats appear now, but a panel the visitor has open is never rebuilt under them
+  // (its focus and its rows stay put): the Look panel shows the switch when it next opens (switcher open() renders),
+  // and an open About gains its line once it closes.
+  switcher.markLayers();
+  if (about.open) about.addEventListener('close', renderAbout, { once: true });
+  else renderAbout();
+}
+// Boats float on drawn water: the terrain's levels, or the flat water (a build without terrain, or a failed one) once
+// its polygons are in.
+const boatsNow = () => boatsShown({ on: boatsOn, year: uniforms.uYear.value, yearMax: config.yearMax, playing,
+  story: document.body.classList.contains('scene-on') }) && (terrainState === 'ready' || (waterDrawn && water.parent === flat));
 let labels = [];
 // Requested after the first frame with buildings, like land and water.
 async function loadLabels() {
@@ -562,6 +608,11 @@ const uniforms = {
   uSun: { value: new THREE.Vector3(...SHADING.sun).normalize() },
   uFaint: { value: 0.13 },                         // today's city during a story: its opacity (setFaint)
   uFaintColor: { value: col(THEME.ui['--ink']) },
+  // The weather (web/weather.js makeWeather sets them; WEATHER_GLSL and WAVE_GLSL read them): how far snow lies and
+  // the rain has wetted roofs and ground, 0 to 1, the look's snow colour, the water's ripple phase (0 to 1, wrapped)
+  // and the ripples' strength (1, more in the rain).
+  uSnow: { value: 0 }, uWet: { value: 0 }, uSnowInk: { value: col(snowInk(THEME)) },
+  uWave: { value: 0 }, uRipple: { value: 1 },
 };
 
 // The terrain grid's uniforms: every shader stage that reads the grid includes this once, before TERRAIN_GLSL,
@@ -600,6 +651,63 @@ const FADE_GLSL = /* glsl */`
   uniform sampler2D uFade;
   float fadeAt(vec2 w) { return texture(uFade, ((w - uGridO) / uCell + 0.5) / uGridN).r; }
 `;
+// Snow and rain on the roofs (FRAG) and the ground (TERRAIN_FRAG), web/weather.js SNOW and WET: uSnow and uWet ease
+// from 0 to 1 as the weather switches. drift(w) is how deep the snow lies at w (world metres), 0 to 1: value noise in
+// cells of 5 m and 1.7 m, so a roof has thin patches rather than a flat white; each layer fades to its mean where its cells come
+// under about 3 px, so far roofs never shimmer. The hash has no sin(), so it stays exact 17 km from the origin. Only
+// computed while there is snow (uSnow is a uniform, so the derivatives keep their neighbours).
+const WEATHER_GLSL = /* glsl */`
+  uniform float uSnow, uWet;
+  uniform vec3 uSnowInk;
+  float wHash(vec2 p) {
+    vec3 q = fract(p.xyx * 0.1031);
+    q += dot(q, q.yzx + 33.33);
+    return fract((q.x + q.y) * q.z);
+  }
+  float wNoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(wHash(i), wHash(i + vec2(1.0, 0.0)), f.x), mix(wHash(i + vec2(0.0, 1.0)), wHash(i + vec2(1.0, 1.0)), f.x), f.y);
+  }
+  float drift(vec2 w) {
+    vec2 a = w / 5.0, b = w / 1.7;
+    float na = mix(wNoise(a), 0.5, smoothstep(0.15, 0.4, length(fwidth(a))));
+    float nb = mix(wNoise(b), 0.5, smoothstep(0.15, 0.4, length(fwidth(b))));
+    return smoothstep(0.25, 0.65, 0.7 * na + 0.3 * nb);   // mostly deep, with thinner patches, soft at their edges
+  }
+  // The ground's weather: about half the roofs' snow, and darker when wet.
+  vec3 weatherGround(vec3 c, vec2 w) {
+    if (uSnow > 0.0) c = mix(c, uSnowInk, uSnow * ${glf(SNOW.ground)} * mix(${glf(SNOW.patch)}, 1.0, drift(w)));
+    return c * (1.0 - ${glf(WET.ground)} * uWet);
+  }
+`;
+// The water's shimmer (web/weather.js SHIMMER): two fields of soft ripples drifting slowly across each other in world
+// metres, lightening the water towards white where they rise together and darkening it where they sink, by a few
+// percent, more in the rain (uRipple). Each field is value noise (WEATHER_GLSL's hash, included before this) in cells
+// stretched four times across its drift, as wind ripples run, tiled every 32 cells and moved a whole number of tiles
+// per turn of uWave (0 to 1, wrapped; frozen under reduced motion), so the wrap moves nothing; the cell index stays
+// small, so the noise is exact 17 km from the origin. A field fades to flat where its cells come under about 3 px, and
+// all of it from 1.5 to 2.5 km away, as the hatch does (FRAG): the far water is calm, never moiré, and from the home
+// view it lies still; close up it moves.
+const WAVE_GLSL = /* glsl */`
+  uniform float uWave, uRipple;
+  float rippleField(vec2 w, vec2 dir, float cell, float tiles) {
+    vec2 p = vec2(dot(w, dir), dot(w, vec2(-dir.y, dir.x)) / 4.0) / cell;
+    float still = smoothstep(0.25, 0.45, length(fwidth(p)));
+    p.x -= 32.0 * tiles * uWave;
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float n = mix(mix(wHash(mod(i, 32.0)), wHash(mod(i + vec2(1.0, 0.0), 32.0)), f.x),
+      mix(wHash(mod(i + vec2(0.0, 1.0), 32.0)), wHash(mod(i + vec2(1.0, 1.0), 32.0)), f.x), f.y);
+    return (1.0 - still) * (2.0 * n - 1.0);
+  }
+  vec3 shimmer(vec3 c, vec2 w, float d) {
+    float v = rippleField(w, vec2(0.8, 0.6), 4.5, 1.0) + rippleField(w, vec2(0.6, 0.8), 2.8, 2.0);
+    v *= 1.0 - smoothstep(1500.0, 2500.0, d);
+    c = mix(c, vec3(1.0), ${glf(SHIMMER.light)} * uRipple * smoothstep(0.15, 0.8, v));
+    return c * (1.0 - ${glf(SHIMMER.dark)} * uRipple * smoothstep(0.15, 0.8, -v));
+  }
+`;
 
 const VERT = /* glsl */`
   in float bld;
@@ -620,6 +728,7 @@ const VERT = /* glsl */`
   flat out float vGid;   // flat: the pick pass reads it as an exact integer, never interpolated
   flat out vec3 vHatchInk;
   flat out float vHatch; // 1: the fragment shader hatches this building in vHatchInk ("Year unknown")
+  flat out float vLit;   // 1 hovered or selected, -1 the quest's red building, else 0: what snow on its roof does (FRAG)
 
   // 1 floor to 40 and more on a log scale, through the look's four colours (uFloors; the legend draws the same).
   vec3 floorsRamp(float f) {
@@ -718,11 +827,15 @@ const VERT = /* glsl */`
     if (uBlind > 0.5 && vGid == uSelected) c = vec3(0.925, 0.0, 0.0);
     else if (uBlind > 0.5 && uBlind < 1.5) c = uMaquette;
     if (uBlind > 0.5 && (vGid == uSelected || uBlind < 1.5)) vHatch = 0.0;
+    vLit = 0.0;
     // Hover and selection mix towards the theme's hover colour: black on light looks, white on the dark one.
     if (vGid == uHover || (vGid == uSelected && uBlind < 0.5)) {
       c = mix(c, uHoverTo, 0.35);
       h = mix(h, uHoverTo, 0.35);
+      vLit = 1.0;
     }
+    // After the hover, so the quest's red building keeps a bare red roof under the pointer too (FRAG: no snow on it).
+    if (uBlind > 0.5 && vGid == uSelected) vLit = -1.0;
     vColor = c;
     vHatchInk = h;
     // On the terrain: the building stands on its own ground, lifted by ground * uRelief. Its wall bottoms
@@ -746,18 +859,20 @@ const VERT = /* glsl */`
 
 const FRAG = /* glsl */`
   precision highp float;
-  uniform vec3 uFogColor, uSun;
+  uniform vec3 uFogColor, uSun, uHoverTo;
   uniform vec2 uFog;
   uniform float uEdgeBuildings, uFaint;
   uniform vec3 uFaintColor;
   ${GRID_GLSL}
   ${FADE_GLSL}
+  ${WEATHER_GLSL}
   in vec3 vColor;
   in vec3 vWorld;
   in float vRel;
   flat in float vGid;
   flat in vec3 vHatchInk;
   flat in float vHatch;
+  flat in float vLit;
   out vec4 outColor;
   // The share of a pixel a hatch line covers: lines HATCH_W of a period wide around every whole s, anti-aliased over
   // one pixel (fw: periods per pixel).
@@ -795,6 +910,15 @@ const FRAG = /* glsl */`
       float light = n.y > 0.9 ? 1.04 : ${glf(SHADING.wallMin)} + ${glf(SHADING.wallLit)} * sun;
       float foot = mix(0.82, 1.0, clamp(vRel / 12.0, 0.0, 1.0));
       vec3 c = base * light * foot;
+      // The weather (WEATHER_GLSL) on the roofs, the walls keeping their colour: darker in the rain; in the snow white in
+      // drifts, at most SNOW.roof of the way. A hovered or selected roof's snow takes the same tint as the building
+      // (vLit 1), so the hover reads on a snowy roof as on a wall; the quest's red building stays red (vLit -1).
+      float flatTop = smoothstep(0.85, 0.95, n.y);
+      c *= 1.0 - ${glf(WET.roof)} * uWet * flatTop;
+      if (uSnow > 0.0) {
+        float lie = uSnow * ${glf(SNOW.roof)} * flatTop * step(-0.5, vLit) * mix(${glf(SNOW.patch)}, 1.0, drift(vWorld.xz));
+        c = mix(c, mix(uSnowInk, uHoverTo, 0.35 * max(vLit, 0.0)), lie);
+      }
       c = mix(uFogColor, c, mix(1.0, fadeAt(vWorld.xz), uEdgeBuildings));   // ?edgebuildings=1: they fade at the edge too
       c = mix(c, uFogColor, smoothstep(uFog.x, uFog.y, d));
       outColor = vec4(c, 1.0);
@@ -977,7 +1101,8 @@ const WATER_VERT = /* glsl */`
 `;
 // Ground in the look's land colour, shaded by the shared sun so that flat ground is exactly that colour (uShade, per
 // look); walls shaded like a slope where the bank is low (most shores are natural) and lit like the buildings' walls in
-// the look's quay colour where they stand over 3 m; water flat. The constants are themes.js SHADING, which the looks'
+// the look's quay colour where they stand over 3 m; water flat but for a slow shimmer (WAVE_GLSL); snow and rain on the
+// ground and the low banks (WEATHER_GLSL). The constants are themes.js SHADING, which the looks'
 // colour checks (web/test/themes.test.mjs) use too. All fade into the sky at the municipality's edge
 // and into the fog like the buildings. In the pick pass they write id 0 (nothing) with depth, so a hill hides what is
 // behind it.
@@ -988,6 +1113,8 @@ const TERRAIN_FRAG = /* glsl */`
   uniform float uShade, uKind;   // uKind: 0 ground, 1 wall, 2 water
   ${GRID_GLSL}
   ${FADE_GLSL}
+  ${WEATHER_GLSL}
+  ${WAVE_GLSL}
   in vec3 vWorld;
   in vec3 vNormal;
   in float vWallH;
@@ -1001,10 +1128,14 @@ const TERRAIN_FRAG = /* glsl */`
       vec3 c = uColour;
       if (uKind < 0.5) {
         c = shaded(c, normalize(vNormal));
+        c = weatherGround(c, vWorld.xz);   // snow, or wet (WEATHER_GLSL)
       } else if (uKind < 1.5) {
         vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
         c = mix(shaded(uLand, n), c * (${glf(SHADING.wallMin)} + ${glf(SHADING.wallLit)} * max(dot(n, uSun), 0.0)),
           smoothstep(1.0, 3.0, vWallH));
+        c = mix(weatherGround(c, vWorld.xz), c, smoothstep(1.0, 3.0, vWallH));   // a low bank takes the ground's weather
+      } else {
+        c = shimmer(c, vWorld.xz, length(vWorld - cameraPosition));   // the water's ripples (WAVE_GLSL)
       }
       c = mix(uFogColor, c, fadeAt(vWorld.xz));
       c = mix(c, uFogColor, smoothstep(uFog.x, uFog.y, length(vWorld - cameraPosition)));
@@ -1209,6 +1340,9 @@ function pick(x, y) {
   for (const f of faints) f.visible = false;
   plaqueGroup.visible = false;
   if (metroLayer) metroLayer.group.visible = false;
+  weather.group.visible = false;   // falling snow or rain would cover the building under the pointer
+  const boatsVisible = ferries?.group.visible;
+  if (ferries) ferries.group.visible = false;
   const outlined = highlight.mesh.visible;
   highlight.mesh.visible = false;
   renderer.setRenderTarget(pickTarget);
@@ -1217,13 +1351,15 @@ function pick(x, y) {
   renderer.render(scene, camera);
   renderer.readRenderTargetPixels(pickTarget, 0, 0, 1, 1, pickPixel);
   renderer.setRenderTarget(null);
-  renderer.setClearColor(THEME.sky, 1);
+  renderer.setClearColor(skyNow(), 1);
   flat.visible = true;
   labelGroup.visible = true;
   storyGroup.visible = true;
   for (const f of faints) f.visible = faintOn;
   plaqueGroup.visible = plaquesOn;
   if (metroLayer) metroLayer.group.visible = metroShown();
+  weather.group.visible = true;
+  if (ferries) ferries.group.visible = boatsVisible;
   highlight.mesh.visible = outlined;
   for (const m of meshes) m.material = m.userData.draw;
   for (const m of terrainMeshes) m.material = m.userData.draw;
@@ -1520,6 +1656,7 @@ canvas.addEventListener('pointerdown', e => {
 canvas.addEventListener('pointerup', e => {
   dragging = false;
   if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  if (postcard.on) return;   // while a postcard is framed a click opens nothing: the cards are out of the picture
   const station = metroOn && !quest && !cardsLocked() ? metroLayer.stationAt(e.clientX, e.clientY, canvas.clientWidth, canvas.clientHeight) : null;
   if (station) { pinStation(station, e.clientX, e.clientY); return; }
   if (pickingStart) { walkStartClick(e.clientX, e.clientY); return; }
@@ -2338,6 +2475,12 @@ function setMetro(v) {
   history.replaceState(history.state, '', metroHref(location.href, metroOn));
   updateMetro(camera.position.distanceTo(controls.target));
 }
+// The Boats switch: on by default, remembered per device (web/ferries.js); the loop shows them at Today.
+function setBoats(v) {
+  boatsOn = !!v;
+  switcher.markLayers();
+  try { localStorage.setItem(BOATS_KEY, boatsOn ? 'on' : 'off'); } catch {}
+}
 // The plaques switch: the markers and the pinned card's plaque section, remembered and kept in the URL (web/panel.js).
 function setPlaques(v) {
   plaquesOn = !!v && !!plaqueList.length;
@@ -2727,11 +2870,39 @@ addEventListener('keydown', e => {
 // The map takes the keyboard too (the audit's finding 1): Tab reaches it, a cross marks the middle of the screen while
 // it has the keyboard, and Enter pins the building there, as a click would.
 canvas.addEventListener('keydown', e => {
-  if (e.key !== 'Enter' || e.repeat) return;
+  if (e.key !== 'Enter' || e.repeat || postcard.on) return;
   e.preventDefault();                      // or the Enter would also press the card's close button, focused by now
   const x = innerWidth / 2, y = innerHeight / 2, gid = pick(x, y);
   if (gid >= 0) pinCard(gid, x, y);
 });
+
+// ---------- Postcard ----------
+// The camera button next to north, or P (web/postcard.js): the page steps aside, the map can still be moved to frame
+// the shot, and Save makes a picture with a filter and the stamp (the site, and the data's credit line in the page's
+// language: the CC BY sources ask for it). drawShot draws the frame without what only belongs to this visit's use of
+// the map: the hover tint, the pinned building's tint and outline, a search pick drawn whatever the map's settings say
+// (uForce: without its tint, outline and note, a 1970s block would stand unexplained in the city of 1850), a
+// walk's route and discs and a quest's circle. The street names, and the plaques and the metro when they are switched
+// on, stay: they are the map. Only the drawing leaves them out, so closing the postcard has nothing to put back; the
+// loop draws with it while the postcard is open, so the screen shows what the picture will.
+const postcardBtn = document.querySelector('.postcard-open');
+function drawShot() {
+  const hover = uniforms.uHover.value, selected = uniforms.uSelected.value, forced = uniforms.uForce.value;
+  const outlined = highlight.mesh.visible, walk = walkGroup.visible, circle = ring.visible;
+  uniforms.uHover.value = -1; uniforms.uSelected.value = -1; uniforms.uForce.value = -1;
+  highlight.mesh.visible = false; walkGroup.visible = false; ring.visible = false;
+  renderer.render(scene, camera);
+  uniforms.uHover.value = hover; uniforms.uSelected.value = selected; uniforms.uForce.value = forced;
+  highlight.mesh.visible = outlined; walkGroup.visible = walk; ring.visible = circle;
+}
+const postcard = mountPostcard({ button: postcardBtn, bar: document.querySelector('.postcard-bar'), renderer, draw: drawShot,
+  T: () => T, credit: () => cornerParts(config.attribution, LANG).map(p => p.text), typingIn,
+  look: () => ({ font: THEME.font, ink: THEME.ui['--ink'], panel: THEME.ui['--panel'] }),
+  // not over a history scene, which has the screen (and its own Escape)
+  canOpen: () => !document.body.classList.contains('scene-on'),
+  // The growth film stops at the year on screen: its pause button is out of sight in the postcard, and the visitor
+  // frames the city of that year (a history scene's year.set stops it the same way).
+  onOpen: () => { if (playing) stopPlay(); } });
 
 // ---------- Loop ----------
 function resize() {
@@ -2753,6 +2924,7 @@ function applyStaticText() {
   document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', T(el.dataset.i18nAria)));
   northBtn.setAttribute('aria-label', T('ui.north'));
   northBtn.title = `${T('ui.north')} (N)`;
+  postcardBtn.title = `${T('postcard.open')} (P)`;
   renderAbout();
   document.getElementById('credit').innerHTML = cornerHtml(config.attribution, T);   // the corner credit
   document.querySelector('.quests-open span').textContent = t('Quests');
@@ -2783,8 +2955,11 @@ let aboutTab = 'about';
 // An entry's action shows only where this build has what it opens.
 const newsCan = a => a === '?metro=1' ? !!metroData : a === '?plaques=1' ? !!plaqueList.length
   : a === 'stories' ? !!FEATURES.scenes : a === 'quests' ? !!FEATURES.quests : a === 'walk' ? !!FEATURES.walks : true;
+// About's line on the boats follows the boats the map has (their routes loaded, loadFerries), not the build's flag: a
+// missing, bad or empty ferries.json leaves no boats, so About says nothing about them.
 function renderAbout() {
-  aboutBody.innerHTML = tabsHtml({ about: aboutHtml(config, T, t(howto(navigator))), news: newsHtml(NEWS, T, newsCan), T,
+  const shown = { ...config, features: { ...config.features, ferries: ferryRoutes.length > 0 } };
+  aboutBody.innerHTML = tabsHtml({ about: aboutHtml(shown, T, t(howto(navigator))), news: newsHtml(NEWS, T, newsCan), T,
     tab: aboutTab });
   aboutBody.lang = LANG;
   markNews();
@@ -2875,7 +3050,8 @@ function applyLook(name) {
     p.color = THEME.periods[i] || config.periods[i].color;
     estColors[i] = estimateTone(p.color, THEME.estimateTo);
   });
-  renderer.setClearColor(THEME.sky);
+  weather.retheme(THEME);
+  applySky();
   land.material.color.set(THEME.land);
   water.material.color.set(THEME.water);
   uniforms.uLand.value.set(THEME.land);
@@ -2890,10 +3066,10 @@ function applyLook(name) {
   uniforms.uFloors.value.forEach((c, i) => c.set(THEME.floors[i]));
   uniforms.uEstimateTo.value.set(THEME.estimateTo);
   uniforms.uHoverTo.value.set(THEME.hoverTo);
-  uniforms.uFogColor.value.set(THEME.sky);
   uniforms.uFaintColor.value.set(THEME.ui['--ink']);
   redrawLabels();
   metroLayer?.retheme();
+  ferries?.retheme();
   recolourLegend(); drawHist(); refreshCard();
 }
 // The period legend and the Floors ramp take the new colours in place: rebuilt, the legend would lose its scroll and
@@ -2905,8 +3081,44 @@ function recolourLegend() {
   const unknown = panel.querySelector('.swatch.unknown > i');
   if (unknown) unknown.style.background = unknownFill(THEME);
 }
-// What an atmosphere's start(ctx) gets to work with (web/look.js); none are built yet.
+// The sky has one source: the look's, as the weather has it now (web/weather.js; the look's own when Clear). The clear
+// colour, the fog and the edge fade take it here, at a look switch and while the weather eases (the loop), and the pick
+// pass puts it back after each hover.
+const skyNow = () => weather.sky(THEME.sky);
+function applySky() {
+  const sky = skyNow();
+  renderer.setClearColor(sky);
+  uniforms.uFogColor.value.set(sky);
+}
+// What an atmosphere's start(ctx) gets to work with (web/look.js).
 looks.atmospheres.context = { scene, uniforms, camera, renderer, get theme() { return THEME; } };
+// ---------- Weather ----------
+// Clear, Snow, Rain or Fog (web/weather.js), the Look panel's Weather row: the atmospheres after look.js's own Clear
+// ('none'), each switching the one weather (a switch stops the old kind, which clears, and starts the new one). The
+// flakes are fewer on a phone (a narrow screen or a coarse pointer) and halve if the frame rate stays under 30. The
+// first weather is the link's ?weather=, else the remembered one, else Clear, there at once; a switch is remembered
+// (hfh-weather) and written into the address, which Clear leaves without the parameter. <html data-weather> says which
+// weather it is, for the masthead's veil (styles.css): a weather's sky is darker than the look's, and the veil must be
+// solid behind the subtitle and the count for their muted ink to keep 4.5:1.
+const coarse = matchMedia('(pointer: coarse)');
+const weather = makeWeather(THREE, { uniforms, camera, renderer, reduced: () => calm.matches,
+  small: () => phone.matches || coarse.matches,
+  fps: () => frameRate(frameMs) });
+scene.add(weather.group);
+for (const [id, name] of Object.entries(WEATHER_NAMES)) {
+  looks.atmospheres.add({ id, name, start: () => weather.set(id), stop: () => weather.set('none') });
+}
+{
+  const first = initialWeather(location.search, (() => { try { return localStorage.getItem(WEATHER_KEY); } catch { return null; } })());
+  weather.set(first, true);
+  looks.atmospheres.set(first);
+  document.documentElement.dataset.weather = first;
+}
+looks.atmospheres.subscribe(kind => {
+  document.documentElement.dataset.weather = kind;
+  try { localStorage.setItem(WEATHER_KEY, kind); } catch {}
+  history.replaceState(null, '', weatherHref(location.href, kind));
+});
 pageLookOnly(); // applyLook takes over, the page's own colours included
 looks.subscribe(applyLook);
 
@@ -3011,8 +3223,11 @@ renderer.setAnimationLoop(now => {
   const dist = camera.position.distanceTo(controls.target);
   followGround(dist, dt);
   updateLods();
-  uniforms.uFog.value.set(dist * 1.6, dist * 4);
+  if (weather.step(dt, dist, controls.target)) applySky();   // the sky moves only while the weather eases
+  const [fogNear, fogFar] = weather.fog();
+  uniforms.uFog.value.set(dist * fogNear, dist * fogFar);
   if (frame % 6 === 0) { updateLabels(dist); updatePlaqueMarkers(); updateMetro(dist); stepPick(); }
+  ferries?.step(now / 1000, dist, boatsNow());
   highlight.step(now, THEME.ui['--accent'], meshes);
   if (playing) {
     const t = Math.min(1, playT0 + (now - playStart) / DURATION);
@@ -3022,17 +3237,18 @@ renderer.setAnimationLoop(now => {
     if (t >= 1) stopPlay();
     drawHist();
   }
-  if (pointer && !dragging && frame % 3 === 0) {
+  if (pointer && !dragging && frame % 3 === 0 && !postcard.on) {
     const gid = pick(pointer[0], pointer[1]);
     uniforms.uHover.value = gid;
     showCard(gid, pointer[0], pointer[1]);
   }
-  renderer.render(scene, camera);
+  if (postcard.on) drawShot(); else renderer.render(scene, camera);
   if (!deferredRequested && meshes.length) {
     deferredRequested = true;
     const base = loadBase();
     base.catch(optional('The water (or the flat land)'));
     loadLabels().catch(optional('The street names'));
+    if (FEATURES.ferries) loadFerries().catch(optional('The boats'));
     loadTerrain(base).catch(e => {
       terrainState = 'failed';
       console.warn('The terrain did not load; the map stays flat.', e);
@@ -3054,7 +3270,9 @@ const scenePlayer = mountScenePlayer({ THREE, scene: storyGroup, faint: setFaint
     set: y => { stopPlay(); setHandle('uYearFrom', FROM_REST); setHandle('uYear', y); },
     restore: ([from, to]) => { stopPlay(); uniforms.uYearFrom.value = from; uniforms.uYear.value = to; drawHist(); } } });
 
-window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, setMetro, get metroOn() { return metroOn; }, get storyLayers() { return [...storyLayers]; }, metroLayer, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
+window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, setMetro, get metroOn() { return metroOn; }, get storyLayers() { return [...storyLayers]; }, metroLayer,
+  get ferries() { return ferries; }, setBoats, get boatsOn() { return boatsOn; }, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
   surfaceAt, setRelief, chooseRelief, get relief() { return relief; }, terrain: () => ({ state: terrainState, source: TERRAIN?.source, relief: uRelief.value, cutK: uCutK.value, chunks: chunkMeshes.length }),
   get timelineLabels() { return placedLabels; }, get pinned() { return pinnedGid; }, districtOf,
-  get forced() { return forcedGid; }, force, scene, highlight: () => highlight.state() };
+  get forced() { return forcedGid; }, force, scene, highlight: () => highlight.state(),
+  get weather() { return weather.state(); }, pauseEffects: on => weather.pause(on), skyNow, postcard };

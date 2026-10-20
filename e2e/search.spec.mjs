@@ -173,6 +173,8 @@ test('a picked building is outlined in the look\'s accent colour, so it stands o
     return { x: Math.round((v.x + 1) / 2 * innerWidth), y: Math.round((1 - v.y) / 2 * innerHeight) };
   }, gid);
   const clip = { x: pos.x - 120, y: pos.y - 120, width: 240, height: 240 };
+  await page.evaluate(() => window.__dbg.ferries?.freeze(0));   // a build with boats: none sails through the clip
+  await frames(page);
   const before = await page.screenshot({ clip });
   await page.evaluate(g => window.__dbg.force(g), gid);
   await frames(page);

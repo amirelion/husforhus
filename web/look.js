@@ -1,4 +1,4 @@
-// The look manager: which look (web/themes.js) the map wears, and the atmospheres that may one day play over it.
+// The look manager: which look (web/themes.js) the map wears, and the atmospheres that play over it (the weather).
 // app.js applies a look (applyLook) and web/switcher.js shows the choice; both subscribe here. Pure apart from the
 // page's URL, history and localStorage, which are passed in, so it can be tested without a browser.
 import { THEMES } from './themes.js';
@@ -42,9 +42,10 @@ function choice(items, first) {
 //   { id: 'snow', name: 'Snow', start(ctx) { ... }, stop() { ... } }
 // start(ctx) builds and shows the effect; ctx is atmospheres.context, what app.js lends an effect (the scene, the
 // shared uniforms, the camera, the renderer, the look on now). stop() takes it away and disposes what it made.
-// 'none' is the plain map. None are built yet: the switcher shows their row once there is one besides 'none'.
+// 'none' is the plain map, shown as Clear: the atmospheres so far are the weather (web/weather.js, added by app.js once
+// the scene exists). The switcher shows their row, headed Weather, once there is one besides 'none'.
 function atmospheres() {
-  const a = choice([{ id: 'none', name: 'None' }], 'none');
+  const a = choice([{ id: 'none', name: 'Clear' }], 'none');
   a.context = null;
   a.add = effect => { a.items.push(effect); };
   a.subscribe((id, was) => {
