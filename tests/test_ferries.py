@@ -31,6 +31,20 @@ def rel(i, tags, *ways, roles=None):
     return {"type": "relation", "id": i, "tags": {"type": "route", "route": "ferry", **tags}, "members": members}
 
 
+def stop(i, name, at, role="stop", **tags):
+    """A stop node as a relation member and as the node element the query outputs with its tags: (member, node)."""
+    member = {"type": "node", "ref": i, "role": role, "lon": at[0], "lat": at[1]}
+    node = {"type": "node", "id": i, "lon": at[0], "lat": at[1], "tags": {"name": name, **tags} if name else tags}
+    return member, node
+
+
+def with_stops(relation, *stops):
+    """The relation with these stops in place of its own, in this member order (after its ways, as OSM often has
+    them), and the nodes: [relation, *nodes]."""
+    relation["members"] = [m for m in relation["members"] if m["type"] != "node"] + [m for m, _ in stops]
+    return [relation, *(n for _, n in stops)]
+
+
 def way(i, tags, *pts):
     return {"type": "way", "id": i, "tags": {"route": "ferry", **tags}, "geometry": geom(*pts)}
 
@@ -63,16 +77,18 @@ VIKING = {"name": "Viking Line: Stockholm => Mariehamn => Turku", "operator": "V
     ({"name": "Sjöstadstrafiken", "ref": "Sjöstadstrafiken", "operator": "Ressel Rederi"}, "ferry", "",
      "Sjöstadstrafiken"),
     ({"name": "Båt: Riddarholmen - Solna Strand", "operator": "E/S Movitz", "network": "E/S Movitz"}, "ferry", "",
-     "Riddarholmen - Solna Strand"),
+     "Movitz"),                                                  # its name is its route: the line's own name
     (VIKING, "ship", "", "Viking Line"),
     ({"name": "Silja Line: Helsinki => Mariehamn => Stockholm", "operator": "Silja Line"}, "ship", "", "Silja Line"),
     ({"name": "Tallink: Tallinn => Mariehamn => Stockholm", "operator": "Tallink"}, "ship", "", "Tallink"),
 ])
 def test_the_chosen_boats(tags, kind, ref, name):
     assert ferries.kind(tags) == kind
-    assert ferries.clean_name(tags) == name
     if kind == "ferry":
         assert ferries.line_ref(tags) == ref
+        assert ferries.ferry_name(tags) == name
+    else:
+        assert ferries.clean_name(tags) == ferries.ship_line(tags) == name
 
 
 @pytest.mark.parametrize("tags", [
@@ -107,6 +123,9 @@ def test_a_ship_is_known_by_its_line(tags, line):
 def test_names_lose_their_direction():
     assert ferries.clean_name({"name": "Cinderella Stockholm ↔ Sandhamn"}) == "Cinderella Stockholm – Sandhamn"
     assert ferries.clean_name({"name": "A => B -> C"}) == "A – B – C"
+    # a hyphen between two places becomes the route line's dash; one inside a name stays
+    assert ferries.clean_name({"name": "Båt: Riddarholmen - Solna Strand"}) == "Riddarholmen – Solna Strand"
+    assert ferries.clean_name({"name": "Ålstäket-Strömkajen"}) == "Ålstäket-Strömkajen"
     assert ferries.clean_name({}) == ""
     assert ferries.line_ref({"ref": "Cityline", "name": "Cityline"}) == ""
 
@@ -139,12 +158,81 @@ def test_lines_take_the_route_ways_of_the_chosen_relations():
     assert (got["r3"]["kind"], got["r3"]["ref"], got["r3"]["group"]) == ("ship", "", "Viking Line")
 
 
+def test_lines_keep_the_named_stop_nodes_in_member_order():
+    els = with_stops(rel(1, SL82, [(0, 0), (1000, 0)]),
+                     stop(51, "Skeppsholmen", (500, 30)), stop(52, "Slussen", (0, 20), role="platform"),
+                     stop(53, "Allmänna gränd", (1000, 10), role=""),                 # no role, but a station
+                     stop(54, "", (700, 0)),                                         # a stop node without a name
+                     stop(55, "Kastellholmen", (800, 0), role="", public_transport="station"),
+                     stop(56, "  Saltsjöqvarn ", (900, 0), role="stop_exit_only"))
+    els[3]["tags"]["public_transport"] = "station"
+    (ln,) = ferries.lines(els, project)
+    assert [n for n, _ in ln["stops"]] == ["Skeppsholmen", "Slussen", "Allmänna gränd", "Kastellholmen", "Saltsjöqvarn"]
+    assert np.allclose(ln["stops"][0][1], [500, 30]) and ln["tags"] == els[0]["tags"]
+    # an older cache without the nodes: the members are there, without names
+    (ln,) = ferries.lines([els[0]], project)
+    assert ln["stops"] == []
+
+
+def test_a_role_left_empty_counts_only_for_a_node_that_says_it_is_a_stop():
+    els = with_stops(rel(1, SL82, [(0, 0), (1000, 0)]), stop(51, "Slussen", (0, 0), role=""),
+                     stop(52, "Färjeläget", (900, 0), role="", amenity="ferry_terminal"))
+    (ln,) = ferries.lines(els, project)
+    assert [n for n, _ in ln["stops"]] == ["Färjeläget"]
+
+
 def test_lines_project_wgs84_to_the_local_frame():
     from pyproj import Transformer
     lon, lat = Transformer.from_crs(city.CRS, 4326, always_xy=True).transform(O_E + 100.0, O_N - 50.0)
     (ln,) = ferries.lines([way(5, {"name": "Cityline"}, (lon, lat), (lon, lat + 0.001))])
     assert np.allclose(ln["coords"][0], [100.0, 50.0], atol=0.01)              # x east, z south
     assert ln["coords"][1][1] < 50.0
+
+
+# ---- what a boat's tooltip says ------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize(("tags", "names"), [
+    ({"from": "Slussen", "via": "Skeppsholmen", "to": "Djurgården (Allmänna gränd)", **SL82},
+     ["Slussen", "Skeppsholmen", "Djurgården (Allmänna gränd)"]),
+    ({"from": " Ropsten", "via": "Frösvik;Mor Annas brygga", "to": "Ropsten "},
+     ["Ropsten", "Frösvik", "Mor Annas brygga", "Ropsten"]),
+    (SL82, ["Slussen", "Djurgården"]),                                     # no from and to: the name's places
+    ({"name": "Viking Line: Stockholm => Mariehamn => Turku", "from": "Stockholm"}, ["Stockholm", "Mariehamn", "Turku"]),
+    ({"name": "Riddarholmen - Solna strand"}, ["Riddarholmen", "Solna strand"]),   # no colon
+    ({"name": "Pendelbåt 89"}, []), ({"name": "Båt: Riddarholmen"}, []), ({"to": "Nybroplan"}, []), ({}, []),
+])
+def test_places_come_from_the_tags_else_the_name(tags, names):
+    assert ferries.places(tags) == names
+
+
+def test_along_follows_the_order_given_unless_it_is_out_of_order():
+    line = [(0, 0), (1000, 0), (1000, 500), (0, 500), (0, 10)]             # a loop back to near its start
+    assert ferries.along(line, [(0, 0), (1000, 250), (0, 20)]) == pytest.approx([0, 1250, 2980])
+    # listed backwards: each one lies far from the line after the one before, so it is found anywhere
+    assert ferries.along(line, [(500, 500), (500, 0)]) == pytest.approx([2000, 500])
+
+
+def test_stop_names_go_along_the_line():
+    line = [(0, 0), (1000, 0), (2000, 0)]
+    stops = [("Tappström", (2400, 50)), ("Kungshättan", (1500, 40)), ("Klara Mälarstrand", (0, 30)),
+             ("Klara Mälarstrand", (5, 30)), ("Lilla Essingen", (600, -20))]   # out of order, a stop and its platform
+    assert ferries.stop_names(line, stops) == ["Klara Mälarstrand", "Lilla Essingen", "Kungshättan", "Tappström"]
+    loop = [(0, 0), (1000, 0), (1000, 500), (0, 500), (0, 0)]
+    stops = [("Henriksdal", (0, 0)), ("Barnängsbryggan", (1000, 200)), ("Lumabryggan", (500, 520)),
+             ("Henriksdal", (0, 0))]
+    assert ferries.stop_names(loop, stops) == ["Henriksdal", "Barnängsbryggan", "Lumabryggan", "Henriksdal"]
+    assert ferries.stop_names(line, [("Slussen", (0, 0)), ("Slussen", (10, 0))]) == []      # one place is no line
+    assert ferries.stop_names(line, []) == []
+
+
+def test_ship_ports_from_every_relation_of_the_lane():
+    legs = [(["Stockholm", "Mariehamn", "Turku"], True), (["Turku", "Långnäs", "Stockholm"], False),
+            (["Helsinki", "Mariehamn", "Stockholm"], False), (["Stockholm", "Långnäs", "Turku"], True),
+            (["Stockholm", "Mariehamn", "Turku"], True), (["Stockholm"], True)]
+    home, dests = ferries.ship_ports(legs)
+    assert home == "Stockholm"
+    assert dests == [{"to": "Turku", "via": ["Mariehamn", "Långnäs"]}, {"to": "Helsinki", "via": ["Mariehamn"]}]
+    assert ferries.ship_ports([(["Stockholm"], True), ([], False)]) == ("", [])
 
 
 # ---- on the water --------------------------------------------------------------------------------------------------
@@ -296,7 +384,12 @@ def test_one_route_per_line_and_per_ship_terminal():
     assert by["r10"]["ref"] == "" and by["r10"]["ends"] == ["pier", "edge"]
     assert by["r10"]["path"][0] == [-900.0, -50.0] and by["r10"]["path"][-1] == [2000.0, -50.0]
     assert by["r12"]["ends"] == ["pier", "edge"] and by["r12"]["path"][0] == [500.0, 100.0]
-    assert set(routes[0]) == {"id", "ref", "name", "kind", "ends", "path"}
+    assert set(routes[0]) == {"id", "ref", "name", "kind", "ends", "path", "stops"}
+    assert by["r1"]["stops"] == ["Slussen", "Djurgården"]                   # no stop nodes: the name's places
+    assert (by["r10"]["home"], by["r10"]["operator"]) == ("Stockholm", "Viking Line")
+    assert by["r10"]["dests"] == [{"to": "Turku", "via": ["Mariehamn"]}, {"to": "Helsinki", "via": ["Mariehamn"]}]
+    assert (by["r12"]["dests"], by["r12"]["operator"]) == ([{"to": "Turku", "via": []}], "Silja Line")
+    assert "stops" not in by["r10"]
     assert all(v == round(v, 1) for r in routes for p in r["path"] for v in p)
 
 
@@ -338,6 +431,27 @@ def test_a_route_is_turned_to_start_at_its_pier():
     assert r["ends"] == ["pier", "edge"] and r["path"][0] == [-900.0, -60.0]
 
 
+def test_a_route_s_stops_follow_its_path():
+    # the stretch on the water runs from the edge to the pier, and is turned to start at the pier: its stops turn too
+    water, land = CHANNEL
+    lane = rel(84, {"name": "Pendelbåt 84: Ålstäcket => Strömkajen", "network": "SL"}, [(3500, 0), (-950, 0)])
+    els = with_stops(lane, stop(1, "Riset", (1500, 20)), stop(2, "Ålstäket", (3500, 0)), stop(3, "Strömkajen", (-950, 0)),
+                     stop(4, "Koviksudde", (2400, 30)))
+    (r,) = ferries.routes(els, water, land, project)
+    assert r["ends"] == ["pier", "edge"] and r["path"][0] == [-900.0, 0.0]
+    assert r["stops"] == ["Strömkajen", "Riset", "Koviksudde", "Ålstäket"]
+
+
+def test_a_route_without_places_has_no_tooltip_fields():
+    water, land = CHANNEL
+    (r,) = ferries.routes([way(7, {"name": "Pendelbåt 89", "network": "SL"}, (-950, 0), (1500, 0))], water, land,
+                          project)
+    assert set(r) == {"id", "ref", "name", "kind", "ends", "path"}
+    (r,) = ferries.routes([rel(10, {"name": "M/S Gabriella", "operator": " Viking Line "}, [(-950, -50), (3000, -50)])],
+                          water, land, project)
+    assert set(r) == {"id", "ref", "name", "kind", "ends", "path", "operator"} and r["operator"] == "Viking Line"
+
+
 def test_no_elements_no_routes():
     assert ferries.layer([], *CHANNEL) == {"version": 1, "routes": []}
 
@@ -349,6 +463,7 @@ def test_the_query_asks_for_ferry_routes_in_the_kommun_with_geometry():
     assert f'area["admin_level"="7"]["ref:scb"="{city.KOMMUN}"]->.k;' in q
     assert 'relation["route"="ferry"](area.k)' in q and 'way["route"="ferry"](area.k)' in q
     assert "out body geom;" in q
+    assert "node(r.f);" in q and q.rstrip().endswith("out body;")          # the stops' nodes, with their names
 
 
 def test_fetch_goes_through_the_shared_query_policy(monkeypatch, tmp_path):

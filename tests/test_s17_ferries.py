@@ -90,6 +90,19 @@ def test_s99_checks_ferries(folder):
     assert "ferries: route #3 has no name or no ref" in errors and "ferries: route #3 has a path of no length" in errors
     assert "ferries: route #4 is not an object" in errors
     assert len(errors) == 9, errors
+    names = json.loads(json.dumps(good))
+    r1, r12, r10 = names["routes"]
+    r1["stops"] = ["Slussen"]
+    r12["home"], r12["operator"] = " ", 7
+    r10["dests"] = [{"to": "Turku", "via": ["Mariehamn", ""]}]
+    (folder / "ferries.json").write_text(json.dumps(names), encoding="utf-8")
+    assert s99_validate.check_ferries(folder) == [
+        "ferries: route r1 has stops ['Slussen'], not two or more names",
+        "ferries: route r12 has home ' ', not a name", "ferries: route r12 has operator 7, not a name",
+        "ferries: route r10 has dests [{'to': 'Turku', 'via': ['Mariehamn', '']}], not a list of {to, via} names"]
+    r10["dests"] = []
+    (folder / "ferries.json").write_text(json.dumps(names), encoding="utf-8")
+    assert "ferries: route r10 has dests [], not a list of {to, via} names" in s99_validate.check_ferries(folder)
     (folder / "ferries.json").write_text('{"routes": []}', encoding="utf-8")
     assert s99_validate.check_ferries(folder) == ["ferries: ferries.json needs version 1 and a routes list"]
     (folder / "ferries.json").write_text("{", encoding="utf-8")

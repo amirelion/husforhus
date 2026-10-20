@@ -1,42 +1,39 @@
 // Postcard mode (spec 2026-10-20 §7): the map without its panels, framed by the visitor, saved as a picture with a
-// filter (None, Tilt-shift, Sepia) and a stamp: "husforhus.se" bottom right and the data's credit line bottom left (the
+// filter (None, Sepia, Poster) and a stamp: "husforhus.se" bottom right and the data's credit line bottom left (the
 // CC BY sources ask for it). The camera button in the corner (index.html .postcard-open) or P opens it; Close or
 // Escape puts the page back and gives the focus back. The map still moves while it is open, so the shot can be framed.
 //
-// The live preview is CSS (a filter on the map's canvas, overlays with backdrop-filter and a gradient mask); the saved
-// picture is drawn on a 2D canvas with the same numbers, in ways every browser supports: the colour steps by pixel
-// maths (the CSS filter functions' own matrices, ctx.filter being missing from older Safari) and the blur by scaling
-// down and up again. The renderer keeps no drawing buffer (no preserveDrawingBuffer), so a frame is drawn and copied
+// Sepia's live preview is CSS (a filter on the map's canvas and a vignette overlay); the saved picture is drawn on a 2D
+// canvas with the same numbers, in ways every browser supports: the colour steps by pixel maths (the CSS filter
+// functions' own matrices, ctx.filter being missing from older Safari). The Poster (web/poster.js, the owner's choice
+// over tilt-shift on 2026-10-20) is printed in the look's inks by app.js's draw itself, so the screen and the picture
+// hold the same pixels, and its title, band and imprint are drawn by poster.js's drawPoster on the picture and on a
+// canvas over the map. The renderer keeps no drawing buffer (no preserveDrawingBuffer), so a frame is drawn and copied
 // in the same task. A phone shares the PNG (the share sheet offers Save Image); a desktop downloads it.
 //
-// app.js mounts it (mountPostcard) with the renderer and its own hooks: draw() draws the frame for the shot (the hover
-// tint, the pinned outline, a search pick the map's settings hide, a walk's discs and the quest's circle left out),
+// app.js mounts it (mountPostcard) with the renderer and its own hooks: draw(kind) draws the frame for the shot (the
+// hover tint, the pinned outline, a search pick the map's settings hide, a walk's discs and the quest's circle left out;
+// in the poster's inks for 'poster'), poster() gives the band's place and year and the poster's colours,
 // canOpen() says whether the mode may open (not during a history scene) and onOpen() stops the growth film. A save still
 // being made when the mode closes is dropped, and "Share image" only ever holds the newest picture of what the screen
 // shows. The top of this file is pure, so web/test/postcard.test.mjs runs it under node; e2e/postcard.spec.mjs covers
 // the page.
 
-export const FILTERS = ['none', 'tilt', 'sepia'];
+import { posterLayout, drawPoster } from './poster.js';
+
+export const FILTERS = ['none', 'sepia', 'poster'];
 export const SITE = 'husforhus.se';
 // The saved picture's longest side at most, in pixels: a 5K screen's full buffer would make a PNG of 15 MB or more.
 export const MAX_SIDE = 2560;
 
 // The colour steps of each filter, in order, as CSS filter functions: the preview applies them as a CSS filter, the
-// saved picture by the same functions' matrices (filterMatrix). Tilt-shift: a toy's brighter, more saturated colours
-// with its blur (TILT); Sepia: an old postcard's brown, faded and a little light, with its vignette (VIGNETTE).
+// saved picture by the same functions' matrices (filterMatrix). Sepia: an old postcard's brown, faded and a little
+// light, with its vignette (VIGNETTE). The Poster has none: its colours are its inks (web/poster.js), printed by the
+// draw itself.
 export const STEPS = {
   none: [],
-  tilt: [['saturate', 1.45], ['contrast', 1.08]],
   sepia: [['sepia', 1], ['saturate', 1.3], ['contrast', 0.82], ['brightness', 1.05]],
-};
-
-// Tilt-shift: a sharp band across the picture at `centre` (a fraction of its height, measured from the top), blurring
-// towards the top and the bottom in two layers, the second over the first, as the preview's two overlays do. Each
-// layer is clear within `clear` of the centre and at full strength from `full` on; its blur is a fraction of the
-// picture's height, so the preview (CSS pixels) and the saved picture (device pixels) agree.
-export const TILT = {
-  centre: 0.52,
-  layers: [{ blur: 0.005, clear: 0.07, full: 0.22 }, { blur: 0.012, clear: 0.17, full: 0.38 }],
+  poster: [],
 };
 // Sepia's vignette: a warm dark brown from `from` (a fraction of the way to the corners) to `alpha` at the corners.
 export const VIGNETTE = { from: 0.45, alpha: 0.6, colour: [62, 40, 20] };
@@ -90,13 +87,6 @@ export function applySteps(data, steps) {
   return data;
 }
 
-// A tilt-shift layer's mask down the picture: [offset, alpha] stops, opaque (blurred) at the top and the bottom,
-// clear around the centre. Offsets stay in 0..1 and never go back.
-export function maskStops({ clear, full }, centre = TILT.centre) {
-  const at = x => Math.min(1, Math.max(0, x));
-  return [[0, 1], [at(centre - full), 1], [at(centre - clear), 0], [at(centre + clear), 0], [at(centre + full), 1], [1, 1]];
-}
-export const maskCss = stops => `linear-gradient(to bottom, ${stops.map(([o, a]) => `rgb(0 0 0 / ${a}) ${+(o * 100).toFixed(2)}%`).join(', ')})`;
 export const vignetteCss = (v = VIGNETTE) => {
   const c = v.colour.join(' ');
   return `radial-gradient(farthest-corner at 50% 50%, rgb(${c} / 0) ${v.from * 100}%, rgb(${c} / ${v.alpha}) 100%)`;
@@ -107,21 +97,6 @@ export function outSize(w, h, max = MAX_SIDE) {
   const k = Math.min(1, max / Math.max(w, h, 1));
   return { w: Math.max(1, Math.round(w * k)), h: Math.max(1, Math.round(h * k)) };
 }
-
-// The sizes a blur by `factor` goes through: halved down to about 1/factor of the picture (a 2 × 2 average each time,
-// so nothing is skipped), then doubled back up to the full size, which smooths the last small image's blocks away.
-export function blurSizes(w, h, factor) {
-  const tw = Math.max(1, Math.round(w / Math.max(1, factor))), th = Math.max(1, Math.round(h / Math.max(1, factor)));
-  const down = [];
-  let cw = w, ch = h;
-  while (cw / 2 >= tw && ch / 2 >= 1) { cw = Math.round(cw / 2); ch = Math.round(ch / 2); down.push([cw, ch]); }
-  if (cw > tw) { cw = tw; ch = th; down.push([cw, ch]); }
-  const up = [];
-  while (cw * 2 < w) { cw *= 2; ch = Math.max(1, Math.round(cw * h / w)); up.push([cw, ch]); }
-  return [...down, ...up, [w, h]].filter((s, i, all) => i === 0 || s[0] !== all[i - 1][0] || s[1] !== all[i - 1][1]);
-}
-// A CSS blur(r) is a Gaussian of standard deviation r; scaling down by `factor` and back is about one of factor / 2.5.
-export const blurFactor = radius => Math.max(1, radius * 1.4);
 
 // Splits the credit's parts into lines no wider than maxW (a part wider than that gets a line of its own).
 export function wrapParts(parts, maxW, measure, sep = ' · ') {
@@ -172,54 +147,122 @@ export function stampLayout({ w, h, scale = 1, credit = [], measure, family = 's
 // N faces north). Pressed while a picture waits behind "Share image", they make it out of date.
 export const MAP_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-', '_', 'n', 'N']);
 
+// The look's font with the stamp's fallbacks.
+export const familyOf = font => `"${font}", "Helvetica Neue", Arial, sans-serif`;
+// The faces a poster is set in: the title's and the band's weights of the look's font, and the imprint's two.
+export const posterFaces = (family, fonts) => [`800 100px ${family}`, `700 100px ${family}`, fonts.site, fonts.credit];
+
+// How far the bar stands up while the Poster previews, in CSS pixels: onto the band (`band`, the band and the paper
+// under it), so the band's place and year show whole, when that still leaves at least LIFT_ROOM of the screen's height
+// for the map between the head (which ends at `headEnd`) and the bar (`barH` tall, `barGap` up from the bottom when
+// down). Else 0: on a phone held sideways (667 × 375) the raised bar would leave a third of the screen, the bar in the
+// lower middle of the frame being composed, so it stays down over the band there; the band still prints in the picture.
+export const LIFT_ROOM = 0.45;
+export function posterLift({ viewH, headEnd, band, barH, barGap }) {
+  const lift = Math.round(band);
+  return viewH - barGap - lift - barH - headEnd >= LIFT_ROOM * viewH ? lift : 0;
+}
+
 // ---------- The page ----------
-// Everything below needs a browser. opts: button, bar (index.html), renderer, draw() (the frame for the shot), T() (the
-// strings), credit() (the credit's parts as text), look() ({ font, ink, panel }: the look's font and colours),
+// Everything below needs a browser. opts: button, bar (index.html), renderer, draw(kind) (the frame for the shot, in
+// the poster's inks for 'poster'), T() (the strings), credit() (the credit's parts as text), look() ({ font, ink,
+// panel }: the look's font and colours), poster() ({ place, year, colours }: the band's words and posterColours),
 // typingIn(el), canOpen(), onOpen() (app.js stops the growth film, whose pause button is out of sight).
 export function mountPostcard(opts) {
-  const { button, bar, renderer, draw, T, credit, look, typingIn, canOpen = () => true, onOpen = () => {} } = opts;
+  const { button, bar, renderer, draw, T, credit, look, poster, typingIn, canOpen = () => true, onOpen = () => {} } = opts;
   const canvas = renderer.domElement;
   const $ = s => bar.querySelector(s);
   const save = $('.pc-save'), share = $('.pc-share'), close = $('.pc-close'), status = $('.pc-status'), hint = $('.pc-hint');
   // A phone or a tablet shares; a narrow desktop window still downloads (macOS would open its share menu instead).
   const handheld = matchMedia('(pointer: coarse)');
   let on = false, filter = 'none', returnFocus = null, busy = false, ready = null, lastStamp = null, savedTimer = 0;
+  let lastPoster = null, dressed = null, dressKey = '', dressRaf = 0, dressLayout = null, lifted = 0;
   // session counts each open and close, view each change to what the screen shows (a filter, a move of the map). A save
   // keeps both from its tap: closed since, it is dropped; reframed since, its picture is not offered behind "Share
   // image", which only ever holds what the screen still shows.
   let session = 0, view = 0;
 
-  // The preview's overlays, just above the map: tilt-shift's two blurred bands and sepia's vignette.
-  const tilt = document.createElement('div');
-  tilt.className = 'pc-tilt';
-  tilt.hidden = true;
-  tilt.setAttribute('aria-hidden', 'true');
-  for (const L of TILT.layers) {
-    const i = document.createElement('i'), mask = maskCss(maskStops(L));
-    i.style.setProperty('mask-image', mask);
-    i.style.setProperty('-webkit-mask-image', mask);
-    tilt.append(i);
-  }
+  // The preview's overlays, just above the map: sepia's vignette, and the poster's dress (its head and title, its band
+  // and its paper) on a canvas of the map's own size, drawn by the same drawPoster as the picture.
   const vignette = document.createElement('div');
   vignette.className = 'pc-vignette';
   vignette.hidden = true;
   vignette.setAttribute('aria-hidden', 'true');
   vignette.style.background = vignetteCss();
-  canvas.after(tilt, vignette);
-  // The blur follows the screen's height, as the saved picture's follows the picture's.
-  function sizeTilt() {
-    [...tilt.children].forEach((i, k) => {
-      const f = `blur(${(TILT.layers[k].blur * canvas.clientHeight).toFixed(1)}px)`;
-      i.style.setProperty('backdrop-filter', f);
-      i.style.setProperty('-webkit-backdrop-filter', f);
-    });
+  const dress = document.createElement('canvas');
+  dress.className = 'pc-poster';
+  dress.hidden = true;
+  dress.setAttribute('aria-hidden', 'true');
+  canvas.after(vignette, dress);
+
+  const measureIn = ctx => (t, font) => { ctx.font = font; return ctx.measureText(t).width; };
+  // The poster's layout on a picture w × h whose CSS pixel is `scale` pixels, with P (poster()) for its words.
+  function posterOn(ctx, w, h, scale, P) {
+    const family = familyOf(look().font), fonts = stampFonts({ w, h, scale, family });
+    return posterLayout({ w, h, scale, family, fonts, place: P.place, year: P.year, credit: credit(), measure: measureIn(ctx) });
+  }
+  // What the tests read of a poster: its boxes, its texts and where they stand, its colours.
+  const describe = (L, colours) => ({
+    width: L.w, height: L.h, scale: L.scale, m: L.m, bottom: L.bottom, head: box(L.head), band: box(L.band),
+    picture: box(L.picture), colours,
+    title: { text: L.title.text, font: L.title.font, size: L.title.size, baseline: L.title.baseline,
+      x0: L.title.glyphs[0].x, x1: L.title.glyphs[0].x + L.title.width },
+    place: { text: L.place.text, font: L.place.font, baseline: L.place.baseline, width: L.place.width },
+    site: { text: L.imprint.site.text, x: L.imprint.site.x, y: L.imprint.site.y },
+    credit: L.imprint.credit.lines.map(l => l.text),
+  });
+
+  // While the Poster previews, each frame looks at what its dress shows (the screen's size, the stadsdel under the
+  // middle and the year, the look, the weather's sky, the language's credit, whether the look's font is in) and draws
+  // it again when that changed: a pan to another stadsdel renames the band as the map moves. The bar stands on the
+  // band, so the band shows whole, where the screen has the room (posterLift).
+  function dressFrame() {
+    dressRaf = 0;
+    if (dress.hidden) return;
+    dressRaf = requestAnimationFrame(dressFrame);
+    const w = canvas.width, h = canvas.height, scale = w / Math.max(1, canvas.clientWidth);
+    const P = poster(), family = familyOf(look().font);
+    const faces = posterFaces(family, stampFonts({ w, h, scale, family }));
+    const loaded = faces.every(f => document.fonts?.check(f) ?? true);
+    const key = JSON.stringify([w, h, scale, family, P, credit(), loaded]);
+    if (key !== dressKey) {
+      dressKey = key;
+      if (!loaded) faces.forEach(f => document.fonts?.load(f).catch(() => {}));
+      if (dress.width !== w) dress.width = w;
+      if (dress.height !== h) dress.height = h;
+      const ctx = dress.getContext('2d');
+      ctx.clearRect(0, 0, w, h);
+      dressLayout = posterOn(ctx, w, h, scale, P);
+      drawPoster(ctx, dressLayout, P.colours);
+      dressed = describe(dressLayout, P.colours);
+    }
+    liftBar();
+  }
+  // Every frame, as the bar's height can change without the dress (a failed save's message in the hint, "Share
+  // image"); the style is only written when the lift changes.
+  function liftBar() {
+    const L = dressLayout, viewH = canvas.clientHeight, r = bar.getBoundingClientRect();
+    const next = posterLift({ viewH, headEnd: (L.head.y + L.head.h) / L.scale, band: (L.band.h + L.bottom) / L.scale,
+      barH: r.height, barGap: viewH - r.bottom - lifted });
+    if (next === lifted) return;
+    lifted = next;
+    if (next) bar.style.setProperty('--pc-lift', `${next}px`); else bar.style.removeProperty('--pc-lift');
   }
 
   function preview() {
-    canvas.style.filter = on && filter !== 'none' ? cssFilter(filter) : '';
-    tilt.hidden = !(on && filter === 'tilt');
+    canvas.style.filter = on && STEPS[filter].length ? cssFilter(filter) : '';
     vignette.hidden = !(on && filter === 'sepia');
-    if (!tilt.hidden) sizeTilt();
+    const show = on && filter === 'poster';
+    if (dress.hidden === show) {
+      dress.hidden = !show;
+      dressKey = '';
+      if (show) { if (!dressRaf) dressFrame(); } else {
+        dressed = null; dressLayout = null; lifted = 0;
+        bar.style.removeProperty('--pc-lift');
+        // A hidden canvas keeps its pixels, as large as the screen's buffer: let them go (dressFrame sizes it again).
+        dress.width = 0; dress.height = 0;
+      }
+    }
     bar.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
   }
   function setFilter(f) {
@@ -284,17 +327,25 @@ export function mountPostcard(opts) {
   // After the next paint: a frame's callback, then a task after it. A hidden page runs no frames, so a timer stands in.
   const nextPaint = () => new Promise(resolve => { requestAnimationFrame(() => setTimeout(resolve, 0)); setTimeout(resolve, 250); });
 
+  // The look's faces loaded before anything is measured in them: measured in the fallback (a slow line, a save just
+  // after a look switch), the pills and the title would fit its widths and the text drawn in the real face would not.
+  async function loadFonts(list) {
+    await Promise.all(list.map(f => (document.fonts?.load(f) ?? Promise.resolve()).catch(() => {})));
+    await document.fonts?.ready;
+  }
+
   // The picture: the frame drawn and copied at once (draw() and drawImage in one task), then the filter and the
-  // stamp. Returns the 2D canvas.
+  // stamp (the poster's dress, for the Poster). Returns the 2D canvas.
   async function capture({ filter: kind = filter, stamp = true } = {}) {
-    draw();
+    kind = validFilter(kind);
+    draw(kind);
     const { w, h } = outSize(canvas.width, canvas.height);
     const shot = document.createElement('canvas');
     shot.width = w; shot.height = h;
     const ctx = shot.getContext('2d');
     ctx.drawImage(canvas, 0, 0, w, h);
     const scale = w / Math.max(1, canvas.clientWidth);
-    kind = validFilter(kind);
+    const P = kind === 'poster' && stamp ? poster() : null;   // the place and the year of this frame
     // The frame is safe in the copy. The pixel work below takes a tenth of a second on a laptop and more on a phone, so
     // it waits for a paint: Download's "Preparing…" shows at the tap, not after the work it stands for.
     await nextPaint();
@@ -303,18 +354,21 @@ export function mountPostcard(opts) {
       applySteps(img.data, STEPS[kind]);
       ctx.putImageData(img, 0, 0);
     }
-    if (kind === 'tilt') tiltShift(shot);
     if (kind === 'sepia') drawVignette(ctx, w, h);
     lastStamp = null;
-    if (stamp) {
-      const L = look(), family = `"${L.font}", "Helvetica Neue", Arial, sans-serif`;
-      // The look's fonts load before the layout measures in them: measured in the fallback (a slow line, a save just
-      // after a look switch), the pills would fit its widths and the text drawn in the real face would not fit them.
+    lastPoster = null;
+    if (P) {
+      // The poster carries the stamp in its imprint.
+      const family = familyOf(look().font);
+      await loadFonts(posterFaces(family, stampFonts({ w, h, scale, family })));
+      const L = posterOn(ctx, w, h, scale, P);
+      drawPoster(ctx, L, P.colours);
+      lastPoster = describe(L, P.colours);
+    } else if (stamp) {
+      const L = look(), family = familyOf(L.font);
       const fonts = stampFonts({ w, h, scale, family });
-      await Promise.all([fonts.site, fonts.credit].map(f => (document.fonts?.load(f) ?? Promise.resolve()).catch(() => {})));
-      await document.fonts?.ready;
-      const layout = stampLayout({ w, h, scale, credit: credit(), family,
-        measure: (t, font) => { ctx.font = font; return ctx.measureText(t).width; } });
+      await loadFonts([fonts.site, fonts.credit]);
+      const layout = stampLayout({ w, h, scale, credit: credit(), family, measure: measureIn(ctx) });
       drawStamp(ctx, layout, L);
       lastStamp = { width: w, height: h, scale, base: fonts.base, fonts: { site: fonts.site, credit: fonts.credit },
         site: box(layout.site), credit: layout.credit && box(layout.credit), lines: layout.credit?.lines.map(l => l.text) || [] };
@@ -323,44 +377,6 @@ export function mountPostcard(opts) {
   }
   const box = b => ({ x: b.x, y: b.y, w: b.w, h: b.h });
 
-  // A copy of `src` blurred by scaling it down and back up (blurSizes). On the way up each step is the mean of the
-  // image drawn in place and four times shifted by half a source pixel diagonally: plain bilinear steps leave the
-  // smallest image's squares showing.
-  function blurred(src, radius) {
-    let cur = src;
-    for (const [w, h] of blurSizes(src.width, src.height, blurFactor(radius))) {
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      const x = c.getContext('2d');
-      x.imageSmoothingEnabled = true;
-      x.imageSmoothingQuality = 'high';
-      x.drawImage(cur, 0, 0, w, h);
-      if (w > cur.width) {
-        const dx = w / cur.width / 2, dy = h / cur.height / 2;
-        [[-dx, -dy], [dx, -dy], [-dx, dy], [dx, dy]].forEach(([ox, oy], i) => {
-          x.globalAlpha = 1 / (i + 2);
-          x.drawImage(cur, ox, oy, w, h);
-        });
-        x.globalAlpha = 1;   // the context goes on to the caller (tiltShift masks through it)
-      }
-      cur = c;
-    }
-    return cur;
-  }
-  // Each layer blurs the picture as it stands so far and is laid over it through its mask, as the preview's overlays
-  // blur what is under them.
-  function tiltShift(shot) {
-    const ctx = shot.getContext('2d'), h = shot.height;
-    for (const L of TILT.layers) {
-      const b = blurred(shot, L.blur * h), bx = b.getContext('2d');
-      bx.globalCompositeOperation = 'destination-in';
-      const g = bx.createLinearGradient(0, 0, 0, h);
-      for (const [o, a] of maskStops(L)) g.addColorStop(o, `rgba(0,0,0,${a})`);
-      bx.fillStyle = g;
-      bx.fillRect(0, 0, b.width, h);
-      ctx.drawImage(b, 0, 0);
-    }
-  }
   // CSS's farthest-corner ellipse is a circle through the corners, stretched to the picture's shape.
   function drawVignette(ctx, w, h) {
     const { from, alpha, colour: [r, g, b] } = VIGNETTE;
@@ -490,7 +506,6 @@ export function mountPostcard(opts) {
   addEventListener('resize', () => {
     if (on && canvas.clientWidth !== width) reframed();
     width = canvas.clientWidth;
-    if (on && filter === 'tilt') sizeTilt();
   });
   // A press or a wheel on the map moves it, or is about to: the screen will not show the waiting picture any more.
   canvas.addEventListener('pointerdown', () => { if (on) reframed(); });
@@ -510,8 +525,11 @@ export function mountPostcard(opts) {
     }
   }, true);
 
+  // stamp: the last picture's stamp; poster: the last poster picture's layout, dress: the poster preview's (null while
+  // the Poster is not on screen), lift: how far the bar stands up on its band (0: down).
   return {
     get on() { return on; }, get filter() { return filter; }, get stamp() { return lastStamp; },
+    get poster() { return lastPoster; }, get dress() { return dressed; }, get lift() { return lifted; },
     open, exit, setFilter, capture, save: savePicture,
   };
 }

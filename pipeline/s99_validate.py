@@ -14,7 +14,8 @@ Fails (exit 1, with a readable list) on:
 - ferries (s17_ferries, when ferries.json is there): not version 1, or a route without its id ("r" or "w" and a
   number, once), its kind (ferry or ship), a name or two ends (pier or edge), or with a path of fewer than two points,
   of no length, outside the map, with a point off the version's water (more than ferries.ON_WATER_M from it) or a
-  segment off the map; with --release and features.ferries on, ferries.json missing or without a route;
+  segment off the map, or with tooltip fields that are not names (stops: two or more; home and operator; dests, each
+  {to, via}); with --release and features.ferries on, ferries.json missing or without a route;
 - stockholm.json naming another version than its folder;
 - any file over 20 MiB; first-load or whole-city transferred bytes over budget;
 - base: land.bin.gz or water.bin.gz missing, not decoding or without a polygon; labels.json missing or not a
@@ -1610,12 +1611,30 @@ def check_metro(out: Path) -> list[str]:
     return errors
 
 
+def _ferry_names(r: dict) -> list[str]:
+    """What is wrong with a route's tooltip fields (s17_ferries), each optional: stops, home, dests, operator."""
+    def name(v):
+        return isinstance(v, str) and bool(v.strip())
+    wrong = []
+    if "stops" in r and not (isinstance(r["stops"], list) and len(r["stops"]) >= 2 and all(map(name, r["stops"]))):
+        wrong.append(f"stops {r['stops']!r}, not two or more names")
+    for key in ("home", "operator"):
+        if key in r and not name(r[key]):
+            wrong.append(f"{key} {r[key]!r}, not a name")
+    if "dests" in r and not (isinstance(r["dests"], list) and r["dests"] and all(
+            isinstance(d, dict) and name(d.get("to")) and isinstance(d.get("via", []), list)
+            and all(map(name, d.get("via", []))) for d in r["dests"])):
+        wrong.append(f"dests {r['dests']!r}, not a list of {{to, via}} names")
+    return wrong
+
+
 def check_ferries(out: Path, cfg: dict | None = None, *, release: bool = False) -> list[str]:
     """The boats' routes (s17_ferries), when the version has them: ferries.json's version, each route's id, kind, name
     and ends, and a path of at least two points inside the map, every one of them on the version's water and no
-    segment off the map. A release with config.features.ferries on (`cfg`, stockholm.json) also needs the file and a
-    route in it: s17_ferries writes none when Overpass cannot be reached and nothing is cached, and the viewer would
-    quietly show no boats while About credits them."""
+    segment off the map; and the tooltip's optional fields, when there, as names (non-empty strings): stops, two or
+    more; home and operator; dests, a list of {to, via: [names]}. A release with config.features.ferries on (`cfg`,
+    stockholm.json) also needs the file and a route in it: s17_ferries writes none when Overpass cannot be reached and
+    nothing is cached, and the viewer would quietly show no boats while About credits them."""
     path = out / "ferries.json"
     on = release and bool(((cfg or {}).get("features") or {}).get("ferries"))
     if not path.exists():
@@ -1659,6 +1678,7 @@ def check_ferries(out: Path, cfg: dict | None = None, *, release: bool = False) 
         if not (isinstance(ends, list) and len(ends) == 2
                 and all(isinstance(e, str) and e in FERRY_ENDS for e in ends)):
             errors.append(f"ferries: route {rid} has ends {ends!r}, not two of pier and edge")
+        errors += [f"ferries: route {rid} has {what}" for what in _ferry_names(r)]
         pts = r.get("path")
         if not isinstance(pts, list) or len(pts) < 2 or not all(isinstance(p, list) and len(p) == 2 for p in pts):
             errors.append(f"ferries: route {rid} has no path")

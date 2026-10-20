@@ -1,11 +1,11 @@
 // web/postcard.js (spec 2026-10-20 §7): the postcard's file name, its filters' maths (the CSS filter functions'
-// matrices, so the saved picture matches the preview), the tilt-shift masks and blur steps, and the stamp's layout.
-// The page itself (the button, the bar, the download) is e2e/postcard.spec.mjs.
+// matrices, so the saved picture matches the preview) and the stamp's layout. The Poster's inks and layout are
+// web/test/poster.test.mjs; the page itself (the button, the bar, the download) is e2e/postcard.spec.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { FILTERS, STEPS, TILT, VIGNETTE, SITE, MAX_SIDE, MAP_KEYS, fileName, validFilter, cssFilter, filterMatrix,
-  applySteps, maskStops, maskCss, vignetteCss, outSize, blurSizes, blurFactor, wrapParts, stampFonts, stampLayout } from '../postcard.js';
+import { FILTERS, STEPS, VIGNETTE, SITE, MAX_SIDE, MAP_KEYS, LIFT_ROOM, fileName, validFilter, cssFilter, filterMatrix,
+  applySteps, vignetteCss, outSize, wrapParts, stampFonts, stampLayout, familyOf, posterFaces, posterLift } from '../postcard.js';
 
 const near = (a, b, eps = 1e-9, msg = '') => assert.ok(Math.abs(a - b) <= eps, `${msg} ${a} ≈ ${b}`);
 const px = (r, g, b) => new Uint8ClampedArray([r, g, b, 255]);
@@ -16,20 +16,23 @@ test('the file is named after the site and the local date', () => {
   assert.match(fileName(), /^husforhus-\d{4}-\d{2}-\d{2}\.png$/);
 });
 
-test('three filters, each with its steps; an unknown one is None', () => {
-  assert.deepEqual(FILTERS, ['none', 'tilt', 'sepia']);
+test('three filters, None, Sepia and Poster, each with its steps; an unknown one is None', () => {
+  assert.deepEqual(FILTERS, ['none', 'sepia', 'poster']);
   for (const f of FILTERS) assert.ok(Array.isArray(STEPS[f]), f);
   assert.equal(validFilter('sepia'), 'sepia');
+  assert.equal(validFilter('poster'), 'poster');
+  assert.equal(validFilter('tilt'), 'none');                     // tilt-shift is gone (the owner, 2026-10-20)
   assert.equal(validFilter('vintage'), 'none');
   assert.equal(validFilter(undefined), 'none');
 });
 
-test('the preview filter is the steps as CSS filter functions, none for None', () => {
+test('the preview filter is the steps as CSS filter functions, none for None and for the Poster, whose inks are drawn', () => {
   assert.equal(cssFilter('none'), 'none');
   assert.equal(cssFilter('nope'), 'none');
-  assert.equal(cssFilter('tilt'), STEPS.tilt.map(([f, a]) => `${f}(${a})`).join(' '));
+  assert.equal(cssFilter('poster'), 'none');
+  assert.deepEqual(STEPS.poster, []);
+  assert.equal(cssFilter('sepia'), STEPS.sepia.map(([f, a]) => `${f}(${a})`).join(' '));
   assert.match(cssFilter('sepia'), /^sepia\(1\) /);
-  assert.match(cssFilter('tilt'), /saturate\(1\.\d+\)/);   // a toy's colours: more saturated than the map
 });
 
 test('the matrices are the Filter Effects spec\'s, so the saved picture matches the preview', () => {
@@ -74,31 +77,6 @@ test('sepia makes an old postcard: brown (red over green over blue), never pure 
   }
 });
 
-test('tilt-shift keeps grey grey and pushes a colour further from it', () => {
-  const grey = applySteps(px(128, 128, 128), STEPS.tilt);
-  assert.ok(Math.abs(grey[0] - grey[1]) <= 1 && Math.abs(grey[1] - grey[2]) <= 1, [...grey]);
-  const teal = applySteps(px(40, 160, 170), STEPS.tilt);
-  assert.ok(teal[1] - teal[0] > 120 - 1, [...teal]);
-});
-
-test('each tilt-shift mask is blurred at both ends and clear around the centre, offsets in order', () => {
-  assert.ok(TILT.centre > 0.3 && TILT.centre < 0.7);
-  TILT.layers.forEach((L, i) => {
-    assert.ok(L.clear < L.full && L.blur > 0, `layer ${i}`);
-    const s = maskStops(L);
-    assert.equal(s[0][1], 1); assert.equal(s.at(-1)[1], 1);
-    for (let k = 1; k < s.length; k++) assert.ok(s[k][0] >= s[k - 1][0], `layer ${i}: ${JSON.stringify(s)}`);
-    assert.ok(s.every(([o, a]) => o >= 0 && o <= 1 && (a === 0 || a === 1)));
-    assert.deepEqual(s.filter(([o]) => Math.abs(o - TILT.centre) < L.clear + 1e-9).map(([, a]) => a), [0, 0]);
-  });
-  // the second layer starts further out and blurs more: the blur grows towards the edges
-  const [a, b] = TILT.layers;
-  assert.ok(b.clear > a.clear && b.full > a.full && b.blur > a.blur);
-  // a centre near an edge clamps its stops into 0..1
-  assert.ok(maskStops({ clear: 0.1, full: 0.3 }, 0.9).every(([o]) => o >= 0 && o <= 1));
-  assert.equal(maskCss([[0, 1], [0.5, 0], [1, 1]]), 'linear-gradient(to bottom, rgb(0 0 0 / 1) 0%, rgb(0 0 0 / 0) 50%, rgb(0 0 0 / 1) 100%)');
-});
-
 test('the vignette is a warm brown ellipse to the corners', () => {
   assert.ok(VIGNETTE.from > 0 && VIGNETTE.from < 1 && VIGNETTE.alpha > 0 && VIGNETTE.alpha < 1);
   const [r, g, b] = VIGNETTE.colour;
@@ -113,25 +91,6 @@ test('the picture keeps the canvas\'s size, its longest side at most MAX_SIDE', 
   assert.deepEqual(outSize(780, 1688), { w: 780, h: 1688 });
   assert.deepEqual(outSize(1000, 4000, 2000), { w: 500, h: 2000 });
   assert.deepEqual(outSize(0, 0), { w: 1, h: 1 });
-});
-
-test('a blur halves the picture down to about 1/factor and doubles it back to the full size', () => {
-  const s = blurSizes(1400, 900, 16);
-  assert.deepEqual(s.at(-1), [1400, 900]);
-  const smallest = s.reduce((m, x) => (x[0] < m[0] ? x : m));
-  assert.ok(smallest[0] >= 1400 / 16 - 1 && smallest[0] <= 1400 / 16 * 2, JSON.stringify(smallest));
-  const i = s.indexOf(smallest);
-  for (let k = 1; k <= i; k++) assert.ok(s[k][0] < s[k - 1][0], 'down');
-  for (let k = i + 1; k < s.length; k++) assert.ok(s[k][0] > s[k - 1][0] && s[k][0] <= s[k - 1][0] * 2 + 1, 'up, at most doubling');
-  // no step repeats the one before it, and no factor gives an empty canvas
-  for (const f of [1, 1.5, 3, 40, 5000]) {
-    const t = blurSizes(780, 1688, f);
-    assert.deepEqual(t.at(-1), [780, 1688]);
-    assert.ok(t.every(([w, h]) => w >= 1 && h >= 1));
-    for (let k = 1; k < t.length; k++) assert.notDeepEqual(t[k], t[k - 1]);
-  }
-  assert.deepEqual(blurSizes(800, 600, 1), [[800, 600]]);
-  assert.ok(blurFactor(10) > 10 && blurFactor(0) === 1);
 });
 
 // A stand-in for measureText: every character half the font's size wide.
@@ -201,6 +160,29 @@ test('the stamp\'s fonts come before its layout, which measures in exactly those
 test('the keys that move the map make a waiting picture out of date; the bar\'s own keys do not', () => {
   for (const k of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '-', '=', '_', 'n', 'N']) assert.ok(MAP_KEYS.has(k), k);
   for (const k of ['Tab', 'Enter', ' ', 'Escape', 'p', 'Shift']) assert.ok(!MAP_KEYS.has(k), k);
+});
+
+test('the look\'s font comes with the stamp\'s fallbacks; a poster is set in four faces, the stamp\'s two among them', () => {
+  assert.equal(familyOf('Inter'), '"Inter", "Helvetica Neue", Arial, sans-serif');
+  const F = stampFonts({ w: 1400, h: 900, family: familyOf('Inter') });
+  const faces = posterFaces(familyOf('Inter'), F);
+  assert.deepEqual(faces.slice(0, 2), ['800 100px "Inter", "Helvetica Neue", Arial, sans-serif', '700 100px "Inter", "Helvetica Neue", Arial, sans-serif']);
+  assert.ok(faces.includes(F.site) && faces.includes(F.credit));
+});
+
+test('the bar stands on the poster\'s band where the map keeps room, and stays down over it on a phone held sideways', () => {
+  assert.equal(LIFT_ROOM, 0.45);
+  // a phone held sideways (667 x 375, the e2e numbers): raised, the bar would leave a third of the screen between the
+  // head and itself, in the lower middle of the frame; it stays down
+  assert.equal(posterLift({ viewH: 375, headEnd: 83, band: 65, barH: 86, barGap: 16 }), 0);
+  // upright phones and a desktop window keep room: the bar stands on the band
+  assert.equal(posterLift({ viewH: 640, headEnd: 67, band: 80, barH: 140, barGap: 16 }), 80);
+  assert.equal(posterLift({ viewH: 844, headEnd: 67, band: 86.4, barH: 140, barGap: 16 }), 86);
+  assert.equal(posterLift({ viewH: 900, headEnd: 200, band: 140, barH: 72, barGap: 16 }), 140);
+  // the threshold itself: exactly LIFT_ROOM of the height left lifts, a pixel less does not
+  const at = { viewH: 1000, headEnd: 100, band: 100, barH: 100, barGap: 250 };
+  assert.equal(posterLift(at), 100);
+  assert.equal(posterLift({ ...at, barGap: 251 }), 0);
 });
 
 test('without credit parts there is only the site', () => {

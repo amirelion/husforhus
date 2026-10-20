@@ -1,12 +1,19 @@
 // web/ferries.js: the boats' switch and when they show, ferries.json read into routes, where each boat is at any second
-// (back and forth, a stop at each pier, out of sight past an edge), how much they grow when zoomed out, each look's
-// paint against its water, and the low-poly models.
+// (back and forth, a stop at each pier, out of sight past an edge) and which way it is heading, what its tooltip says,
+// finding it under the pointer, how much they grow when zoomed out, each look's paint against its water, and the
+// low-poly models.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { boatsOnFrom, boatsShown, parseFerries, pointAlong, headingAt, routePlan, runAt, runTime, boatAt, calmTime,
-  boatScale, MAX_BOOST, KINDS, EDGE_WAIT_S, EDGE_FADE_M, PAINT, PARTS, boatModels, wakeModel, hullShape } from '../ferries.js';
+  boatScale, MAX_BOOST, KINDS, EDGE_WAIT_S, EDGE_FADE_M, PAINT, PARTS, boatModels, wakeModel, hullShape, headingFor,
+  routeLine, boatTitle, boatInfo, boatHtml, orList, segmentDistance, boatUnder, HIT_PX, placeName, SV_PLACES } from '../ferries.js';
+import { makeT } from '../i18n.js';
 import { THEMES } from '../themes.js';
 import { rgb } from '../tone.js';
+
+const I18N = Object.fromEntries(['en', 'sv'].map(l => [l, JSON.parse(readFileSync(new URL(`../i18n/${l}.json`, import.meta.url), 'utf8'))]));
+const EN = makeT(I18N, 'en'), SV = makeT(I18N, 'sv');
 
 // Small hand-made routes in local metres: an L-shaped ferry line between two piers (1200 m), a short ferry hop
 // (300 m), and a ship lane from a pier out past the map's edge (3000 m).
@@ -256,4 +263,152 @@ test('the models: a 30 m ferry and a 190 m ship, waterline at 0, each vertex tag
   assert.equal(w.t[0], 0);
   assert.equal(w.t[w.t.length - 1], 1);
   assert.ok([...w.index].every(i => i < w.t.length));
+});
+
+// ---------- What a boat says ----------
+// As s17_ferries writes them on 2026-10-20 (data/dev): a ferry line with its stops, one cut at the map's edge, a line
+// known by name, and a ship lane out past the edge with its ports.
+const SAYS = parseFerries({ version: 1, routes: [
+  { id: 'r5981630', ref: '82', name: 'Djurgårdsfärjan 82', kind: 'ferry', ends: ['pier', 'pier'], path: [[0, 0], [1600, 0]],
+    stops: ['Slussen', 'Skeppsholmen', 'Allmänna gränd'] },
+  { id: 'r7779528', ref: '89', name: 'Båt 89', kind: 'ferry', ends: ['pier', 'edge'], path: [[0, 0], [9000, 0]],
+    stops: ['Klara Mälarstrand', 'Lilla Essingen', 'Ekensberg', 'Kungshättan', 'Tappström'] },
+  { id: 'r11528943', ref: '', name: 'Cityline', kind: 'ferry', ends: ['pier', 'pier'], path: [[0, 0], [4000, 0]],
+    stops: ['Nybroplan', 'Allmänna gränd', 'Masthamnen', 'Barnängsbryggan', 'Lumabryggan', 'Henriksdal'] },
+  { id: 'r2545969', ref: '', name: 'Viking Line', kind: 'ship', ends: ['pier', 'edge'], path: [[0, 0], [4000, 0]],
+    home: 'Stockholm', operator: 'Viking Line', dests: [{ to: 'Turku', via: ['Mariehamn', 'Långnäs'] },
+      { to: 'Helsinki', via: ['Mariehamn'] }] },
+] });
+const [sl82, sl89, city, viking] = SAYS;
+
+test('ferries.json\'s tooltip fields are read when there, names only, and an older file has none', () => {
+  assert.deepEqual(sl82.stops, ['Slussen', 'Skeppsholmen', 'Allmänna gränd']);
+  assert.deepEqual([viking.home, viking.operator, viking.dests.length], ['Stockholm', 'Viking Line', 2]);
+  assert.deepEqual([line.stops, line.home, line.dests, line.operator], [[], '', [], '']);
+  const [odd] = parseFerries({ version: 1, routes: [{ id: 'x', kind: 'ship', ends: ['pier', 'edge'], path: [[0, 0], [9, 0]],
+    stops: [' A ', '', 7, 'B'], home: 5, operator: '  ', dests: [{ to: ' Turku ', via: ['', ' Mariehamn', null] }, { via: ['X'] }, 'Y', null] }] });
+  assert.deepEqual(odd.stops, ['A', 'B']);
+  assert.deepEqual([odd.home, odd.operator], ['', '']);
+  assert.deepEqual(odd.dests, [{ to: 'Turku', via: ['Mariehamn'] }]);
+  assert.deepEqual(parseFerries({ version: 1, routes: [{ kind: 'ferry', path: [[0, 0], [9, 0]], stops: ['Slussen'] }] })[0].stops, []);
+});
+
+test('a boat heads for the end it sails to: out along its path on the run out, back on the run back, the next run\'s at a stop', () => {
+  for (const route of [hop, lane]) {
+    const plan = routePlan(route), seen = new Set();
+    for (let t = 0; t < plan.period; t += 0.25) {
+      const b = boatAt(plan, 0, t), later = boatAt(plan, 0, t + 0.25);
+      seen.add(b.toward);
+      if (b.speed > 0 && later.speed > 0) {
+        // under way: it gets nearer the end it heads for
+        const [x, z] = route.pts[b.toward ? route.pts.length - 1 : 0];
+        assert.ok(Math.hypot(later.x - x, later.z - z) < Math.hypot(b.x - x, b.z - z), `${route.id} at ${t}`);
+      }
+    }
+    assert.deepEqual([...seen].sort(), [0, 1]);
+  }
+  // standing at a pier it says where it goes next: at the first pier the far end, at the far pier the first
+  const plan = routePlan(hop);
+  let first = null, far = null;
+  for (let t = 0; t < plan.period && (first === null || far === null); t += 0.05) {
+    const b = boatAt(plan, 0, t);
+    if (b.speed !== 0) continue;
+    if (Math.abs(b.x) < 1e-6) first = b; else if (Math.abs(b.x - 300) < 1e-6) far = b;
+  }
+  assert.equal(first.toward, 1);
+  assert.equal(far.toward, 0);
+});
+
+test('where a boat is heading: a ferry\'s last stop or its first, a ship\'s destinations going out and home coming in', () => {
+  assert.deepEqual(headingFor(sl82, 1), ['Allmänna gränd']);
+  assert.deepEqual(headingFor(sl82, 0), ['Slussen']);
+  assert.deepEqual(headingFor(sl89, 1), ['Tappström']);         // the line's end, past the map's edge
+  assert.deepEqual(headingFor(viking, 1), ['Turku', 'Helsinki']);
+  assert.deepEqual(headingFor(viking, 0), ['Stockholm']);
+  assert.deepEqual(headingFor(line, 1), []);                     // an older file: nothing to say
+  assert.deepEqual(headingFor({ ...viking, home: '' }, 0), []);
+  assert.deepEqual(headingFor({ ...viking, dests: [] }, 1), []);
+  // in Swedish the Finnish ports by their Swedish names
+  assert.deepEqual(headingFor(viking, 1, 'sv'), ['Åbo', 'Helsingfors']);
+  assert.deepEqual(headingFor(viking, 0, 'sv'), ['Stockholm']);
+});
+
+test('a loop that ends where it began (Sjöstadstrafiken) says no heading: it heads for the same pier either way', () => {
+  const loop = { ...sl82, stops: ['Henriksdal', 'Barnängsbryggan', 'Lumabryggan', 'Henriksdal'] };
+  assert.deepEqual(headingFor(loop, 1), []);
+  assert.deepEqual(headingFor(loop, 0), []);
+  assert.equal(routeLine(loop), 'Henriksdal – Barnängsbryggan – Lumabryggan – Henriksdal');   // the route still says it
+  assert.deepEqual(boatInfo(loop, 1, EN), { title: 'Djurgårdsfärjan · line 82',
+    route: 'Henriksdal – Barnängsbryggan – Lumabryggan – Henriksdal', heading: '', note: 'Real route, not a live position' });
+});
+
+test('the route in one line: the stops, or home, the ports on the way to every destination, and the destinations', () => {
+  assert.equal(routeLine(sl82), 'Slussen – Skeppsholmen – Allmänna gränd');
+  assert.equal(routeLine(viking), 'Stockholm – Mariehamn – Turku, Helsinki');   // Långnäs is on the way to Turku only
+  assert.equal(routeLine({ ...viking, dests: [{ to: 'Tallinn', via: ['Mariehamn'] }] }), 'Stockholm – Mariehamn – Tallinn');
+  assert.equal(routeLine({ ...viking, home: '', dests: [{ to: 'Tallinn', via: [] }] }), 'Tallinn');
+  assert.equal(routeLine(line), '');
+  assert.equal(routeLine({ ...viking, dests: [] }), '');
+  // in Swedish: Åbo and Helsingfors, the ports that read the same left as they are
+  assert.equal(routeLine(viking, 'sv'), 'Stockholm – Mariehamn – Åbo, Helsingfors');
+  assert.equal(routeLine({ ...viking, dests: [{ to: 'Tallinn', via: ['Mariehamn'] }] }, 'sv'), 'Stockholm – Mariehamn – Tallinn');
+  assert.equal(routeLine(sl82, 'sv'), 'Slussen – Skeppsholmen – Allmänna gränd');
+  assert.equal(placeName('Turku', 'en'), 'Turku');
+  assert.equal(placeName('Helsinki', 'sv'), 'Helsingfors');
+  assert.equal(placeName('Mariehamn', 'sv'), 'Mariehamn');
+  for (const [fi, sv] of Object.entries(SV_PLACES)) assert.notEqual(fi, sv);
+});
+
+test('the title: a ferry by its name and line number, a line known by name by its name, a ship by its operator', () => {
+  assert.equal(boatTitle(sl82, EN), 'Djurgårdsfärjan · line 82');
+  assert.equal(boatTitle(sl82, SV), 'Djurgårdsfärjan · linje 82');
+  // a name that is only a word for a boat says nothing: the line number alone (SL's Båt 89)
+  assert.equal(boatTitle(sl89, EN), 'Line 89');
+  assert.equal(boatTitle(sl89, SV), 'Linje 89');
+  assert.equal(boatTitle({ ...sl82, name: 'Färja 82' }, SV), 'Linje 82');
+  // SL's commuter boats (Pendelbåt 80, 80X, 84) are called so in the page's language
+  assert.equal(boatTitle({ ...sl82, ref: '80X', name: 'Pendelbåt 80X' }, EN), 'Commuter boat · line 80X');
+  assert.equal(boatTitle({ ...sl82, ref: '80', name: 'Pendelbåt 80' }, SV), 'Pendelbåt · linje 80');
+  assert.equal(boatTitle({ ...sl82, name: 'Pendelbåt' }, EN), 'Commuter boat · line 82');   // no number to drop
+  assert.equal(boatTitle({ ...sl82, name: 'Djurgårdsbåt 82' }, EN), 'Djurgårdsbåt · line 82');   // a name, kept
+  assert.equal(boatTitle({ ...sl82, name: 'Linje 182' }, EN), 'Linje 182 · line 82');       // a number, not the ref
+  assert.equal(boatTitle({ ...sl82, name: '82' }, SV), 'Linje 82');
+  assert.equal(boatTitle(city, EN), 'Cityline');
+  assert.equal(boatTitle(viking, EN), 'Viking Line');
+  assert.equal(boatTitle({ ...viking, operator: '', name: 'Silja Line' }, EN), 'Silja Line');
+});
+
+test('the tooltip in English and Swedish, and an older file\'s title and note only', () => {
+  assert.deepEqual(boatInfo(sl82, 1, EN), { title: 'Djurgårdsfärjan · line 82', route: 'Slussen – Skeppsholmen – Allmänna gränd',
+    heading: 'Heading for Allmänna gränd', note: 'Real route, not a live position' });
+  assert.deepEqual(boatInfo(sl82, 0, SV), { title: 'Djurgårdsfärjan · linje 82', route: 'Slussen – Skeppsholmen – Allmänna gränd',
+    heading: 'På väg mot Slussen', note: 'Riktig linje, inte var båten är just nu' });
+  assert.equal(boatInfo(viking, 1, EN).heading, 'Heading for Turku or Helsinki');
+  assert.equal(boatInfo(viking, 1, SV).heading, 'På väg mot Åbo eller Helsingfors');
+  assert.equal(boatInfo(viking, 1, SV).route, 'Stockholm – Mariehamn – Åbo, Helsingfors');
+  assert.equal(boatInfo(viking, 0, EN).heading, 'Heading for Stockholm');
+  assert.deepEqual(boatInfo(hop, 1, EN), { title: 'Hop', route: '', heading: '', note: 'Real route, not a live position' });
+  assert.notEqual(EN('boat.note'), SV('boat.note'));
+  assert.equal(orList(['A', 'B', 'C'], 'en'), 'A, B, or C');
+  assert.equal(orList(['Ropsten'], 'sv'), 'Ropsten');
+});
+
+test('the tooltip\'s HTML escapes every name and leaves out the lines it has nothing for', () => {
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const html = boatHtml({ title: 'A <b> & B', route: '', heading: 'Heading for "C"', note: 'Note' }, esc);
+  assert.equal(html, '<p class="boat-title">A &lt;b&gt; &amp; B</p><p class="boat-heading">Heading for &quot;C&quot;</p>' +
+    '<p class="boat-note">Note</p>');
+});
+
+test('the boat under the pointer: the nearest hull whose reach takes the point, along its whole length', () => {
+  assert.equal(segmentDistance(5, 5, [0, 0], [10, 0]), 5);
+  assert.equal(segmentDistance(-3, 4, [0, 0], [10, 0]), 5);                 // past the stern: to its end
+  assert.equal(segmentDistance(3, 4, [0, 0], [0, 0]), 5);                   // a boat seen end on
+  const hulls = [{ k: 0, a: [100, 100], b: [300, 100], r: HIT_PX }, { k: 3, a: [100, 120], b: [140, 120], r: 30 }];
+  assert.equal(boatUnder(hulls, 290, 108), 0);                              // near the bow of the long one
+  assert.equal(boatUnder(hulls, 120, 112), 3);                              // nearer the second's line
+  assert.equal(boatUnder(hulls, 200, 108), 0);                              // the second's reach ends near its bow
+  assert.equal(boatUnder(hulls, 160, 125), 3);                              // past its bow, within its reach
+  assert.equal(boatUnder(hulls, 200, 140), -1);
+  assert.equal(boatUnder([], 0, 0), -1);
 });

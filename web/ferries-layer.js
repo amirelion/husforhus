@@ -7,13 +7,22 @@
 // distance, up to four times, so one stays a few pixels long when the map is zoomed out.
 // app.js calls step() every frame: it returns at once while the boats are hidden (the switch off, a year before
 // Today, the film or a story), and under reduced motion the boats stand still, without wakes, each on a run of its
-// route (ferries.js calmTime). The pick pass hides the group (app.js pick), so a boat is never hovered or clicked.
+// route (ferries.js calmTime). The pick pass hides the group (app.js pick), so a boat never hides the building under
+// it there; hitAt finds the boat under the pointer on the screen instead (each hull as a capsule, hullOnScreen), for
+// its tooltip (app.js), and depthAt says how far along the pointer's ray it lies, so app.js can ask the pick pass
+// whether a building there stands in front of it.
 // Tested through the pure parts (web/test/ferries.test.mjs) and in the browser (e2e/ferries.spec.mjs).
-import { KINDS, routePlan, boatAt, calmTime, boatScale, boatModels, wakeModel, PAINT, PARTS } from './ferries.js';
+import { KINDS, routePlan, boatAt, calmTime, boatScale, boatModels, wakeModel, PAINT, PARTS, HIT_PX,
+  boatUnder } from './ferries.js';
 import { SHADING } from './themes.js';
 
 const glf = x => (Number.isInteger(x) ? x.toFixed(1) : String(x));
 const WAKE_ALPHA = 0.55;   // a wake's opacity at the stern, at full speed
+const HIT_SEEN = 0.2;      // a boat is hit while it shows at least this much: fading out at an edge end of its route,
+                           // into the haze at the map's edge or into the fog far off. Not more: Tallink's lane down
+                           // Lilla Värtan lies in the edge's haze all the way, 0.27 at its quay (2026-10-20), and its
+                           // white ship still reads there
+const HEIGHT = { ferry: 4.9, ship: 36 };   // metres to the top of the upper works (ferries.js boatModels), true size
 
 const HULL_VERT = /* glsl */`
   in float aPart;     // per vertex: 0 hull, 1 upper works, 2 windows, 3 the ships' band (ferries.js PARTS)
@@ -85,8 +94,9 @@ const wakeFrag = fade => /* glsl */`
 
 // routes: ferries.js parseFerries; uniforms: app.js's shared ones (the fog, the sky, the sun, the edge fade); fadeGlsl:
 // the grid and edge-fade GLSL that declares fadeAt (app.js GRID_GLSL + FADE_GLSL); look(): the look's id; calm: the
-// reduced-motion query.
-export function makeFerries(THREE, { routes, uniforms, fadeGlsl, look, calm }) {
+// reduced-motion query; camera: the map's, for hitAt; fadeAt(x, z): the map's edge fade there, 0 to 1, as the shaders
+// read it (terrain.js fadeAtGrid), for hitAt.
+export function makeFerries(THREE, { routes, uniforms, fadeGlsl, look, calm, camera, fadeAt = () => 1 }) {
   const plans = routes.map(routePlan);
   // calm: the moment this boat stands still at under reduced motion
   const boats = plans.flatMap(plan => Array.from({ length: plan.boats }, (_, i) => ({ plan, i, calm: calmTime(plan, i) })));
@@ -161,7 +171,7 @@ export function makeFerries(THREE, { routes, uniforms, fadeGlsl, look, calm }) {
       const kind = KINDS[b.plan.route.kind], s = boatScale(dist, kind.length);
       const at = boatAt(b.plan, b.i, still ? b.calm : frozen ?? t, s);
       last[k] = { route: b.plan.route.id, i: b.i, kind: b.plan.route.kind, x: at.x, z: at.z, heading: at.heading,
-        alpha: at.alpha, speed: still ? 0 : at.speed, scale: s };
+        alpha: at.alpha, speed: still ? 0 : at.speed, scale: s, toward: at.toward };
       // three.js turns about +y anticlockwise seen from above, from +x towards -z: the bow (+x) along the heading
       Q.setFromAxisAngle(Y, -at.heading);
       M.compose(P.set(at.x, 0, at.z), Q, S.set(s, s, s));
@@ -178,7 +188,81 @@ export function makeFerries(THREE, { routes, uniforms, fadeGlsl, look, calm }) {
     hullAlpha.needsUpdate = wakeAlpha.needsUpdate = true;
   }
 
-  return { group, step, retheme,
+  // How much of boat k shows where it was drawn last, 0 to 1: its own fade at an edge end of its route, times the
+  // map's edge fade and the distance fog there, as the hull's fragment shader mixes them towards the sky.
+  const W = new THREE.Vector3();
+  function seen(p) {
+    W.set(p.x, 0, p.z).applyMatrix4(group.matrixWorld);
+    const [near, far] = [uniforms.uFog.value.x, uniforms.uFog.value.y], d = W.distanceTo(camera.position);
+    const fog = far > near ? Math.min(1, Math.max(0, (d - near) / (far - near))) : d >= far ? 1 : 0;
+    return p.alpha * fadeAt(W.x, W.z) * (1 - fog * fog * (3 - 2 * fog));
+  }
+  // Boat k as drawn last, on a screen w by h pixels: its hull's centre line at half its height from stern a to bow b,
+  // and its reach r round that line (half its beam and half its height on screen, at least HIT_PX), with c its middle
+  // at the waterline; null while the boats are hidden, it hardly shows (seen) or its middle is behind the camera. Up
+  // close a ship is longer than the camera is far from it (190 m; the camera comes to 60 m), so the centre line is cut
+  // where it passes behind the camera, and the part of the hull on the screen is still found.
+  const V = new THREE.Vector3(), E = new THREE.Vector3(), Sa = new THREE.Vector3(), Sb = new THREE.Vector3();
+  // a point of the boats' group in the camera's view space (it looks down -z), and such a point on the screen: null
+  // behind the near plane or past the far one
+  const inView = (out, x, y, z) => out.set(x, y, z).applyMatrix4(group.matrixWorld).applyMatrix4(camera.matrixWorldInverse);
+  const toScreen = (v, w, h) => {
+    V.copy(v).applyMatrix4(camera.projectionMatrix);
+    return Math.abs(V.z) > 1 ? null : [(V.x + 1) / 2 * w, (1 - V.y) / 2 * h];
+  };
+  const onScreen = (x, y, z, w, h) => toScreen(inView(E, x, y, z), w, h);
+  function hullOnScreen(k, w, h) {
+    const p = last[k];
+    if (!group.visible || !p || seen(p) < HIT_SEEN) return null;
+    const kind = KINDS[p.kind], s = p.scale, half = kind.length / 2 * s, y = HEIGHT[p.kind] / 2 * s;
+    const dx = Math.cos(p.heading), dz = Math.sin(p.heading), side = kind.beam / 2 * s;
+    const c = onScreen(p.x, 0, p.z, w, h), mid = onScreen(p.x, y, p.z, w, h);
+    if (!c || !mid) return null;
+    // an end behind the camera moves along the line to just in front of the near plane
+    inView(Sa, p.x - dx * half, y, p.z - dz * half);
+    inView(Sb, p.x + dx * half, y, p.z + dz * half);
+    const zn = -camera.near * 1.001, behind = [Sa.z > zn, Sb.z > zn];
+    if (behind[0] && !behind[1]) Sa.lerp(Sb, (zn - Sa.z) / (Sb.z - Sa.z));
+    else if (behind[1] && !behind[0]) Sb.lerp(Sa, (zn - Sb.z) / (Sa.z - Sb.z));
+    const both = behind[0] && behind[1];   // only with its middle a hair from the near plane
+    const a = (!both && toScreen(Sa, w, h)) || mid, b = (!both && toScreen(Sb, w, h)) || mid;
+    const top = onScreen(p.x, 2 * y, p.z, w, h), beam = onScreen(p.x - dz * side, y, p.z + dx * side, w, h);
+    const r = Math.max(HIT_PX, (beam ? Math.hypot(beam[0] - mid[0], beam[1] - mid[1]) : 0) +
+      (top ? Math.hypot(top[0] - c[0], top[1] - c[1]) / 2 : 0));
+    return { k, a, b, r, c };
+  }
+  // How far boat k lies along the ray through (px, py), on a screen w by h, as the camera's depth (view space's -z,
+  // where its far plane cuts): the point of its hull's centre line nearest that ray, less half its beam, so its near
+  // side. app.js draws the far plane in to it to ask the pick pass whether a building there stands in front of the boat.
+  const C = new THREE.Vector3(), U = new THREE.Vector3(), F = new THREE.Vector3(), A = new THREE.Vector3(),
+    B = new THREE.Vector3(), AB = new THREE.Vector3(), CA = new THREE.Vector3();
+  function depthAt(k, px, py, w, h) {
+    const p = last[k];
+    if (!p) return Infinity;
+    const kind = KINDS[p.kind], s = p.scale, half = kind.length / 2 * s, y = HEIGHT[p.kind] / 2 * s;
+    const dx = Math.cos(p.heading), dz = Math.sin(p.heading);
+    A.set(p.x - dx * half, y, p.z - dz * half).applyMatrix4(group.matrixWorld);
+    B.set(p.x + dx * half, y, p.z + dz * half).applyMatrix4(group.matrixWorld);
+    C.setFromMatrixPosition(camera.matrixWorld);
+    U.set(px / w * 2 - 1, 1 - py / h * 2, 0.5).unproject(camera).sub(C).normalize();
+    // the nearest points of the segment A-B (A + t AB, t in 0..1) and the ray (C + u U)
+    AB.subVectors(B, A); CA.subVectors(A, C);
+    const aa = AB.dot(AB), ab = AB.dot(U), ad = AB.dot(CA), ud = U.dot(CA), den = aa - ab * ab;
+    let t = den > 1e-9 * aa ? (ab * ud - ad) / den : A.distanceTo(C) <= B.distanceTo(C) ? 0 : 1;   // seen end on
+    t = Math.min(1, Math.max(0, t));
+    const u = A.addScaledVector(AB, t).sub(C).dot(U) - kind.beam / 2 * s;
+    return u * U.dot(camera.getWorldDirection(F));
+  }
+  // The boat under (px, py), on a screen w by h: {k, route (parseFerries'), i, toward} of the nearest whose capsule
+  // takes the point (ferries.js boatUnder), or null.
+  function hitAt(px, py, w, h) {
+    if (!group.visible) return null;
+    const k = boatUnder(boats.map((_, j) => hullOnScreen(j, w, h)).filter(Boolean), px, py);
+    return k < 0 ? null : boatOf(k);
+  }
+  const boatOf = k => ({ k, route: boats[k].plan.route, i: boats[k].i, toward: last[k]?.toward ?? 1 });
+
+  return { group, step, retheme, hitAt, hullOnScreen, depthAt, boatOf,
     // freeze(t): draw every boat as at time t until freeze(null), for tests that compare two screenshots
     freeze: t => { frozen = t ?? null; },
     get count() { return n; },

@@ -15,6 +15,9 @@
 // Floors mode's ramp: four colours from 1 floor to 40 and more on a log scale, for the shader and the legend
 // alike; each stays clear of the look's land and sky, and they step in lightness, lighter to darker on a light ground
 // and the reverse on the dark one (web/test/themes.test.mjs).
+// `poster` is the look as a 1930s travel poster (the postcard's Poster filter, web/poster.js): the title over the sky,
+// the band under the picture and its text, the paper round it and the imprint on the paper, each from the look's own
+// colours (web/test/poster.test.mjs checks that they read).
 export const THEMES = {
   // Ärg (patina): building age read like copper roofs ageing. Verdigris for the old city, darkening through the
   // 19th century, then warm copper for the modern city; ink-dark Baltic water makes the islands read at a glance.
@@ -31,6 +34,8 @@ export const THEMES = {
     floors: ['#d6c6a8', '#c08a58', '#8d4d2b', '#4b2214'],
     ui: { '--bg': '#d9dfe3', '--ink': '#15232b', '--muted': '#56636b', '--panel': '#f6f6f4', '--line': '#c8cfd3', '--accent': '#1e625d' },
     periods: ['#8ed3d0', '#72c3c1', '#5ab2b3', '#47a0a5', '#3c8e97', '#387b88', '#3c6778', '#465262', '#87503d', '#aa6446', '#cf7b50', '#e49f75'],
+    // the Baltic's ink-dark blue over the sky, a copper band
+    poster: { title: '#0e2433', band: '#87503d', bandInk: '#f6efe3', paper: '#ece4d4', imprint: '#15232b' },
   },
   // Kalkfärg (limewash): the pigments Stockholm put on its walls, in the order it used them (Cramér, Stadsmuseet):
   // earth colours until the 1910s, the first green houses in the 1920s, cooler modern colours after.
@@ -43,6 +48,8 @@ export const THEMES = {
     floors: ['#c3cfdb', '#7d97b0', '#3f5e7e', '#1b2a44'],
     ui: { '--bg': '#dbe5e9', '--ink': '#1f1a17', '--muted': '#5f5850', '--panel': '#faf7f2', '--line': '#ddd5c9', '--accent': '#33485c' },
     periods: ['#501912', '#7d241a', '#a14e2b', '#bc7d2f', '#d7bb74', '#d19936', '#669f72', '#3c8888', '#3b6d89', '#435177', '#4b355b', '#9d69c1'],
+    // Falu red over the sky, a slate-blue band
+    poster: { title: '#7d241a', band: '#33485c', bandInk: '#faf7f2', paper: '#eee3cf', imprint: '#1f1a17' },
   },
   // Blå timmen (blue hour): a navy winter afternoon (21 December, 15:30). Warm for the old city, cold and pale for
   // the new, rising steadily in lightness; candle-amber accent.
@@ -55,6 +62,8 @@ export const THEMES = {
     floors: ['#46536f', '#7d8db0', '#bfc8df', '#fff1cf'],
     ui: { '--bg': '#121d30', '--ink': '#eef2f7', '--muted': '#9fb0c6', '--panel': '#1a2740', '--line': '#2b3a55', '--accent': '#ffc861' },
     periods: ['#861118', '#992502', '#a24203', '#ad5800', '#b86d02', '#c28209', '#c79916', '#c3b244', '#aacf79', '#8ae6c7', '#bfe8ff', '#f9f2d8'],
+    // candle amber over the night sky, an oxblood band
+    poster: { title: '#ffc861', band: '#861118', bandInk: '#f9f2d8', paper: '#e9dec4', imprint: '#121d30' },
   },
   // Upstream's white model under a pale sky, for comparison; city.py's palette until Ärg became the default (2026-10-15;
   // its p11 #4a2b7a keeps the lightness step).
@@ -67,6 +76,8 @@ export const THEMES = {
     floors: ['#c9d5db', '#7da8bf', '#2b5c8c', '#0d1a40'],
     ui: { '--bg': '#e4e8ea', '--ink': '#000000', '--muted': '#5d6266', '--panel': '#ffffff', '--line': '#cfd5d8', '--accent': '#1d5aa6' },
     periods: ['#4a1410', '#8c1c13', '#c0462b', '#d97a2b', '#e5b13a', '#b9a93a', '#8e9f3c', '#3f8f6b', '#2c7391', '#3a4f9a', '#4a2b7a', '#8f3f7a'],
+    // black over the sky, the accent's blue band
+    poster: { title: '#111111', band: '#1d5aa6', bandInk: '#ffffff', paper: '#f1ede2', imprint: '#000000' },
   },
 };
 

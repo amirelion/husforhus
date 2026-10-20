@@ -7,7 +7,10 @@ same version folder (water.bin.gz, land.bin.gz), so this step runs after s04_bas
           direction), kind ("ferry": the city's boats; "ship": the Baltic ships), ends (per end of the path: "pier", a
           terminal in the map, or "edge", where the lane leaves the map's water), path [[x, z], ...] (one line on the
           water that never leaves the map, simplified to 4 m, or 40 m where it is drawn along the map's edge, in
-          0.1 m). One route per line, and per ship line and terminal for the ships.
+          0.1 m). One route per line, and per ship line and terminal for the ships. Optional, for the boat's tooltip
+          (web/ferries.js boatInfo; a file without them still reads): a city boat's stops (its stop names in order
+          along the path, the whole line's), a ship's home (its port here, "Stockholm"), dests ([{to, via: [...]}],
+          the ports its relations sail to, the most sailed first) and operator, as OSM names them.
 The boats are illustration: real routes, not live positions. When Overpass cannot be reached and nothing is cached (or
 the cache does not read), a warning says so and the file has no routes, so a preview or fixture build goes on without
 boats (the viewer then draws none, as without the file); with --release the step stops instead, and s99_validate's

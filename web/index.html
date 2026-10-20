@@ -103,6 +103,7 @@
 </aside>
 
 <div id="card" class="card" hidden></div>
+<div id="boat-tip" class="card boat-tip" aria-hidden="true" hidden></div>
 <section id="quest" class="quest" hidden aria-live="polite"></section>
 <dialog id="quests" class="about quests" aria-labelledby="quests-title">
   <button class="about-close" aria-label="Close">×</button>
@@ -120,15 +121,15 @@
   <button class="credit-open" aria-controls="credit" aria-expanded="true" data-i18n-aria="credit.open"
     aria-label="Show the map's sources" hidden>i</button>
 </div>
-<!-- Postcard mode's bar (web/postcard.js): the filters, Save and Close, at the bottom while the rest of the page steps
-     aside. "Share image" shows only when a phone's share sheet refused the first try. -->
+<!-- Postcard mode's bar (web/postcard.js): the filters, Download and Close, at the bottom while the rest of the page
+     steps aside. "Share image" shows only when a phone's share sheet refused the first try. -->
 <section class="postcard-bar" aria-label="Postcard" data-i18n-aria="postcard.open" hidden>
   <p class="pc-hint" data-i18n="postcard.hint">Move the map to frame your picture.</p>
   <div class="pc-row">
     <div class="pc-filters" role="group" aria-label="Filter" data-i18n-aria="postcard.filter">
       <button type="button" data-filter="none" aria-pressed="true" data-i18n="postcard.none">None</button>
-      <button type="button" data-filter="tilt" aria-pressed="false" data-i18n="postcard.tilt">Tilt-shift</button>
       <button type="button" data-filter="sepia" aria-pressed="false" data-i18n="postcard.sepia">Sepia</button>
+      <button type="button" data-filter="poster" aria-pressed="false" data-i18n="postcard.poster">Poster</button>
     </div>
     <div class="pc-actions">
       <button type="button" class="pc-save" data-i18n="postcard.save">Download</button>

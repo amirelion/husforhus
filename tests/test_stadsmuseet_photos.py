@@ -147,10 +147,10 @@ def test_choose_applies_every_rule_oldest_first_and_caps():
     assert set(picks) == {1}
     assert n == {"unplaced": 1, "licence": 1, "interior or detail": 1, "people or event": 2, "no building keyword": 1,
                  "building gone": 1, "private house": 1, "designation": 1, "deny list": 1, "no rendition": 1, "over the cap": 1}
-    # outside FULL_AREAS a building gets MAX_ELSEWHERE photos: the oldest
+    # outside FULL_AREAS a building gets MAX_ELSEWHERE photos: the oldest two
     picks, n = sp.choose(its, sp.place(its, TABLE), private={2}, designations={"exempel 12"},
                          deny={"deny": "not this building"}, full={3})
-    assert [p["id"] for p in picks[1]] == ["p3"] and n["over the cap"] == 3
+    assert [p["id"] for p in picks[1]] == ["p3", "p4"] and n["over the cap"] == 2
 
 
 @pytest.mark.parametrize("title, keywords", [

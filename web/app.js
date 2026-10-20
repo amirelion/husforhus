@@ -17,8 +17,9 @@ import { archaeologySection } from './archaeology.js';
 import { photoSlides, photoFigure } from './photos.js';
 import { metroOnFrom, metroHref, METRO_KEY, stationCard } from './metro.js';
 import { makeMetroLayer } from './metro-layer.js';
-import { BOATS_KEY, boatsOnFrom, boatsShown, parseFerries } from './ferries.js';
+import { BOATS_KEY, boatsOnFrom, boatsShown, parseFerries, boatInfo, boatHtml } from './ferries.js';
 import { makeFerries } from './ferries-layer.js';
+import { mountBoatTip } from './boat-tip.js';
 import { estimateTone, inkOn, rgba, luma, rgb, unknownFill } from './tone.js';
 import { THEMES, SHADING } from './themes.js';
 import { createLooks } from './look.js';
@@ -28,8 +29,8 @@ import { initialCollapsed, LEGEND_KEY, photoOnlyFrom, photoOnlyHref, markPhotos,
 import { cityCount, layerCount, tallyTitle, tallyFromAttrs, periodCounts } from './count.js';
 import { placeLabels, labelAt, stepYear } from './timeline.js';
 import { unknownShown, readPref, writePref, prefAfterClick, unknownHint, easeShown } from './unknown.js';
-import { makeGround, cutFactor, levelAt, LOD_TOL, parsePolygons, fadeWidth, askWorker, withTimeout, FETCH_TIMEOUT_MS }
-  from './terrain.js';
+import { makeGround, cutFactor, levelAt, LOD_TOL, parsePolygons, fadeWidth, fadeAtGrid, askWorker, withTimeout,
+  FETCH_TIMEOUT_MS } from './terrain.js';
 import { RELIEF_KEY, RELIEF_MAX, RELIEF_STEP, initialRelief, reliefNote, reliefValue, ease } from './relief.js';
 import { howto } from './howto.js';
 import { northTurn, turnAt, needleDeg } from './north.js';
@@ -44,6 +45,7 @@ import { mountScenePlayer } from './scene-player.js';
 import { makeWeather, initialWeather, weatherHref, frameRate, WEATHER_KEY, NAMES as WEATHER_NAMES, SNOW, WET, SHIMMER,
   snowInk } from './weather.js';
 import { mountPostcard } from './postcard.js';
+import { makePosterPass, posterInks, posterColours, posterYear, nearestIndex } from './poster.js';
 
 // Colours are authored in sRGB and drawn as they are.
 THREE.ColorManagement.enabled = false;
@@ -488,7 +490,9 @@ let ferries = null;
 async function loadFerries() {
   ferryRoutes = parseFerries(await getJson(`${DATA}ferries.json`));
   if (!ferryRoutes.length) return;
-  ferries = makeFerries(THREE, { routes: ferryRoutes, uniforms, fadeGlsl: GRID_GLSL + FADE_GLSL, look: () => THEME_NAME, calm });
+  ferries = makeFerries(THREE, { routes: ferryRoutes, uniforms, fadeGlsl: GRID_GLSL + FADE_GLSL, look: () => THEME_NAME, calm,
+    camera, fadeAt: (x, z) => fadeAtGrid(uniforms.uFade.value.image?.data, { x0: uniforms.uGridO.value.x,
+      z0: uniforms.uGridO.value.y, cell: uniforms.uCell.value, nx: uniforms.uGridN.value.x, nz: uniforms.uGridN.value.y }, x, z) });
   scene.add(ferries.group);
   // The switch and About's line on the boats appear now, but a panel the visitor has open is never rebuilt under them
   // (its focus and its rows stay put): the Look panel shows the switch when it next opens (switcher open() renders),
@@ -610,8 +614,9 @@ const uniforms = {
   uFaintColor: { value: col(THEME.ui['--ink']) },
   // The weather (web/weather.js makeWeather sets them; WEATHER_GLSL and WAVE_GLSL read them): how far snow lies and
   // the rain has wetted roofs and ground, 0 to 1, the look's snow colour, the water's ripple phase (0 to 1, wrapped)
-  // and the ripples' strength (1, more in the rain).
-  uSnow: { value: 0 }, uWet: { value: 0 }, uSnowInk: { value: col(snowInk(THEME)) },
+  // and the ripples' strength (1, more in the rain). uSnowEven lays the snow evenly, at its deepest, instead of in drifts:
+  // the poster's frame only (drawShot), where drifts would print as blotches of two inks.
+  uSnow: { value: 0 }, uWet: { value: 0 }, uSnowInk: { value: col(snowInk(THEME)) }, uSnowEven: { value: 0 },
   uWave: { value: 0 }, uRipple: { value: 1 },
 };
 
@@ -655,9 +660,10 @@ const FADE_GLSL = /* glsl */`
 // from 0 to 1 as the weather switches. drift(w) is how deep the snow lies at w (world metres), 0 to 1: value noise in
 // cells of 5 m and 1.7 m, so a roof has thin patches rather than a flat white; each layer fades to its mean where its cells come
 // under about 3 px, so far roofs never shimmer. The hash has no sin(), so it stays exact 17 km from the origin. Only
-// computed while there is snow (uSnow is a uniform, so the derivatives keep their neighbours).
+// computed while there is snow (uSnow is a uniform, so the derivatives keep their neighbours). uSnowEven (the poster's
+// frame) takes the drifts away.
 const WEATHER_GLSL = /* glsl */`
-  uniform float uSnow, uWet;
+  uniform float uSnow, uWet, uSnowEven;
   uniform vec3 uSnowInk;
   float wHash(vec2 p) {
     vec3 q = fract(p.xyx * 0.1031);
@@ -673,7 +679,7 @@ const WEATHER_GLSL = /* glsl */`
     vec2 a = w / 5.0, b = w / 1.7;
     float na = mix(wNoise(a), 0.5, smoothstep(0.15, 0.4, length(fwidth(a))));
     float nb = mix(wNoise(b), 0.5, smoothstep(0.15, 0.4, length(fwidth(b))));
-    return smoothstep(0.25, 0.65, 0.7 * na + 0.3 * nb);   // mostly deep, with thinner patches, soft at their edges
+    return mix(smoothstep(0.25, 0.65, 0.7 * na + 0.3 * nb), 1.0, uSnowEven);   // mostly deep, thinner patches, soft edges
   }
   // The ground's weather: about half the roofs' snow, and darker when wet.
   vec3 weatherGround(vec3 c, vec2 w) {
@@ -1411,13 +1417,16 @@ function shardCache(dir, pick) {
 }
 const cardOf = shardCache('cards', (d, gid) => d?.[gid]);
 // Each building's stadsdel: districts.bin.gz, one byte per gid naming config.districts (0: none), fetched
-// with the first card and kept; a failed fetch is asked again by the next card.
-let districtBytes = null, districtAsked = false;
+// with the first card or the first poster and kept. A failed fetch is asked again by the next card or poster frame
+// once DISTRICT_RETRY_MS have passed: the Poster's preview asks on every frame, so without the wait a file the server
+// fails would be fetched again once a frame for as long as the preview shows.
+const DISTRICT_RETRY_MS = 15_000;
+let districtBytes = null, districtAsked = false, districtRetryAt = 0;
 function districtOf(gid) {
-  if (!districtAsked && config.districts) {
+  if (!districtAsked && config.districts && performance.now() >= districtRetryAt) {
     districtAsked = true;
     fetchGz(`${DATA}districts.bin.gz`).then(b => { districtBytes = new Uint8Array(b); refreshCard(); })
-      .catch(() => { districtAsked = false; });
+      .catch(() => { districtAsked = false; districtRetryAt = performance.now() + DISTRICT_RETRY_MS; });
   }
   const c = districtBytes?.[gid];
   return c ? config.districts[c - 1] : '';
@@ -1503,6 +1512,10 @@ function cardHtml(gid, pinned) {
 
 const card = document.getElementById('card');
 card.setAttribute('aria-label', T('card.label'));
+// A boat's tooltip (web/boat-tip.js; when it shows: Boat tooltips, below). Mounted here, as a card pinned any way
+// (a click, search, a walk's stop, a landmark) hides it: on a phone both are sheets, and the card's would lie under it.
+const boatTip = mountBoatTip(document.getElementById('boat-tip'),
+  { html: b => boatHtml(boatInfo(b.route, b.toward, T), esc) });
 let pinnedGid = -1;
 let lastPin = [0, 0];
 let focusBack = null;     // where the keyboard focus goes when a pinned card closes
@@ -1539,6 +1552,7 @@ function showCard(gid, x, y) {
 // A pinned card is a non-modal dialog: it takes the keyboard focus (its close button) when it opens, and gives it
 // back when it closes, by its button or Escape.
 function pinCard(gid, x, y) {
+  if (gid >= 0) boatTip.hide();
   if (gid >= 0 && gid !== pinnedGid) { pickSeq++; slideAt = 0; }   // a new pin (not a redraw): a street's numbers
                                                          // still coming no longer move the camera; today's photo first
   if (gid !== forcedGid && forcedGid >= 0) force(-1);   // another building or none: the search pick is let go
@@ -1604,6 +1618,7 @@ function pinCard(gid, x, y) {
 // A station's small card (web/metro.js stationCard), pinned like a building's: its close button or Escape closes it.
 function pinStation(s, x, y) {
   pinCard(-1);
+  boatTip.hide();
   document.getElementById('walk')?.classList.toggle('under-card', phone.matches);
   focusBack = document.activeElement;
   card.innerHTML = stationCard(s, T, esc);
@@ -1646,9 +1661,16 @@ addEventListener('keydown', e => {
   if (e.key === 'Escape' && !(e.target instanceof Element && e.target.closest('dialog'))) pinCard(-1);
 });
 
-// A click (not a drag) pins the building under the pointer, or clears the pin on empty ground.
-let pointer = null, dragging = false, downAt = null;
-canvas.addEventListener('pointermove', e => { pointer = [e.clientX, e.clientY]; });
+// A click (not a drag) pins the building under the pointer, or clears the pin on empty ground. A metro station's ring
+// takes it first, as before the boats (the rings are drawn over everything); then a boat under it, unless the building
+// there stands in front of it (boatOver): a tap on a touch screen shows the boat's tooltip (boatTap), and no building
+// card opens behind it.
+let pointer = null, pointerType = '', dragging = false, downAt = null;
+canvas.addEventListener('pointermove', e => {
+  pointer = [e.clientX, e.clientY]; pointerType = e.pointerType;
+  // a drag moves the map from under a hovered boat's tooltip (a click on the boat keeps it)
+  if (dragging && downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) boatTip.hide('hover');
+});
 canvas.addEventListener('pointerdown', e => {
   dragging = true; downAt = [e.clientX, e.clientY];
   if (pinnedGid < 0 && !pinnedStation) card.hidden = true;
@@ -1657,15 +1679,21 @@ canvas.addEventListener('pointerup', e => {
   dragging = false;
   if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
   if (postcard.on) return;   // while a postcard is framed a click opens nothing: the cards are out of the picture
-  const station = metroOn && !quest && !cardsLocked() ? metroLayer.stationAt(e.clientX, e.clientY, canvas.clientWidth, canvas.clientHeight) : null;
+  const station = stationUnder(e.clientX, e.clientY);
   if (station) { pinStation(station, e.clientX, e.clientY); return; }
   if (pickingStart) { walkStartClick(e.clientX, e.clientY); return; }
   const gid = pick(e.clientX, e.clientY);
+  const boat = boatOver(e.clientX, e.clientY, gid);
+  if (boat) { if (e.pointerType !== 'mouse') boatTap(boat, e.clientX, e.clientY); return; }
+  boatTip.hide('tap');       // a tap anywhere else lets a tapped boat's tooltip go
   if (quest && !solved && qStep().kind === 'find') { questClick(gid); return; }
   if (cardsLocked()) return;
   pinCard(gid === pinnedGid ? -1 : gid, e.clientX, e.clientY);
 });
-canvas.addEventListener('pointerleave', () => { pointer = null; if (pinnedGid < 0 && !pinnedStation) card.hidden = true; uniforms.uHover.value = -1; });
+canvas.addEventListener('pointerleave', () => {
+  pointer = null; if (pinnedGid < 0 && !pinnedStation) card.hidden = true; uniforms.uHover.value = -1;
+  boatTip.hide('hover');
+});
 
 // ---------- Flying to a building ----------
 let flight = null;
@@ -2884,25 +2912,110 @@ canvas.addEventListener('keydown', e => {
 // (uForce: without its tint, outline and note, a 1970s block would stand unexplained in the city of 1850), a
 // walk's route and discs and a quest's circle. The street names, and the plaques and the metro when they are switched
 // on, stay: they are the map. Only the drawing leaves them out, so closing the postcard has nothing to put back; the
-// loop draws with it while the postcard is open, so the screen shows what the picture will.
+// loop draws with it while the postcard is open, so the screen shows what the picture will. For the Poster
+// (web/poster.js) the frame goes through the poster pass, which prints it in the look's inks: those of the mode on
+// screen, with the sky as the weather has it.
 const postcardBtn = document.querySelector('.postcard-open');
-function drawShot() {
+const posterPass = makePosterPass(THREE, renderer);
+const posterMode = () => (uniforms.uMode.value === MODE.floors ? 'floors' : uniforms.uMode.value === MODE.layers ? 'layers' : 'period');
+function drawShot(kind = postcard.filter) {
   const hover = uniforms.uHover.value, selected = uniforms.uSelected.value, forced = uniforms.uForce.value;
   const outlined = highlight.mesh.visible, walk = walkGroup.visible, circle = ring.visible;
   uniforms.uHover.value = -1; uniforms.uSelected.value = -1; uniforms.uForce.value = -1;
   highlight.mesh.visible = false; walkGroup.visible = false; ring.visible = false;
-  renderer.render(scene, camera);
+  if (kind === 'poster') {
+    uniforms.uSnowEven.value = 1;
+    posterPass.render(() => renderer.render(scene, camera), posterInks({ theme: THEME, sky: skyNow(), mode: posterMode(),
+      groups: GROUP_COLORS, snow: uniforms.uSnow.value > 0 ? snowInk(THEME) : null }));
+    uniforms.uSnowEven.value = 0;
+  } else renderer.render(scene, camera);
   uniforms.uHover.value = hover; uniforms.uSelected.value = selected; uniforms.uForce.value = forced;
   highlight.mesh.visible = outlined; walkGroup.visible = walk; ring.visible = circle;
+}
+// The poster's band names the stadsdel under the middle of the view: that of the building nearest the point the camera
+// looks at (the middle of the screen), within 1.5 km, so open water further out gives the year alone. The buildings'
+// places come from attrs.bin, read once; the districts are fetched with the first poster as with the first card, and
+// the answer is kept until the point moves by 5 m (the preview asks every frame).
+let posterXZ = null, posterAt = null, posterPlace = '';
+function placeNow() {
+  if (!config.districts) return '';
+  districtOf(0);
+  if (!districtBytes) return '';
+  const t = controls.target;
+  if (posterAt && Math.hypot(t.x - posterAt[0], t.z - posterAt[1]) < 5) return posterPlace;
+  if (!posterXZ) {
+    const n = Math.floor(attrs.byteLength / config.attrStride);
+    posterXZ = new Float32Array(2 * n);
+    for (let g = 0; g < n; g++) {
+      posterXZ[2 * g] = attrs.getFloat32(g * config.attrStride + 12, true);
+      posterXZ[2 * g + 1] = attrs.getFloat32(g * config.attrStride + 16, true);
+    }
+  }
+  const g = nearestIndex(posterXZ, t.x, t.z, i => districtBytes[i] > 0, 1500);
+  posterAt = [t.x, t.z];
+  posterPlace = g >= 0 ? config.districts[districtBytes[g] - 1] : '';
+  return posterPlace;
 }
 const postcard = mountPostcard({ button: postcardBtn, bar: document.querySelector('.postcard-bar'), renderer, draw: drawShot,
   T: () => T, credit: () => cornerParts(config.attribution, LANG).map(p => p.text), typingIn,
   look: () => ({ font: THEME.font, ink: THEME.ui['--ink'], panel: THEME.ui['--panel'] }),
+  poster: () => ({ place: placeNow(), year: posterYear(uniforms.uYear.value, config.yearMax),
+    colours: posterColours(THEME, skyNow()) }),
   // not over a history scene, which has the screen (and its own Escape)
   canOpen: () => !document.body.classList.contains('scene-on'),
   // The growth film stops at the year on screen: its pause button is out of sight in the postcard, and the visitor
   // frames the city of that year (a history scene's year.set stops it the same way).
   onOpen: () => { if (playing) stopPlay(); } });
+
+// ---------- Boat tooltips ----------
+// A boat says which line it is, where the line goes and which way it is heading (web/ferries.js boatInfo, in the
+// page's language), in its tooltip (web/boat-tip.js, mounted with the card): with a mouse while it is under the pointer
+// (the loop: it wins over the building behind it, whose hover tint and card stay away; the cursor stays as it is, as a
+// click on a boat opens nothing), on a touch screen when it is tapped (boatTap). Only while the boats show, and never
+// in a quest, while a walk's start is being picked or with a postcard framed, where a click on the map means something
+// else. The pick pass cannot see the boats, so web/ferries-layer.js hitAt finds them on the screen.
+const boatsTakePointer = () => !!ferries?.visible && !quest && !pickingStart && !postcard.on;
+const boatUnderPointer = (x, y) => (boatsTakePointer() ? ferries.hitAt(x, y, canvas.clientWidth, canvas.clientHeight) : null);
+// The metro station whose ring a click at (x, y) opens, or null (the click handler's, and the loop's: no boat's
+// tooltip where a click would open a station).
+const stationUnder = (x, y) => (metroOn && !quest && !cardsLocked()
+  ? metroLayer.stationAt(x, y, canvas.clientWidth, canvas.clientHeight) : null);
+// Whether the building under (x, y) stands in front of the boat there. hitAt finds a boat by its outline on the screen,
+// whatever stands before it, while the hull is drawn depth-tested, so a building in front hides it: the pick pass is
+// asked again with the camera's far plane drawn in to the boat's depth on that pixel (ferries-layer.js depthAt), and
+// finds the building only when its wall is nearer. Exact where the buildings are drawn (relief, cuts), at the cost of
+// a second 1x1 pick while a boat and a building share the pointer.
+function buildingInFront(boat, x, y) {
+  const depth = ferries.depthAt(boat.k, x, y, canvas.clientWidth, canvas.clientHeight), far = camera.far;
+  if (!(depth > camera.near)) return false;   // the boat's near side at the camera: nothing stands before it
+  camera.far = Math.min(far, depth);         // pick's view offset updates the projection with it
+  const gid = pick(x, y);
+  camera.far = far;
+  camera.updateProjectionMatrix();
+  return gid >= 0;
+}
+// The boat the pointer is on at (x, y), where the pick pass found building gid (-1 for none): the boat under it, unless
+// that building stands in front of it; else null.
+function boatOver(x, y, gid) {
+  const boat = boatUnderPointer(x, y);
+  return boat && (gid < 0 || !buildingInFront(boat, x, y)) ? boat : null;
+}
+// A tap: on a phone the tooltip is a sheet where the building card's would be, so a pinned card closes first.
+function boatTap(boat, x, y) {
+  if (phone.matches) pinCard(-1);
+  boatTip.tap(boat, x, y);
+}
+// Every few frames: a tapped boat's tooltip follows it (its direction turns at a pier) and goes when the boat sails off
+// the screen or out of sight, or the boats hide; a hovered one goes with the boats.
+function stepBoatTip() {
+  const t = boatTip.shown;
+  if (!t) return;
+  if (!boatsTakePointer()) { boatTip.hide(); return; }
+  if (t.mode !== 'tap') return;
+  const w = canvas.clientWidth, h = canvas.clientHeight, hull = ferries.hullOnScreen(t.k, w, h);
+  if (!hull || hull.c[0] < 0 || hull.c[0] > w || hull.c[1] < 0 || hull.c[1] > h) { boatTip.hide(); return; }
+  boatTip.follow(ferries.boatOf(t.k), hull.c);
+}
 
 // ---------- Loop ----------
 function resize() {
@@ -3238,11 +3351,24 @@ renderer.setAnimationLoop(now => {
     drawHist();
   }
   if (pointer && !dragging && frame % 3 === 0 && !postcard.on) {
-    const gid = pick(pointer[0], pointer[1]);
-    uniforms.uHover.value = gid;
-    showCard(gid, pointer[0], pointer[1]);
+    // a boat under a mouse pointer (its tooltip), unless the building there stands in front of it or a click there
+    // would open a station; else the building, as before
+    const [x, y] = pointer, gid = pick(x, y);
+    const boat = pointerType === 'mouse' && !stationUnder(x, y) ? boatOver(x, y, gid) : null;
+    if (boat) {
+      uniforms.uHover.value = -1;
+      showCard(-1, x, y);
+      boatTip.hover(boat, x, y);
+    } else {
+      boatTip.hide('hover');
+      uniforms.uHover.value = gid;
+      showCard(gid, x, y);
+    }
   }
+  if (frame % 3 === 0) stepBoatTip();
   if (postcard.on) drawShot(); else renderer.render(scene, camera);
+  // The poster's copy of the frame is as large as the screen's buffer: let go once the Poster is not on screen.
+  if (!postcard.on || postcard.filter !== 'poster') posterPass.release();
   if (!deferredRequested && meshes.length) {
     deferredRequested = true;
     const base = loadBase();
@@ -3271,8 +3397,9 @@ const scenePlayer = mountScenePlayer({ THREE, scene: storyGroup, faint: setFaint
     restore: ([from, to]) => { stopPlay(); uniforms.uYearFrom.value = from; uniforms.uYear.value = to; drawHist(); } } });
 
 window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, setMetro, get metroOn() { return metroOn; }, get storyLayers() { return [...storyLayers]; }, metroLayer,
-  get ferries() { return ferries; }, setBoats, get boatsOn() { return boatsOn; }, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
+  get ferries() { return ferries; }, setBoats, get boatTip() { return boatTip.shown; }, get boatsOn() { return boatsOn; }, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
   surfaceAt, setRelief, chooseRelief, get relief() { return relief; }, terrain: () => ({ state: terrainState, source: TERRAIN?.source, relief: uRelief.value, cutK: uCutK.value, chunks: chunkMeshes.length }),
   get timelineLabels() { return placedLabels; }, get pinned() { return pinnedGid; }, districtOf,
   get forced() { return forcedGid; }, force, scene, highlight: () => highlight.state(),
-  get weather() { return weather.state(); }, pauseEffects: on => weather.pause(on), skyNow, postcard };
+  get weather() { return weather.state(); }, pauseEffects: on => weather.pause(on), skyNow, postcard,
+  posterPass: () => posterPass.state(), placeNow };

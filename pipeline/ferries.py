@@ -26,6 +26,18 @@ of Stockholm. Paths are simplified to SIMPLIFY_M (their points moved onto the ed
 rounded to 0.1 m; every point lies on the water, and no segment leaves the map (they cross land only under a bridge or
 at a pier). The boats are illustration: real routes, not live positions.
 
+What the viewer says about a boat (its tooltip, web/ferries.js boatInfo), with each route, the names as OSM has them:
+  - a city boat's name, its title: an SL line's own (Djurgårdsfärjan 82, Pendelbåt 80), a line without a number by the
+    one of CITY_LINES its tags name (ferry_name: Movitz, whose OSM name is only its route);
+  - a city boat's stops, in order along its path (stops): the chosen relation's stop and platform members that are
+    named nodes (the query outputs them), placed along its line (along: OSM lists Båt 89's and Pendelbåt 84's stops
+    out of order), a stop and its platform of one name once; else its from, via and to tags; else its name's
+    "X: A - B - C". The whole line's, so a boat on a route cut at the map's edge still says where it goes (Tappström);
+  - a Baltic ship's home port (home, its terminal's end of the relations: "Stockholm") and destinations (dests, each
+    {to, via}: Turku via Mariehamn or Långnäs, Helsinki via Mariehamn) from all the relations of its route, by their
+    from, via and to tags, else their names' "Stockholm => Mariehamn => Turku"; the stops' own names there are the
+    terminals' ("Viking Line: Stadsgården, Stockholm"), not the ports'. And its operator when OSM has one.
+
     uv run python -m pipeline.ferries --base web/data/<version>              # print the routes
     uv run python -m pipeline.ferries --base web/data/<version> --dest PATH  # and write them as ferries.json
 (the routes come from the cache when it matches the query, else from one Overpass query; --refresh asks again)
@@ -41,6 +53,7 @@ from pathlib import Path
 
 import numpy as np
 import shapely
+import shapely.ops
 
 from . import city, io
 from .fetch import post_query_retrying
@@ -61,8 +74,14 @@ CITY_LINES = ("Sjöstadstrafiken", "Cityline", "Movitz")   # named in the name, 
 SHIPS = ("Viking Line", "Silja Line", "Tallink")         # named before the name's colon, or in the operator
 GENERIC = {"båt", "färja", "pendelbåt", "boat", "ferry"}  # a name head that says nothing ("Båt: Riddarholmen - …")
 NOT_ROUTE = ("stop", "platform")                         # member roles (with _entry_only, _exit_only) of no way sailed
+STOP_NODES = {"stop_position", "platform", "station"}     # public_transport of a stop node whose role was left empty
+                                                         # (Movitz's Riddarholmen, Båt 89's Jungfrusund on 2026-10-20)
+STOP_SLACK_M = 100.0           # a stop is looked for on its line after the one before it while it lies at most this much
+                               # further from that part than from the whole line (a pier beside the lane; along)
 LINE_REF = re.compile(r"\d{1,3}[A-Z]?")
 ARROWS = re.compile(r"\s*(?:<=>|<->|=>|->|→|⇒|↔)\s*")
+LEGS = re.compile(r"\s*(?:<=>|<->|=>|->|→|⇒|↔)\s*|\s+[-–]\s+")    # between the places of a name ("A - B", "A => B")
+PLACE_HYPHEN = re.compile(r"\s+-\s+")                    # a hyphen with spaces round it, between two places
 
 SIMPLIFY_M = 4.0               # as s16_metro
 EDGE_SIMPLIFY_M = 40.0         # a path's points moved onto the map's edge are simplified this much, on the water: the
@@ -103,13 +122,23 @@ def line_ref(tags: dict) -> str:
 
 def clean_name(tags: dict) -> str:
     """The name without its direction: the head of a PTv2 name ('Viking Line: Stockholm => Mariehamn => Turku' ->
-    'Viking Line'), or, when the head is a bare word such as 'Båt', the rest; the ref when there is no name; arrows
-    become dashes."""
+    'Viking Line'), or, when the head is a bare word such as 'Båt', the rest; the ref when there is no name; arrows,
+    and a hyphen between two places ('A - B'), become the route line's dashes (web/ferries.js routeLine)."""
     raw = (tags.get("name") or tags.get("ref") or "").strip()
     head, colon, rest = raw.partition(":")
     if colon:
         raw = rest if head.strip().lower() in GENERIC else head
-    return ARROWS.sub(" – ", raw).strip()
+    return PLACE_HYPHEN.sub(" – ", ARROWS.sub(" – ", raw)).strip()
+
+
+def ferry_name(tags: dict) -> str:
+    """A city boat's name, the tooltip's title (web/ferries.js boatTitle): an SL line's from its name ('Djurgårdsfärjan
+    82', clean_name); a line without a number by the one of CITY_LINES its tags name, as its name is often only its
+    route ('Båt: Riddarholmen - Solna Strand', run by E/S Movitz, is Movitz), which the tooltip says below it."""
+    if line_ref(tags):
+        return clean_name(tags)
+    words = " ".join(tags.get(k, "") for k in ("name", "ref", "operator", "network")).lower()
+    return next((c for c in CITY_LINES if c.lower() in words), clean_name(tags))
 
 
 def ship_line(tags: dict) -> str | None:
@@ -166,29 +195,131 @@ def chain(parts: list[np.ndarray]) -> np.ndarray:
     return np.concatenate(out)
 
 
+def _stop(member: dict, tags: dict) -> bool:
+    """Whether a relation's member is one of its stops: a node in a stop or platform role, or in none when its own tags
+    say it is a stop (STOP_NODES, a ferry terminal)."""
+    if member["type"] != "node":
+        return False
+    role = member.get("role", "")
+    return role.startswith(NOT_ROUTE) or (role == "" and (tags.get("public_transport") in STOP_NODES
+                                                          or tags.get("amenity") == "ferry_terminal"))
+
+
 def lines(elements: list[dict], project=lonlat_to_3011) -> list[dict]:
-    """The chosen routes as lines: {id, kind, ref, name, group, coords (local metres)}, in element order. `group` is
-    what makes two of them one route (the line, or a ship's line, ship_line, which is also its name; the terminal is
-    added later)."""
+    """The chosen routes as lines: {id, kind, ref, name, group, coords (local metres), tags, stops}, in element order.
+    `group` is what makes two of them one route (the line, or a ship's line, ship_line, which is also its name; the
+    terminal is added later). `stops`: a relation's named stop nodes (_stop) as [(name, (x, z))], in member order; the
+    query outputs the nodes with their tags, and a node it did not (an older cache) gives no name."""
     out, in_relation = [], set()
     rels = [e for e in elements if e["type"] == "relation"]
+    nodes = {e["id"]: e.get("tags", {}) for e in elements if e["type"] == "node"}
     for r in rels:
         in_relation.update(m["ref"] for m in r.get("members", []) if m["type"] == "way")
+
+    def stops(members):
+        found = [(nodes.get(m["ref"], {}).get("name", "").strip(), m) for m in members
+                 if _stop(m, nodes.get(m["ref"], {})) and m.get("lat") is not None and m.get("lon") is not None]
+        found = [(n, m) for n, m in found if n]
+        return [(n, tuple(_local([m], project)[0])) for n, m in found]
     candidates = [(f"r{r['id']}", r.get("tags", {}),
                    [m.get("geometry") or [] for m in r.get("members", [])
-                    if m["type"] == "way" and not m.get("role", "").startswith(NOT_ROUTE)]) for r in rels]
-    candidates += [(f"w{w['id']}", w.get("tags", {}), [w.get("geometry") or []])
+                    if m["type"] == "way" and not m.get("role", "").startswith(NOT_ROUTE)],
+                   stops(r.get("members", []))) for r in rels]
+    candidates += [(f"w{w['id']}", w.get("tags", {}), [w.get("geometry") or []], [])
                    for w in elements if w["type"] == "way" and w["id"] not in in_relation]
-    for rid, tags, geoms in candidates:
+    for rid, tags, geoms, named in candidates:
         k = kind(tags)
         if k is None:
             continue
         coords = chain([_local(g, project) for g in geoms])
         if len(coords) < 2:
             continue
-        ref, name = ("", ship_line(tags)) if k == "ship" else (line_ref(tags), clean_name(tags))
-        out.append({"id": rid, "kind": k, "ref": ref, "name": name, "group": ref or name, "coords": coords})
+        ref, name = ("", ship_line(tags)) if k == "ship" else (line_ref(tags), ferry_name(tags))
+        out.append({"id": rid, "kind": k, "ref": ref, "name": name, "group": ref or name, "coords": coords,
+                    "tags": tags, "stops": named})
     return out
+
+
+# ---- what a boat's tooltip says ------------------------------------------------------------------------------------
+
+def _names(value) -> list[str]:
+    """A tag's names, trimmed: "A;B" is two."""
+    return [n.strip() for n in str(value or "").split(";") if n.strip()]
+
+
+def places(tags: dict) -> list[str]:
+    """A route's places from its tags, in its direction: from, via and to; else its name's "X: A - B - C" (or
+    "A - B", "A => B"), the head before a colon left out; [] when that gives fewer than two."""
+    if _names(tags.get("from")) and _names(tags.get("to")):
+        return _names(tags.get("from")) + _names(tags.get("via")) + _names(tags.get("to"))
+    raw = tags.get("name", "")
+    _, colon, rest = raw.partition(":")
+    parts = [p.strip() for p in LEGS.split(rest if colon else raw) if p.strip()]
+    return parts if len(parts) >= 2 else []
+
+
+def along(line, pts) -> list[float]:
+    """Each point's place along a line, metres from its start, in the order given. Each is looked for on the line
+    after the point before it, so a loop's last stop lands at its end and a pier called at twice is passed twice; and
+    anywhere on the line when it lies more than STOP_SLACK_M further from that part than from the whole line (a
+    relation that lists its stops out of order)."""
+    ls = shapely.LineString(np.asarray(line, dtype=float))
+    out, prev = [], 0.0
+    for p in pts:
+        pt = shapely.Point(p)
+        here = ls.project(pt)
+        if ls.length - prev > 1e-6:
+            rest = shapely.ops.substring(ls, prev, ls.length)
+            if rest.geom_type == "LineString" and rest.distance(pt) <= ls.distance(pt) + STOP_SLACK_M:
+                here = prev + rest.project(pt)
+        out.append(float(here))
+        prev = here
+    return out
+
+
+def stop_names(line, stops: list) -> list[str]:
+    """A line's stops [(name, (x, z))] as names in order along it (along; a tie keeps the relation's order), a name
+    straight after itself once (a stop and its platform, a stop listed twice). [] for fewer than two."""
+    if len(line) < 2 or not stops:
+        return []
+    at = along(line, [xy for _, xy in stops])
+    out = []
+    for _, name in sorted(zip(at, (n for n, _ in stops)), key=lambda t: t[0]):
+        if not out or out[-1] != name:
+            out.append(name)
+    return out if len(out) >= 2 else []
+
+
+def _by_count(names: list[str]) -> list[str]:
+    """Distinct names, the most often named first, then the first named."""
+    count = {}
+    for n in names:
+        count[n] = count.get(n, 0) + 1
+    return sorted(count, key=lambda n: -count[n])                  # stable: a tie keeps the first named first
+
+
+def ship_ports(legs: list[tuple[list[str], bool]]) -> tuple[str, list[dict]]:
+    """A ship route's home port and its destinations, from its relations' places (places) and, for each, whether its
+    terminal in the map is at the relation's start (it leaves from here): home is that end, the destination the other
+    and the vias between, from home outwards. ("", []) when no relation names two places. The destinations as {to,
+    via}, the most sailed first (_by_count), each with its vias the same way."""
+    homes, dests, vias = [], [], {}
+    for names, leaves in legs:
+        if len(names) < 2:
+            continue
+        names = names if leaves else names[::-1]
+        homes.append(names[0])
+        dests.append(names[-1])
+        vias.setdefault(names[-1], []).extend(names[1:-1])
+    if not dests:
+        return "", []
+    return _by_count(homes)[0], [{"to": d, "via": _by_count(vias[d])} for d in _by_count(dests)]
+
+
+def _leaves(line, terminal) -> bool:
+    """Whether a relation's terminal in the map is in the first half of its line: the relation leaves from it."""
+    ls = shapely.LineString(np.asarray(line, dtype=float))
+    return ls.project(shapely.Point(terminal)) <= ls.length / 2
 
 
 # ---- on the water --------------------------------------------------------------------------------------------------
@@ -438,14 +569,17 @@ def _terminal(r: dict):
 def routes(elements: list[dict], water, land, project=lonlat_to_3011) -> list[dict]:
     """The routes for ferries.json: one per line (ferries) or per ship line and terminal (ships), each the best of its
     relations' stretches on water (on_water's choice, a ship's lane moved onto the edge from up to SHIP_SNAP_M out),
-    the path starting at its pier when only one end is a pier."""
+    the path starting at its pier when only one end is a pier. A city boat's route has its best relation's stops in
+    the path's direction (stop_names, else places) when it has two; a ship's its home port and destinations from all
+    its relations (ship_ports) and its operator, when OSM has them."""
     groups: dict = {}
     ground, wet = the_map(water, land), the_water(water)
     for ln in lines(elements, project):
         w = on_water(ln["coords"], water, land, ground, SHIP_SNAP_M if ln["kind"] == "ship" else SNAP_M)
         if w is None:
             continue
-        r = {**ln, **w}
+        # the stops along the whole line, before its coords become the stretch on the water (in the same direction)
+        r = {**ln, **w, "line": ln["coords"], "names": stop_names(ln["coords"], ln["stops"]) or places(ln["tags"])}
         key = (r["kind"], r["group"])
         if r["kind"] == "ship":
             t = _terminal(r)
@@ -456,11 +590,23 @@ def routes(elements: list[dict], water, land, project=lonlat_to_3011) -> list[di
     out = []
     for members in groups.values():
         best = max(members, key=lambda r: ("pier" in r["ends"], round(r["length"], 1), -int(r["id"][1:])))
-        coords, ends, moved = best["coords"], list(best["ends"]), best["moved"]
+        coords, ends, moved, names = best["coords"], list(best["ends"]), best["moved"], best["names"]
         if ends == ["edge", "pier"]:
-            coords, ends, moved = coords[::-1], ends[::-1], moved[::-1]
-        out.append({"id": best["id"], "ref": best["ref"], "name": best["name"], "kind": best["kind"], "ends": ends,
-                    "path": simplify(coords, ground=ground, moved=moved, wet=wet)})
+            coords, ends, moved, names = coords[::-1], ends[::-1], moved[::-1], names[::-1]
+        route = {"id": best["id"], "ref": best["ref"], "name": best["name"], "kind": best["kind"], "ends": ends,
+                 "path": simplify(coords, ground=ground, moved=moved, wet=wet)}
+        if best["kind"] == "ferry" and names:
+            route["stops"] = names
+        if best["kind"] == "ship":
+            # every relation of the lane, the ports from their tags (their stops are named after the terminals)
+            home, dests = ship_ports([(places(r["tags"]), _leaves(r["line"], _terminal(r))) for r in members])
+            if dests:
+                route.update(home=home, dests=dests)
+            operator = next((r["tags"]["operator"].strip() for r in [best, *members]
+                             if r["tags"].get("operator", "").strip()), "")
+            if operator:
+                route["operator"] = operator
+        out.append(route)
     return sorted(out, key=lambda r: (r["kind"] != "ferry", r["name"], r["id"]))
 
 
@@ -492,6 +638,11 @@ def main(argv: list[str] | None = None) -> None:
         print(f"{r['id']:>11} {r['kind']:5} {r['ref'] or '-':>4} {r['name'][:28]:28} {'/'.join(r['ends']):10} "
               f"{len(r['path']):4} pts {length(r['path']):7.0f} m  off water: {off_water(r['path'], water)}  "
               f"off map: {off_map(r['path'], ground)}")
+        if r.get("stops"):
+            print(f"{'':12}stops: {' - '.join(r['stops'])}")
+        for d in r.get("dests", []):
+            print(f"{'':12}{r['home']} => {' / '.join(d['via']) or '-'} => {d['to']}"
+                  f"{'  (' + r['operator'] + ')' if r.get('operator') else ''}")
     if args.dest:
         io.write_json(args.dest, out)
         print(f"ferries: {len(out['routes'])} routes -> {args.dest}")

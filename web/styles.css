@@ -827,6 +827,27 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 #card .metro-line { display: inline-flex; align-items: center; gap: 6px; }
 #card .metro-line i { width: 14px; height: 4px; border-radius: 2px; }
 #card .metro-formerly { color: var(--muted); }
+/* A boat's tooltip (web/boat-tip.js): the hover card's paper, as small as its lines, above a pinned card; on a phone the
+   card's sheet (the .card rules above), full width, at least as tall as the timeline and the modes under the legend's
+   sheet (its 156 px), so its edge never cuts through the modes' labels, its shadow cast upwards as the Look sheet's.
+   Its tokens are the look's, so it reads in every look. */
+.card.boat-tip { width: auto; max-width: 300px; padding: 10px 14px 9px; z-index: 11; }
+.boat-tip p { margin: 0; line-height: 1.4; }
+.boat-tip .boat-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+.boat-tip .boat-route { margin-top: 3px; }
+.boat-tip .boat-heading { margin-top: 3px; font-weight: 600; }
+.boat-tip .boat-note { margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+/* A tapped one takes taps (a tap on it closes it, boat-tip.js), so none reaches the modes, the timeline or the map
+   under it; a hovered one lets the pointer through, as the hover card. */
+.card.boat-tip.tapped { pointer-events: auto; }
+@media (max-width: 720px) {
+  .card.boat-tip { max-width: none; min-height: calc(env(safe-area-inset-bottom, 0px) + 156px);
+    padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 14px); box-shadow: 0 -8px 30px rgba(30, 40, 50, .22); }
+  .boat-tip .boat-title { font-size: 16px; }
+  /* The sheet stands in for the legend's handle and a walk's bar just above it while it shows, as a long route's
+     sheet (Pendelbåt 80's ten stops on four lines at 360 px) would cut through them. */
+  body:has(> #boat-tip:not([hidden])) :is(.panel, .walk) { visibility: hidden; }
+}
 /* On a narrow phone the corner's row (search, north, Look, Stories, About, EN | SV) wraps right-aligned onto a second
    line rather than pushing the first buttons off the left edge (e2e/credits.spec.mjs checks 390 and 360 px). The 18 px
    between the lines keeps the touch bands apart (Look's reaches 8 px down, About's 10 px up), so a tap just under Look
@@ -843,16 +864,23 @@ body.postcard .crosshair { visibility: hidden; }
 /* "Building the city N%" while the tiles still stream in would sit in the middle of the frame and never in the picture.
    A failed start or a lost map (role="alert", app.js loadFailed) still shows: it says why the map is blank. */
 body.postcard .loading:not([role="alert"]) { visibility: hidden; }
-/* The preview: tilt-shift's two blurred bands (each a backdrop blur through its gradient mask, set in postcard.js) and
-   sepia's vignette, over the map and under the bar; the map takes the pointer through them. */
-.pc-tilt, .pc-tilt > i, .pc-vignette { position: fixed; inset: 0; pointer-events: none; }
-.pc-tilt > i { display: block; }
-/* The bar: the filters, Save and Close in one row at the bottom centre; a phone held upright stacks them in two. It is
-   centred by its margins between the gutters, as wide as its row: with left: 50% and a transform it could only have
-   been as wide as the half of the screen right of the middle, and wrapped into two rows on a phone held sideways (37%
-   of the frame at 667 × 375) or with "Share image" showing. */
+/* The preview: sepia's vignette, and the poster's dress (its head and title, band and paper, drawn in postcard.js on a
+   canvas as large as the map's), over the map and under the bar; the map takes the pointer through them. */
+.pc-vignette, .pc-poster { position: fixed; inset: 0; pointer-events: none; }
+.pc-poster { width: 100%; height: 100%; }
+/* While the map has the keyboard, its ring is drawn again on the overlay that previews: the map's own ring lies under
+   the overlay (the poster's paper covers it whole) and takes the map's CSS filter (sepia's), and in the postcard the
+   ring is the only sign of that focus, the crosshair being set aside. Both overlays come after the map in the page. */
+#scene:focus-visible ~ .pc-poster, #scene:focus-visible ~ .pc-vignette {
+  outline: 2px solid var(--accent); outline-offset: -4px; }
+/* The bar: the filters, Download and Close in one row at the bottom centre; a phone held upright stacks them in two.
+   It is centred by its margins between the gutters, as wide as its row: with left: 50% and a transform it could only
+   have been as wide as the half of the screen right of the middle, and wrapped into two rows on a phone held sideways
+   (37% of the frame at 667 × 375) or with "Share image" showing. With the Poster on it stands on the poster's band
+   (--pc-lift, set in postcard.js), so the band's place and year show whole as the map moves, where the screen keeps
+   room for the map (not on a phone held sideways). */
 .postcard-bar { position: fixed; z-index: 20; left: var(--gutter); right: var(--gutter); margin-inline: auto;
-  width: fit-content; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--gutter));
+  width: fit-content; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--gutter) + var(--pc-lift, 0px));
   padding: 8px 10px 10px; border-radius: 14px; background: var(--panel); color: var(--ink);
   box-shadow: 0 6px 28px rgba(30, 40, 50, .22); }
 .pc-hint { margin: 0 4px 8px; color: var(--muted); font-size: 12px; line-height: 1.35; text-align: center; }

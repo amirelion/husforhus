@@ -125,6 +125,19 @@ export function makeGround(T) {
   return { tAt: (x, z) => bil(0, x, z), cutAt: (x, z) => bil(1, x, z), surfaceAt: (x, z, R, K) => R * bil(0, x, z) - K * bil(1, x, z) };
 }
 
+// The edge fade at world (x, z), 0 to 1, as the shaders' fadeAt reads its texture (app.js FADE_GLSL: linear filtering
+// between the nodes, clamped at the grid's edge): fade is fadeField's bytes, grid {x0, z0, cell, nx, nz}. 1 without a
+// grid (no terrain: the texture is one white texel). The boats' hit test uses it (ferries-layer.js), so a boat drawn
+// into the haze at the map's edge cannot be pointed at.
+export function fadeAtGrid(fade, grid, x, z) {
+  const { x0, z0, cell, nx, nz } = grid || {};
+  if (!fade || !(nx >= 2 && nz >= 2) || fade.length < nx * nz || !(cell > 0)) return 1;
+  const at = (i, j) => fade[Math.min(nz - 1, Math.max(0, j)) * nx + Math.min(nx - 1, Math.max(0, i))];
+  const gx = (x - x0) / cell, gz = (z - z0) / cell, fx = Math.floor(gx), fz = Math.floor(gz), tx = gx - fx, tz = gz - fz;
+  const top = at(fx, fz) * (1 - tx) + at(fx + 1, fz) * tx, bottom = at(fx, fz + 1) * (1 - tx) + at(fx + 1, fz + 1) * tx;
+  return (top * (1 - tz) + bottom * tz) / 255;
+}
+
 // The texture the shaders read heights from: two floats per node, (t, cut), row-major (an RG32F DataTexture).
 export function heightTexture(T) {
   const out = new Float32Array(T.nx * T.nz * 2);

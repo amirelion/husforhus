@@ -3,8 +3,10 @@
 // illustration, not live positions: a boat's place is a pure function of the time, so a test can ask where every boat is
 // at any second. Each boat goes back and forth along its route, slows into a pier and stops there a while, turns round,
 // and at an "edge" end (the lane leaves the map's water) fades out, waits out of sight and fades in again.
+// Hovered (or tapped on a touch screen), a boat says which line it is, where the line goes and which way it is heading
+// (boatInfo, from ferries.json's optional stops, home, dests and operator; boatUnder finds it on the screen).
 // Pure functions, tested by node --test (web/test/ferries.test.mjs); web/ferries-layer.js draws the boats and
-// web/app.js decides when they show (on by default, at Today only).
+// web/app.js decides when they show (on by default, at Today only) and shows the tooltip.
 
 // On by default, remembered per device (hfh-boats: 'on' | 'off'), never in the URL.
 export const BOATS_KEY = 'hfh-boats';
@@ -30,7 +32,11 @@ export const TWO_FERRIES_M = 1000; // a ferry line this long or longer has two b
 // ---------- Routes ----------
 // ferries.json (version 1) -> the routes the map can sail: each with its path as a polyline (cumulative lengths), its
 // two ends ('pier' or 'edge') and its kind. A route of an unknown kind, or with fewer than two points, is left out, so
-// a newer file cannot break the viewer.
+// a newer file cannot break the viewer. What the tooltip says comes along when the file has it, names only (trimmed,
+// none empty): a ferry's stops (two or more, in the path's direction), a ship's home port, its destinations ({to,
+// via}) and its operator; an older file without them gives [] and ''.
+const nameOf = v => (typeof v === 'string' ? v.trim() : '');
+const namesOf = a => (Array.isArray(a) ? a.map(nameOf).filter(Boolean) : []);
 export function parseFerries(data) {
   if (!data || data.version !== 1 || !Array.isArray(data.routes)) return [];
   const out = [];
@@ -42,8 +48,12 @@ export function parseFerries(data) {
     const at = [0];
     for (let i = 1; i < pts.length; i++) at.push(at[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
     const ends = [0, 1].map(i => (r.ends?.[i] === 'edge' ? 'edge' : 'pier'));
+    const stops = namesOf(r.stops);
+    const dests = (Array.isArray(r.dests) ? r.dests : []).filter(d => d && nameOf(d.to))
+      .map(d => ({ to: nameOf(d.to), via: namesOf(d.via) }));
     out.push({ id: String(r.id ?? out.length), ref: String(r.ref ?? ''), name: String(r.name ?? ''), kind: r.kind, ends,
-      pts, at, length: at[at.length - 1] });
+      pts, at, length: at[at.length - 1], stops: stops.length >= 2 ? stops : [], home: nameOf(r.home), dests,
+      operator: nameOf(r.operator) });
   }
   return out;
 }
@@ -114,8 +124,10 @@ export function runTime(s, L, v, r0, r1) {
 const smooth = k => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
 
 // Boat i of a route at time t (seconds): where it is ({x, z}), where its bow points (heading, the angle of its
-// direction, atan2 of z over x), how much of it shows (alpha: 0 out of sight past an edge end, fading near one) and
-// its speed as a share of its top speed (0 at a stop: no wake). scale: how much larger than life the layer draws it
+// direction, atan2 of z over x), how much of it shows (alpha: 0 out of sight past an edge end, fading near one), its
+// speed as a share of its top speed (0 at a stop: no wake) and the end of the route it is heading for (toward: 1 on
+// the run out along the path, 0 on the run back; at a stop, the next run's, so a ferry at its pier says where it goes
+// next). scale: how much larger than life the layer draws it
 // (boatScale); its keep-right offset grows with it, so two ferries drawn four times as wide still pass apart.
 export function boatAt(plan, i, t, scale = 1) {
   const { route, kind, ramps, waits, sail, period } = plan, L = route.length;
@@ -127,14 +139,14 @@ export function boatAt(plan, i, t, scale = 1) {
     const [x, z] = pointAlong(route, s), heading = back ? fwd + Math.PI : fwd;
     // keep to its own right of the line, less near the ends, so it still meets its pier
     const off = kind.offset * scale * Math.min(1, s / 100, (L - s) / 100), dx = Math.cos(heading), dz = Math.sin(heading);
-    return { x: x - dz * off, z: z + dx * off, heading, alpha: fade(s), speed };
+    return { x: x - dz * off, z: z + dx * off, heading, alpha: fade(s), speed, toward: back ? 0 : 1 };
   };
   // a stop at end e (0 or 1): at a pier it turns round in the middle of the stop; past an edge it is out of sight
   const stop = (e, k) => {
     const s = e ? L : 0, arrive = headingAt(route, s, 2 * kind.length) + (e ? 0 : Math.PI);
     const turn = smooth((k - 0.2) / 0.6);
     const [x, z] = pointAlong(route, s);
-    return { x, z, heading: arrive + Math.PI * turn, alpha: route.ends[e] === 'edge' ? 0 : 1, speed: 0 };
+    return { x, z, heading: arrive + Math.PI * turn, alpha: route.ends[e] === 'edge' ? 0 : 1, speed: 0, toward: 1 - e };
   };
   if (u < waits[0]) return stop(0, u / waits[0]);
   u -= waits[0];
@@ -165,6 +177,102 @@ export function calmTime(plan, i) {
 // map is zoomed out (about 0.8% of the distance), never more than four times its size, and true size up close.
 export const MAX_BOOST = 4;
 export const boatScale = (dist, length) => Math.min(MAX_BOOST, Math.max(1, dist * 0.008 / length));
+
+// ---------- What a boat says ----------
+// The tooltip (web/app.js shows it): a title, the line's route, which way this boat is heading and a note that the
+// boat is not live. Names are OSM's (s17_ferries); the phrases are web/i18n's boat.*. A route without stops or
+// destinations (an older ferries.json) says its title and the note only.
+
+// The ports OpenStreetMap's from, via and to tags name in Finnish or English, as Swedish names them (OSM's own Swedish
+// names of these routes, name:sv, say Åbo and Helsingfors); every other place (Mariehamn, Långnäs, Tallinn, the
+// city's piers) reads the same in both languages.
+export const SV_PLACES = { Turku: 'Åbo', Helsinki: 'Helsingfors', Naantali: 'Nådendal', Hanko: 'Hangö' };
+export const placeName = (name, lang) => (lang === 'sv' && SV_PLACES[name]) || name;
+
+// The places a boat is heading for, at the end of its path it sails to (toward, boatAt), in the language lang: a
+// ferry's last stop or its first; a ship sailing out past the map's edge, its destinations, and coming in to its pier,
+// its home port. [] when the route does not say, and for a loop (Sjöstadstrafiken, Henriksdal round to Henriksdal),
+// which ends where it began whichever way it sails, so its first and last stops say nothing about its direction.
+export function headingFor(route, toward, lang = 'en') {
+  const at = name => placeName(name, lang);
+  if (route.kind === 'ship') return route.ends[toward] === 'edge' ? route.dests.map(d => at(d.to)) : route.home ? [at(route.home)] : [];
+  const s = route.stops;
+  return s.length && s[0] !== s[s.length - 1] ? [at(toward ? s[s.length - 1] : s[0])] : [];
+}
+
+// The line's route in one line, in the language lang: a ferry's stops; a ship's home port, the ports on the way to
+// every one of its destinations, and the destinations ("Stockholm – Mariehamn – Turku, Helsinki"). '' when the route
+// does not say.
+export function routeLine(route, lang = 'en') {
+  const at = name => placeName(name, lang);
+  if (route.kind !== 'ship') return route.stops.map(at).join(' – ');
+  if (!route.dests.length) return '';
+  const shared = route.dests[0].via.filter(v => route.dests.every(d => d.via.includes(v)));
+  return [route.home, ...shared].filter(Boolean).map(at).concat(route.dests.map(d => at(d.to)).join(', ')).join(' – ');
+}
+
+// A ferry's name that only says what the boat is (the words of pipeline/ferries.py's GENERIC): "Båt 89" is line 89,
+// the number says it all; SL's commuter boats' "Pendelbåt 80" is said in the page's language (boat.commuter).
+const GENERIC = new Set(['båt', 'färja', 'boat', 'ferry']);
+const COMMUTER = new Set(['pendelbåt', 'commuter boat']);
+
+// The title: a ferry's name and line number ("Djurgårdsfärjan · line 82"; the name loses the number it ends with, and
+// a name that is only a word for a boat goes: "Line 89"), a line without a number by its name; a ship by its operator,
+// else its line's name.
+export function boatTitle(route, T) {
+  if (route.kind === 'ship') return route.operator || route.name;
+  if (!route.ref) return route.name;
+  const tail = ` ${route.ref}`;
+  let base = route.name === route.ref ? '' : route.name.endsWith(tail) ? route.name.slice(0, -tail.length).trim() : route.name;
+  if (GENERIC.has(base.toLowerCase())) base = '';
+  else if (COMMUTER.has(base.toLowerCase())) base = T('boat.commuter');
+  return base ? T('boat.line', { name: base, ref: route.ref }) : T('boat.lineOnly', { ref: route.ref });
+}
+
+// "Turku or Helsinki" in the page's language (a ship sails out to one of them); a plain list where Intl cannot.
+export function orList(names, lang) {
+  try { return new Intl.ListFormat(lang === 'sv' ? 'sv' : 'en', { type: 'disjunction' }).format(names); } catch {
+    return names.join(', ');
+  }
+}
+
+// Everything the tooltip says about a boat on a route heading for end `toward` (boatAt), in T's language: {title,
+// route, heading, note}, '' where the route does not say.
+export function boatInfo(route, toward, T) {
+  const places = headingFor(route, toward, T.lang);
+  return { title: boatTitle(route, T), route: routeLine(route, T.lang),
+    heading: places.length ? T('boat.heading', { place: orList(places, T.lang) }) : '', note: T('boat.note') };
+}
+
+// The tooltip's HTML, each line escaped (esc), the empty ones left out.
+export const boatHtml = (info, esc) => [['boat-title', info.title], ['boat-route', info.route],
+  ['boat-heading', info.heading], ['boat-note', info.note]].filter(([, t]) => t)
+  .map(([cls, t]) => `<p class="${cls}">${esc(t)}</p>`).join('');
+
+// ---------- Under the pointer ----------
+// The pick pass leaves the boats out (it reads a building id from a pixel), so a boat is found on the screen instead,
+// as the metro's stations are: ferries-layer.js hullOnScreen projects each boat it draws to a capsule, its hull's centre
+// line from stern to bow and a reach round it (the hull's half beam and half height on screen, at least HIT_PX), so
+// it grows with the boat when the map zooms in and stays easy to hit when the boat is a few pixels long.
+export const HIT_PX = 12;
+
+// The distance in pixels from (px, py) to the segment a-b.
+export function segmentDistance(px, py, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], len2 = dx * dx + dy * dy;
+  const k = len2 ? Math.max(0, Math.min(1, ((px - a[0]) * dx + (py - a[1]) * dy) / len2)) : 0;
+  return Math.hypot(px - (a[0] + k * dx), py - (a[1] + k * dy));
+}
+
+// The boat under the pointer: of the capsules [{k, a, b, r}] (hullOnScreen), the one whose reach takes (px, py) and
+// whose centre line is nearest; -1 for none.
+export function boatUnder(hulls, px, py) {
+  let best = -1, bd = Infinity;
+  for (const h of hulls) {
+    const d = segmentDistance(px, py, h.a, h.b);
+    if (d <= h.r && d < bd) { bd = d; best = h.k; }
+  }
+  return best;
+}
 
 // ---------- Colours ----------
 // Each look's paint for the boats, chosen against its water (web/themes.js) and never any operator's livery or SL's

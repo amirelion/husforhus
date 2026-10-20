@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { ShapeUtils, Vector2 } from '../vendor/three.core.js';
 import {
   CLS, FADE_MAX_M, FETCH_TIMEOUT_MS, LOD_TOL, WORKER_TIMEOUT_MS, askWorker, chunkIndices, chunkVertices, cutFactor,
-  edgeMesh, fadeField, fadeWidth, heightTexture, levelAt, makeGround, parsePolygons, parseTerrain, waterMesh, wallMesh,
+  edgeMesh, fadeAtGrid, fadeField, fadeWidth, heightTexture, levelAt, makeGround, parsePolygons, parseTerrain, waterMesh, wallMesh,
   withTimeout,
 } from '../terrain.js';
 
@@ -81,6 +81,18 @@ test('the cut is used fully, for the exaggeration only, or not at all', () => {
   assert.equal(cutFactor('true', 2.5), 1.5);
   assert.equal(cutFactor('true', 0.6), 0);   // flatter than true: nothing buried to keep
   assert.equal(cutFactor('none', 2.5), 0);
+});
+
+test('the fade read at a point as the shaders read it: between its nodes, clamped at the grid, 1 without one', () => {
+  // 3 by 2 nodes, 10 m apart, from (100, 200): a row of 0, 255, 255 over a row of 0, 0, 255
+  const grid = { x0: 100, z0: 200, cell: 10, nx: 3, nz: 2 }, fade = Uint8Array.from([0, 255, 255, 0, 0, 255]);
+  assert.equal(fadeAtGrid(fade, grid, 110, 200), 1);
+  assert.equal(fadeAtGrid(fade, grid, 105, 200), 0.5);
+  assert.equal(fadeAtGrid(fade, grid, 110, 205), 0.5);
+  assert.equal(fadeAtGrid(fade, grid, 50, 150), 0);                       // past the grid: its edge's value
+  assert.equal(fadeAtGrid(fade, grid, 500, 500), 1);
+  assert.equal(fadeAtGrid(Uint8Array.from([255]), { x0: 0, z0: 0, cell: 1, nx: 1, nz: 1 }, 5, 5), 1);   // no terrain
+  assert.equal(fadeAtGrid(undefined, grid, 105, 200), 1);
 });
 
 test('the fade is 0 outside the domain and rises to 255 over fadeM', () => {
