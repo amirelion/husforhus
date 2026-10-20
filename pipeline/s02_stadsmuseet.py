@@ -22,7 +22,7 @@ import geopandas as gpd
 import pandas as pd
 
 from . import io, stadsmuseet, suppress
-from .s00_fetch_stadsmuseet import AREAS, CATEGORIES, INVESTIGATIONS, read_record, read_records
+from .s00_fetch_stadsmuseet import AREAS, CATEGORIES, INVESTIGATIONS, read_record, read_records, read_report
 from .s02_addresses import OUT as ADDRESSES
 from .s02_years import BUILDINGS
 
@@ -37,7 +37,9 @@ def load_records() -> list[dict]:
         if r.get("published") is False:
             continue
         own = read_record(r["id"])
-        out.append({**r, "categories": (own or {}).get("categories") or r.get("categories") or []})
+        pages = stadsmuseet.report_pages(read_report(r["id"]), r["id"])
+        out.append({**r, "categories": (own or {}).get("categories") or r.get("categories") or [],
+                    **({"report_page": pages[0]} if pages else {})})
     return out
 
 

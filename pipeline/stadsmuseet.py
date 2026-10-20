@@ -38,8 +38,12 @@ from .privacy import normalise, phrases
 from .textfold import fold
 
 CREDIT = "Stadsmuseet i Stockholm"
-REPORT_URL = "https://digitalastadsmuseet.stockholm.se/fotoweb/archives/5004-Dokument-och-publikationer/?BR={n}"
-REPORT_RE = re.compile(re.escape(REPORT_URL.split("{")[0]) + r"[1-9]\d{0,5}")
+# A record's report: its own page in Digitala Stadsmuseet's archive of documents, found by the BR number in field 688
+# (s00_fetch_stadsmuseet asks ARCHIVE?688=<n>). The archive's web page ignores a ?BR=<n> address and shows its first
+# page for every number (found live, 2026-10-20), so the card links the report's own page.
+SITE = "https://digitalastadsmuseet.stockholm.se"
+ARCHIVE = f"{SITE}/fotoweb/archives/5004-Dokument-och-publikationer/"
+REPORT_RE = re.compile(re.escape(ARCHIVE) + r"[^\s\"'<>?#]+\.info")
 MEDIEVAL = "1100-1400-talet"     # the register's category labels (/api/brCategories), matched by label, not id
 DENDRO = "Dendrokronologi"
 COVER = 0.5      # a footprint at least half inside a record's polygon is one the record covers
@@ -83,9 +87,23 @@ def years(rec: dict) -> tuple[int, int] | None:
     return int(a), int(b)
 
 
+def report_pages(answer: dict | None, n: int) -> list[str]:
+    """The pages of the archive items whose field 688 (BR-nummer) holds n, from the archive's answer to ?688=<n>
+    (the query alone can return unrelated items too: research note 2026-10-19 §3)."""
+    out = []
+    for a in (answer or {}).get("data") or []:
+        held = ((a.get("metadata") or {}).get("688") or {}).get("value") or []
+        held = held if isinstance(held, list) else [held]
+        href = a.get("href") or ""
+        if str(int(n)) in {str(v).strip() for v in held} and href.startswith("/fotoweb/archives/5004-"):
+            out.append(SITE + href)
+    return out
+
+
 def report_url(rec: dict) -> str:
-    """The record's report in Digitala Stadsmuseet (https, by BR number), or "" when it has none."""
-    return REPORT_URL.format(n=int(rec["id"])) if rec.get("digital_archive_link_exists") is True else ""
+    """The record's report page in Digitala Stadsmuseet (s02 puts the first match in `report_page`), or ""."""
+    page = rec.get("report_page") or ""
+    return page if rec.get("digital_archive_link_exists") is True and REPORT_RE.fullmatch(page) else ""
 
 
 def facts(recs: list[dict], labels: dict[int, str]) -> dict:

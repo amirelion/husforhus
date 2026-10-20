@@ -1377,7 +1377,10 @@ def check_privacy(out: Path, uuids: set[str], props: set[str], fnrs: set[int] = 
                      | set(phrases(s.replace("_", " "))))     # a file name in a URL: "Diana_1.jpg"
             if parts & props:
                 errors.append(f"privacy: {rel} {path} holds a property designation (FASTIGHET)")
-            if fnrs and not ID_FORMAT.fullmatch(s) and any(int(d) in fnrs for d in DIGITS_RE.findall(s)):
+            # a report page in Digitala Stadsmuseet is named by the archive's own file number ("10092195.pdf.info"),
+            # which can equal an FNR by chance (two did, 2026-10-20); its designations are still checked above
+            if (fnrs and not ID_FORMAT.fullmatch(s) and not stadsmuseet.REPORT_RE.fullmatch(s)
+                    and any(int(d) in fnrs for d in DIGITS_RE.findall(s))):
                 errors.append(f"privacy: {rel} {path} holds a property-unit key (FNR)")
             if s.casefold() == "fnr" and not path.startswith("line "):
                 errors.append(f"privacy: {rel} {path} is a property-unit key field (FNR)")

@@ -16,7 +16,10 @@ Plans, not promises: the order can change.
 ### Features
 - **Building archaeology from the City Museum.** On 274 buildings in Gamla stan and on Riddarholmen, a pinned card now says what Stadsmuseet i Stockholm's building-archaeology register found: medieval walls documented (227 buildings), timber dated by tree rings, the years of each investigation, and a link to each report in Digitala Stadsmuseet. Used with the museum's permission; the facts are in the map's own words, and the building's year and colour do not change.
 
+- **The archaeology section is shorter, and its link works.** One line sums up the investigations ("Investigated 7 times, 1961–2019"), and one link opens the latest report itself in Digitala Stadsmuseet. Before, each report had a link, and every one opened the archive's front page.
+
 ### Data
+- Data version `v20261020-p4r`: each record's report found by its number in Digitala Stadsmuseet (518 of 533).
 - Data version `v20261020-p4q`: the register, placed on the footprints by its own map areas and addresses (546 of 549 records). One Wikipedia excerpt no longer names a property designation.
 
 ## 2026-10-18
