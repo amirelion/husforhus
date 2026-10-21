@@ -288,7 +288,7 @@ def test_config_follows_contract_c5(tmp_path):
         "buildings": 11,
         "byFlag": {"exact": 4, "range": 1, "long": 1, "area": 1, "estimate": 1, "period": 1, "unknown": 2},
         "bySrc": {"none": 2, "curated": 1, "raa": 4, "raa_area": 1, "wikidata": 1, "estimate": 2, "raa_old": 0, "osm": 0, "reader": 0,
-                  "cited": 0},
+                  "cited": 0, "bygglov": 0},
         "floorsOsm": 0, "floorsHeight": 11, "privateHouses": 3,
         "photos": 1, "extracts": {"sv": 2, "en": 1},
     }
@@ -430,11 +430,17 @@ def test_attribution_credits_each_source_in_the_d44_form():
         # Stadsmuseet's permission (2026-10-19) has no licence name: the credit says it is used with permission
         "stadsmuseet_br": ("Stads- och byggnadsarkeologiskt register: Stadsmuseet i Stockholm, used with permission, processed",
                            "Stads- och byggnadsarkeologiskt register: Stadsmuseet i Stockholm, används med tillstånd, bearbetad"),
+        # Stadsarkivet's answer (O6, 2026-10-20) likewise; it waits with city.FEATURES bygglov
+        "stadsarkivet_bygglov": ("Bygglov 1875–1980: Stockholms stadsarkiv, used with permission, processed",
+                                 "Bygglov 1875–1980: Stockholms stadsarkiv, används med tillstånd, bearbetad"),
         "stadsmuseet_photos": ("Digitala Stadsmuseet, fotografier: Stadsmuseet i Stockholm, CC BY 4.0",) * 2,
         "kulturnav": ("KulturNav, Byggnader i Sverige: ArkDes, CC0, processed",
                       "KulturNav, Byggnader i Sverige: ArkDes, CC0, bearbetad"),
         "stadsmuseet_inventories": ("Byggnadsinventeringar: Stadsmuseet i Stockholm, CC BY 4.0, processed",
                                     "Byggnadsinventeringar: Stadsmuseet i Stockholm, CC BY 4.0, bearbetad"),
+        # the City's Hjorthagen stage years (D63): facts read from its pages, so no licence, "facts only"
+        "stockholm_stages": ("Hjorthagens utbyggnadsetapper: Stockholms stad, facts only, processed",
+                             "Hjorthagens utbyggnadsetapper: Stockholms stad, endast fakta, bearbetad"),
         "metro_stations": both("Tunnelbanestationer: Wikidata, CC0"),
         "metro_track": ("Tunnelbanans spår: © OpenStreetMap contributors, ODbL, processed",
                         "Tunnelbanans spår: © OpenStreetMap-bidragsgivare, ODbL, bearbetad"),

@@ -17,9 +17,10 @@ export function prepare(index) {
       fe: en ? fold(en) : '' })),
     // the names people use for the best-known buildings ("Slottet", "Royal Palace"), each pointing at a card's name
     baliases: (index.baliases || []).map(([name, gid]) => ({ name, gid, f: fold(name) })),
-    // what is inside a carded building ("Nobelprismuseet" in Börshuset): Swedish, English and other names
-    occupants: (index.occupants || []).map(([sv, en, gid, alt = []]) => ({ sv, en, gid, f: fold(sv), fe: fold(en),
-      fa: alt.map(fold) })),
+    // what is inside a building ("Nobelprismuseet" in Börshuset, "Historiska museet" on a footprint with no named
+    // card): Swedish, English and other names, and the stadsdel for a footprint search has no building row for
+    occupants: (index.occupants || []).map(([sv, en, gid, alt = [], d = -1]) => ({ sv, en, gid, d, f: fold(sv),
+      fe: fold(en), fa: alt.map(fold) })),
   };
 }
 
@@ -95,16 +96,16 @@ export function textRows(P, q, raw = '') {
     const b = byGid.get(a.gid), s = score(a.f, q);
     if (b && s >= 0) add({ kind: 'building', label: b.name, gid: b.gid, d: b.d, en: b.en, via: a.name }, s, a.name);
   }
-  // an institution inside a building: found by any of its names, picked as the building, after an exact building name
+  // an institution inside a building: found by any of its names, picked as the building, after an exact building
+  // name; on a footprint whose card has no name it stands alone ("Historiska museet", no "in ...")
   for (const o of P.occupants || []) {
     const b = byGid.get(o.gid);
-    if (!b) continue;
     const s = score(o.f, q), se = score(o.fe, q), sa = o.fa.map(f => score(f, q)).filter(x => x >= 0);
     const all = [s, se, ...sa].filter(x => x >= 0);
     if (!all.length) continue;
     const best = Math.min(...all);
-    add({ kind: 'occupant', label: o.sv, sv: o.sv, en: o.en, building: b.name, gid: o.gid, d: b.d }, best,
-      best === s ? o.sv : best === se ? o.en : '');
+    add({ kind: 'occupant', label: o.sv, sv: o.sv, en: o.en, building: b ? b.name : '', gid: o.gid, d: b ? b.d : o.d },
+      best, best === s ? o.sv : best === se ? o.en : '');
   }
   for (const st of P.streets) add({ kind: 'street', label: st.name, n: st.n, ds: st.ds, shard: st.shard, street: st.name }, score(st.f, q), st.name);
   // a stadsdel found by its everyday name and by its own, or buildings of one name in one stadsdel: once, the better match
@@ -242,7 +243,7 @@ export function rowText(row, P, T) {
     if (dist(row.d)) parts.push(dist(row.d));
     if (row.near) parts.push(T(row.side ? 'search.near.side' : 'search.near', { n: row.near }));
   }
-  const main = row.kind === 'occupant'
-    ? T('search.in', { name: T.lang === 'en' ? row.en || row.sv : row.sv, building: row.building }) : row.label;
+  const own = row.kind === 'occupant' && (T.lang === 'en' ? row.en || row.sv : row.sv);
+  const main = !own ? row.label : row.building ? T('search.in', { name: own, building: row.building }) : own;
   return { main, sub: parts.join(' · ') };
 }

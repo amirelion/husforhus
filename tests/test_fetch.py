@@ -210,6 +210,9 @@ def test_record_keeps_a_derived_file_under_its_path_with_the_time_it_was_made(tm
     assert re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", got["retrieved"])
     with pytest.raises(ValueError, match="not inside"):
         fetch.record(tmp_path / "elsewhere.tif", entry, manifest=manifest)
+    assert fetch.unrecord(dest, manifest=manifest) is True               # a file the step no longer vouches for
+    assert sorted(json.loads(manifest.read_text(encoding="utf-8"))) == ["city/a.zip"]
+    assert fetch.unrecord(dest, manifest=manifest) is False and dest.exists()
 
 
 def test_zip_members_over_range_requests(server):

@@ -58,6 +58,11 @@ Fails (exit 1, with a readable list) on:
   check that reads "measured" with fewer than min_cell "≈ year" buildings (or the reverse), min_cell/min_right/
   max_band that are not city.ESTIMATE's, or a table that does not describe this build (result's ESTIMATE and
   PERIOD counts against stats.byFlag, tested against the building-level years);
+- the building-permit tier (pipeline/validate_bygglov.py): its accuracy block not adding up, not city.BYGGLOV's, a
+  cell that dates under its thresholds, or a blind spot over 5%; a permit-dated row outside the index's years, a span
+  over max_lag or a type and year no dating cell reaches; a permit-dated card with a cited or reader line or a
+  case-number string; any shipped file holding the permit database's path; with --release, a full-city build where
+  the tier is on but was not applied (tested, above, leaves out the permit years while they do not train);
 - tiles: gids not exactly 0..n-1 once each; and, last, on a build with no other finding, a tile's year, yflag or
   period disagreeing with attrs for a gid;
 - data: data/buildings.parquet not holding exactly this version's gids 0..n-1 (after a fixture build it holds
@@ -113,6 +118,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from . import cited, city, codes, contributions, ferries, plaques, stadsmuseet, suppress
+from . import validate_bygglov
 from . import stadsmuseet_photos as sm_photos
 from .estimate import GROUPS
 from .geo import lonlat_to_3011
@@ -152,15 +158,18 @@ FERRY_ID = re.compile(r"[rw]\d+")
 MIN_PRIVATE_OVERLAP = 2  # years a private row's decade must share with its period, or the pair pins the year
 YFLAGS = (codes.EXACT, codes.RANGE, codes.LONG, codes.AREA, codes.ESTIMATE, codes.PERIOD, codes.UNKNOWN)
 YSRCS = (codes.SRC_NONE, codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_AREA, codes.SRC_WIKIDATA, codes.SRC_ESTIMATE,
-         codes.SRC_RAA_OLD, codes.SRC_OSM, codes.SRC_READER, codes.SRC_CITED)
+         codes.SRC_RAA_OLD, codes.SRC_OSM, codes.SRC_READER, codes.SRC_CITED, codes.SRC_BYGGLOV)
 # The codes.py pairing: the yflags a source may carry (a cited record may give only a period: the curated PERIOD).
 PAIRS = {codes.SRC_NONE: (codes.UNKNOWN,), codes.SRC_RAA_AREA: (codes.AREA,),
          codes.SRC_ESTIMATE: (codes.ESTIMATE, codes.PERIOD),
-         codes.SRC_CITED: (codes.EXACT, codes.RANGE, codes.LONG, codes.PERIOD)}
+         codes.SRC_CITED: (codes.EXACT, codes.RANGE, codes.LONG, codes.PERIOD),
+         codes.SRC_BYGGLOV: (codes.EXACT, codes.RANGE)}
 DATED_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
 # The accuracy table's keys, a cell's keys and the statuses.
 TABLE_KEYS = {"method", "held_out", "folds", "near_m", "min_cell", "min_right", "max_band", "tested", "cells", "fallback",
               "band_coverage", "by_true_period", "area", "external", "result"}
+# The permit tier's block (s02_years, pipeline/validate_bygglov.py checks it): absent from builds before the tier.
+OPTIONAL_TABLE_KEYS = {"bygglov"}
 ACCURACY_STATUSES = {"estimate", "period", "unknown", "not measurable"}
 SIDE_STATUSES = {"not measurable", "measured"}            # the area and external checks
 CELL_KEYS = {"group", "era", "inner", "n", "status"}
@@ -711,7 +720,7 @@ def check_accuracy(cfg: dict) -> list[str]:
     if not isinstance(acc, dict):
         return ["accuracy: stockholm.json has no accuracy table (run s02_years and s03_tiles)"]
     errors = []
-    extra = stray(acc, TABLE_KEYS)
+    extra = stray(acc, TABLE_KEYS | OPTIONAL_TABLE_KEYS)
     if extra:
         errors.append(f"accuracy: stockholm.json accuracy has keys outside the accuracy table's: {extra}")
     missing = sorted(TABLE_KEYS - set(acc))
@@ -765,10 +774,14 @@ def check_accuracy(cfg: dict) -> list[str]:
     elif "result" in acc:
         errors.append("accuracy: result is not an object")
     known = sum(int(f.get(k, 0)) for k in ("exact", "range", "long"))
+    # a permit year is a record but neither trains nor tests the estimate unless its block says it does
+    permits = acc.get("bygglov") if isinstance(acc.get("bygglov"), dict) else {}
+    left_out = 0 if permits.get("trains") else int((cfg.get("stats", {}).get("bySrc") or {}).get("bygglov", 0))
+    known -= left_out
     if "tested" in acc and acc["tested"] != known:
         errors.append(f"accuracy: tested is {num(acc['tested'])} but the build has {num(known)} building-level years "
-                      "(exact + range + long)")
-    return errors
+                      f"(exact + range + long{f', without the {num(left_out)} permit years' if left_out else ''})")
+    return errors + validate_bygglov.block(cfg)
 
 
 def decoded_tiles(out: Path, cfg: dict, errors: list[str]):
@@ -1331,10 +1344,11 @@ def check_search(out: Path, cfg: dict, a: np.ndarray, hidden: np.ndarray,
     """Search/index.json and its address shards, required once config.features.search is on. Every
     building entry names what its card names (so search shows nothing a card does not), every other name
     (`baliases`) is city.BUILDING_ALIASES' and points at the building whose card carries its target name, every gid
-    is a building, every street's numbers sit in the shard it names, no street and number together read as a property
-    designation of the city's buildings (`designations`: the shards keep the street and the number apart, which the
-    privacy scan reads one by one), and a private-category house's address appears only as city.PRIVATE_ADDRESSES
-    allows."""
+    is a building, every occupant (what is inside a building) sits on one that is not a private-category house and
+    has no name that reads as a property designation, every street's numbers sit in the shard it names, no street
+    and number together read as a property designation of the city's buildings (`designations`: the shards keep the
+    street and the number apart, which the privacy scan reads one by one), and a private-category house's address
+    appears only as city.PRIVATE_ADDRESSES allows."""
     folder = out / "search"
     if not (folder / "index.json").exists():
         on = (cfg.get("features") or {}).get("search")
@@ -1366,12 +1380,19 @@ def check_search(out: Path, cfg: dict, a: np.ndarray, hidden: np.ndarray,
         ok = isinstance(b, list) and len(b) == 2 and isinstance(b[0], str) and whole(b[1]) and 0 <= b[1] < n
         if not ok or city.BUILDING_ALIASES.get(b[0]) not in names.get(b[1], set()):
             errors.append(f"search: other-name entry {i} is not one of city.BUILDING_ALIASES for its building's card name")
-    for i, o in enumerate(listed("occupants")):              # what is inside a building: only one a card names
-        if not (isinstance(o, list) and len(o) == 4 and isinstance(o[0], str) and isinstance(o[1], str) and o[0]
-                and whole(o[2]) and 0 <= o[2] < n and isinstance(o[3], list)):
-            errors.append(f"search: occupant entry {i} is not [Swedish name, English name, gid, other names]")
-        elif not names.get(o[2]):
-            errors.append(f"search: occupant entry {i} (gid {o[2]}) is in a building no card names")
+    # what is inside a building: on any footprint (the hand-checked table needs no card), but never on a private
+    # house, whose home search would name, and never a name that reads as a property designation
+    n_districts = len(index.get("districts") or [])
+    for i, o in enumerate(listed("occupants")):
+        # a version built before 2026-10-21 has no stadsdel at the end (web/search.js reads both)
+        if not (isinstance(o, list) and len(o) in (4, 5) and isinstance(o[0], str) and isinstance(o[1], str) and o[0]
+                and whole(o[2]) and 0 <= o[2] < n and isinstance(o[3], list) and all(isinstance(x, str) for x in o[3])
+                and (len(o) == 4 or whole(o[4]) and -1 <= o[4] < n_districts)):
+            errors.append(f"search: occupant entry {i} is not [Swedish name, English name, gid, other names, stadsdel]")
+        elif hidden[o[2]]:
+            errors.append(f"search: occupant entry {i} (gid {o[2]}) is on a private-category house")
+        elif designations and any(mentions(x, designations) for x in [o[0], o[1], *o[3]]):
+            errors.append(f"search: occupant entry {i} (gid {o[2]}) has a name that reads as a property designation")
     shards = {}
     for p, s in read_shards(folder / "addr"):
         if isinstance(s, dict):
@@ -1440,7 +1461,7 @@ def check_suppressed(out: Path, a: np.ndarray, data: Path, entries: list[dict]) 
         index = index if isinstance(index, dict) else {}
         found |= {b[1] for b in lists(index.get("buildings")) if isinstance(b, list) and len(b) == 4}
         found |= {b[1] for b in lists(index.get("baliases")) if isinstance(b, list) and len(b) == 2}
-        found |= {o[2] for o in lists(index.get("occupants")) if isinstance(o, list) and len(o) == 4}
+        found |= {o[2] for o in lists(index.get("occupants")) if isinstance(o, list) and len(o) >= 4}
         for shard in objects(out / "search" / "addr"):
             found |= {p[1] for _, pairs in items(shard) for p in lists(pairs) if isinstance(p, list) and len(p) == 3}
     for g in sorted(gids):
@@ -1924,6 +1945,8 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
         errors.append(f"attrs: {len(a)} records but stats.buildings is {cfg['stats']['buildings']}")
     periods = [(p["from"], p["to"]) for p in cfg["periods"]] if cfg.get("periods") else None
     errors += check_attrs(a, periods)
+    if release:
+        errors += validate_bygglov.release(cfg, len(a))
     errors += check_histograms(cfg)
     errors += check_accuracy(cfg)
     errors += check_tiles(out, cfg, len(a))
@@ -1931,9 +1954,11 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     if mismatch:  # the checks below would read another build's rows by gid
         return [*errors, *mismatch]
     errors += check_private_marked(a, data)
+    errors += validate_bygglov.rows(a, cfg, data)
     errors += check_osm_floors(a, data)
     hidden = raa_hidden(a, data)
     errors += check_cards(out, a, hidden, keys=building_keys(len(a), data))
+    errors += validate_bygglov.cards(out, a, read_shards(out / "cards"))
     errors += check_wiki(out, a, hidden)
     errors += check_photo_gids(out, hidden)
     errors += check_beside_private(out, a, data)
@@ -1950,6 +1975,7 @@ def validate(out: Path, data: Path = DATA, *, release: bool = False, sources: li
     errors += check_archive_photos(out, hidden)
     errors += check_metro(out)
     errors += check_ferries(out, cfg, release=release)
+    errors += validate_bygglov.files(text_files(out))
     if sets:
         uuids, props, fnrs = sets
         errors += check_privacy(out, uuids, props | register_designations(data), fnrs)

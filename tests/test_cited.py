@@ -21,6 +21,8 @@ DOCS = "https://digitalastadsmuseet.stockholm.se/fotoweb/archives/5004-Dokument-
 INVENTORY = DOCS + "Byggnadsinventeringar/10043930.pdf.info"
 REPORT = DOCS + "DOK_1/SSM_DOK_000624.pdf.info"
 UUID = "2e389b81-54f2-48cc-b4ee-ae1285df2207"
+RESULTS = "https://www.norradjurgardsstaden2030.se/resultat/etapp/"          # the City's stage pages (D63)
+VAXER = "https://vaxer.stockholm/omraden/stadsutvecklingsomraden/norra-djurgardsstaden/i-hjorthagen/"
 
 
 def row(**kw):
@@ -50,6 +52,31 @@ def test_a_good_row_of_each_source_passes():
     assert cited.row_errors(row(source="ssm_inventory", place=INVENTORY, page="3", quote="")) == []
     assert cited.row_errors(row(source="ssm_br", place=REPORT, page="1", quote="", kind="period", year_from="1000",
                                 year_to="1520")) == []
+
+
+def stage(**kw):
+    """A Hjorthagen block's row: its building stage's move-in years from the City's stage page (D63)."""
+    return row(**{"source": "stockholm_stage", "place": RESULTS + "vastra", "quote": "", "year_from": "2014",
+                  "year_to": "2017", "confidence": "high", "note": "Västra stage, block Tyresta: move-in 2014–2017.",
+                  **kw})
+
+
+def test_a_stage_row_cites_the_city_s_stage_page_without_a_quote_or_a_page():
+    # the stage's results page (Norra 1, Västra, Norra 2) or the City's Hjorthagen page (Brofästet's years)
+    for place in (RESULTS + "norra-1", RESULTS + "vastra", RESULTS + "norra-2", VAXER):
+        assert cited.row_errors(stage(place=place)) == [] and cited.is_place(place), place
+    # the City's text is facts we put in our own words: never a quote, and no page number
+    assert cited.row_errors(stage(quote="Färdigställt 2014–2017")) == [
+        "quote is required for KulturNav and Wikipedia and empty for the City Museum and the City's stage pages"]
+    assert cited.row_errors(stage(page="2")) == ["page is a page number for a City Museum PDF only"]
+    # only Hjorthagen's stage pages: not another area's page on vaxer.stockholm, nor another site, nor plain http
+    for place in ("https://vaxer.stockholm/omraden/stadsutvecklingsomraden/stadsutvecklingsomrade-hammarby-sjostad/",
+                  "https://www.norradjurgardsstaden2030.se/resultat/bilaga/2025",
+                  "http://www.norradjurgardsstaden2030.se/resultat/etapp/vastra", RESULTS + "vastra?x=1", WP):
+        assert cited.row_errors(stage(place=place)) == ["place is not a stockholm_stage page"], place
+    # a stage's move-in span is a construction window: the map's year is its last, a span (RANGE)
+    assert cited.year_of("built", 2014, 2017) == (2017, RANGE)
+    assert cited.SOURCES["stockholm_stage"]["credit"] == "stockholm_stages"
 
 
 def test_a_wikipedia_link_carries_its_oldid_alone():
@@ -265,6 +292,7 @@ def test_two_keys_on_one_footprint_and_an_oid_key_beside_a_uuid_are_refused():
 
 def test_the_repo_table_reads_and_holds_the_decided_rows():
     t = cited.read()
+    t = t[t.source != "stockholm_stage"]           # Gamla stan and Riddarholmen (Hjorthagen's stages: the next test)
     keys = cited.by_key(t)
     assert (len(t), len(keys)) == (254, 161)
     # Vindragarlagets hus was the wrong house (its record is the next footprint, which RAÄ dates); Mälartorget 15 is
@@ -318,6 +346,31 @@ def test_the_repo_table_reads_and_holds_the_decided_rows():
     fs = {k[:8]: cited.footprint(rs) for k, rs in keys.items()}
     unplaced = [k for k, f in fs.items() if cited.footprint_year(f)[1] == UNKNOWN]
     assert unplaced == ["5cb0834f", "bcc747db"]
+
+
+def test_the_repo_table_s_hjorthagen_rows_give_each_block_its_stage_s_move_in_years():
+    # D63: the City's four finished housing stages in Hjorthagen, one built row per footprint whose block is in one,
+    # keyed by uuid, its span the stage's move-in years and its link the stage's page
+    t = cited.read()
+    h = t[t.source == "stockholm_stage"]
+    spans = {RESULTS + "norra-1": ("2012", "2014"), RESULTS + "vastra": ("2014", "2017"),
+             RESULTS + "norra-2": ("2016", "2017"), VAXER: ("2018", "2020")}
+    assert h.place.value_counts().to_dict() == {RESULTS + "norra-1": 22, VAXER: 18, RESULTS + "vastra": 17,
+                                                RESULTS + "norra-2": 15}
+    assert all(spans[p] == (a, z) for p, a, z in zip(h.place, h.year_from, h.year_to))
+    assert set(h.kind) == {"built"} and not h.quote.any() and not h.page.any() and not h.circa.any()
+    assert h.key.str.fullmatch(cited.UUID.pattern).all() and h.key.is_unique and not h.key.isin(t.key[t.source !=
+                                                                                                       "stockholm_stage"]).any()
+    # Brofästet's block list may be incomplete, so its rows are medium; so are a non-home and Padjelanta (the research
+    # spells it Padjelanda)
+    assert set(h.confidence[h.place == VAXER]) == {"medium"}
+    assert (h.confidence == "medium").sum() == 20
+    # the Backåkra house Wikidata dates 2019 keeps its year (inside its stage's span): no row on it
+    assert "2ffb531e-914f-4986-aae7-d85b8bf0b809" not in set(h.key)
+    # Kvarteret Tyresta (Lövängsgatan 12–14, Slåttervallsgatan 3–5) is in Västra
+    tyresta = h[h.key == "089d0de8-13f8-4430-8225-851e33d97c50"].iloc[0]
+    assert (tyresta.place, tyresta.year_from, tyresta.year_to) == (RESULTS + "vastra", "2014", "2017")
+    assert all(cited.footprint_year(cited.footprint(rs))[1] == RANGE for rs in cited.by_key(h).values())
 
 
 def test_plain_reads_wikitext_as_its_reader_sees_it():
@@ -717,7 +770,8 @@ def test_the_card_carries_about_and_the_other_houses():
 
 # the fixture's source, and the credits the cited sources need (cited.SOURCES' `credit`)
 CREDITS = [{**tinycity.SOURCES[0], "id": i}
-           for i in ("test-src", "wikipedia", "kulturnav", "stadsmuseet_br", "stadsmuseet_inventories")]
+           for i in ("test-src", "wikipedia", "kulturnav", "stadsmuseet_br", "stadsmuseet_inventories",
+                     "stockholm_stages")]
 
 
 def cited_site(tmp_path, monkeypatch, r: dict, gid: int = 7, ship: dict | None = None, extra=(),
@@ -782,6 +836,18 @@ def test_a_cited_decade_ships_with_its_link_and_passes(tmp_path, monkeypatch):
     card = json.loads((out / "cards" / "07.json").read_text())["7"]
     assert card["yc"] == {"s": "wikipedia_sv", "u": WP} and "quote" not in json.dumps(card)
     assert validate(out, path) == []
+
+
+def test_a_stage_row_ships_its_span_with_the_stage_page_and_passes(tmp_path, monkeypatch):
+    r = {"source": "stockholm_stage", "place": RESULTS + "norra-2", "quote": "", "year_from": "2016",
+         "year_to": "2017", "note": "Norra 2 stage, block Sonfjället: move-in 2016–2017."}
+    out, path = cited_site(tmp_path, monkeypatch, r)
+    card = json.loads((out / "cards" / "07.json").read_text())["7"]
+    assert card["yc"] == {"s": "stockholm_stage", "u": RESULTS + "norra-2"}
+    assert validate(out, path) == []
+    # its credit, the City's stage pages, must be in sources.yml
+    errors = validate(out, path, sources=[s for s in CREDITS if s["id"] != "stockholm_stages"])
+    assert "cited: source stockholm_stages is not in sources.yml (its credit would be missing)" in errors
 
 
 def test_a_cited_period_passes(tmp_path, monkeypatch):

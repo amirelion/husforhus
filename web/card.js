@@ -18,7 +18,7 @@ export const band = b => Math.max(b.year - b.yearFrom, b.yearTo - b.year);
 export const decadeOnly = b => b.yflag === YFLAG.RANGE && b.year === b.yearFrom && b.yearTo === b.yearFrom + 9
   && b.yearFrom % 10 === 0;
 const SRC = { [YSRC.RAA]: 'raa', [YSRC.RAA_OLD]: 'raa_old', [YSRC.WIKIDATA]: 'wikidata', [YSRC.OSM]: 'osm', [YSRC.READER]: 'reader',
-  [YSRC.CITED]: 'cited' };
+  [YSRC.CITED]: 'cited', [YSRC.BYGGLOV]: 'bygglov' };
 const EST_FLAGS = [YFLAG.AREA, YFLAG.ESTIMATE, YFLAG.PERIOD];
 export const isEstimate = b => EST_FLAGS.includes(b.yflag);
 
@@ -46,6 +46,7 @@ export function sourceLine(b, T, card = {}) {
     return b.private ? T('card.private.period') : T('card.src.period');
   }
   if (b.private) {
+    if (b.ysrc === YSRC.BYGGLOV) return [permitLine(b, T), T('card.private.rule')].join(' · ');
     const how = b.ysrc === YSRC.ESTIMATE ? 'estimate' : b.ysrc === YSRC.RAA_AREA ? 'area' : SRC[b.ysrc];
     return [how && T(`card.private.${how}`), T('card.private.rule')].filter(Boolean).join(' · ');
   }
@@ -56,6 +57,7 @@ export function sourceLine(b, T, card = {}) {
   // (app.js links the line to the report's issue, `yrd.url`, when there is one).
   if (b.ysrc === YSRC.CITED) return citedLine(b, T, card?.yc);
   if (b.ysrc === YSRC.READER) return card?.yrd ? T('card.src.reader', { ref: card.yrd.ref, note: card.yrd.note }) : T('card.private.reader');
+  if (b.ysrc === YSRC.BYGGLOV) return permitLine(b, T);
   if (b.ysrc === YSRC.RAA_AREA) return T('card.src.area');
   if (b.ysrc === YSRC.ESTIMATE) return T('card.src.estimate', { n: band(b) });
   const key = SRC[b.ysrc];
@@ -65,6 +67,17 @@ export function sourceLine(b, T, card = {}) {
     if (!d.includes('–')) return T(`card.src.${key}.decade`, { decade: d });
   }
   return T(b.yflag === YFLAG.LONG ? `card.src.${key}.long` : `card.src.${key}`, { span: span(b.yearFrom, b.yearTo) });
+}
+
+// A building-permit year (pipeline/years_bygglov.py): the year the property's first permit was closed, from the City
+// Archives' card index, "Building permit closed 1934 (Stadsarkivet)", never with "≈" (a record, not an estimate) and
+// never with a span (the opening year is a parse of the case number). A private house names its decade instead, "Building
+// permit closed in the 1930s (Stadsarkivet)", and "1900–1909" for a decade that starts a century. Nothing per card
+// links the archive: its card pages show the property designation and the exact year (About links its information page).
+export function permitLine(b, T) {
+  if (!b.private) return T('card.src.bygglov', { year: b.yearTo });
+  const d = decade(b.year, T.lang);
+  return d.includes('–') ? T('card.private.bygglov.span', { span: d }) : T('card.private.bygglov', { decade: d });
 }
 
 // A cited record's line (pipeline/cited.py; card `yc`, its source `s`, its page `u`, `k` "rebuilt" for a new house
@@ -79,7 +92,7 @@ export function sourceLine(b, T, card = {}) {
 // differ)", each reading linked to its source; and `r`, the rebuilds and extensions the records name, and `o`, the other
 // houses the footprint holds, make the pinned card's second line, "Rebuilt or extended 1780 and 1906 · Also part of
 // this building: a house built 1804". app.js links each part (citedParts, citedMore) to its record.
-const CITED_SRCS = ['kulturnav', 'wikipedia_sv', 'ssm_inventory', 'ssm_br'];
+const CITED_SRCS = ['kulturnav', 'wikipedia_sv', 'ssm_inventory', 'ssm_br', 'stockholm_stage'];
 const FLOOR_YEAR = 1000;   // pipeline/yearrules.py: a row from it has no earlier bound ("medieval")
 const MEDIEVAL_END = 1520; // the Swedish Middle Ages end with the 1520s; a span ending by then is medieval
 const BUILT_MAX = 100;     // pipeline/cited.py: a span over 100 years is a period

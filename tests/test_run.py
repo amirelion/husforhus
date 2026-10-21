@@ -21,12 +21,15 @@ def test_steps_contract():
     # s02_towers' parts go into s03_tiles' tiles. metro: s16_metro writes metro.json into the version s03_tiles made.
     # The City Museum's register: fetched with the other sources, placed by s02_stadsmuseet once s02_addresses' table
     # is there (its address fallback), and on s03_tiles' cards; its archive photos likewise (s02_stadsmuseet_photos
-    # reads years.parquet for the private houses). The ferries: s17_ferries cuts the routes to the water s04_base wrote
+    # reads years.parquet for the private houses). The building-permit index (s00_fetch_bygglov) is fetched with the
+    # other sources, but a routine run only reports its cache: the crawl needs --fetch. The ferries: s17_ferries cuts
+    # the routes to the water s04_base wrote
     assert run.STEPS == ["s00_fetch_city", "s00_fetch_raa", "s00_fetch_raa_old", "s00_fetch_wikidata", "s00_fetch_osm",
-                         "s00_fetch_dem", "s00_fetch_plaques", "s00_fetch_stadsmuseet", "s01_load", "s08_landmarks",
-                         "s02_years", "s02_attributes", "s02_addresses", "s02_stadsmuseet", "s02_stadsmuseet_photos",
-                         "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers", "s03_tiles", "s16_metro", "s04_base",
-                         "s17_ferries", "s07_labels", "s14_search", "s15_plaques", "s13_quests", "s99_validate"]
+                         "s00_fetch_dem", "s00_fetch_plaques", "s00_fetch_stadsmuseet", "s00_fetch_bygglov", "s01_load",
+                         "s08_landmarks", "s02_years", "s02_attributes", "s02_addresses", "s02_stadsmuseet",
+                         "s02_stadsmuseet_photos", "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers",
+                         "s03_tiles", "s16_metro", "s04_base", "s17_ferries", "s07_labels", "s14_search",
+                         "s15_plaques", "s13_quests", "s99_validate"]
 
 
 def test_list_prints_steps_without_importing_them(capsys):

@@ -18,6 +18,15 @@ The first tier that applies wins:
   raa       a RAÄ Byggnad record joined by registerbyggnad_id == LOD1 UUID; RAÄ polygons that join no
             UUID may still date a footprint they cover by at least half
   raa_old   RAÄ's OLD register file (pipeline/years_raa_old.py), joined by UUID: years the 2025 register dropped
+  bygglov   the year a property's first building permit was closed, from Stockholms stadsarkiv's card index
+            "Bygglov 1875–1980" (pipeline/years_bygglov.py, city.BYGGLOV), on the property's one main building, and
+            only in the cells (KATEGORI group, inner or outer city, era, episodes) where it measured right against the
+            unrounded building-level record years above. Written after the landmarks and before the takedown reset, it
+            fills only an unknown footprint (an area-dated one too with the lever fill_area, off): never a curated,
+            cited, RAÄ, old-register, Wikidata or OSM year (a Wikidata or OSM year more than DISAGREE_YEARS away goes
+            on the review list, bygglov_vs_wikidata and bygglov_vs_osm). It never trains or tests the estimate tier
+            (lever trains, off), but the estimate is run on its footprints as if they had none, to score it against
+            the permit years (accuracy.json bygglov estimate_check); only the rows without a permit year are written
   raa_area  the footprint's centroid lies in a dated RAÄ Område polygon (the smallest one wins)
   wikidata  a Wikidata building item placed on exactly one footprint (pipeline/years_wikidata.py); an item the
             hand-checked pin table (pipeline/wiki_pins.csv, pipeline/pins.py) puts on its own footprint is placed there,
@@ -28,7 +37,8 @@ The first tier that applies wins:
             period only) comes only with city.ESTIMATE's give_period lever, off since 2026-10-15
   reader    a reader's report the owner accepted (pipeline/contributions.csv, pipeline/contributions.py), written last:
             it fills a building that is unknown, area-dated or estimated, and replaces a record year (raa, raa_old,
-            wikidata, osm) only when its row says replaces_register yes; a curated or withheld building refuses it
+            wikidata, osm) only when its row says replaces_register yes (a permit year needs no such flag: a permit
+            dates a property, not a building); a curated or withheld building refuses it
 
 Display rule for a from–to range (yearrules.display): a span of 15 years or less shows year_to (completion),
 flagged EXACT when from == to, else RANGE; a longer span shows year_from, flagged LONG. A Wikidata or OSM tier
@@ -45,7 +55,9 @@ from the decade's middle year instead (1615: Stormaktstiden), so the pair never 
 raa_id links every footprint a RAÄ Byggnad record joins by UUID, whether or not that record has a usable year,
 so s02_attributes can read its rating and architects. The raa_old tier never sets it (its record pages will die).
 
-Outputs: data/years.parquet, data/accuracy.json (the estimate tier's accuracy table, with the
+Outputs: data/years.parquet, data/accuracy.json (the estimate tier's accuracy table, with the permit tier's block,
+`bygglov`: its settings, cells, funnel, test, blind spot, the estimate against the permit years and the other sources;
+and with the
 area tier's check, area years against the building-level years in the same polygons, Wikidata and OSM years the
 area outranked included, and the external check, estimate.check_external: the map's own rule, trained on curated +
 raa + raa_old alone, run on the rows only Wikidata or OSM dated as if they had no year, counted per map state and
@@ -69,8 +81,9 @@ from . import cited as cited_mod
 from . import city
 from . import estimate as est
 from . import contributions, pins, suppress, years_osm, years_raa_old, years_wikidata
-from .codes import (AREA, ESTIMATE, EXACT, LONG, PERIOD, RANGE, SRC_CITED, SRC_CURATED, SRC_ESTIMATE, SRC_NONE, SRC_OSM,
-                    SRC_RAA, SRC_RAA_AREA, SRC_RAA_OLD, SRC_READER, SRC_WIKIDATA, UNKNOWN)
+from . import years_bygglov as bygglov_mod
+from .codes import (AREA, ESTIMATE, EXACT, LONG, PERIOD, RANGE, SRC_BYGGLOV, SRC_CITED, SRC_CURATED, SRC_ESTIMATE,
+                    SRC_NONE, SRC_OSM, SRC_RAA, SRC_RAA_AREA, SRC_RAA_OLD, SRC_READER, SRC_WIKIDATA, UNKNOWN)
 from .geo import LANDMARK_MAX_M, lonlat_to_3011, resolve_points  # noqa: F401  (re-exported for callers and tests)
 from .s00_fetch_raa import DEST as RAA_GPKG
 from .s00_fetch_raa import LAYER as RAA_LAYER
@@ -97,7 +110,8 @@ PERIOD_FROM = np.array([p[3] for p in city.PERIODS], dtype=np.int64)
 PERIOD_TO = np.minimum(np.array([p[4] for p in city.PERIODS], dtype=np.int64), LATEST_YEAR)
 # ysrc as the review list names it (cited_no_period, cited_period_vs_record)
 SRC_NAMES = {SRC_NONE: "", SRC_CURATED: "curated", SRC_RAA: "raa", SRC_RAA_AREA: "raa_area", SRC_WIKIDATA: "wikidata",
-             SRC_ESTIMATE: "estimate", SRC_RAA_OLD: "raa_old", SRC_OSM: "osm", SRC_READER: "reader", SRC_CITED: "cited"}
+             SRC_ESTIMATE: "estimate", SRC_RAA_OLD: "raa_old", SRC_OSM: "osm", SRC_READER: "reader", SRC_CITED: "cited",
+             SRC_BYGGLOV: "bygglov"}
 
 
 def raa_id_from_url(url) -> str:
@@ -225,7 +239,9 @@ def disagree(src: pd.DataFrame, y_from, y_to, pos, years: int = DISAGREE_YEARS) 
 def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dict], *, raa_old=None, wikidata=None,
                  osm=None, stadsdel=None, estimates: bool = True, params: dict | None = None,
                  exclude: set[int] = frozenset(), reader: pd.DataFrame | None = None,
-                 cited: pd.DataFrame | None = None, wiki_pins: dict[str, int] | None = None) -> tuple[pd.DataFrame, dict]:
+                 cited: pd.DataFrame | None = None, wiki_pins: dict[str, int] | None = None,
+                 bygglov: pd.DataFrame | str | None = None, bygglov_params: dict | None = None
+                 ) -> tuple[pd.DataFrame, dict]:
     """years.parquet rows for buildings b (gid, uuid, kategori, geometry and, for the estimate tier,
     fastighet, height, area, prod_year, fnr; EPSG:3011), plus a report (raa_rejected, landmarks, review, accuracy).
 
@@ -243,7 +259,9 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     footprint, unless RAÄ dates it, loses an area, Wikidata or OSM year and stays unknown rather than estimated. A
     period row on a footprint whose Wikidata or OSM year lies inside its span is not written either (review
     cited_period_vs_record). wiki_pins: {qid: gid} (pins.pins_of), the items the pin table
-    puts on their own footprint, for the Wikidata tier.
+    puts on their own footprint, for the Wikidata tier. bygglov: the permit index's properties
+    (years_bygglov.properties), or the reason there is none, "off" or "absent" (None: "off"); bygglov_params:
+    city.BYGGLOV, or a copy with other settings.
     """
     p = city.ESTIMATE if params is None else params
     n = len(b)
@@ -367,6 +385,30 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
             landmark[k] = L["name"]
             report["landmarks"][L["name"]] = int(g)
 
+    # The building-permit tier: after every building-level record, so the cells are measured against their unrounded
+    # years, and before the takedown reset and the estimate tier.
+    bp = city.BYGGLOV if bygglov_params is None else bygglov_params
+    permit = np.zeros(n, bool)                  # the footprints it dated
+    before_permit = ysrc.copy()                 # what each had before it (the funnel's split, the estimate's check)
+    permit_rows = None
+    if isinstance(bygglov, pd.DataFrame):
+        record = np.isin(ysrc, (SRC_CURATED, SRC_RAA, SRC_RAA_OLD)) | ((ysrc == SRC_CITED) & (yflag != PERIOD))
+        t, cells_bg, checks_bg = bygglov_mod.tier(b, bygglov, stadsdel, np.where(record, year, 0), exclude, bp)
+        # It fills a footprint no tier dates (a cited row's footprint with no map period stays unknown: a hand-checked
+        # conflict), and an area-dated one only with fill_area.
+        target = ((ysrc == SRC_NONE) & ~no_period) | (bool(bp["fill_area"]) & (ysrc == SRC_RAA_AREA))
+        permit = target & t.ok.to_numpy()
+        k = np.flatnonzero(permit)
+        yr, fl = display(t.year_from.to_numpy()[k], t.year.to_numpy()[k])
+        year[k], y_from[k], y_to[k], ysrc[k], yflag[k] = yr, t.year_from.to_numpy()[k], t.year.to_numpy()[k], \
+            SRC_BYGGLOV, fl
+        permit_rows = t.loc[t.ok, ["year_from", "year"]].rename(columns={"year": "year_to"})
+        report["bygglov"] = {"status": "applied", **bygglov_mod.settings(bp), "target": int(target.sum()),
+                             "written": int(permit.sum()), "skipped": bygglov_mod.skipped(t, target, permit),
+                             "cells": cells_bg, **checks_bg}
+    else:
+        report["bygglov"] = bygglov_mod.not_run(bygglov or "off", bp)
+
     # A takedown is dated by nothing from here on (main() draws it as "Year unknown" afterwards).
     gone_gids = [g for g in exclude if g in pos.index]
     gone = pos[gone_gids].to_numpy()
@@ -376,7 +418,8 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     # The curated review list: a Wikidata or OSM year more than DISAGREE_YEARS outside the winning
     # RAÄ, area or curated span; century-precision Wikidata items; and every Wikidata gain, so the owner can scan them.
     review = {"wikidata_vs_raa": [], "wikidata_vs_area": [], "wikidata_vs_curated": [], "osm_vs_raa": [],
-              "wikidata_century": [], "wikidata_gains": [], **cited_review, "cited_vs_wikidata": [], "cited_vs_osm": []}
+              "wikidata_century": [], "wikidata_gains": [], **cited_review, "cited_vs_wikidata": [], "cited_vs_osm": [],
+              "bygglov_vs_wikidata": [], "bygglov_vs_osm": []}
     if w is not None and len(w):
         def name_w(g):
             return str(w.name[g])
@@ -410,14 +453,38 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
             by_period = on.index.to_numpy()[yflag[pos[on.index].to_numpy()] == PERIOD]
             listed = np.union1d(disagree(on, y_from, y_to, pos), by_period).astype(np.int64)
             review[key] = _entries(listed, pos, lambda g, t=t: str(t.name[g]), on, year, y_from, y_to, extra)
+    # A permit year the tier would have written where a Wikidata or OSM year stands (it never replaces one): listed when
+    # the two lie more than DISAGREE_YEARS apart; the accuracy block counts how many share the period
+    others = {}
+    for key, t_, src, extra in (("wikidata", w, SRC_WIKIDATA, lambda g: {"qid": str(w.qid[g])}),
+                                ("osm", o, SRC_OSM, lambda g: {"osm_id": str(o.osm_id[g])})):
+        if permit_rows is None:
+            break
+        on = permit_rows[ysrc[pos[permit_rows.index].to_numpy()] == src]
+        on = on[~on.index.isin(gone_gids)]
+        listed = disagree(on, y_from, y_to, pos)
+        review[f"bygglov_vs_{key}"] = _entries(listed, pos, lambda g, t_=t_: str(t_.name[g]), on, year, y_from, y_to,
+                                               extra)
+        k = pos[on.index].to_numpy()
+        others[key] = {"n": int(len(on)), "listed": int(len(listed)),
+                       "same_period": int((city.period_indices(on.year_to.to_numpy()) ==
+                                           city.period_indices(year[k])).sum())}
+    if permit_rows is not None:
+        report["bygglov"]["others"] = others
     report["review"] = review
 
     # The estimate tier, on everything still without a year. Training and testing use the in-memory exact years
     # (private houses are rounded to their decade only below) of every building-level tier, never area years (they are not
     # building-level anchors) and never a cited PERIOD (a century is no anchor either).
+    # Permit years neither train nor test it unless the lever trains says so (city.BYGGLOV).
     train = (ysrc != SRC_NONE) & (ysrc != SRC_RAA_AREA) & (yflag != PERIOD)
+    if not bp.get("trains", False):
+        train &= ysrc != SRC_BYGGLOV
     cited_years = (ysrc == SRC_CITED) & (yflag != PERIOD)     # building-level, as curated years are
     query = (ysrc == SRC_NONE) & ~no_period
+    # The permit-dated footprints that were unknown are estimated too, as if they had no year, and never written: the
+    # estimate against the permit years on the houses the estimator actually targets (the check D31 could not make)
+    shadow = permit & (before_permit == SRC_NONE)
     accuracy = {"method": "knn", "held_out": "kvarter", "folds": p["folds"], "near_m": p["near_m"],
                 "min_cell": p["min_cell"], "min_right": p["min_right"], "max_band": p["max_band"],
                 "tested": int(train.sum()), "cells": [], "fallback": [], "band_coverage": None, "by_true_period": [],
@@ -425,8 +492,13 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     external = est.no_external()
     if estimates:
         f = est.features(b, stadsdel=stadsdel)
-        got, accuracy = est.run(f, year, train, query, p=p, stadsdel=stadsdel)
-        rows = np.flatnonzero(got.yflag.to_numpy() != UNKNOWN)
+        got, accuracy = est.run(f, year, train, query | shadow, p=p, stadsdel=stadsdel)
+        estimated = got.yflag.to_numpy() != UNKNOWN
+        would = shadow & estimated
+        if permit.any():
+            report["bygglov"]["estimate_check"] = bygglov_mod.estimate_check(
+                got.yhat.to_numpy()[would], year[would], bp["min_cell"])
+        rows = np.flatnonzero(estimated & ~shadow)
         if len(rows):
             yh = np.clip(np.round(got.yhat.to_numpy()[rows]), FLOOR_YEAR, LATEST_YEAR).astype(np.int64)
             fl = got.yflag.to_numpy()[rows]
@@ -460,7 +532,15 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
         area_acc.update(status="measured", **est.score(a.year.to_numpy(dtype=np.int64)[both], level[ka][both]))
     accuracy["area"] = area_acc
     accuracy["external"] = external
-    if report["cited"] or no_period.any():
+    accuracy["bygglov"] = report["bygglov"]
+    if report["bygglov"]["status"] == "applied":
+        # The funnel's split by what each footprint had before: unknown, an estimate it would have had, its area's year
+        estimated_before = int(would.sum()) if estimates else 0
+        report["bygglov"]["written_by_state"] = {"unknown": int(shadow.sum()) - estimated_before,
+                                                 "estimate": estimated_before,
+                                                 "area": int((permit & (before_permit == SRC_RAA_AREA)).sum())}
+        report["bygglov"].setdefault("estimate_check", bygglov_mod.estimate_check([], [], bp["min_cell"]))
+    if report["cited"] or no_period.any() or shadow.any():
         # the table describes what ships (s99 ties result to stats.byFlag): the cited PERIODs count as periods
         accuracy["result"] = {**accuracy["result"], "estimate": int((yflag == ESTIMATE).sum()),
                               "period": int((yflag == PERIOD).sum()), "unknown": int((yflag == UNKNOWN).sum())}
@@ -471,9 +551,16 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
     if reader is not None and len(reader):
         report["reader"] = contributions.apply_years(reader, pos, year, y_from, y_to, ysrc, yflag, gone=gone_gids)
         # the table describes what ships (s99 ties tested and result to stats.byFlag), as suppress.accuracy does
-        accuracy["tested"] = int(np.isin(yflag, (EXACT, RANGE, LONG)).sum())
+        accuracy["tested"] = int((np.isin(yflag, (EXACT, RANGE, LONG))
+                                  & ((ysrc != SRC_BYGGLOV) | bool(bp.get("trains", False)))).sum())
         accuracy["result"] = {**accuracy["result"], "estimate": int((yflag == ESTIMATE).sum()),
                               "period": int((yflag == PERIOD).sum()), "unknown": int((yflag == UNKNOWN).sum())}
+
+    # What ships of the permit tier, after the readers' reports (s99 ties it to stats.bySrc)
+    shipped = ysrc == SRC_BYGGLOV
+    if report["bygglov"]["status"] == "applied":
+        report["bygglov"]["shipped"] = {"n": int(shipped.sum()), "exact": int((shipped & (yflag == EXACT)).sum()),
+                                        "range": int((shipped & (yflag == RANGE)).sum())}
 
     # Period from the year before the decade rounding, so the map keeps each house's period colour.
     period = np.where(year > 0, city.period_indices(year), 0)
@@ -510,6 +597,7 @@ def summary(y: pd.DataFrame) -> dict:
         "wikidata": int((y.ysrc == SRC_WIKIDATA).sum()),
         "osm": int((y.ysrc == SRC_OSM).sum()),
         "reader": int((y.ysrc == SRC_READER).sum()),
+        "bygglov": int((y.ysrc == SRC_BYGGLOV).sum()),
         "estimate": int((y.yflag == ESTIMATE).sum()),
         "period": int((y.yflag == PERIOD).sum()),
         "private": int(y.private.sum()),
@@ -538,6 +626,10 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--contributions", type=Path, default=contributions.PATH, help="accepted readers' reports")
     ap.add_argument("--cited", type=Path, default=cited_mod.PATH, help="cited building years")
     ap.add_argument("--pins", type=Path, default=pins.PATH, help="Wikidata items pinned to their own footprint")
+    ap.add_argument("--bygglov-cards", type=Path, default=bygglov_mod.CARDS, help="the permit index as one table")
+    ap.add_argument("--bygglov-manifest", type=Path, default=None,
+                    help="the harvest's MANIFEST.json (default data/raw/bygglov/MANIFEST.json): no complete harvest, "
+                         "no permit tier")
     a = ap.parse_args(argv or [])
     b = gpd.read_parquet(a.buildings)
     try:
@@ -569,12 +661,23 @@ def main(argv: list[str] | None = None) -> None:
     # A takedown is dated by no tier, so it neither trains nor tests the estimate; it is drawn as "Year
     # unknown", and the table counts what ships (pipeline/suppress.py)
     hidden = suppress.gids_of(a.buildings, a.suppress)
+    # The permit tier reads the harvest's cards, never the network: without a complete harvest it is absent (s99
+    # --release stops a full-city build then, so a release cannot quietly lose its permit years)
+    permits = "off"
+    if city.FEATURES.get("bygglov"):
+        c = bygglov_mod.cards(a.bygglov_cards, manifest=a.bygglov_manifest)
+        if c is None:
+            permits = "absent"
+            print("warning: no complete harvest of the building-permit index (run s00_fetch_bygglov --fetch): no "
+                  "bygglov tier", file=sys.stderr)
+        else:
+            permits = bygglov_mod.properties(bygglov_mod.keys(c))
     try:
         years, report = assign_years(
             b, load_raa(a.raa), load_landmarks(a.landmarks), raa_old=raa_old,
             wikidata=years_wikidata.load(a.wikidata, a.wikidata_classes),
             osm=years_osm.load(a.osm), stadsdel=est.stadsdel_of(b, a.stadsdelar), estimates=not a.no_estimates,
-            exclude=hidden, reader=reader, cited=cited, wiki_pins=wiki_pins)
+            exclude=hidden, reader=reader, cited=cited, wiki_pins=wiki_pins, bygglov=permits)
     except contributions.Refused as e:
         raise SystemExit(f"contributions: {e}; {a.out} is unchanged")
     except cited_mod.Refused as e:
@@ -613,6 +716,13 @@ def main(argv: list[str] | None = None) -> None:
               f"{e['record_src']} year {e['record_year']} lies inside it and is more precise; listed in the review file",
               file=sys.stderr)
     print("cited:", report["cited"])
+    bg = report.get("bygglov") or {"status": "off"}
+    if bg["status"] == "applied":
+        print(f"bygglov: {bg['written']:,} written ({bg['written_by_state']}), {bg['shipped']['n']:,} shipped; blind spot "
+              f"{bg['blind_spot']['dated']} of {bg['blind_spot']['n']}; cells used: "
+              f"{sum(c['status'] == 'dated' for c in bg['cells'])} of {len(bg['cells'])}")
+    else:
+        print("bygglov:", bg["status"])
     print("review list:", {k: len(v) for k, v in report["review"].items()}, "->", a.review_out)
     print("estimate tier:", report["accuracy"].get("result"), "area tier:", report["accuracy"].get("area"),
           "->", a.accuracy_out)

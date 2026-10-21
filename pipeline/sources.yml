@@ -1,6 +1,7 @@
 # Every dataset the pipeline uses (contract C6). Checked by pipeline/sources.py and by s99_validate.
-# licence: SPDX id, one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, ODbL-1.0, LicenseRef-PublicDomain, or
-#         LicenseRef-Permission (a publisher's written permission; its terms in `terms`, required then).
+# licence: SPDX id, one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, ODbL-1.0, LicenseRef-PublicDomain,
+#         LicenseRef-Permission (a publisher's written permission; its terms in `terms`, required then), or
+#         LicenseRef-Facts (facts read from a publisher's pages, in our own words; nothing of theirs copied).
 # feature (optional): a city.FEATURES switch; the source is credited (About, the corner) only while it is on.
 # modified: required for CC-BY* and ODbL; true when we reproject, clip, simplify or join the data.
 # attribution: for CC-BY*, ODbL it must contain the `product` string and the licence marker ("CC BY 4.0",
@@ -206,6 +207,26 @@
   modified: true   # facts from the records' fields and categories, years cited from its reports; never their texts
   status: confirmed
 
+# Stockholms stadsarkiv's card index to the building-permit files 1875-1980 (SE/SSA/0174, series D 1 AB), harvested
+# from its search app by s00_fetch_bygglov, one request at a time (behind city.FEATURES bygglov). s02_years takes one
+# year per property from it (pipeline/years_bygglov.py) and shows it on the property's one main building; a private
+# house shows its decade only. Designations, diarienummer, aktnummer and card ids are a join key only, never shipped
+# (spec §6.3; s99 checks that no shipped file holds the database's path). About credits it, and each dated card names
+# Stadsarkivet; no corner credit (the archive asked for none).
+- id: stadsarkivet_bygglov
+  url: https://sok.stadsarkivet.stockholm.se/?id=4243&template=view_post
+  search_url: https://sok.stadsarkivet.stockholm.se/Databas/bygglov1875-1980/Sok
+  publisher: Stockholms stadsarkiv
+  product: Register till bygglovshandlingar 1875–1980
+  dataset: Bygglov 1875–1980
+  licence: LicenseRef-Permission
+  licence_url: https://sok.stadsarkivet.stockholm.se/?id=4243&template=view_post
+  terms: "written answer from Stockholms stadsarkiv, 2026-10-20 (O6): the search app's data may be used and spread as we prefer, and fetched from the database freely (there is no file)"
+  attribution: Bygglov 1875–1980, Stockholms stadsarkiv (bearbetad / modified)
+  modified: true   # one year per property, placed on one footprint, a private house's rounded to its decade
+  status: confirmed
+  feature: bygglov
+
 # The City Museum's archive photos (s00_fetch_stadsmuseet, s02_stadsmuseet_photos): CC BY photos of Gamla stan and
 # Riddarholmen on the pinned card's "photos through the years", each credited and linked to its own .info page. Only
 # photos whose own licence (field 590) is CC BY ship; NC and ND never do (docs/research/2026-10-19-stadsmuseet-sources.md
@@ -249,6 +270,22 @@
   licence_url: https://creativecommons.org/licenses/by/4.0/
   attribution: Byggnadsinventeringar, Stadsmuseet i Stockholm, CC BY 4.0 (bearbetad / modified)
   modified: true   # a year read from the inventory, placed on a footprint; never the inventory's text
+  status: confirmed
+
+# The City of Stockholm's building stages in Hjorthagen (pipeline/gamla_stan_years.csv, source stockholm_stage; D63):
+# each stage's move-in years and the blocks in it, from the City's Hjorthagen page on vaxer.stockholm ("Tidsplan och
+# byggaktörer") and the stages' results pages on norradjurgardsstaden2030.se (docs/research/2026-10-20-newer-buildings.md).
+# Facts only, in our own words: no text, image or file of the City's is used. A card's source line links the stage's
+# page; the years are placed on footprints by block, so "processed".
+- id: stockholm_stages
+  url: https://vaxer.stockholm/omraden/stadsutvecklingsomraden/norra-djurgardsstaden/i-hjorthagen/
+  publisher: Stockholms stad
+  product: Stockholm växer, Hjorthagen
+  dataset: Hjorthagens utbyggnadsetapper
+  licence: LicenseRef-Facts
+  licence_url: https://vaxer.stockholm/omraden/stadsutvecklingsomraden/norra-djurgardsstaden/i-hjorthagen/
+  attribution: Hjorthagens utbyggnadsetapper, Stockholm växer, Hjorthagen, Stockholms stad (facts only; bearbetad / modified)
+  modified: true
   status: confirmed
 
 # Tunnelbanan (behind city.FEATURES metro; s16_metro). The facts were checked against the research CSVs' own sources

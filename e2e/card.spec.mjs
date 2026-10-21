@@ -120,6 +120,45 @@ test('a private house card shows its decade and nothing that could give the year
   expect(errors).toEqual([]);
 });
 
+// A permit-dated building (ysrc 10, codes.SRC_BYGGLOV): the fixture (Gamla stan, which the tier leaves out) has none, so
+// CI skips this; on a laptop's full-city build it pins the card's wording (web/test/card.test.mjs holds the logic).
+test('a permit-dated card names the archive and, on a private house, only its decade', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page);
+  const priv = await firstGid(page, b => b.ysrc === 10 && b.private === 1);
+  const pub = await firstGid(page, b => b.ysrc === 10 && b.private !== 1);
+  test.skip(priv < 0 && pub < 0, 'this build has no permit-dated building');
+  const card = page.locator('#card.pinned');
+  if (priv >= 0) {
+    await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), priv);
+    const head = card.locator('.card-head .y');
+    await expect(head).toHaveText(/^(\d{3}0s|\d{2}00–\d{2}09)$/);           // a record: no "≈"
+    // the line, then the "Why?" link to About's privacy section that every private house's line ends with
+    await expect(card.locator('.dating')).toHaveText(
+      /^Building permit closed (in the \d{3}0s|\d{2}00–\d{2}09) \(Stadsarkivet\) · private house: decade only Why\?$/);
+    await expect(card.locator('.sources')).toHaveCount(0);
+    const start = Number((await head.textContent()).slice(0, 4));
+    const html = await card.innerHTML();
+    // no year but the decade's ends, and no link to the archive's card page (it shows the designation and the year)
+    const runs = (await card.innerText()).match(/\d{4,}/g) || [];
+    expect(runs.filter(y => ![start, start + 9].includes(Number(y)))).toEqual([]);
+    expect(html).not.toContain('/Visa/');
+    expect(html).not.toContain('bygglov1875');
+  }
+  if (pub >= 0) {
+    await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), pub);
+    const year = (await card.locator('.card-head .y').textContent()).trim();
+    expect(year).toMatch(/^\d{4}$/);
+    await expect(card.locator('.dating')).toHaveText(`Building permit closed ${year} (Stadsarkivet)`);
+  }
+  await open(page, '?lang=sv');
+  await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), priv >= 0 ? priv : pub);
+  await expect(card.locator('.dating')).toHaveText(priv >= 0
+    ? /^Bygglov avslutat (på \d{3}0-talet|\d{2}00–\d{2}09) \(Stadsarkivet\) · småhus: bara årtiondet Varför\?$/
+    : /^Bygglov avslutat \d{4} \(Stadsarkivet\)$/);
+  expect(errors).toEqual([]);
+});
+
 test('the hover card is the band and how the year is known; Swedish when the language is', async ({ page }) => {
   const errors = watchErrors(page);
   await page.addInitScript(() => {

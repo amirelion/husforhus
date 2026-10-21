@@ -1,5 +1,23 @@
 [
   {
+    "date": "2026-10-21",
+    "kind": "data",
+    "title": { "en": "11,000 more houses dated", "sv": "11 000 fler hus daterade" },
+    "text": {
+      "en": "11,175 houses, most of them villas in the suburbs, now show their decade from the City Archives' building permits of 1875–1980: the year the property's first permit was closed. Hjorthagen's new blocks show the move-in years the City gives for their building stage. “Year unknown” falls from 56% to 45% of the map. A house built after 1980 on an older plot can now and then show the earlier house's year; if you spot one, tell us with “Something wrong?”.",
+      "sv": "11 175 hus, de flesta villor i ytterstaden, visar nu sitt årtionde ur Stadsarkivets bygglov 1875–1980: året då fastighetens första bygglov avslutades. Hjorthagens nya kvarter visar de inflyttningsår som staden anger för deras byggetapp. ”Okänt byggår” minskar från 56 till 45 procent av kartan. Ett hus som byggts efter 1980 på en äldre tomt kan ibland visa det tidigare husets år; ser du ett sådant, berätta det med ”Något som inte stämmer?”."
+    }
+  },
+  {
+    "date": "2026-10-21",
+    "kind": "feature",
+    "title": { "en": "Find museums by name", "sv": "Hitta museer på namn" },
+    "text": {
+      "en": "Search now finds Historiska museet, Stadsmuseet, Fotografiska, Liljevalchs, the city's libraries and about 80 more museums, theatres, academies and offices, and takes you to the building they are in.",
+      "sv": "Sökningen hittar nu Historiska museet, Stadsmuseet, Fotografiska, Liljevalchs, stadens bibliotek och ett åttiotal andra museer, teatrar, akademier och myndigheter, och tar dig till huset de finns i."
+    }
+  },
+  {
     "date": "2026-10-20",
     "kind": "data",
     "title": { "en": "Gamla stan, house by house", "sv": "Gamla stan, hus för hus" },

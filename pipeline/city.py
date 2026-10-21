@@ -65,9 +65,10 @@ TIER1 = [
 ]
 SALTSJON = (2050.0, 600.0, 0.0)               # local (x, z, angle°): open water off Fåfängan, 237 m from any shore
 FEATURES = {"quests": True, "layers": False, "energy": False, "lang": True, "search": True, "scenes": True,
-            "plaques": True, "metro": True, "walks": True, "ferries": True}   # lang, search, scenes, plaques: on since
-# 2026-10-17; metro: s16_metro; ferries: s17_ferries, the boats (decided 2026-10-20), shown while the timeline is at
-# today unless the viewer's Boats switch turns them off
+            "plaques": True, "metro": True, "walks": True, "ferries": True, "bygglov": True}   # lang, search, scenes,
+# plaques: on since 2026-10-17; metro: s16_metro; ferries: s17_ferries, the boats (decided 2026-10-20), shown while the
+# timeline is at today unless the viewer's Boats switch turns them off; bygglov: the building-permit year tier in
+# s02_years (city.BYGGLOV, decided 2026-10-21), and its source's credit in About
 # quests and walks: on for everyone since 2026-10-18; the Look panel's "Quests and walks" switch hides their buttons
 # Where a walk can start besides the walker's own location (web/app.js, Walks): (en, sv, x, z) in local metres,
 # from WGS84 via pyproj (2026-10-18). The first is the default; Stortorget is ORIGIN.
@@ -137,6 +138,36 @@ ESTIMATE = dict(
     folds=5, seed=0,       # cross-validation with whole kvarter held out
     far_rule="unknown",    # beyond near_m: "unknown" (option A, measured right) or "period" (option C; needs give_period)
     period_only_stadsdelar=set(),   # e.g. {"GAMLA STAN"}: still-unknown buildings there get the period (needs give_period)
+)
+# The building-permit tier (pipeline/years_bygglov.py): one year per property from Stockholm City Archives' permit
+# cards (1875-1980), on the property's one main building. Frozen after the offline measurement of 2026-10-20 (the
+# internal report data/research/bygglov-measure/report.md): the earliest closing year beat every other rule, a property
+# with an undated card did worse (houses 70% right period, against 92%), no closing year needs a batch correction, and
+# the block check below cut the record buildings from 1981 on that would get a predecessor's year from 35 to 13 of 321.
+BYGGLOV = dict(
+    not_main={"Komplementbyggnad", "Ekonomibyggnad", "Ospec. byggnad Oregistrerad", "Ospec. byggnad Registrerad",
+              "Transformator"},       # outbuildings, garages, sheds, substations: never the property's year
+    max_footprints=6,      # a property with more footprints is an estate (a hospital, a park, a trakt 1:1): no year
+    skip_stadsdelar={"GAMLA STAN", "RIDDARHOLMEN"},   # every standing building is older than the index
+    late_prod_year=ESTIMATE["late_prod_year"],        # the estimate tier's two guards: probably newer than every card
+    late_unit_fnr=ESTIMATE["late_unit_fnr"],
+    year_rule="earliest_close",   # the earliest closing year among the property's dated cards
+    undated="skip",        # a property with a card without a closing year gets nothing ("ignore" would use the rest)
+    max_lag=10,            # year_from is the first card's opening year when it is at most this many years earlier
+    min_year=1873,         # a closing year outside min_year..max_year is a misreading, and counts as none
+    max_year=1985,
+    episode_years=5,       # cards closing within this many years of the first make one episode; later ones a second
+    block_years=10,        # the first card more than this many years from the median of its block's other properties'
+                           # first cards: an old plot in a newer block (a predecessor's card) or an alteration's card
+    block_uncarded=0.2,    # more than this share of the block's properties without a card: rebuilt or renumbered
+    groups={"house"},      # the only KATEGORI groups given a year; the others are measured and reported
+    fill_area=False,       # an area-dated footprint keeps its area year: inside the area polygons no house has a
+                           # building-level year to test the permit years against
+    min_cell=30,           # test buildings a cell needs to be measurable
+    min_right=0.85,        # share in the right period a cell needs to write years (a record must beat the estimate)
+    min_decade=0.70,       # share in the same decade it needs too (what a private house shows)
+    trains=False,          # permit years never train or test the estimate tier: M9 measured no gain, and the houses
+                           # built from 1981 on got worse (pulled towards their older neighbours)
 )
 
 # --- Terrain ---
@@ -312,6 +343,10 @@ BUILDING_ALIASES = {
     "Prins Eugens Waldemarsudde": "Waldemarsudde", "Kaknäs Tower": "Kaknästornet",
     "Domkyrkan": "Storkyrkan", "Stockholm Cathedral": "Storkyrkan", "Sankt Nikolai kyrka": "Storkyrkan",
     "Sankta Clara kyrka": "Klara kyrka", "Maritime Museum": "Sjöhistoriska Museet", "Observatory": "Observatoriet",
+    # the old observatory's museum and KTH's main library are the buildings themselves, carded under the house's name
+    # (docs/research/2026-10-21-missing-landmarks.md)
+    "Stockholms gamla observatorium": "Observatoriet", "Stockholm Observatory": "Observatoriet",
+    "KTH Biblioteket": "Kungliga Tekniska högskolans bibliotek", "KTH Library": "Kungliga Tekniska högskolans bibliotek",
 }
 # Municipalities around Stockholm: a search for one says the map covers Stockholms kommun only.
 OUTSIDE = ("Botkyrka", "Danderyd", "Ekerö", "Haninge", "Huddinge", "Järfälla", "Lidingö", "Nacka", "Sollentuna", "Solna",

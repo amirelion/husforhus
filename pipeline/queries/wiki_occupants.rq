@@ -1,14 +1,25 @@
 # Hus för hus, s06_wiki (step 4): what is inside the carded buildings. Items located in (P276) or headquartered in
 # (P159) a building's item, and the building's own occupants (P466), with their classes, sv/en labels and aliases.
+# Each link is read as a statement (p:/ps:) of the best rank, so a statement that has ended is left out: one with an
+# end time (P582), an end cause (P1534) or a latest date (P1326) is history, not a tenant (the Riksdag's P276 in
+# Kulturhuset, 1971–83, put it in search there until 2026-10-21).
 # Works of art and people are dropped here already (a museum holds thousands of paintings); pipeline/occupants.py
 # keeps the public institutions. The pipeline fills the VALUES line, a batch of buildings at a time.
 PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 SELECT DISTINCT ?b ?occ ?cls ?sv ?en ?alt WHERE {
   VALUES ?b { __ITEMS__ }
-  { ?occ wdt:P276 ?b } UNION { ?occ wdt:P159 ?b } UNION { ?b wdt:P466 ?occ }
+  { ?occ p:P276 ?st . ?st ps:P276 ?b } UNION { ?occ p:P159 ?st . ?st ps:P159 ?b } UNION { ?b p:P466 ?st . ?st ps:P466 ?occ }
+  ?st a wikibase:BestRank .
+  FILTER NOT EXISTS { ?st pq:P582 [] }
+  FILTER NOT EXISTS { ?st pq:P1534 [] }
+  FILTER NOT EXISTS { ?st pq:P1326 [] }
   FILTER NOT EXISTS { ?occ wdt:P170 [] }
   FILTER NOT EXISTS { ?occ wdt:P31 wd:Q5 }
   FILTER NOT EXISTS { ?occ wdt:P576 [] }

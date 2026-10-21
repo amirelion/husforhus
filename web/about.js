@@ -4,8 +4,10 @@
 // opens it at a section for a link to #about/<section>.
 
 export const SECTIONS = ['years', 'accuracy', 'limits', 'privacy', 'sources', 'contact'];
-const RECORD = ['curated', 'cited', 'raa', 'raa_old', 'wikidata', 'osm', 'reader'];
-const SOURCE_ROWS = ['curated', 'cited', 'raa', 'raa_old', 'raa_area', 'wikidata', 'osm', 'reader', 'estimate', 'none'];
+// A building-permit year (bygglov) is a record: the property's own file, not an estimate.
+const RECORD = ['curated', 'cited', 'raa', 'raa_old', 'bygglov', 'wikidata', 'osm', 'reader'];
+const SOURCE_ROWS = ['curated', 'cited', 'raa', 'raa_old', 'bygglov', 'raa_area', 'wikidata', 'osm', 'reader', 'estimate',
+  'none'];
 const AMSTERDAM = 'https://github.com/alexbarakov/amsterdam-by-building';
 const PARIS = 'https://paris.bogachev.fr/';
 const REPO = 'https://github.com/amirelion/husforhus';
@@ -60,10 +62,15 @@ export function aboutTokens(config, T) {
   const snapshot = y && m ? new Intl.DateTimeFormat(T.lang === 'sv' ? 'sv-SE' : 'en', { month: 'long', year: 'numeric' })
     .format(new Date(Date.UTC(y, m - 1, 15))) : esc(a.snapshot || '');
   const v = String(config.version || '').match(/^v(\d{4})(\d{2})(\d{2})/);
+  // the permit years (accuracy.bygglov, as the accuracy page counts them): a closing year is not an exact or a
+  // finished year, so "kinds" leaves them out and their own paragraph names them
+  const permit = acc.bygglov?.status === 'applied' ? acc.bygglov : null;
+  const shipped = permit?.shipped || {};
   return {
     buildings: num(n), with_year: num(withYear), with_year_pct: share(withYear), record: num(record),
     area: num(src.raa_area || 0), estimated: num(src.estimate || 0), unknown: num(src.none || 0),
-    exact: num(s.byFlag?.exact || 0), range: num(s.byFlag?.range || 0), long: num(s.byFlag?.long || 0),
+    exact: num((s.byFlag?.exact || 0) - (shipped.exact || 0)), range: num((s.byFlag?.range || 0) - (shipped.range || 0)),
+    long: num(s.byFlag?.long || 0), bygglov: num(src.bygglov || 0), bygglov_right: pct(permit?.min_right ?? 0, T.lang, 0),
     cited_period: num(a.citedPeriod || 0),
     private_cat: num(a.privateCategory || 0), private_dated: num(a.privateDated || 0), fewest: esc(a.fewestPrivateYears ?? ''),
     near: num(a.nearM ?? acc.near_m ?? 0), late: esc(a.lateYear ?? ''), min_cell: num(acc.min_cell ?? 0),
@@ -139,6 +146,7 @@ export function aboutHtml(config, T, howto = '') {
       <tr class="total"><td>${esc(T('about.table.all'))}</td><td>${k.buildings}</td><td>${pct(1, T.lang)}</td></tr></tbody></table></div>
     ${P('about.years.kinds')}
     ${a.citedPeriod ? P('about.years.cited') : ''}
+    ${acc.bygglov?.status === 'applied' && src.bygglov ? P('about.years.bygglov') : ''}
     ${has ? P('about.years.private') : ''}
     ${h3('about.acc.title', 'accuracy')}
     ${P('about.acc.how')}

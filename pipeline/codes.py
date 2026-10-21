@@ -11,8 +11,8 @@ EXACT, RANGE, LONG, AREA, ESTIMATE, PERIOD, UNKNOWN = 0, 1, 2, 3, 4, 6, 7
 # `private` = True; their published year is the decade start, year_from = year, year_to = year + 9.
 
 # ysrc: where it came from. Pairs with yflag (s99 checks it): SRC_NONE <-> UNKNOWN; SRC_RAA_AREA <-> AREA;
-# SRC_ESTIMATE <-> ESTIMATE or PERIOD; SRC_CITED <-> EXACT, RANGE, LONG or PERIOD; every other source <-> EXACT, RANGE
-# or LONG.
+# SRC_ESTIMATE <-> ESTIMATE or PERIOD; SRC_CITED <-> EXACT, RANGE, LONG or PERIOD; SRC_BYGGLOV <-> EXACT or RANGE; every
+# other source <-> EXACT, RANGE or LONG.
 SRC_NONE, SRC_CURATED, SRC_RAA, SRC_RAA_AREA, SRC_WIKIDATA, SRC_ESTIMATE = 0, 1, 2, 3, 4, 5
 SRC_RAA_OLD, SRC_OSM = 6, 7
 # SRC_READER: a reader's report the owner checked and accepted (pipeline/contributions.py); EXACT, RANGE or LONG.
@@ -21,6 +21,11 @@ SRC_READER = 8
 # LONG), or a century, half-century or period the record gives (PERIOD: year_from/year_to are the record's span, year
 # a year inside the period that covers most of it). Unlike SRC_CURATED it is no landmark and keeps the private rule.
 SRC_CITED = 9
+# SRC_BYGGLOV: the year a property's first building permit was closed, from Stockholms stadsarkiv's card index
+# "Bygglov 1875-1980" (pipeline/years_bygglov.py), on the property's one main building. year_to is the closing year,
+# year_from the case's opening year when the case number gives one (at most city.BYGGLOV max_lag earlier), so the flag is
+# EXACT or RANGE, never LONG. It is a record, not an estimate: no "≈".
+SRC_BYGGLOV = 10
 # fsrc: floors source.
 FLOORS_OSM, FLOORS_HEIGHT = 0, 1
 # rating (Stadsmuseet klassificering): 0 none, 1 Blått, 2 Grönt, 3 Gult

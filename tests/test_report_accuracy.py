@@ -82,7 +82,7 @@ def test_the_sources_are_named_in_words_and_their_shares_add_up_to_100():
     md = page()
     table = section(md, "Where the years come from")
     shares = [float(s) for s in re.findall(r"\| ([\d.]+)% \|", table)]
-    assert len(shares) == 10 and round(sum(shares), 1) == 100.0
+    assert len(shares) == 11 and round(sum(shares), 1) == 100.0
     assert "| **All buildings** | **11** | **100.0%** |" in table
     for name in ("RAÄ's building register", "RAÄ's older register file", "Wikidata", "OpenStreetMap",
                  "A hand-checked list of landmarks", "No source: the year stays unknown"):
@@ -127,11 +127,11 @@ def test_a_cited_record_counts_as_a_record_even_with_a_century_only():
     short = section(md, "In short")
     # 6 + the two cited; still 2 estimated (the kNN's estimate and its one period-only year), none unknown
     assert "**8 (72.7%) have a year from a record**" in short
-    assert "a published record checked by hand (KulturNav, Swedish Wikipedia or the City Museum)" in short
+    assert "a published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum or the City's stage years)" in short
     assert "(1 of them only to a century or a period, or to two readings where sources differ, shown with ≈)" in short
     assert "**2 (18.2%) are estimated** from similar dated buildings nearby (1 of them with the period only)" in short
     table = section(md, "Where the years come from")
-    assert "| A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum) | 2 | 18.2% |" in table
+    assert "| A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum, the City) | 2 | 18.2% |" in table
     assert ("where a published record gives only a century or a period, or two records give different years, the map "
             "shows that period with ≈ (1)") in table
     assert "and 1 get the period only." in md
@@ -335,3 +335,42 @@ def test_the_committed_page_describes_the_build_that_ships():
     assert m.group(1) == version, (f"docs/accuracy.md describes {m.group(1)} but web/data/current.json ships "
                                    f"{version}: regenerate it (uv run python -m pipeline.report_accuracy --version "
                                    f"{version})")
+
+
+def test_the_permit_years_have_their_section_with_the_caveat_and_the_blind_spot_from_the_block():
+    from pipeline.codes import EXACT, RANGE, SRC_BYGGLOV
+    from tests.test_validate_bygglov import good
+    _, y, _ = tiny_city()
+    for g, flag in ((7, EXACT), (8, RANGE)):
+        y.loc[g, ["year", "year_from", "year_to", "ysrc", "yflag", "private"]] = [1930, 1930, 1939, SRC_BYGGLOV, flag,
+                                                                                  True]
+    acc = accuracy()
+    acc["bygglov"] = good()["accuracy"]["bygglov"]
+    acc["bygglov"]["shipped"] = {"n": 2, "exact": 1, "range": 1}
+    md = report_accuracy.render(acc, y, REVIEW, None, "2026-10-20", "v20261020-m3b")
+    s = section(md, "The building-permit years (Stockholm City Archives)")
+    assert s.lstrip().startswith("2 buildings get their year from the City Archives' (Stadsarkivet's) card index")
+    assert "the permit year fell in the right period at least 85% of the time and in the same decade at least 70%" in s
+    assert "All of them are private houses, so they show only their decade." in s
+    # the owner's caveat, in plain words, and the way to report it
+    assert ("**It can be wrong.** A house built after 1980 on an older property can sometimes show the earlier house's "
+            'permit year. If you see one, please report it with "Something wrong?" on its card.') in s
+    assert "**1 (2.5%) would get a permit year**" in s and "Of the 40 buildings from 1981 or later" in s
+    assert "| No permit card names the property | 7 |" in s and "| Year unknown | 2 |" in s
+    assert "| Houses (villa, row, chain) | 1920–1945 | outer | one | 40 | 95% | 90% | 92% | dates |" in s
+    assert "1 more cells have fewer than 30 test buildings (5 in all)" in s
+    assert "On the 40 test buildings in the cells the map uses, the permit year fell in the right period for 95%" in s
+    assert "partly the files agreeing with themselves" in s
+    # a closing year is not an exact year: the record kinds leave the two out and name them on their own
+    table = section(md, "Where the years come from")
+    assert "| The City Archives' building permits, 1875–1980 (Stadsarkivet) | 2 |" in table
+    assert "a building-permit year is the year the property's first permit was closed (2)" in table
+    # with another block the numbers follow it: nothing in the section is typed in
+    acc["bygglov"]["blind_spot"] = {"n": 30, "dated": 0, "share": 0.0}
+    md2 = report_accuracy.render(acc, y, REVIEW, None, "2026-10-20", "v20261020-m3b")
+    assert "**0 (0.0%) would get a permit year**" in md2 and "Of the 30 buildings" in md2
+    # a build without the tier says so, and one from before it has no section
+    acc["bygglov"] = {"status": "absent"}
+    assert "The building-permit years are not used" in report_accuracy.render(acc, y, REVIEW, None, "2026-10-20", "v")
+    del acc["bygglov"]
+    assert "building-permit years" not in page()

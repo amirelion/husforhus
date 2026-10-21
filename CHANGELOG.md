@@ -13,6 +13,16 @@ Plans, not promises: the order can change.
 - **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 17 plaques not yet placed on a building (the other 17 unplaced are on bridges).
 - **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
 
+## 2026-10-21
+
+### Features
+- **Building-permit years.** A house can now take its year from Stockholm City Archives' card index of building permits, 1875–1980: the year the property's first permit was closed. The card says "Building permit closed in the 1930s (Stadsarkivet)". It is used only on a property's one main building, and only for kinds of building where it matched the heritage register's year in a test. It can be wrong for a house built after 1980 on an older property, which can show the earlier house's year; the accuracy page gives the numbers.
+- **Stage years in Hjorthagen.** Hjorthagen's new blocks show the move-in years the City gives for their building stage ("Built 2014–2017"), linked to the City's page.
+- **Find museums and institutions by name.** Search finds about 100 more museums, theatres, libraries, academies and public offices, among them Historiska museet, Stadsmuseet, Fotografiska, Liljevalchs and Svenska Akademien, and goes to the building they are in, also where the building has no card of its own. Links in Wikidata that have ended (such as the Riksdag's years in Kulturhuset) are no longer shown.
+
+### Data
+- Data version `v20261021-fx5`: 11,175 houses dated from the City Archives' building permits (8,188 had no year, 2,987 had an estimate), all shown as their decade; 72 footprints in Hjorthagen's stages Norra 1, Västra, Norra 2 and Brofästet; a reader's report (HFH-4: Wollmar Yxkullsgatan 4, built 1990), whose card no longer shows the 1914 photo of the house that stood there before. "Year unknown" falls from 43,293 to 35,032 of 77,743 buildings (55.7% to 45.1%). Institutions inside buildings: 186 in search, 82 of them placed by hand from checked sources.
+
 ## 2026-10-20
 
 ### Features

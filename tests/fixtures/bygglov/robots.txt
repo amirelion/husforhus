@@ -1,0 +1,14 @@
+User-agent: *
+Disallow: /Bildarkiv/
+Disallow: /js/
+Disallow: /Bin/
+Disallow: /images/ 
+Disallow: /Tornado/ 
+Disallow: /App_Code/
+Disallow: /App_Data/
+Disallow: /CookiesManager/
+Disallow: /Leveransframstallan-e-arkiv/
+Disallow: /SSAsupportcenter/
+Disallow: /SSAsupportcenter - Copy/
+Disallow: /svarasystem/
+Disallow: /svarasystem-test/

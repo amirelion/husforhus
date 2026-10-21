@@ -181,5 +181,33 @@ def test_occupants_are_listed_only_for_buildings_a_card_names_and_carries(built)
                        {"qid": "Q9", "sv": "Börshuset", "en": "Börshuset", "alt": []}],
            "Q999": [{"qid": "Q8", "sv": "Ingenstans", "en": "Nowhere", "alt": []}]}
     index, _ = s14_search.build(df, cards, PLACES, occ)
-    assert index["occupants"] == [["Nobelprismuseet", "Nobel Prize Museum", 0, ["Nobelmuseet"]]]
+    assert index["occupants"] == [["Nobelprismuseet", "Nobel Prize Museum", 0, ["Nobelmuseet"], 0]]   # in Gamla stan
     assert s14_search.build(df, cards, PLACES)[0]["occupants"] == []
+
+
+HISTORISKA = {"qid": "Q1726607", "sv": "Historiska museet", "en": "Swedish History Museum",
+              "alt": ["Statens historiska museum"]}
+
+
+def test_a_hand_checked_occupant_needs_no_card_and_carries_its_stadsdel(built):
+    # pipeline/occupant_pins.csv by footprint: gid 2's card has neither a name nor an item, as Historiska museet's
+    # footprint had none on 2026-10-21, yet search finds the museum there, in Riddarholmen (stadsdel 3)
+    out, df, cards = built
+    index, _ = s14_search.build(df, cards, PLACES, {}, {2: [HISTORISKA]})
+    assert index["occupants"] == [["Historiska museet", "Swedish History Museum", 2, ["Statens historiska museum"], 3]]
+    assert s14_search.build(df, cards, PLACES, {}, {2: [HISTORISKA]}, hidden={2})[0]["occupants"] == []  # a takedown
+
+
+def test_the_hand_check_wins_over_wikidata_and_an_unnamed_carded_house_keeps_its_occupants(built):
+    out, df, cards = built
+    cards = {**cards, 3: {**cards[3], "qid": "Q10585474"}}            # a card with an item but no name (Milon 11)
+    occ = {"Q750444": [{"qid": "Q1726607", "sv": "Historiska museet", "en": "Historiska museet", "alt": []},
+                       {"qid": "Q10671642", "sv": "Slottskyrkan", "en": "Royal Chapel", "alt": []}],
+           "Q10585474": [{"qid": "Q1439258", "sv": "Forum för levande historia", "en": "Living History Forum",
+                          "alt": []}]}
+    pinned = {2: [HISTORISKA], 1: [{"qid": "", "sv": "Slottskyrkan", "en": "Royal Chapel", "alt": []}]}
+    index, _ = s14_search.build(df, cards, PLACES, occ, pinned)
+    assert [(o[0], o[2]) for o in index["occupants"]] == [
+        ("Slottskyrkan", 1),                       # once: Wikidata's and the table's, the same name on one footprint
+        ("Historiska museet", 2),                  # the table's footprint, not where Wikidata put the item
+        ("Forum för levande historia", 3)]

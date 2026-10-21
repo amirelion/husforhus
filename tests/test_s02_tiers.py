@@ -109,7 +109,8 @@ def main_args(tmp_path, monkeypatch):
                     "--osm", str(tmp_path / "osm.json"), "--out", str(tmp_path / f"years{tag}.parquet"),
                     "--accuracy-out", str(tmp_path / f"accuracy{tag}.json"),
                     "--review-out", str(tmp_path / f"review{tag}.json"),
-                    "--landmarks", str(tmp_path / "landmarks.json")]
+                    "--landmarks", str(tmp_path / "landmarks.json"),
+                    "--bygglov-manifest", str(tmp_path / "no-harvest.json")]   # no permit index: the tier is absent
         return recs, args
     return setup
 
@@ -427,7 +428,8 @@ def test_estimates_off_leaves_an_empty_table_that_still_describes_the_data():
     assert acc["area"] == {"n": 0, "status": "not measurable"} and acc["external"] == NO_EXTERNAL
     assert set(report["review"]) == {"wikidata_vs_raa", "wikidata_vs_area", "wikidata_vs_curated", "osm_vs_raa",
                                      "wikidata_century", "wikidata_gains", "cited_vs_raa", "cited_vs_wikidata",
-                                     "cited_vs_osm", "cited_no_period", "cited_period_vs_record"}
+                                     "cited_vs_osm", "cited_no_period", "cited_period_vs_record", "bygglov_vs_wikidata",
+                                     "bygglov_vs_osm"}
 
 
 def test_summary_counts_every_tier():
@@ -435,7 +437,7 @@ def test_summary_counts_every_tier():
     y, _ = run(b, no_raa(), wikidata=wikidata(("Q0", 0, 1700, 1700, False)), osm=osm(("way/1", 1, 1800, 1800)))
     s = s02_years.summary(y.reset_index())
     assert set(s) == {"buildings", "curated", "cited", "raa", "raa_old", "raa_area", "wikidata", "osm", "reader", "estimate",
-                      "period", "private", "unknown", "byFlag", "with_raa_id"}
+                      "period", "private", "unknown", "byFlag", "with_raa_id", "bygglov"}
     assert (s["wikidata"], s["osm"], s["unknown"], s["estimate"], s["period"]) == (1, 1, 1, 0, 0)
 
 

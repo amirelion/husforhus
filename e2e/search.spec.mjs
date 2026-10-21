@@ -373,3 +373,26 @@ test('"nobel" finds the Nobel Prize Museum and flies to Börshuset', async ({ pa
   await expect(page.locator('#card.pinned')).toContainText('Börshuset');
   expect(errors).toEqual([]);
 });
+
+// pipeline/occupant_pins.csv places an institution by footprint, whose card may have no name (Historiska museet,
+// 2026-10-21): its row stands alone, without "in ...", and still flies to that footprint
+test('an institution on a footprint without a named card is found by its name and flies there', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page);
+  const found = await page.evaluate(async () => {
+    const { version } = await (await fetch('data/current.json')).json();
+    const index = await (await fetch(`data/${version}/search/index.json`)).json();
+    const named = new Set(index.buildings.map(b => b[1]));
+    const alone = (index.occupants || []).filter(e => e.length === 5 && !named.has(e[2]));
+    const o = alone.find(e => e[0] === 'Historiska museet') || alone[0];
+    return o ? { name: o[1] || o[0], gid: o[2] } : null;
+  });
+  test.skip(found === null, 'this build has no institution on a footprint without a named card');
+  await page.getByRole('combobox').fill(found.name);
+  const row = page.getByRole('option', { name: found.name }).filter({ hasText: 'Inside a building' })
+    .filter({ hasNotText: /, in / }).first();      // a string would match ", Inside": a regex keeps the case
+  await expect(row).toContainText(found.name);
+  await row.click();
+  await expect.poll(() => page.evaluate(() => window.__dbg.pinned), { timeout: 10_000 }).toBe(found.gid);
+  expect(errors).toEqual([]);
+});

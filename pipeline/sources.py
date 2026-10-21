@@ -10,7 +10,10 @@ import yaml
 REQUIRED = ["id", "url", "publisher", "product", "dataset", "licence", "licence_url", "attribution", "status"]
 # LicenseRef-PublicDomain: Open Plaques. LicenseRef-Permission: a publisher's written permission, its terms in the
 # entry's `terms` (the City Museum's building-archaeology register: free use with the source credited).
-LICENCES = {"CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0", "ODbL-1.0", "LicenseRef-PublicDomain", "LicenseRef-Permission"}
+# LicenseRef-Facts: facts read from a publisher's web pages, in our own words, with no text, image or data file
+# taken (the City's stage years for Hjorthagen, D63); credited all the same.
+LICENCES = {"CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0", "ODbL-1.0", "LicenseRef-PublicDomain", "LicenseRef-Permission",
+            "LicenseRef-Facts"}
 # Licences that oblige an attribution line. For these, check_sources requires:
 #   - `modified` is a real true/false;
 #   - `attribution` contains the entry's `product` string;
@@ -24,7 +27,8 @@ STATUSES = ("confirmed", "pending-O1")
 # reads as CREDIT_LICENCES says, or as the source's own `licence_as`, which may only drop the version ("CC BY").
 CREDIT_LICENCES = {"CC-BY-4.0": "CC BY 4.0", "CC-BY-SA-4.0": "CC BY-SA 4.0", "CC0-1.0": "CC0", "ODbL-1.0": "ODbL",
                    "LicenseRef-PublicDomain": "Public Domain",
-                   "LicenseRef-Permission": {"en": "used with permission", "sv": "används med tillstånd"}}
+                   "LicenseRef-Permission": {"en": "used with permission", "sv": "används med tillstånd"},
+                   "LicenseRef-Facts": {"en": "facts only", "sv": "endast fakta"}}
 PROCESSED = {"en": "processed", "sv": "bearbetad"}
 
 

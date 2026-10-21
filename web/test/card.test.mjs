@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { yearLine, sourceLine, floorsLine, heightLine, towerLine, ratingLine, protLine, photoCredit, extractFor, cardLinks, fillUrl,
   decade, band, decadeOnly, isEstimate, rebuildLine, placeLine, whyAnchor, citedParts, citedRebuilds, citedShown, citedAlso,
-  citedMore, citedHead } from '../card.js';
+  citedMore, citedHead, permitLine } from '../card.js';
 import { makeT } from '../i18n.js';
 import { YFLAG, YSRC, FSRC } from '../codes.js';
 
@@ -317,6 +317,11 @@ test('a cited year: built, a decade, a new house, a period and a medieval house,
       '≈ medieval origin · City Museum, building archaeology', '≈ medeltida ursprung · Stadsmuseet, byggnadsarkeologi'],
     [c({ year: 1299, yearFrom: 1000, yearTo: 1599, yflag: YFLAG.PERIOD }), wp,
       '≈ medieval origin · Swedish Wikipedia', '≈ medeltida ursprung · svenska Wikipedia'],
+    // a Hjorthagen block dated by its building stage's move-in years (the City's stage page, D63)
+    [c({ year: 2017, yearFrom: 2014, yearTo: 2017, yflag: YFLAG.RANGE }),
+      { s: 'stockholm_stage', u: 'https://www.norradjurgardsstaden2030.se/resultat/etapp/vastra' },
+      'Built 2014–2017 · move-in years of its Hjorthagen stage (City of Stockholm)',
+      'Byggt 2014–2017 · inflyttningsåren för husets etapp i Hjorthagen (Stockholms stad)'],
     // a card without its shard entry (the hover card before the shard loads) still says it is a record
     [c({ year: 1643, yearFrom: 1643, yearTo: 1643 }), undefined, 'Built 1643 · a published record', 'Byggt 1643 · en publicerad källa'],
   ];
@@ -474,4 +479,30 @@ test('another house the footprint holds: its own line, never a rebuild of the ho
   assert.deepEqual(citedMore({ s: 'wikipedia_sv', u: wp, o: [o(1887, 1890, 'kulturnav', kn)] }, EN), [
     { text: 'Also part of this building: a house built ' }, { text: '1887–1890', href: kn, title: 'KulturNav (ArkDes)' }]);
   assert.deepEqual(citedMore({ s: 'wikipedia_sv', u: wp }, EN), []);
+});
+
+// A building-permit year (codes.SRC_BYGGLOV): the closing year of the property's first permit, named with the archive,
+// never with "≈" or a span; a private house names its decade and the decade rule (the owner's short wording, 2026-10-21).
+test('a permit-dated card says when the first permit closed and names Stadsarkivet, in English and Swedish', () => {
+  const pub = b({ year: 1934, yearFrom: 1931, yearTo: 1934, yflag: YFLAG.RANGE, ysrc: YSRC.BYGGLOV });
+  assert.equal(yearLine(pub, '', EN), '1934');
+  assert.equal(sourceLine(pub, EN), 'Building permit closed 1934 (Stadsarkivet)');
+  assert.equal(sourceLine(pub, SV), 'Bygglov avslutat 1934 (Stadsarkivet)');
+  const exact = b({ year: 1928, yearFrom: 1928, yearTo: 1928, yflag: YFLAG.EXACT, ysrc: YSRC.BYGGLOV });
+  assert.equal(sourceLine(exact, EN), 'Building permit closed 1928 (Stadsarkivet)');
+  const house = b({ year: 1930, yearFrom: 1930, yearTo: 1939, yflag: YFLAG.RANGE, ysrc: YSRC.BYGGLOV, private: 1 });
+  assert.equal(yearLine(house, '', EN), '1930s');
+  assert.equal(yearLine(house, '', SV), '1930-talet');
+  assert.equal(sourceLine(house, EN), 'Building permit closed in the 1930s (Stadsarkivet) · private house: decade only');
+  assert.equal(sourceLine(house, SV), 'Bygglov avslutat på 1930-talet (Stadsarkivet) · småhus: bara årtiondet');
+  // a decade that starts a century prints as its ten years, as everywhere on the card
+  const c1900 = b({ year: 1900, yearFrom: 1900, yearTo: 1909, yflag: YFLAG.EXACT, ysrc: YSRC.BYGGLOV, private: 1 });
+  assert.equal(sourceLine(c1900, EN), 'Building permit closed 1900–1909 (Stadsarkivet) · private house: decade only');
+  assert.equal(permitLine(c1900, SV), 'Bygglov avslutat 1900–1909 (Stadsarkivet)');
+  for (const x of [pub, exact, house]) {
+    for (const text of [yearLine(x, '', EN), sourceLine(x, EN), yearLine(x, '', SV), sourceLine(x, SV)]) {
+      assert.doesNotMatch(text, /≈|193[1-3]|Visa/, text);        // a record, no opening year, no card page
+    }
+  }
+  assert.doesNotMatch(sourceLine(house, EN), /193[1-9]/);          // a private house never shows its year
 });

@@ -47,6 +47,10 @@ def read_manifest(manifest: Path | None = None) -> dict:
 def _record(manifest: Path, key: str, entry: dict) -> None:
     data = read_manifest(manifest)
     data[key] = entry
+    _write_manifest(manifest, data)
+
+
+def _write_manifest(manifest: Path, data: dict) -> None:
     manifest.parent.mkdir(parents=True, exist_ok=True)
     tmp = manifest.with_name(manifest.name + ".part")
     tmp.write_text(json.dumps(data, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -58,6 +62,19 @@ def record(dest: Path, entry: dict, manifest: Path | None = None) -> None:
     path relative to data/raw. The entry is the step's; `retrieved` is added."""
     manifest = _manifest_path(manifest)
     _record(manifest, _key(Path(dest), manifest), {**entry, "retrieved": _now()})
+
+
+def unrecord(dest: Path, manifest: Path | None = None) -> bool:
+    """Drop the entry of a file a step no longer vouches for (s00_fetch_bygglov's MANIFEST.json once its cache is no
+    longer complete). True when there was one."""
+    manifest = _manifest_path(manifest)
+    key = _key(Path(dest), manifest)
+    data = read_manifest(manifest)
+    if key not in data:
+        return False
+    del data[key]
+    _write_manifest(manifest, data)
+    return True
 
 
 def sha256_file(path: Path) -> str:

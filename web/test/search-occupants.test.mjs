@@ -1,6 +1,7 @@
 // web/search.js: what is inside a building (index.occupants, pipeline/s14_search.py): found by its Swedish name, its
 // English one or another name, shown as "Nobel Prize Museum, in Börshuset", picked like the building, and ranked
-// below an exact match on a building's own name.
+// below an exact match on a building's own name. One on a footprint whose card has no name (the hand-checked table,
+// pipeline/occupant_pins.csv) stands alone, with the stadsdel its entry carries.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -18,7 +19,8 @@ const P = prepare({
   baliases: [],
   occupants: [['Nobelprismuseet', 'Nobel Prize Museum', 229, ['Nobelmuseet', 'Nobel Museum']],
     ['Nobelhuset', 'Nobel House', 300, []], ['Svenska Akademien', 'Swedish Academy', 229, []],
-    ['Ingenstans', 'Nowhere', 999, []]],                     // a gid no building row names: never shown
+    // a footprint no building row names: Historiska museet, whose card shows no name of its own, in stadsdel 0
+    ['Historiska museet', 'Swedish History Museum', 999, ['Statens historiska museum'], 0]],
 });
 
 test('"nobel" finds the museum inside Börshuset, a row that flies to the building', async () => {
@@ -35,6 +37,17 @@ test('found by its English name and by an older name, with the same folding as t
     assert.ok(textRows(P, q.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')).some(r => r.kind === 'occupant'), q);
   }
   assert.ok(!textRows(P, 'ingenstans').length);
+});
+
+test('an institution on a footprint with no named card is found alone, flies to its footprint, says where it is', async () => {
+  for (const q of ['Historiska museet', 'statens historiska', 'Swedish History']) {
+    const { rows } = await search(P, q, async () => ({}));
+    assert.equal(rows[0].kind, 'occupant', q);
+    assert.equal(rows[0].gid, 999, q);
+  }
+  const [row] = (await search(P, 'historiska museet', async () => ({}))).rows;
+  assert.deepEqual(rowText(row, P, SV), { main: 'Historiska museet', sub: 'I en byggnad · Gamla stan' });
+  assert.deepEqual(rowText(row, P, EN), { main: 'Swedish History Museum', sub: 'Inside a building · Gamla stan' });
 });
 
 test('an exact building name ranks above an occupant of the same name', () => {

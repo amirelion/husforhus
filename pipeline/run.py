@@ -2,7 +2,7 @@
 """Run pipeline steps in their declared order.
 
     uv run python -m pipeline.run                    # every step
-    uv run python -m pipeline.run s03_tiles s04_base s07_labels   # just these, in declared order (never s03_tiles alone)
+    uv run python -m pipeline.run s03_tiles s04_base s07_labels  # just these, in declared order (never s03_tiles alone)
     uv run python -m pipeline.run --list
     uv run python -m pipeline.run s99_validate -- --release   # arguments after -- go to each step's main()
 """
@@ -11,10 +11,11 @@ import importlib
 import sys
 import time
 
-STEPS = ["s00_fetch_city", "s00_fetch_raa", "s00_fetch_raa_old", "s00_fetch_wikidata", "s00_fetch_osm", "s00_fetch_dem",
-         "s00_fetch_plaques", "s00_fetch_stadsmuseet", "s01_load", "s08_landmarks", "s02_years", "s02_attributes",
-         "s02_addresses", "s02_stadsmuseet", "s02_stadsmuseet_photos", "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers", "s03_tiles",
-         "s16_metro", "s04_base", "s17_ferries", "s07_labels", "s14_search", "s15_plaques", "s13_quests", "s99_validate"]
+STEPS = ["s00_fetch_city", "s00_fetch_raa", "s00_fetch_raa_old", "s00_fetch_wikidata", "s00_fetch_osm",
+         "s00_fetch_dem", "s00_fetch_plaques", "s00_fetch_stadsmuseet", "s00_fetch_bygglov", "s01_load",
+         "s08_landmarks", "s02_years", "s02_attributes", "s02_addresses", "s02_stadsmuseet", "s02_stadsmuseet_photos",
+         "s02_terrain", "s06_wiki", "s00_fetch_laser", "s02_towers", "s03_tiles", "s16_metro", "s04_base",
+         "s17_ferries", "s07_labels", "s14_search", "s15_plaques", "s13_quests", "s99_validate"]
 
 
 def main(argv: list[str] | None = None) -> int:

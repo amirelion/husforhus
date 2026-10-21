@@ -1,8 +1,11 @@
 """Cited building years: pipeline/gamla_stan_years.csv, each row with its source and the place in it.
 
 Hand-checked, like the landmarks (docs/research/2026-10-20-gamla-stan-years.md; the rules in
-docs/research/2026-10-16-gamla-stan-ages.md §13 and §14), but no landmark: s02_years writes them as codes.SRC_CITED,
-and private houses keep their decade-only rule. Keyed by footprint, so a row survives renumbered gids. Columns:
+docs/research/2026-10-16-gamla-stan-ages.md §13 and §14), but no landmark. The file's name is older than its
+contents: since 2026-10-21 it also holds Hjorthagen's new blocks (source stockholm_stage, D63:
+docs/research/2026-10-20-newer-buildings.md), one built row per footprint with its stage's move-in years.
+s02_years writes the rows as codes.SRC_CITED, and private houses keep their decade-only rule. Keyed by footprint, so a
+row survives renumbered gids. Columns:
   key         the footprint: its LOD1 UUID (buildings.parquet `uuid`), or "oid:<n>" for one the City's data gives no
               UUID (its LOD1 object id, buildings.parquet `oid`, only where its `uuid` is empty); either way it must
               name exactly one footprint, and two keys never name the same one (rows refuses both). A file whose first
@@ -38,11 +41,14 @@ and private houses keep their decade-only rule. Keyed by footprint, so a row sur
   source      one of SOURCES
   place       the record's own page: a Wikipedia revision by its id alone (https://sv.wikipedia.org/w/index.php?oldid=N;
               no article title, D49), a KulturNav entry, or a City Museum document in Digitala Stadsmuseet: one of the
-              CC BY inventories (CC_BY_INVENTORIES) or a report the museum's register links (s99 checks that)
+              CC BY inventories (CC_BY_INVENTORIES) or a report the museum's register links (s99 checks that), or the
+              City of Stockholm's page for a Hjorthagen building stage (STAGE_PAGE: the stage's results page on
+              norradjurgardsstaden2030.se, or its row on vaxer.stockholm's Hjorthagen page)
   page        the page of a City Museum PDF the year is on; empty for the other sources
   quote       the source's words, at most QUOTE_WORDS words, without a property designation (s99 checks it): a short
               quotation from Wikipedia (CC BY-SA 4.0) or KulturNav (CC0), linked to its revision or entry by `place`;
-              required for those two, empty for the City Museum's (its text never enters git: decided 2026-10-20).
+              required for those two, empty for the City Museum's (its text never enters git: decided 2026-10-20) and
+              the City's stage pages (a stage's move-in years and its blocks are facts; no text is taken: D63).
               Wikipedia's own words only: a sentence the article quotes from someone else (inside quotation marks,
               relayed()) is not Wikipedia's text; cite the work it quotes instead (the network test refuses one)
   confidence  high | medium (low stays on hold, in the research note)
@@ -106,6 +112,10 @@ CC_BY_INVENTORIES = frozenset({
     "10043946", "10043947", "10043948", "10043950", "10043951", "10043953", "10043954", "10043955", "10043957",
     "10043958", "10043959", "10043960", "10043961", "10043962"})
 INVENTORY = re.compile(re.escape(ARCHIVE) + r"Dokument/Byggnadsinventeringar/(\d+)\.pdf\.info")
+# The City of Stockholm's pages for Hjorthagen's building stages (D63): a stage's results page on the project's site
+# (Norra 1, Västra, Norra 2), or the City's Hjorthagen page on vaxer.stockholm, whose stage list gives Brofästet's years
+STAGE_PAGE = re.compile(r"https://(?:www\.norradjurgardsstaden2030\.se/resultat/etapp/[a-z0-9]+(?:-[a-z0-9]+)*"
+                        r"|vaxer\.stockholm/omraden/stadsutvecklingsomraden/norra-djurgardsstaden/i-hjorthagen/)")
 # Each source: the page a row cites (fullmatch), its sources.yml entry (the credit), whether a page number is needed
 # and whether a quote is.
 SOURCES = {
@@ -115,6 +125,7 @@ SOURCES = {
                      "credit": "wikipedia", "page": False, "quote": True},
     "ssm_inventory": {"place": INVENTORY, "credit": "stadsmuseet_inventories", "page": True, "quote": False},
     "ssm_br": {"place": REPORT_RE, "credit": "stadsmuseet_br", "page": True, "quote": False},
+    "stockholm_stage": {"place": STAGE_PAGE, "credit": "stockholm_stages", "page": False, "quote": False},
 }
 PERIOD_BOUNDS = [(p[3], min(p[4], LATEST_YEAR)) for p in city.PERIODS]
 
@@ -174,7 +185,8 @@ def row_errors(r: dict) -> list[str]:
         if src["page"] != bool(r["page"]) or (r["page"] and not r["page"].isdigit()):
             e.append("page is a page number for a City Museum PDF only")
         if src["quote"] != bool(r["quote"].strip()):
-            e.append("quote is required for KulturNav and Wikipedia and empty for the City Museum")
+            e.append("quote is required for KulturNav and Wikipedia and empty for the City Museum and the City's "
+                     "stage pages")
     if len(r["quote"].split()) > QUOTE_WORDS or "\n" in r["quote"]:
         e.append(f"quote is more than {QUOTE_WORDS} words or one line")
     if r["confidence"] not in CONFIDENCE:

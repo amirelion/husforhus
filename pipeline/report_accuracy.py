@@ -7,8 +7,10 @@ Stadsdelar for the Gamla stan section). docs/accuracy.md (committed, read by the
 the map knows each building's year: a short summary with the honest limits, where the years come from (shares by
 largest remainder, so they add up to 100%), what the terms mean, how a house is estimated and when the map shows an
 estimate (from city.ESTIMATE and the table), the table cell by cell, the test by the period of the true year, the
-independent check per map state with its 1990 split, the area check, Gamla stan, the hand-check list's six sizes and
-the 12 periods; it says how far a private house's period colour narrows its decade (fewest_private_years) and how
+independent check per map state with its 1990 split, the area check, the building-permit years (accuracy.json's
+bygglov block: the rule, why footprints get none, the cells, the test, the blind spot with its plain caveat that a
+house built after 1980 can show an older house's permit year, the estimate against the permit years and the other
+sources), Gamla stan, the hand-check list's sizes and the 12 periods; it says how far a private house's period colour narrows its decade (fewest_private_years) and how
 many estimated houses have no property-unit key, so the late-unit check passes them (no_key, from
 data/buildings.parquet). It is aggregate-only: no building name, Wikidata or OSM id, gid, UUID, property designation or
 property-unit key (FNR), no per-building year, and no stadsdel name but Gamla stan (the repository goes public at
@@ -25,7 +27,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from . import city
-from .codes import ESTIMATE, PERIOD, SRC_CITED
+from .codes import ESTIMATE, EXACT, PERIOD, RANGE, SRC_BYGGLOV, SRC_CITED
 from .estimate import stadsdel_of
 from .s01_load import STADSDELAR
 from .s02_years import ACCURACY, BUILDINGS, MIN_PRIVATE_OVERLAP, OUT as YEARS, REVIEW
@@ -36,9 +38,10 @@ NAMES = Path("data/review-years.md")
 GAMLA_STAN = "GAMLA STAN"
 # Where the years come from, in tier order, in words (the source names of SRC_NAMES never appear on the page).
 SOURCES = [("curated", "A hand-checked list of landmarks"),
-           ("cited", "A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum)"),
+           ("cited", "A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum, the City)"),
            ("raa", "RAÄ's building register (Bebyggelseregistret)"),
            ("raa_old", "RAÄ's older register file (years the current register dropped)"),
+           ("bygglov", "The City Archives' building permits, 1875–1980 (Stadsarkivet)"),
            ("raa_area", "RAÄ, for a whole area (a district or an estate)"),
            ("wikidata", "Wikidata"),
            ("osm", "OpenStreetMap"),
@@ -51,7 +54,9 @@ REVIEW_ROWS = [("wikidata_gains", "Got their year from Wikidata alone"),
                ("wikidata_vs_area", "A Wikidata year more than 10 years from the area's"),
                ("wikidata_vs_curated", "A Wikidata year more than 10 years from the hand-checked list"),
                ("osm_vs_raa", "An OpenStreetMap year more than 10 years from RAÄ's"),
-               ("wikidata_century", "Wikidata items with only a century (not used)")]
+               ("wikidata_century", "Wikidata items with only a century (not used)"),
+               ("bygglov_vs_wikidata", "A Wikidata year more than 10 years from the permit year (Wikidata's kept)"),
+               ("bygglov_vs_osm", "An OpenStreetMap year more than 10 years from the permit year (OpenStreetMap's kept)")]
 
 
 def pct(v) -> str:
@@ -85,8 +90,8 @@ def shares(counts: list[int], decimals: int = 1) -> list[str]:
 
 # The summary's four kinds as the table's sources (codes.py pairs each yflag with its ysrc; a cited record's century
 # or period is PERIOD but from a record, cited_periods)
-KIND_SOURCES = [("curated", "cited", "raa", "raa_old", "wikidata", "osm", "reader"), ("raa_area",), ("estimate",),
-                ("none",)]
+KIND_SOURCES = [("curated", "cited", "raa", "raa_old", "bygglov", "wikidata", "osm", "reader"), ("raa_area",),
+                ("estimate",), ("none",)]
 
 
 def kind_shares(by_flag: dict, by_src: dict, cited_period: int = 0) -> tuple[list[str], list[str]]:
@@ -130,6 +135,131 @@ def kinds(by_flag: dict, cited_period: int = 0) -> tuple[int, int, int, int]:
     rows that come from a cited record (cited_periods), counted as from a record."""
     return (by_flag["exact"] + by_flag["range"] + by_flag["long"] + cited_period, by_flag["area"],
             by_flag["estimate"] + by_flag["period"] - cited_period, by_flag["unknown"])
+
+
+def permit_flags(y: pd.DataFrame) -> tuple[int, int]:
+    """(EXACT, RANGE) counts of the permit-dated rows: a closing year with no opening year (EXACT) is not an exact
+    construction year, so the page counts them on their own."""
+    if "ysrc" not in y:
+        return 0, 0
+    on = y.ysrc == SRC_BYGGLOV
+    return int((on & (y.yflag == EXACT)).sum()), int((on & (y.yflag == RANGE)).sum())
+
+
+# Why a footprint the permit tier may fill got no year (accuracy.json bygglov skipped), in words, in the rules' order.
+PERMIT_SKIPS = [("takedown", "Taken off the map at its owner's request"),
+                ("no_designation", "No property designation"),
+                ("joint_property", "A joint property"),
+                ("not_main", "Not a main building (an outbuilding, a garage, a shed, a substation)"),
+                ("several_main", "Two or more main buildings on the property"),
+                ("estate", "More than {max_footprints} footprints on the property (an estate)"),
+                ("skip_stadsdel", "In Gamla stan or on Riddarholmen (every building there is older than the index)"),
+                ("late_prod", "First mapped by the City in {late} or later"),
+                ("late_unit", "On a property unit formed late"),
+                ("no_card", "No permit card names the property"),
+                ("undated_only", "Only cards without a closing year"),
+                ("undated_card", "A card without a closing year beside the others (the first case may be undated)"),
+                ("block_disagrees", "Its first permit is more than 10 years from the rest of its block's"),
+                ("block_uncarded", "Many properties in its block have no card (rebuilt or renumbered after the index)"),
+                ("cell", "A kind of building where the permit years did not measure right")]
+PERMIT_STATUS = {"dated": "dates", "measured only": "not used: type not dated", "fails": "not used: too few right",
+                 "not measurable": "not used: too few to measure"}
+
+
+def permit_section(bg: dict | None, y: pd.DataFrame, p: dict | None = None) -> list[str]:
+    """The building-permit years' section from accuracy.json's bygglov block, in plain words; [] for a build from
+    before the tier. Aggregate only, every number from the block or y."""
+    if not bg:
+        return []
+    lines = ["## The building-permit years (Stockholm City Archives)", ""]
+    if bg.get("status") != "applied":
+        why = ("switched off" if bg.get("status") == "off" else
+               "not used: the build had no complete copy of the City Archives' permit index")
+        return lines + [f"The building-permit years are {why}, so no building gets one.", ""]
+    p = city.ESTIMATE if p is None else p
+    on = y.ysrc == SRC_BYGGLOV
+    n, private = int(on.sum()), int((on & y.private.astype(bool)).sum()) if "private" in y else 0
+    lines += [f"{n:,} buildings get their year from the City Archives' (Stadsarkivet's) card index of building permits, "
+              "1875–1980. The year is the year the property's first building permit was closed. The map puts it "
+              f"only on a property's one main building, on a property with at most {bg['max_footprints']} footprints. "
+              f"It uses it only in kinds of building where, among at least {bg['min_cell']} test buildings, the permit "
+              f"year fell in the right period at least {100 * bg['min_right']:.0f}% of the time and in the same decade "
+              f"at least {100 * bg['min_decade']:.0f}%. It never replaces a year from another record."
+              + ("" if not private else " All of them are private houses, so they show only their decade."
+                 if private == n else f" {private:,} of them are private houses, so they show only their decade."), "",
+              "**It can be wrong.** A house built after 1980 on an older property can sometimes show the earlier "
+              "house's permit year. If you see one, please report it with \"Something wrong?\" on its card.", ""]
+    state = bg["written_by_state"]
+    lines += ["| What the footprint had before | Footprints dated |", "|---|---:|",
+              f"| Year unknown | {state['unknown']:,} |", f"| An estimate (\"≈\") | {state['estimate']:,} |",
+              *([f"| Its area's year | {state['area']:,} |"] if bg["fill_area"] or state["area"] else []),
+              f"| **All** | **{bg['written']:,}** |", "",
+              f"The tier could fill {bg['target']:,} footprints. Why the others got no permit year:", "",
+              "| Why no permit year | Footprints |", "|---|---:|"]
+    words = {"max_footprints": bg["max_footprints"], "late": p["late_prod_year"]}
+    for key, text in PERMIT_SKIPS:
+        if bg["skipped"].get(key):
+            lines.append(f"| {text.format(**words)} | {bg['skipped'][key]:,} |")
+    lines += ["", "### The test, cell by cell", "",
+              "Each test building has a year from a building record (RAÄ, RAÄ's older register, the hand-checked "
+              "landmarks or a published record checked by hand) and gets its permit year by the same rules. The cells "
+              "split them by building type, inner or outer city, the era of the permit year, and whether the "
+              "property's cards make one case or several (\"episodes\": cards more than five years after the first "
+              "start another).", "",
+              "| Building type | Era of the permit year | City | Episodes | Test buildings | Right period | Same decade "
+              "| Within ±3 years | What the map does |", "|---|---|---|---|---:|---:|---:|---:|---|"]
+    small = [c for c in bg["cells"] if c["status"] == "not measurable"]
+    for c in bg["cells"]:
+        if c["status"] == "not measurable":
+            continue
+        label = city.GROUP_LABELS.get(c["group"], c["group"])
+        where = "inner" if c["inner"] else "outer"
+        ep = "one" if c["episodes"] == 1 else "two or more"
+        nums = f"{pct(c['right_period'])} | {pct(c['same_decade'])} | {pct(c['within_3'])}"
+        lines.append(f"| {label} | {c['era']} | {where} | {ep} | {c['n']:,} | {nums} | {PERMIT_STATUS[c['status']]} |")
+    t = bg["test"]
+    lines += [""]
+    if small:
+        lines += [f"{len(small):,} more cells have fewer than {bg['min_cell']} test buildings "
+                  f"({sum(c['n'] for c in small):,} in all), too few to measure: they date nothing.", ""]
+    if t.get("used"):
+        lines.append(f"On the {t['used']:,} test buildings in the cells the map uses, the permit year fell in the right "
+                     f"period for {pct(t['right_period'])} and in the same decade for {pct(t['same_decade'])}; it was "
+                     f"the record's year exactly for {pct(t['exact'])}.")
+    else:
+        lines.append("No cell passes the rule, so no building gets a permit year.")
+    bs = bg["blind_spot"]
+    share = f" ({100 * bs['dated'] / bs['n']:.1f}%)" if bs["n"] else ""
+    lines += ["", "### The blind spot", "",
+              "Most test buildings are old. A building from 1981 or later stands on a property whose permit cards are "
+              "all older, so any permit year it gets is wrong: it is the earlier house's. Of the "
+              f"{bs['n']:,} buildings from 1981 or later that have a record year and pass the footprint rules, "
+              f"**{bs['dated']:,}{share} would get a permit year**. The build fails its checks when this is over 5%. "
+              "Readers can correct such a house with \"Something wrong?\".", ""]
+    ec = bg["estimate_check"]
+    lines += ["### The estimate against the permit years", ""]
+    if ec.get("status") == "measured":
+        lines.append(f"On {ec['n']:,} of the permit-dated footprints the estimate tier would have given an estimate. "
+                     "Run there as if they had no year, its estimate fell in the permit year's period for "
+                     f"{pct(ec['right_period'])} and in its decade for {pct(ec['same_decade'])} (a typical difference "
+                     f"of {ec['median_error']:.0f} years). These are the houses the estimate tier actually estimates, "
+                     "so this is a check of both on the same houses, outside the record-dated ones.")
+    else:
+        lines.append(f"Only {ec.get('n', 0):,} permit-dated footprints would have had an estimate, too few to compare.")
+    lines += ["", "### Against the other sources", ""]
+    for key, name in (("wikidata", "Wikidata"), ("osm", "OpenStreetMap")):
+        o = bg.get("others", {}).get(key)
+        if o and o["n"]:
+            lines.append(f"- {name} dates {o['n']:,} footprint{'s' if o['n'] != 1 else ''} the permit years would "
+                         f"also date, and keeps its year there: {o['same_period']:,} of {o['n']:,} share the period, and "
+                         f"{o['listed']:,} lie{'s' if o['listed'] == 1 else ''} more than 10 years apart (listed for a "
+                         "hand check).")
+        else:
+            lines.append(f"- {name} dates no footprint the permit years would also date.")
+    lines += ["", "**Why the test may flatter it.** RAÄ very likely read many of its house years from these same "
+              "permit files, so a permit year agreeing with RAÄ is partly the files agreeing with themselves. The "
+              "blind spot and the estimate check do not depend on RAÄ, which is why they are shown.", ""]
+    return lines
 
 
 def period_years(i: int) -> str:
@@ -262,7 +392,8 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
              f"This map shows {n:,} buildings in Stockholm. Of them:", "",
              f"- **{rec:,} ({s_rec}) have a year from a record**: RAÄ's building registers (RAÄ is Sweden's National "
              "Heritage Board), a short hand-checked list of landmarks, a published record checked by hand (KulturNav, "
-             "Swedish Wikipedia or the City Museum), Wikidata, OpenStreetMap or a reader's report the map's maker checked"
+             "Swedish Wikipedia, the City Museum or the City's stage years), the City Archives' building permits, "
+             "Wikidata, OpenStreetMap or a reader's report the map's maker checked"
              + (f" ({cp:,} of them only to a century or a period, or to two readings where sources differ, shown "
                 "with ≈)" if cp else "") + ".",
              f"- **{area:,} ({s_area}) have the year of their area**: they stand in a district or an estate that RAÄ "
@@ -286,10 +417,14 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
     src_counts = [by_src[key] for key, _ in SOURCES]
     for (_, words), k, share in zip(SOURCES, src_counts, src_shares):
         lines.append(f"| {words} | {k:,} | {share} |")
+    permit_exact, permit_range = permit_flags(y)
     lines += [f"| **All buildings** | **{n:,}** | **{'100.0%' if n else '–'}** |", "",
-              f"A year from a record is shown as the record gives it: an exact year ({by_flag['exact']:,} buildings), "
-              f"the year a building was finished when the record gives a span of up to 15 years ({by_flag['range']:,}), "
-              f"or the first year of a longer span ({by_flag['long']:,})"
+              f"A year from a record is shown as the record gives it: an exact year "
+              f"({by_flag['exact'] - permit_exact:,} buildings), the year a building was finished when the record gives "
+              f"a span of up to 15 years ({by_flag['range'] - permit_range:,}), or the first year of a longer span "
+              f"({by_flag['long']:,})"
+              + (f"; a building-permit year is the year the property's first permit was closed "
+                 f"({permit_exact + permit_range:,})" if permit_exact + permit_range else "")
               + (f"; where a published record gives only a century or a period, or two records give different years, "
                  f"the map shows that period with ≈ ({cp:,}), when one of its 12 periods holds at least three quarters "
                  "of it (of the span between them, for two records)" if cp else "")
@@ -428,6 +563,7 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
         lines.append(f"Only {area_acc.get('n', 0):,} buildings in a RAÄ-dated area also have a year of their own, too "
                      f"few to measure (the rule needs {min_cell}).")
     lines.append("")
+    lines += permit_section(acc.get("bygglov"), y, p)
 
     if gamla is not None:
         g_rec, g_area, g_est, g_unk = kinds(counts(gamla)[0], cited_periods(gamla))

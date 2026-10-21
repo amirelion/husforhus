@@ -398,7 +398,8 @@ def test_main_fails_when_no_building_gets_a_raa_year(tmp_path, monkeypatch, ysrc
             "--raa-old", str(tmp_path / "missing.gpkg"), "--wikidata", str(tmp_path / "dated.json"),
             "--wikidata-classes", str(tmp_path / "classes.json"), "--osm", str(tmp_path / "osm.json"),
             "--accuracy-out", str(tmp_path / "accuracy.json"), "--review-out", str(tmp_path / "review.json"),
-            "--landmarks", str(tmp_path / "landmarks.json")]
+            "--landmarks", str(tmp_path / "landmarks.json"),
+            "--bygglov-manifest", str(tmp_path / "no-harvest.json")]      # no permit index: the tier is absent
     (tmp_path / "landmarks.json").write_text("[]")      # s08_landmarks' verified list
     if fails:
         with pytest.raises(SystemExit, match="no building got a RAÄ year"):
@@ -437,10 +438,23 @@ def test_real_stockholm_years(tmp_path: Path):
     assert 100 <= s["wikidata"] <= 200            # 137
     assert 400 <= s["osm"] <= 650                 # 514
     # The 2026-10-15 rule (houses only, no period on its own, 7 in 10 right, the FNR guard), measured on v20261015-m3b:
-    assert 3_800 <= s["estimate"] <= 5_200        # 4,510 (an earlier build had 5,906 and 1,182 period-only)
+    permits = json.loads((tmp_path / "accuracy.json").read_text(encoding="utf-8"))["bygglov"]
+    if permits["status"] == "applied":
+        # The building-permit tier on the full harvest (v20261021-bgtest, from fx4's data): 11,175 houses (8,188 unknown
+        # and 2,987 the estimate would have dated), 13 of the 321 post-1980 record-dated footprints, the offline
+        # measurement's numbers exactly (data/research/bygglov-measure/report.md)
+        assert 10_000 <= s["bygglov"] <= 12_500
+        assert permits["blind_spot"]["dated"] <= 0.05 * permits["blind_spot"]["n"]   # the plan's stop rule
+        assert permits["shipped"]["n"] == s["bygglov"] and permits["written"] >= s["bygglov"]
+        assert {c["group"] for c in permits["cells"] if c["status"] == "dated"} == {"house"}
+        assert 1_200 <= s["estimate"] <= 2_200    # 1,571
+        assert 23_500 <= s["private"] <= 27_000   # 25,461
+        assert 33_000 <= s["unknown"] <= 37_500   # 35,105 (45.2%; 43,293 in fx4 without the permits)
+    else:
+        assert 3_800 <= s["estimate"] <= 5_200    # 4,510 (an earlier build had 5,906 and 1,182 period-only)
+        assert 15_000 <= s["private"] <= 18_500   # 16,864: 12,204 dated houses + the estimated and newly dated ones
+        assert 42_500 <= s["unknown"] <= 45_500   # 43,935 (41,357 in an earlier build; 49,804 before the estimates)
     assert s["period"] == 0                       # give_period is off: a rule, not a measurement
-    assert 15_000 <= s["private"] <= 18_500       # 16,864: 12,204 dated houses + the estimated and newly dated ones
-    assert 42_500 <= s["unknown"] <= 45_500       # 43,935 (41,357 in an earlier build; 49,804 before the estimates)
     assert (tmp_path / "accuracy.json").exists() and (tmp_path / "review.json").exists()
     bld = pd.read_parquet(s02_years.BUILDINGS, columns=["gid", "uuid", "kategori", "fnr"])
     assert s["buildings"] == len(bld) and set(y.gid) == set(bld.gid)

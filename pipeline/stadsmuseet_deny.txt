@@ -8,3 +8,4 @@ SvD_38426_0_0S	people: a queue outside the housing office
 F_52525_0_0S	people: police with a man they have taken in
 SvD_32038_0_0S	people: sunbathers on a roof terrace
 ASW_1475_0_0S	people: two men outside the house
+F_3827_0_0S	a house gone: Wollmar Yxkullsgatan 4 in 1914, before the house built in 1990 (HFH-4)

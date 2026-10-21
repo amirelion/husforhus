@@ -77,7 +77,7 @@ assert ATTR_DTYPE.itemsize == 24
 FLAG_NAMES = {codes.EXACT: "exact", codes.RANGE: "range", codes.LONG: "long", codes.AREA: "area",
               codes.ESTIMATE: "estimate", codes.PERIOD: "period", codes.UNKNOWN: "unknown"}
 SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_old", "osm", "reader",
-             "cited"]  # index = codes ysrc
+             "cited", "bygglov"]  # index = codes ysrc
 # histogram holds the building-level years; histogramEst the area and kNN years and the PERIOD rows (the kNN's
 # period-only years and a cited record's century or period: both shown with "≈").
 KNOWN_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
@@ -534,8 +534,9 @@ def with_wiki(df: pd.DataFrame, table: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+# A permit year is a record (the property's own file), not an estimate: About's "from a record", Gamla stan's dated.
 RECORD_SRCS = (codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_RAA_OLD, codes.SRC_WIKIDATA, codes.SRC_OSM, codes.SRC_READER,
-               codes.SRC_CITED)
+               codes.SRC_CITED, codes.SRC_BYGGLOV)
 
 
 def about_stats(df: pd.DataFrame, cards: list[dict]) -> dict:

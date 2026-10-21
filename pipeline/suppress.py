@@ -113,11 +113,14 @@ def accuracy(acc: dict, before: pd.DataFrame, after: pd.DataFrame) -> dict:
     """The accuracy table recounted for what ships, as s99 ties it to stats.byFlag: tested (the building-level years)
     and result (estimate, period; a suppressed estimate counts as unknown). Takedowns neither train nor test the
     estimate (s02_years clears their years first and assign_years excludes them); this function only moves an
-    estimated takedown from "estimate" to "unknown" in the result counts."""
+    estimated takedown from "estimate" to "unknown" in the result counts. A permit year (SRC_BYGGLOV) counts in tested
+    only when the permit tier trains the estimate (accuracy.json bygglov trains)."""
     known = (codes.EXACT, codes.RANGE, codes.LONG)
     est = (codes.ESTIMATE, codes.PERIOD)
     out = dict(acc)
-    out["tested"] = int(after.yflag.isin(known).sum())
+    trains = bool((acc.get("bygglov") or {}).get("trains", False))
+    permit = (after.ysrc == codes.SRC_BYGGLOV).to_numpy() if "ysrc" in after else np.zeros(len(after), bool)
+    out["tested"] = int((after.yflag.isin(known).to_numpy() & (~permit | trains)).sum())
     gone = int((before.yflag.isin(est).to_numpy() & ~after.yflag.isin(est).to_numpy()).sum())
     r = dict(acc.get("result") or {})
     r.update(estimate=int((after.yflag == codes.ESTIMATE).sum()), period=int((after.yflag == codes.PERIOD).sum()),

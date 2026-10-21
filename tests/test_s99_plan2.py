@@ -24,7 +24,8 @@ def test_clean_build_with_plan2_rows_passes(site):
     (0, codes.SRC_RAA_AREA, codes.EXACT, "yflag does not pair with their ysrc"),      # an exact area year
     (6, codes.SRC_RAA, codes.AREA, "yflag does not pair with their ysrc"),            # an area year from a record
     (7, codes.SRC_RAA, codes.UNKNOWN, "yflag does not pair with their ysrc"),         # unknown with a source
-    (3, 10, codes.RANGE, "ysrc outside codes.py"),                                   # 9 is SRC_CITED
+    (3, 11, codes.RANGE, "ysrc outside codes.py"),                                   # 10 is SRC_BYGGLOV
+    (3, codes.SRC_BYGGLOV, codes.LONG, "yflag does not pair with their ysrc"),     # a permit year is never LONG
 ])
 def test_ysrc_must_pair_with_yflag(site, gid, ysrc, yflag, message):
     edit_attrs(site, lambda a: (a["ysrc"].__setitem__(gid, ysrc), a["yflag"].__setitem__(gid, yflag)))
@@ -328,7 +329,7 @@ def test_known_and_estimated_flags_split_the_histograms():
     assert s03_tiles.KNOWN_FLAGS == (codes.EXACT, codes.RANGE, codes.LONG)
     assert s03_tiles.ESTIMATED_FLAGS == (codes.AREA, codes.ESTIMATE, codes.PERIOD)
     assert s03_tiles.SRC_NAMES == ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_old", "osm", "reader",
-                                   "cited"]
+                                   "cited", "bygglov"]
     # every ysrc code has its name (stats.bySrc): a code without one would drop its buildings from About's table
     assert len(s03_tiles.SRC_NAMES) == max(v for k, v in vars(codes).items() if k.startswith("SRC_")) + 1
 

@@ -42,8 +42,8 @@ def test_repo_sources_file():
     ids = [s["id"] for s in sources]
     assert ids == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse", "raa_old", "wikidata", "osm",
                    "lm_markhojd", "lm_laser", "wikipedia", "samfundet_plaques", "openplaques", "stadsmuseet_br",
-                   "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories", "metro_stations", "metro_track",
-                   "ferry_routes"]
+                   "stadsarkivet_bygglov", "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories", "stockholm_stages",
+                   "metro_stations", "metro_track", "ferry_routes"]
     by_id = {s["id"]: s for s in sources}
     # Lantmäteriet's terrain model, CC BY 4.0 with no licence question pending (it never blocks --release)
     # asks for the product name, ©Lantmäteriet, that it was processed and the licence
@@ -122,10 +122,10 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
         "raa_old": "Bebyggelseregistret, äldre registret", "wikidata": "Wikidata", "osm": "OpenStreetMap",
         "lm_markhojd": "Markhöjdmodell Nedladdning", "lm_laser": "Laserdata Nedladdning, skog", "wikipedia": "Wikipedia",
         "samfundet_plaques": "Kulturhusskyltar", "openplaques": "Open Plaques",
-        "stadsmuseet_br": "Stads- och byggnadsarkeologiskt register",
+        "stadsmuseet_br": "Stads- och byggnadsarkeologiskt register", "stadsarkivet_bygglov": "Bygglov 1875–1980",
         "stadsmuseet_photos": "Digitala Stadsmuseet, fotografier",
         "kulturnav": "KulturNav, Byggnader i Sverige", "stadsmuseet_inventories": "Byggnadsinventeringar",
-        "metro_stations": "Tunnelbanestationer", "metro_track": "Tunnelbanans spår", "ferry_routes": "Båtlinjer"}
+        "stockholm_stages": "Hjorthagens utbyggnadsetapper", "metro_stations": "Tunnelbanestationer", "metro_track": "Tunnelbanans spår", "ferry_routes": "Båtlinjer"}
     assert {k: s["credit_as"]["sv"] for k, s in by_id.items() if "credit_as" in s} == {
         "city_lod1": "© Stockholms stad, Stadsbyggnadskontoret", "city_stadsdelar": "© Stockholms stad, Stadsbyggnadskontoret",
         "city_stadskarta": "© Stockholms stad, Stadsbyggnadskontoret", "wikidata": "Wikidatas bidragsgivare",
@@ -142,6 +142,10 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
     assert credit(by_id["stadsmuseet_inventories"]) == {
         "en": "Byggnadsinventeringar: Stadsmuseet i Stockholm, CC BY 4.0, processed",
         "sv": "Byggnadsinventeringar: Stadsmuseet i Stockholm, CC BY 4.0, bearbetad"}
+    # the City's Hjorthagen stage years (D63): facts read from its pages, nothing of theirs copied
+    assert credit(by_id["stockholm_stages"]) == {
+        "en": "Hjorthagens utbyggnadsetapper: Stockholms stad, facts only, processed",
+        "sv": "Hjorthagens utbyggnadsetapper: Stockholms stad, endast fakta, bearbetad"}
 
 
 def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
@@ -149,8 +153,8 @@ def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
     assert [s["id"] for s in load_sources()] == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse",
                                                   "raa_old", "wikidata", "osm", "lm_markhojd", "lm_laser", "wikipedia",
                                                   "samfundet_plaques", "openplaques", "stadsmuseet_br",
-                                                  "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories",
-                                                  "metro_stations", "metro_track", "ferry_routes"]
+                                                  "stadsarkivet_bygglov", "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories",
+                                                  "stockholm_stages", "metro_stations", "metro_track", "ferry_routes"]
 
 
 def test_release_fails_on_pending_sources():
@@ -186,8 +190,8 @@ def test_required_field_empty(field):
 
 def test_licence_must_be_allowed_spdx():
     assert check_sources([with_(licence="CC-BY-NC-4.0")], release=False) == [
-        "demo: licence 'CC-BY-NC-4.0' is not one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, LicenseRef-Permission, "
-        "LicenseRef-PublicDomain, ODbL-1.0"]
+        "demo: licence 'CC-BY-NC-4.0' is not one of CC-BY-4.0, CC-BY-SA-4.0, CC0-1.0, LicenseRef-Facts, "
+        "LicenseRef-Permission, LicenseRef-PublicDomain, ODbL-1.0"]
     for ok in ["CC-BY-4.0", "CC0-1.0", "ODbL-1.0", "CC-BY-SA-4.0"]:
         assert check_sources([with_(licence=ok)], release=False) == []
 
@@ -323,3 +327,16 @@ def test_wikipedia_is_credited_like_the_other_sources():
     # The attribution reaches the About page; the pattern "Product, © publisher, licence (modified)"
     w = {s["id"]: s for s in load_sources()}["wikipedia"]
     assert w["attribution"] == "Wikipedia, © Wikipedia contributors, CC BY-SA 4.0 (bearbetad / modified)"
+
+
+def test_the_permit_index_is_credited_with_permission_and_its_feature():
+    # Stadsarkivet's written answer (O6) is the permission: its terms are required, and the credit says "used with
+    # permission, processed" in both languages; it waits with city.FEATURES bygglov, and has no corner credit
+    s = {x["id"]: x for x in load_sources(ROOT / "pipeline" / "sources.yml")}["stadsarkivet_bygglov"]
+    assert check_sources([s], release=True) == []
+    assert (s["licence"], s["feature"], s["status"]) == ("LicenseRef-Permission", "bygglov", "confirmed")
+    assert "corner" not in s and "bygglov1875-1980" not in s["url"]      # About links the information page only
+    assert credit(s) == {"en": "Bygglov 1875–1980: Stockholms stadsarkiv, used with permission, processed",
+                         "sv": "Bygglov 1875–1980: Stockholms stadsarkiv, används med tillstånd, bearbetad"}
+    assert check_sources([{**s, "terms": ""}], release=False) == [
+        "stadsarkivet_bygglov: licence LicenseRef-Permission needs the permission's 'terms'"]
