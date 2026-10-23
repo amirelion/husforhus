@@ -97,6 +97,15 @@ test('rebuildLine and the cellar wording, in English and Swedish', () => {
   assert.equal(rebuildLine({ rebuilt: [[1935, 'extended']] }, EN), 'Extended 1935');
   assert.equal(rebuildLine({ rebuilt: [[1935, 'extended']] }, SV), 'Tillbyggt 1935');
   for (const c of [{}, { rebuilt: [] }, undefined, { rebuilt: [[1900, 'facade']] }]) assert.equal(rebuildLine(c, EN), '');
+  // the other house on a curated footprint its article dates (Historiska museet's Kanslikasernen range), after any
+  // rebuild, whether it is older or newer
+  assert.equal(rebuildLine({ also: [[1805, 1818]] }, EN), 'Also part of this building: a house built 1805–1818');
+  assert.equal(rebuildLine({ also: [[1805, 1818]] }, SV), 'I byggnaden ingår också ett hus byggt 1805–1818');
+  assert.equal(rebuildLine({ rebuilt: [[1935, 'extended']], also: [[1700, 1700], [1785, 1790]] }, EN),
+    'Extended 1935 · Also part of this building: houses built 1700 and 1785–1790');
+  assert.equal(rebuildLine({ also: [[1700, 1700], [1720, 1725], [1785, 1790]] }, SV),
+    'I byggnaden ingår också hus byggda 1700, 1720–1725 och 1785–1790');
+  for (const also of [[], 'x', [[1805]]]) assert.equal(rebuildLine({ also }, EN), '');
   const palace = b({ year: 1754, yearFrom: 1697, yearTo: 1754, yflag: YFLAG.RANGE, ysrc: YSRC.CURATED });
   assert.equal(sourceLine(palace, EN, { cellars: true }), 'Hand-checked landmark: built 1697–1754 on older cellar walls');
   assert.equal(sourceLine(palace, SV, { cellars: true }), 'Kontrollerat landmärke: byggt 1697–1754 på äldre källarmurar');
@@ -337,6 +346,35 @@ test('a cited year: built, a decade, a new house, a period and a medieval house,
   // the header names the period, as for any period-only year; an "about" year stays the record's year there (§14)
   assert.equal(yearLine(b(c({ year: 1655, yearFrom: 1600, yearTo: 1699, yflag: YFLAG.PERIOD })), 'Stormaktstiden', EN), 'Stormaktstiden');
   assert.equal(yearLine(b(c({ year: 1640, yearFrom: 1640, yearTo: 1640 })), '', EN, { s: 'wikipedia_sv', u: 'x', c: true }), '1640');
+});
+
+// AB Stadsholmen's fact sheets (pipeline/cited.py source stadsholmen, D64): named as written with the City Museum and
+// linked to the company's property list, never to a sheet (its PDF is named by the property designation)
+test('a year from AB Stadsholmen\'s fact sheet names the sheet and links the property list, in English and Swedish', () => {
+  const list = 'https://www.stadsholmen.se/fastigheter/', wp = 'https://sv.wikipedia.org/w/index.php?oldid=59514298';
+  const sh = { s: 'stadsholmen', u: list };
+  const c = over => b({ ysrc: YSRC.CITED, yflag: YFLAG.EXACT, ...over });
+  const text = parts => parts.map(p => p.text).join('');
+  assert.equal(sourceLine(c({ year: 1520, yearFrom: 1000, yearTo: 1520, yflag: YFLAG.PERIOD }), EN, { yc: sh }),
+    '≈ medieval origin · AB Stadsholmen\'s fact sheet (with the City Museum)');
+  assert.equal(sourceLine(c({ year: 1520, yearFrom: 1000, yearTo: 1520, yflag: YFLAG.PERIOD }), SV, { yc: sh }),
+    '≈ medeltida ursprung · AB Stadsholmens faktablad (med Stadsmuseet)');
+  assert.equal(sourceLine(c({ year: 1784, yearFrom: 1784, yearTo: 1784 }), EN, { yc: sh }),
+    'Built 1784 · AB Stadsholmen\'s fact sheet (with the City Museum)');
+  assert.deepEqual(citedParts(c({ year: 1746, yearFrom: 1746, yearTo: 1746 }), SV, { ...sh, k: 'rebuilt' }), [
+    { text: 'Byggt 1746 och ersatte ett äldre hus · AB Stadsholmens faktablad (med Stadsmuseet)', href: list }]);
+  // its rebuilds beside another source's year: each linked to the list, the sheet's name as the link's title
+  const r = [{ a: 1850, z: 1850, ...sh }, { a: 1970, z: 1979, ...sh }];
+  assert.equal(text(citedRebuilds({ s: 'ssm_br', u: 'x', r }, EN)), 'Rebuilt or extended 1850 and in the 1970s');
+  assert.deepEqual(citedRebuilds({ s: 'ssm_br', u: 'x', r }, SV)[1],
+    { text: '1850', href: list, title: 'AB Stadsholmens faktablad (med Stadsmuseet)' });
+  // Köpmanbrinken 4: the sheet's older house with medieval walls, or the block article's new house of the 1680s (no
+  // colour: both shown)
+  const e = [{ a: 1000, z: 1520, ...sh }, { a: 1680, z: 1689, s: 'wikipedia_sv', u: wp }];
+  assert.equal(sourceLine(b({}), EN, { yc: { e } }), '≈ medieval origin, or built in the 1680s (sources differ)');
+  assert.equal(sourceLine(b({}), SV, { yc: { e } }), '≈ medeltida ursprung eller byggt på 1680-talet (källorna går isär)');
+  assert.deepEqual(citedParts(b({}), EN, { e })[1],
+    { text: 'medieval origin', href: list, title: 'AB Stadsholmen\'s fact sheet (with the City Museum)' });
 });
 
 // pipeline/cited.py's either pair (two sources that differ, decided 2026-10-20): both readings, each linked to its record

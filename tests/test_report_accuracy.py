@@ -127,11 +127,13 @@ def test_a_cited_record_counts_as_a_record_even_with_a_century_only():
     short = section(md, "In short")
     # 6 + the two cited; still 2 estimated (the kNN's estimate and its one period-only year), none unknown
     assert "**8 (72.7%) have a year from a record**" in short
-    assert "a published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum or the City's stage years)" in short
+    assert ("a published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum, AB Stadsholmen or the "
+            "City's stage years)") in short
     assert "(1 of them only to a century or a period, or to two readings where sources differ, shown with ≈)" in short
     assert "**2 (18.2%) are estimated** from similar dated buildings nearby (1 of them with the period only)" in short
     table = section(md, "Where the years come from")
-    assert "| A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum, the City) | 2 | 18.2% |" in table
+    assert ("| A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum, AB Stadsholmen, the "
+            "City) | 2 | 18.2% |") in table
     assert ("where a published record gives only a century or a period, or two records give different years, the map "
             "shows that period with ≈ (1)") in table
     assert "and 1 get the period only." in md

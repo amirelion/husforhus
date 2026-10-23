@@ -1,5 +1,23 @@
 [
   {
+    "date": "2026-10-23",
+    "kind": "data",
+    "title": { "en": "Gamla stan's houses, raised and rebuilt", "sv": "Gamla stans hus, påbyggda och ombyggda" },
+    "text": {
+      "en": "AB Stadsholmen's fact sheets, written with the City Museum, now date 59 buildings in Gamla stan and say when they were raised, rebuilt or given a new front; 18 houses that had no year now have one. Search also finds Skogskyrkogården, Polismuseet, Unga Klara, Kista bibliotek and a few more, and Historiska museet's card now carries the museum's name.",
+      "sv": "AB Stadsholmens faktablad, som togs fram med Stadsmuseet, daterar nu 59 byggnader i Gamla stan och berättar när de byggdes på, byggdes om eller fick ny fasad; 18 hus som saknade årtal har nu ett. Sökningen hittar också Skogskyrkogården, Polismuseet, Unga Klara, Kista bibliotek och några till, och Historiska museets kort bär nu museets namn."
+    }
+  },
+  {
+    "date": "2026-10-23",
+    "kind": "feature",
+    "title": { "en": "Turn the map with one button", "sv": "Vrid kartan med en knapp" },
+    "text": {
+      "en": "The new button next to the compass, or the T key, makes a drag turn and tilt the map instead of moving it. Press it again to move the map as before.",
+      "sv": "Den nya knappen bredvid kompassen, eller T-tangenten, gör att du vrider och lutar kartan när du drar i den i stället för att flytta den. Tryck igen för att flytta kartan som vanligt."
+    }
+  },
+  {
     "date": "2026-10-21",
     "kind": "data",
     "title": { "en": "11,000 more houses dated", "sv": "11 000 fler hus daterade" },

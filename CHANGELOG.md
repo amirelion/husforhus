@@ -13,6 +13,16 @@ Plans, not promises: the order can change.
 - **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 17 plaques not yet placed on a building (the other 17 unplaced are on bridges).
 - **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
 
+## 2026-10-23
+
+### Features
+- **A turn button.** Right after the compass, an orbit button (or the T key) switches a plain drag, or a one-finger drag on a phone, from moving the map to turning and tilting it; a right-drag or ⌘/Ctrl-drag then moves it, and two fingers zoom and move. Its tooltip says what a press does, the hint under the map follows the mode, and every visit starts in move mode.
+- **AB Stadsholmen's fact sheets.** A Gamla stan card can name AB Stadsholmen's fact sheet (written with the City Museum) as its source, with the years the house was raised, rebuilt or given a new front. Used with the company's permission; the card links its list of properties.
+- **Historiska museet's card** is named for the museum and dated by the museum building (1934–1940), with the older Kanslikasernen range as a second line.
+
+### Data
+- Data version `v20261023-fx6`: 158 rows from AB Stadsholmen's fact sheets on 59 Gamla stan footprints (Gamla stan's "Year unknown" falls from 175 to 157 of 442); 11 more institutions placed by hand (196 in search), among them Skogskyrkogården, Polismuseet, Unga Klara and Kista bibliotek; Kista Science Tower's Wikidata item moved onto the tower. Otherwise as `v20261021-fx5`.
+
 ## 2026-10-21
 
 ### Features

@@ -92,7 +92,9 @@ export function permitLine(b, T) {
 // differ)", each reading linked to its source; and `r`, the rebuilds and extensions the records name, and `o`, the other
 // houses the footprint holds, make the pinned card's second line, "Rebuilt or extended 1780 and 1906 · Also part of
 // this building: a house built 1804". app.js links each part (citedParts, citedMore) to its record.
-const CITED_SRCS = ['kulturnav', 'wikipedia_sv', 'ssm_inventory', 'ssm_br', 'stockholm_stage'];
+// A row from AB Stadsholmen's fact sheets (D64) links the company's property list, never the sheet, whose PDF is
+// named by the property designation.
+const CITED_SRCS = ['kulturnav', 'wikipedia_sv', 'ssm_inventory', 'ssm_br', 'stockholm_stage', 'stadsholmen'];
 const FLOOR_YEAR = 1000;   // pipeline/yearrules.py: a row from it has no earlier bound ("medieval")
 const MEDIEVAL_END = 1520; // the Swedish Middle Ages end with the 1520s; a span ending by then is medieval
 const BUILT_MAX = 100;     // pipeline/cited.py: a span over 100 years is a period
@@ -220,10 +222,18 @@ export function placeLine(card, T) {
 
 // A curated card's second line (§14 of the Gamla stan research): "Rebuilt 1757 · raised 1857", never with
 // "≈"; '' without rebuilds. A rebuild never sets the year or the colour. A kind the strings do not hold is left out.
+// Then the other house on the footprint its article dates (`also`, pipeline/landmarks.py: one City outline around two
+// buildings), in the cited records' words: "Also part of this building: a house built 1805–1818".
 const REBUILD_KINDS = ['rebuilt', 'raised', 'extended'];
 export function rebuildLine(card, T) {
   const parts = (card?.rebuilt || []).filter(([, kind]) => REBUILD_KINDS.includes(kind))
     .map(([year, kind]) => T(`card.rebuild.${kind}`, { year }));
+  const also = (Array.isArray(card?.also) ? card.also : []).filter(r => Array.isArray(r) && r.length === 2)
+    .map(([a, z]) => span(a, z));
+  if (also.length) {
+    const list = also.length > 1 ? `${also.slice(0, -1).join(', ')} ${T('card.cited.and')} ${also.at(-1)}` : also[0];
+    parts.push(T(also.length > 1 ? 'card.cited.also.more' : 'card.cited.also', { list }));
+  }
   const line = parts.join(' · ');
   return line && line[0].toUpperCase() + line.slice(1);
 }

@@ -23,6 +23,7 @@ REPORT = DOCS + "DOK_1/SSM_DOK_000624.pdf.info"
 UUID = "2e389b81-54f2-48cc-b4ee-ae1285df2207"
 RESULTS = "https://www.norradjurgardsstaden2030.se/resultat/etapp/"          # the City's stage pages (D63)
 VAXER = "https://vaxer.stockholm/omraden/stadsutvecklingsomraden/norra-djurgardsstaden/i-hjorthagen/"
+SHLIST = "https://www.stadsholmen.se/fastigheter/"     # AB Stadsholmen's property list (D64)
 
 
 def row(**kw):
@@ -67,8 +68,10 @@ def test_a_stage_row_cites_the_city_s_stage_page_without_a_quote_or_a_page():
         assert cited.row_errors(stage(place=place)) == [] and cited.is_place(place), place
     # the City's text is facts we put in our own words: never a quote, and no page number
     assert cited.row_errors(stage(quote="Färdigställt 2014–2017")) == [
-        "quote is required for KulturNav and Wikipedia and empty for the City Museum and the City's stage pages"]
-    assert cited.row_errors(stage(page="2")) == ["page is a page number for a City Museum PDF only"]
+        "quote is required for KulturNav and Wikipedia and empty for the City Museum, AB Stadsholmen and the City's "
+        "stage pages"]
+    assert cited.row_errors(stage(page="2")) == [
+        "page is a page number for a City Museum PDF or an AB Stadsholmen fact sheet only"]
     # only Hjorthagen's stage pages: not another area's page on vaxer.stockholm, nor another site, nor plain http
     for place in ("https://vaxer.stockholm/omraden/stadsutvecklingsomraden/stadsutvecklingsomrade-hammarby-sjostad/",
                   "https://www.norradjurgardsstaden2030.se/resultat/bilaga/2025",
@@ -77,6 +80,46 @@ def test_a_stage_row_cites_the_city_s_stage_page_without_a_quote_or_a_page():
     # a stage's move-in span is a construction window: the map's year is its last, a span (RANGE)
     assert cited.year_of("built", 2014, 2017) == (2017, RANGE)
     assert cited.SOURCES["stockholm_stage"]["credit"] == "stockholm_stages"
+
+
+def sheet(**kw):
+    """A row from AB Stadsholmen's fact sheet for the footprint's property (D64): the company's property list, the
+    sheet's page, no quote."""
+    return row(**{"source": "stadsholmen", "place": SHLIST, "page": "7", "quote": "", "kind": "rebuilt",
+                  "year_from": "1780", "year_to": "1780", "note": "The sheet: raised by a storey in 1780.", **kw})
+
+
+def test_a_stadsholmen_row_cites_the_property_list_with_its_page_and_no_quote():
+    assert cited.row_errors(sheet()) == [] and cited.is_place(SHLIST)
+    # never the sheet's PDF, on either host: its file name is the property designation (D17); nor a property's page
+    # (named by it too), another host's list, plain http or a query. Exempel 1 is a made-up property, like the URLs
+    for place in ("https://www.stadsholmen.se/app/uploads/2018/09/Exempel1-FAKTABLAD.pdf",
+                  "https://stadsholmen.se/app/uploads/2018/09/Exempel1-FAKTABLAD.pdf",
+                  "https://www.stadsholmen.se/fastigheter/exempel-1/", "https://stadsholmen.se/fastigheter/",
+                  "http://www.stadsholmen.se/fastigheter/", SHLIST + "?omrade=gamla-stan", WP):
+        assert cited.row_errors(sheet(place=place)) == [
+            "place is not a stadsholmen page (AB Stadsholmen's property list, never a fact sheet's PDF: its file name "
+            "is the property designation)"], place
+        assert not cited.place_ok("stadsholmen", place), place
+    # the sheets' text is never taken (the permission covers the years), and the page the year is on is required
+    assert cited.row_errors(sheet(quote="Huset byggdes på 1780")) == [
+        "quote is required for KulturNav and Wikipedia and empty for the City Museum, AB Stadsholmen and the City's "
+        "stage pages"]
+    for page in ("", "p7", "7a"):
+        assert cited.row_errors(sheet(page=page)) == [
+            "page is a page number for a City Museum PDF or an AB Stadsholmen fact sheet only"], page
+    assert cited.SOURCES["stadsholmen"]["credit"] == "stadsholmen_faktablad"
+
+
+def test_the_harvested_sheets_give_the_properties_they_cover(tmp_path):
+    # data/raw/stadsholmen/MANIFEST.json, the research harvest: one entry per PDF; none on this machine is None.
+    # Made-up properties, normalised as s99 compares a FASTIGHET
+    assert cited.sheet_properties(tmp_path) is None
+    f = tmp_path / cited.SHEETS
+    f.parent.mkdir(parents=True)
+    f.write_text(json.dumps({"a.pdf": {"fastighet": "EXEMPEL  1"}, "b.pdf": {"fastighet": "Provgården 2"}, "c.pdf": {}}),
+                 encoding="utf-8")
+    assert cited.sheet_properties(tmp_path) == {"exempel 1", "provgården 2"}
 
 
 def test_a_wikipedia_link_carries_its_oldid_alone():
@@ -101,7 +144,7 @@ def test_an_inventory_must_be_one_of_the_cc_by_ones():
     ({"quote": ""}, "quote is required for KulturNav and Wikipedia and empty for the City Museum"),
     ({"source": "ssm_br", "place": REPORT, "page": "1"}, "quote is required for KulturNav and Wikipedia and empty for "
                                                           "the City Museum"),          # never the museum's text
-    ({"page": "3"}, "page is a page number for a City Museum PDF only"),
+    ({"page": "3"}, "page is a page number for a City Museum PDF or an AB Stadsholmen fact sheet only"),
     ({"confidence": "low"}, "confidence 'low' (low stays on hold)"),
     ({"kind": "period", "year_from": "1640", "year_to": "1640"}, "a period is a span, not one year"),
     ({"year_from": "999"}, "year_from..year_to is not a span inside 1000..2026"),
@@ -294,14 +337,15 @@ def test_the_repo_table_reads_and_holds_the_decided_rows():
     t = cited.read()
     t = t[t.source != "stockholm_stage"]           # Gamla stan and Riddarholmen (Hjorthagen's stages: the next test)
     keys = cited.by_key(t)
-    assert (len(t), len(keys)) == (254, 161)
+    assert (len(t), len(keys)) == (409, 188)
     # Vindragarlagets hus was the wrong house (its record is the next footprint, which RAÄ dates); Mälartorget 15 is
     # held (two building phases on one footprint): docs/research/2026-10-20-gamla-stan-years.md. Held on the review's
-    # answers of 2026-10-20 too: Själagårdsgatan 5, Köpmangatan 22, Själagårdsgatan 19, the house behind Kindstugatan 11
-    # and the no-address house at Västerlånggatan (oid 50482216); and Baggensgatan 19, whose report cannot confirm its
-    # cellar is medieval
-    assert not t.key.str.startswith(("116f5662", "2f06bb6a", "cc821610", "fa5783d0", "4ff97ad1", "ffd9aa36",
-                                     "oid:50482216", "55f7943a")).any()
+    # answers of 2026-10-20 too: Själagårdsgatan 5, Köpmangatan 22, the house behind Kindstugatan 11 and the
+    # no-address house at Västerlånggatan (oid 50482216); and Baggensgatan 19, whose report cannot confirm its cellar
+    # is medieval. Själagårdsgatan 19, held then, is dated since 2026-10-23 by AB Stadsholmen's sheet (D64)
+    assert not t.key.str.startswith(("116f5662", "2f06bb6a", "cc821610", "fa5783d0", "ffd9aa36", "oid:50482216",
+                                     "55f7943a")).any()
+    assert set(t.source[t.key.str.startswith("4ff97ad1")]) == {"stadsholmen"}
     # a dated medieval cellar is a medieval origin (the review of 2026-10-20: one rule for the cellar-only cards):
     # Skottgränd 1, Skottgränd 7, Stora Nygatan 34 and Österlånggatan 35 ship like Skomakargatan 30, and Funckens
     # Gränd 2's medieval cellar is its origin, its 1627 anchors a rebuild
@@ -312,26 +356,30 @@ def test_the_repo_table_reads_and_holds_the_decided_rows():
     ignatii = cited.footprint(keys["4dc27df6-8423-454a-987f-f283dec6e53d"])
     assert (ignatii["kind"], ignatii["year_from"], ignatii["year_to"]) == ("period", 1000, 1520)
     assert [(o["a"], o["z"]) for o in ignatii["rebuilt"]] == [(1600, 1699), (1906, 1906)]
-    # where two sources differ both readings are shown (Gåsgränd 4, Slottsbacken 6); Stortorget 18 and 20 are two
+    # where two sources differ both readings are shown (Gåsgränd 4, Slottsbacken 6, and where AB Stadsholmen's sheet
+    # differs from Wikipedia: Munkbrogatan 11, Köpmanbrinken 4, Österlånggatan 34); Stortorget 18 and 20 are two
     # houses on one footprint, not two readings: the card is Schantzska huset's (its name, photo and article), so its
     # 1650 dates it and the 1520s Seyfridtz house is the other house; so too Kammarrätten's house beside the Sparre
     # palace, and the old national archive beside the Stenbock palace
-    assert sorted(k[:8] for k, rs in keys.items() if cited.footprint(rs)["kind"] == "either") == ["2a22d390",
-                                                                                                    "36232e6d"]
+    assert sorted(k[:8] for k, rs in keys.items() if cited.footprint(rs)["kind"] == "either") == [
+        "2a22d390", "33154fc2", "36232e6d", "94bb3a36", "f6acf0c5"]
     stortorget = cited.footprint(keys["3b1e01bd-52cb-45e1-8eb0-79f09a1928d4"])
-    assert (stortorget["kind"], stortorget["year_from"], stortorget["rebuilt"]) == ("built", 1650, [])
+    assert (stortorget["kind"], stortorget["year_from"]) == ("built", 1650)
+    assert [(o["a"], o["z"], o["s"]) for o in stortorget["rebuilt"]] == [(1861, 1861, "stadsholmen"),
+                                                                          (1904, 1905, "stadsholmen")]
     assert [(o["a"], o["z"]) for o in stortorget["also"]] == [(1520, 1529)]
     sparre = cited.footprint(keys["de5a1bde-c116-48c0-b144-fd1a5c243b8b"])
     assert ([o["a"] for o in sparre["rebuilt"]], [o["a"] for o in sparre["also"]]) == ([1807], [1804])
     stenbock = cited.footprint(keys["d7d96f2a-6194-447d-a066-196367589456"])
     assert [(o["a"], o["z"], o["s"]) for o in stenbock["also"]] == [(1887, 1890, "kulturnav")]
-    # no span ships an end year its source does not give: after 1762 is the 1760s, shortly after 1685 the 1680s
+    # no span ships an end year its source does not give: after 1762 is the 1760s, shortly after 1685 the 1680s (one
+    # of Köpmanbrinken 4's two readings)
     for k, want in (("a1eba477", (1760, 1769)), ("f6acf0c5", (1680, 1689)), ("eaac7398", (1675, 1699))):
-        f = cited.footprint(next(rs for key, rs in keys.items() if key.startswith(k)))
-        assert (f["year_from"], f["year_to"]) == want, k
+        rs = next(rs for key, rs in keys.items() if key.startswith(k))
+        assert want in {(int(r["year_from"]), int(r["year_to"])) for r in rs if r["kind"] not in cited.LATER}, k
     # a source's "about one year" says so on the card
-    assert sorted(t.key[t.circa == "true"].str[:8]) == ["37cdb69f", "7062f8d2", "71140b72", "d6e7c50c", "deff337f",
-                                                        "eaac7398"]
+    assert sorted(t.key[t.circa == "true"].str[:8]) == ["0796a12d", "37cdb69f", "43d457bd", "7062f8d2", "71140b72",
+                                                        "d6e7c50c", "deff337f", "e816107b", "eaac7398"]
     brandenburgska = t[t.key.str.startswith("e029fefa")].iloc[0]
     assert (brandenburgska.year_from, brandenburgska.year_to, brandenburgska.kind, brandenburgska.place) == (
         "1640", "1649", "built", "https://sv.wikipedia.org/w/index.php?oldid=55051687")
@@ -340,12 +388,16 @@ def test_the_repo_table_reads_and_holds_the_decided_rows():
     osterlanggatan9 = t[t.key.str.startswith("3643fddd")].iloc[0]
     assert (osterlanggatan9.source, osterlanggatan9.page, osterlanggatan9.quote) == ("ssm_br", "12", "")
     assert osterlanggatan9.place.endswith("/Byggnadshistoriska%20rapporter/SSMB_0027901_01.pdf.info")
-    # every footprint's period (or either pair) is coloured by one map period but two: Funckens Gränd 1's "the beginning
-    # of the 1600s" (1600–1624), and the late 1500s to the mid-1600s at Kindstugatan 3 (1580–1649) straddle 1610/1611,
-    # so they have no colour and their cards give the span (s02 lists them, cited_no_period)
+    # every footprint's period (or either pair) is coloured by one map period but six: Funckens Gränd 1's "the
+    # beginning of the 1600s" (1600–1624), and the late 1500s to the mid-1600s at Kindstugatan 3 (1580–1649) straddle
+    # 1610/1611, as do two early-1600s houses AB Stadsholmen's sheets date (Järntorgsgatan 4 and the courtyard house at
+    # Trädgårdstvärgränd 1); and two either pairs fall in two periods (Munkbrogatan 11, 1778 or 1872; Köpmanbrinken 4,
+    # medieval or the 1680s), so they have no colour and their cards give the span or the two readings (s02 lists them,
+    # cited_no_period). Österlånggatan 34's 1895 or 1898 lie in one period, which colours it
     fs = {k[:8]: cited.footprint(rs) for k, rs in keys.items()}
     unplaced = [k for k, f in fs.items() if cited.footprint_year(f)[1] == UNKNOWN]
-    assert unplaced == ["5cb0834f", "bcc747db"]
+    assert sorted(unplaced) == ["0796a12d", "30f86dd2", "5cb0834f", "94bb3a36", "bcc747db", "f6acf0c5"]
+    assert cited.footprint_year(fs["33154fc2"])[1] == PERIOD
 
 
 def test_the_repo_table_s_hjorthagen_rows_give_each_block_its_stage_s_move_in_years():
@@ -371,6 +423,61 @@ def test_the_repo_table_s_hjorthagen_rows_give_each_block_its_stage_s_move_in_ye
     tyresta = h[h.key == "089d0de8-13f8-4430-8225-851e33d97c50"].iloc[0]
     assert (tyresta.place, tyresta.year_from, tyresta.year_to) == (RESULTS + "vastra", "2014", "2017")
     assert all(cited.footprint_year(cited.footprint(rs))[1] == RANGE for rs in cited.by_key(h).values())
+
+
+def test_the_repo_table_s_stadsholmen_rows_link_the_property_list_with_their_page():
+    # D64: AB Stadsholmen's fact sheets for Gamla stan, 158 rows on 59 footprints, 27 of them dated by no row before;
+    # each links the company's property list, never the sheet's PDF (named by the designation), with the sheet's page
+    # and no quote
+    t = cited.read()
+    sh = t[t.source == "stadsholmen"]
+    assert (len(sh), sh.key.nunique()) == (158, 59)
+    assert set(sh.place) == {SHLIST} and sh.page.str.fullmatch(r"\d+").all() and not sh.quote.any()
+    assert len(set(sh.key) - set(t.key[t.source != "stadsholmen"])) == 27
+    assert sh.kind.value_counts().to_dict() == {"rebuilt": 119, "period": 17, "also": 8, "built": 7,
+                                                "rebuilt_from_new": 4, "either": 3}
+    keys = cited.by_key(t)
+    # Suckiska huset (Österlånggatan 37): the sheet's new house of 1662 over medieval cellars, which the block article
+    # gives no year of its own (a medieval cellar under a house a source dates as new gives way to it, as at
+    # Kindstugatan 3); the article's later facade and its 1960s flats stay
+    suckiska = cited.footprint(keys["c7a6716f-fb86-4a5d-a3fd-009c66e90c80"])
+    assert (suckiska["kind"], suckiska["year_from"], suckiska["source"]) == ("rebuilt_from_new", 1662, "stadsholmen")
+    assert [(o["a"], o["z"], o["s"]) for o in suckiska["rebuilt"]] == [
+        (1750, 1799, "wikipedia_sv"), (1959, 1959, "stadsholmen"), (1960, 1970, "wikipedia_sv")]
+    # where a sheet dates a medieval cellar and never says the older house went, the house's origin is medieval and
+    # its 1600s house a rebuild, as at Funckens gränd 2 (the two joined houses at Järntorget, Göran Hälsinges gränd 5)
+    for k, rebuilt in (("40b2eb9f", [(1669, 1671), (1778, 1778)]), ("c22d2284", [(1600, 1699), (1740, 1756)]),
+                       ("757a72cf", [(1650, 1699)])):
+        f = cited.footprint(next(rs for key, rs in keys.items() if key.startswith(k)))
+        assert (f["kind"], f["year_from"], f["year_to"]) == ("period", 1000, 1520), k
+        assert [(o["a"], o["z"]) for o in f["rebuilt"]] == rebuilt, k
+    # Köpmanbrinken 4: Wikipedia's new house of the 1680s, or the sheet's older house with medieval walls in its own
+    # front; Österlånggatan 34: Wikipedia's 1895, or the sheet's 1898
+    kopmanbrinken = cited.footprint(keys["f6acf0c5-1b43-4dfd-bc1d-4cdb6cdb9d86"])
+    assert [(o["a"], o["z"], o["s"]) for o in kopmanbrinken["options"]] == [(1000, 1520, "stadsholmen"),
+                                                                            (1680, 1689, "wikipedia_sv")]
+    osterlanggatan34 = cited.footprint(keys["33154fc2-44a8-4d85-8845-75a713ec2d9d"])
+    assert [(o["a"], o["s"]) for o in osterlanggatan34["options"]] == [(1895, "wikipedia_sv"), (1898, "stadsholmen")]
+    assert [o["a"] for o in osterlanggatan34["rebuilt"]] == [1972]
+    # Österlånggatan 10: the sheet's 1632 is the museum card's 1600s rebuild, one row
+    osterlanggatan10 = cited.footprint(keys["9ef9f4cb-9454-446b-b631-375b44ea383f"])
+    assert [(o["a"], o["z"], o["s"]) for o in osterlanggatan10["rebuilt"]] == [
+        (1632, 1632, "stadsholmen"), (1760, 1761, "stadsholmen"), (1970, 1974, "stadsholmen")]
+    # a renovation that changes no structure or exterior gets no row: Västerlånggatan 37's 1940s refit, for one, is
+    # gone, and Västerlånggatan 77 keeps only its 1850 rebuild of the sheet's
+    assert not sh.key.str.startswith("70810a4d").any()
+    assert list(sh.year_from[sh.key.str.startswith("1e8a8f4c")]) == ["1850"]
+    # Munkbrogatan 11: the sheet's works of 1778, or Wikipedia's 1872; the block's 1971–73 rebuild stays
+    munkbrogatan = cited.footprint(keys["94bb3a36-fbb5-44b8-ace1-01af09012e3b"])
+    assert [(o["a"], o["s"]) for o in munkbrogatan["options"]] == [(1778, "stadsholmen"), (1872, "wikipedia_sv")]
+    assert [(o["a"], o["z"]) for o in munkbrogatan["rebuilt"]] == [(1971, 1973)]
+    # Helga Lekamens gränd 5: the 1978 memo's undated later top storey is the sheet's raising of 1758, one row
+    helga = cited.footprint(keys["30b313a2-7702-47ef-a1ac-f35ab985fa96"])
+    assert [(o["a"], o["z"], o["s"]) for o in helga["rebuilt"]] == [(1758, 1758, "stadsholmen")]
+    assert [(o["a"], o["z"]) for o in helga["also"]] == [(1650, 1699)]
+    # one row relies on a neighbour's sheet, and its note says so (the place cannot: it is the list)
+    neighbour = sh[sh.key.str.startswith("9ef9f4cb") & (sh.year_from == "1970")].iloc[0]
+    assert "neighbour's sheet" in neighbour.note
 
 
 def test_plain_reads_wikitext_as_its_reader_sees_it():
@@ -771,7 +878,7 @@ def test_the_card_carries_about_and_the_other_houses():
 # the fixture's source, and the credits the cited sources need (cited.SOURCES' `credit`)
 CREDITS = [{**tinycity.SOURCES[0], "id": i}
            for i in ("test-src", "wikipedia", "kulturnav", "stadsmuseet_br", "stadsmuseet_inventories",
-                     "stockholm_stages")]
+                     "stockholm_stages", "stadsholmen_faktablad")]
 
 
 def cited_site(tmp_path, monkeypatch, r: dict, gid: int = 7, ship: dict | None = None, extra=(),
@@ -1075,6 +1182,29 @@ def test_a_city_museum_report_must_be_one_the_register_links(tmp_path, monkeypat
                         "metadata": {"688": {"value": ["42"]}}}]}
     (reports / "42.json").write_text(json.dumps(linked), encoding="utf-8")
     assert cited_errors(validate(out, path)) == []
+
+
+def test_a_stadsholmen_row_links_the_property_list_and_its_property_must_have_a_harvested_sheet(tmp_path, monkeypatch,
+                                                                                                capsys):
+    r = {"source": "stadsholmen", "place": SHLIST, "page": "6", "quote": "", "note": "The sheet: built in the 1640s."}
+    out, path = cited_site(tmp_path, monkeypatch, r, gid=8)
+    card = json.loads((out / "cards" / "08.json").read_text())["8"]
+    assert card["yc"] == {"s": "stadsholmen", "u": SHLIST}
+    # without the harvest: a warning only, since no committed step makes it
+    capsys.readouterr()
+    assert cited_errors(validate(out, path)) == []
+    assert "cannot check that 1 AB Stadsholmen rows are on properties its fact sheets cover" in capsys.readouterr().err
+    sheets = out.parents[2] / "data" / cited.SHEETS
+    sheets.parent.mkdir(parents=True)
+    sheets.write_text(json.dumps({"Diana1-FAKTABLAD.pdf": {"fastighet": "DIANA 1"}}), encoding="utf-8")
+    assert cited_errors(validate(out, path)) == [
+        "cited: row 1 (gid 8) cites AB Stadsholmen's fact sheet, but its footprint is on no property the harvested "
+        "sheets cover (the permission covers Gamla stan's sheets)"]
+    sheets.write_text(json.dumps({"Diana2-FAKTABLAD.pdf": {"fastighet": "DIANA 2"}}), encoding="utf-8")
+    assert cited_errors(validate(out, path)) == []
+    # its credit, AB Stadsholmen / Stadsmuseet, must be in sources.yml
+    errors = validate(out, path, sources=[s for s in CREDITS if s["id"] != "stadsholmen_faktablad"])
+    assert "cited: source stadsholmen_faktablad is not in sources.yml (its credit would be missing)" in errors
 
 
 def test_a_fixture_build_never_reads_the_repo_table(tmp_path, monkeypatch):

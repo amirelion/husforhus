@@ -140,7 +140,8 @@ def test_the_repo_pin_table_puts_each_item_on_its_own_house():
     assert t.set_index("qid").uuid.to_dict() == {
         "Q10715723": "5f88e1cb-0b71-4852-9549-132b1970971f",      # Vindragarlagets hus, Stora Hoparegränd 6
         "Q10505314": "dacaf108-6f9c-4c80-a3b3-53a9cbcadc7f",      # the listed house at Johannesgränd 4
-        "Q10551608": "f71eaa09-dc47-4e2f-9531-095fe5ae3b6e"}      # Källaren Stralsund, across Skottgränd
+        "Q10551608": "f71eaa09-dc47-4e2f-9531-095fe5ae3b6e",      # Källaren Stralsund, across Skottgränd
+        "Q124304": "78f13bc3-1153-4089-b232-c29d9ec76e40"}        # Kista Science Tower, not the shopping centre (D65)
 
 
 def test_a_pin_on_a_uuid_with_several_footprints_is_refused():

@@ -53,7 +53,10 @@ period colour. When that decade and period share fewer than two years (a 1610 or
 from the decade's middle year instead (1615: Stormaktstiden), so the pair never pins the year (s99 checks it).
 
 raa_id links every footprint a RAÄ Byggnad record joins by UUID, whether or not that record has a usable year,
-so s02_attributes can read its rating and architects. The raa_old tier never sets it (its record pages will die).
+so s02_attributes can read its rating and architects. A landmark whose entry names its own record (landmarks.py `raa`:
+one City outline around two RAÄ buildings, the UUID joining the other house's) links that record instead, when it
+covers at least OVERLAP_MIN of the footprint (own_record; else the joined one stays, report landmarks_raa_kept). The
+raa_old tier never sets it (its record pages will die).
 
 Outputs: data/years.parquet, data/accuracy.json (the estimate tier's accuracy table, with the permit tier's block,
 `bygglov`: its settings, cells, funnel, test, blind spot, the estimate against the permit years and the other sources;
@@ -197,6 +200,17 @@ def match_raa(b: gpd.GeoDataFrame, recs: gpd.GeoDataFrame) -> tuple[pd.DataFrame
     by_overlap = pick(pd.DataFrame(hits.drop(columns="geometry")))
     link = pd.concat([link[~link.index.isin(by_overlap.index)], by_overlap.raa_id])
     return pd.concat([by_uuid, by_overlap]).sort_index(), link.sort_index()
+
+
+def own_record(footprint, byggnad: gpd.GeoDataFrame, raa_id: str) -> str:
+    """Why a landmark's own RAÄ record (landmarks.py `raa`) may not link its footprint, or "" when it may: it must be
+    one of the Byggnad records and cover at least OVERLAP_MIN of the footprint, the share a record that joins no UUID
+    needs to date one (match_raa)."""
+    hit = byggnad.geometry[byggnad.raa_id == raa_id]
+    if hit.empty:
+        return "it is not one of RAÄ's Byggnad records"
+    share = float(shapely.area(shapely.intersection(hit.values[0], footprint)) / shapely.area(footprint))
+    return "" if share >= OVERLAP_MIN else f"it covers {share:.0%} of the footprint, less than {OVERLAP_MIN:.0%}"
 
 
 def match_areas(b: gpd.GeoDataFrame, areas: gpd.GeoDataFrame) -> pd.DataFrame:
@@ -368,7 +382,7 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
         ysrc[k] = SRC_CITED
         report["cited"] = len(c)
 
-    report["landmarks_dropped"], report["landmarks"] = [], {}
+    report["landmarks_dropped"], report["landmarks"], report["landmarks_raa_kept"] = [], {}, []
     if landmarks:
         xs, ys = lonlat_to_3011([L["lon"] for L in landmarks], [L["lat"] for L in landmarks])
         for L, g in zip(landmarks, resolve_points(b, xs, ys)):
@@ -384,6 +398,14 @@ def assign_years(b: gpd.GeoDataFrame, raa: gpd.GeoDataFrame, landmarks: list[dic
             yflag[k] = EXACT if L["year_from"] == L["year_to"] else RANGE
             landmark[k] = L["name"]
             report["landmarks"][L["name"]] = int(g)
+            # the RAÄ record of the building the year belongs to, where the UUID joins another house's (landmarks.py
+            # `raa`): its architects, rating and protection then reach the card, never another house's
+            if L.get("raa"):
+                why = own_record(b.geometry.values[k], byggnad, L["raa"]["id"])
+                if why:
+                    report["landmarks_raa_kept"].append({"name": L["name"], "raa": L["raa"]["id"], "why": why})
+                else:
+                    raa_id[k] = L["raa"]["id"]
 
     # The building-permit tier: after every building-level record, so the cells are measured against their unrounded
     # years, and before the takedown reset and the estimate tier.
@@ -704,6 +726,9 @@ def main(argv: list[str] | None = None) -> None:
         print("RAÄ year rejected:", r)
     for name in report["landmarks_dropped"]:
         print("landmark dropped (no footprint within 15 m, or one already taken):", name)
+    for e in report.get("landmarks_raa_kept", []):
+        print(f"warning: landmark {e['name']}: its RAÄ record {e['raa']} does not link its footprint ({e['why']}); "
+              "the record its UUID joins stays", file=sys.stderr)
     print("landmarks placed:", report["landmarks"])
     for g in report["cited_skipped"]:
         print(f"warning: cited row on gid {g} skipped: a RAÄ record or a landmark dates it", file=sys.stderr)

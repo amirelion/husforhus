@@ -248,10 +248,17 @@ def card_of(site, gid):
 def test_a_rebuild_on_a_card_that_is_not_curated_fails(site):
     # Rebuild lines and older cellars are a hand-checked entry's, checked against its article; gid 0 is
     # RAÄ-dated and gid 10 Wikidata-dated
-    edit_card(site, 0, {**card_of(site, 0), "rebuilt": [[1700, "rebuilt"]]})
+    edit_card(site, 0, {**card_of(site, 0), "rebuilt": [[1700, "rebuilt"]], "also": [[1805, 1818]]})
     edit_card(site, 10, {**card_of(site, 10), "cellars": True})
     assert check(site) == ["cards: 00.json gid 0 is not curated and carries `rebuilt`",
+                           "cards: 00.json gid 0 is not curated and carries `also`",
                            "cards: 10.json gid 10 is not curated and carries `cellars`"]
+
+
+def test_another_house_on_a_curated_card_may_come_before_its_year(site):
+    # Historiska museet's 1805–1818 range on its 1939 card (D65): not a rebuild, so no order against the card's year
+    edit_card(site, 1, {**card_of(site, 1), "also": [[1700, 1705], [1805, 1818]]})
+    assert check(site) == []
 
 
 def test_a_rebuild_year_before_the_card_year_fails(site):
@@ -270,6 +277,10 @@ def test_a_rebuild_year_before_the_card_year_fails(site):
     ({"rebuilt": [["1857", "raised"]]}, "has `rebuilt` that is not a list of [year, kind] by year"),
     ({"rebuilt": [[1857, "raised"], [1772, "rebuilt"]]}, "has `rebuilt` that is not a list of [year, kind] by year"),
     ({"cellars": False}, "has `cellars` that is not true"),
+    # the other house on a curated footprint (D65): spans by year, inside the years, before or after the card's own
+    *[({"also": also}, "has `also` that is not a list of [from, to] by year, inside 1000..2026")
+      for also in ([], [[1818, 1805]], [[1805]], [["1805", 1818]], [[1900, 1905], [1805, 1818]], [[1805, 2027]],
+                   [[999, 1805]], "1805–1818")],
 ])
 def test_a_rebuild_of_another_kind_or_shape_fails(site, change, message):
     edit_card(site, 1, {**card_of(site, 1), **change})

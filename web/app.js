@@ -34,6 +34,7 @@ import { makeGround, cutFactor, levelAt, LOD_TOL, parsePolygons, fadeWidth, fade
 import { RELIEF_KEY, RELIEF_MAX, RELIEF_STEP, initialRelief, reliefNote, reliefValue, ease } from './relief.js';
 import { howto } from './howto.js';
 import { northTurn, turnAt, needleDeg } from './north.js';
+import { controlsFor, turnTitle } from './turn.js';
 import { mountSearch } from './searchbox.js';
 import { makeHighlight } from './highlight.js';
 import { aboutHtml, aboutTarget } from './about.js';
@@ -259,9 +260,9 @@ controls.enableDamping = true;
 // Like a web map: drag moves the city; Ctrl/Cmd with the left button, or the right button, turns and tilts it.
 // (OrbitControls swaps PAN for ROTATE itself while Ctrl, Cmd or Shift is held.) Shift works too but is not advertised
 // (web/howto.js): a real Shift-drag is unreliable, since the browser takes a Shift-press for selection-extend and some
-// browser shells take Shift-drag for themselves. One finger moves, two zoom and turn.
-controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
-controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
+// browser shells take Shift-drag for themselves. One finger moves, two zoom and turn. Turn mode (see Turn mode below,
+// web/turn.js) swaps the buttons and the fingers: one finger turns, two zoom and move. Every visit starts in move mode.
+Object.assign(controls, controlsFor(false, THREE));
 controls.rotateSpeed = 0.6;
 controls.maxPolarAngle = Math.PI * 0.47;
 controls.minDistance = 60;
@@ -2891,6 +2892,38 @@ canvas.addEventListener('pointerdown', () => { turn = null; });
 addEventListener('keydown', e => {
   if ((e.key === 'n' || e.key === 'N') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat && !typingIn(e.target)) faceNorth();
 });
+
+// ---------- Turn mode ----------
+// The orbit button after north (index.html .turn-open, web/turn.js), or the T key: pressed, a plain drag (one finger on
+// a touch screen) turns and tilts the map, and a right-drag, a ⌘/Ctrl-drag or two fingers move it; pressed again, the
+// map moves as it always did. A visitor wrote that ⌘-drag took a while to find (D66). Not remembered between visits, so
+// no storage and no URL parameter. The tooltip says what a press does now: the title for a mouse hover, and data-tip
+// for keyboard focus, where a title shows nothing (styles.css). The hint under the map follows the mode, and the
+// button's name stays the same with aria-pressed carrying the state. A history scene leaves it as it is: the scene owns
+// the camera with the controls switched off, and gives them back in the same mode. T waits while the keys go to a field
+// or a dialog, as P does, and wherever the button is out of sight, since nothing would show what T did: in postcard
+// mode, and during a story. While a story plays its player takes T itself (scene-player.js, its capture-phase keys);
+// the scene-on check covers the sensitive-content warning before it, which lets the keys through.
+const turnBtn = document.querySelector('.turn-open');
+let turning = false;
+function showTurn() {
+  const tip = turnTitle(T, turning);
+  turnBtn.setAttribute('aria-pressed', String(turning));
+  turnBtn.title = tip;
+  turnBtn.dataset.tip = tip;
+  document.querySelector('.howto').textContent = t(howto(navigator, turning));
+}
+function setTurning(on) {
+  turning = !!on;
+  Object.assign(controls, controlsFor(turning, THREE));
+  showTurn();
+}
+turnBtn.onclick = () => setTurning(!turning);
+// postcard is set up further down; a key press only ever comes after the whole module has run.
+addEventListener('keydown', e => {
+  if ((e.key === 't' || e.key === 'T') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat && !typingIn(e.target)
+    && !document.body.classList.contains('scene-on') && !postcard.on) setTurning(!turning);
+});
 // + and - zoom (= and _ too, the same keys unshifted), as the arrows pan and Shift + arrows turn (the audit's finding 9).
 function zoomBy(k) {
   flight = null;
@@ -3047,11 +3080,11 @@ function applyStaticText() {
   northBtn.setAttribute('aria-label', T('ui.north'));
   northBtn.title = `${T('ui.north')} (N)`;
   postcardBtn.title = `${T('postcard.open')} (P)`;
+  showTurn();   // the turn button's tooltip and the hint under the map, in the page's language and the map's mode
   renderAbout();
   document.getElementById('credit').innerHTML = cornerHtml(config.attribution, T);   // the corner credit
   document.querySelector('.quests-open span').textContent = t('Quests');
   document.querySelector('.tally-count').childNodes[1].textContent = ' ' + T('ui.buildings');
-  document.querySelector('.howto').textContent = t(howto(navigator));
   const ld = document.getElementById('loading');
   if (failedId) ld.textContent = T(failedId);   // a failed start keeps its message, in the new language
   else if (ld.firstChild) ld.firstChild.textContent = T('ui.loading') + ' ';
@@ -3406,7 +3439,7 @@ const scenePlayer = mountScenePlayer({ THREE, scene: storyGroup, faint: setFaint
     restore: ([from, to]) => { stopPlay(); uniforms.uYearFrom.value = from; uniforms.uYear.value = to; drawHist(); } } });
 
 window.__dbg = { scenePlayer, renderer, stats, goHome, viewAt, pick, uniforms, camera, controls, setLayer, layers, pinCard, showCard, building, attrTally, setHideEst, setPhotoOnly, setPlaques, get plaquesOn() { return plaquesOn; }, setMetro, get metroOn() { return metroOn; }, get storyLayers() { return [...storyLayers]; }, metroLayer,
-  get ferries() { return ferries; }, setBoats, get boatTip() { return boatTip.shown; }, get boatsOn() { return boatsOn; }, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, startPlay, questClick, startQuest, get quests() { return quests; },
+  get ferries() { return ferries; }, setBoats, get boatTip() { return boatTip.shown; }, get boatsOn() { return boatsOn; }, pinStation, plaqueGroup, get photoGids() { return photoGids; }, meshes, labelGroup, get labels() { return labels; }, flyTo, faceNorth, get turning() { return turning; }, setTurning, startPlay, questClick, startQuest, get quests() { return quests; },
   surfaceAt, setRelief, chooseRelief, get relief() { return relief; }, terrain: () => ({ state: terrainState, source: TERRAIN?.source, relief: uRelief.value, cutK: uCutK.value, chunks: chunkMeshes.length }),
   get timelineLabels() { return placedLabels; }, get pinned() { return pinnedGid; }, districtOf,
   get forced() { return forcedGid; }, force, scene, highlight: () => highlight.state(),

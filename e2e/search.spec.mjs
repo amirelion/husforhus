@@ -374,8 +374,9 @@ test('"nobel" finds the Nobel Prize Museum and flies to Börshuset', async ({ pa
   expect(errors).toEqual([]);
 });
 
-// pipeline/occupant_pins.csv places an institution by footprint, whose card may have no name (Historiska museet,
-// 2026-10-21): its row stands alone, without "in ...", and still flies to that footprint
+// pipeline/occupant_pins.csv places an institution by footprint, whose card may have no name (Liljevalchs konsthall,
+// 2026-10-21; Historiska museet's card has its name since D65): its row stands alone, without "in ...", and still flies
+// to that footprint
 test('an institution on a footprint without a named card is found by its name and flies there', async ({ page }) => {
   const errors = watchErrors(page);
   await open(page);
@@ -384,7 +385,7 @@ test('an institution on a footprint without a named card is found by its name an
     const index = await (await fetch(`data/${version}/search/index.json`)).json();
     const named = new Set(index.buildings.map(b => b[1]));
     const alone = (index.occupants || []).filter(e => e.length === 5 && !named.has(e[2]));
-    const o = alone.find(e => e[0] === 'Historiska museet') || alone[0];
+    const o = alone.find(e => e[0] === 'Liljevalchs konsthall') || alone[0];
     return o ? { name: o[1] || o[0], gid: o[2] } : null;
   });
   test.skip(found === null, 'this build has no institution on a footprint without a named card');

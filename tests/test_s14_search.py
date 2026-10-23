@@ -190,8 +190,8 @@ HISTORISKA = {"qid": "Q1726607", "sv": "Historiska museet", "en": "Swedish Histo
 
 
 def test_a_hand_checked_occupant_needs_no_card_and_carries_its_stadsdel(built):
-    # pipeline/occupant_pins.csv by footprint: gid 2's card has neither a name nor an item, as Historiska museet's
-    # footprint had none on 2026-10-21, yet search finds the museum there, in Riddarholmen (stadsdel 3)
+    # pipeline/occupant_pins.csv by footprint: gid 2 is a made-up footprint whose card has neither a name nor an item,
+    # yet search finds the museum there, in Riddarholmen (stadsdel 3)
     out, df, cards = built
     index, _ = s14_search.build(df, cards, PLACES, {}, {2: [HISTORISKA]})
     assert index["occupants"] == [["Historiska museet", "Swedish History Museum", 2, ["Statens historiska museum"], 3]]

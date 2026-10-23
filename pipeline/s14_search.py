@@ -9,7 +9,7 @@ Writes into the version folder:
   "Stadshuset", each with the gid of the one card carrying its target name), what is inside the buildings
   (`occupants`: Swedish and English name, gid, other names, stadsdel; from s06_wiki's data/occupants.json for a
   footprint whose card carries the building's item, "Nobelprismuseet" in Börshuset, and from the hand-checked table
-  pipeline/occupant_pins.csv by footprint, which needs no card at all: "Historiska museet") and how many buildings
+  pipeline/occupant_pins.csv by footprint, which needs no card at all: "Liljevalchs konsthall") and how many buildings
   have an address
   (the empty field says what share of the city search covers);
 - search/addr/<k>.json, loaded when a street is resolved: {street: [[number, gid, stadsdel], ...]}, the stadsdel an

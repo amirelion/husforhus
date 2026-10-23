@@ -347,6 +347,9 @@ BUILDING_ALIASES = {
     # (docs/research/2026-10-21-missing-landmarks.md)
     "Stockholms gamla observatorium": "Observatoriet", "Stockholm Observatory": "Observatoriet",
     "KTH Biblioteket": "Kungliga Tekniska högskolans bibliotek", "KTH Library": "Kungliga Tekniska högskolans bibliotek",
+    # the card named Kanslikasernen until D65 (2026-10-23) is Historiska museet's, the range one part of it; the
+    # museum's formal name went with its occupant row, which search now drops as the building itself
+    "Kanslikasernen": "Historiska museet", "Statens historiska museum": "Historiska museet",
 }
 # Municipalities around Stockholm: a search for one says the map covers Stockholms kommun only.
 OUTSIDE = ("Botkyrka", "Danderyd", "Ekerö", "Haninge", "Huddinge", "Järfälla", "Lidingö", "Nacka", "Sollentuna", "Solna",

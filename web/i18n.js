@@ -29,6 +29,8 @@ export const LEGACY = {
   'Hidden while one period is shown alone.': 'ui.unknown.solo',
   'Drag to move. Right-drag or ⌘-drag to turn. Scroll or press + / − to zoom.': 'ui.howto.mac',
   'Drag to move. Right-drag or Ctrl-drag to turn. Scroll or press + / − to zoom.': 'ui.howto.other',
+  'Drag to turn. Right-drag or ⌘-drag to move. Scroll or press + / − to zoom.': 'ui.howto.turn.mac',
+  'Drag to turn. Right-drag or Ctrl-drag to move. Scroll or press + / − to zoom.': 'ui.howto.turn.other',
   // The quests (and the context layers) came from upstream in English; Swedish since they went public (2026-10-18).
   "Quests": 'quest.title', "Find buildings from riddles and old photos, guess their age with the colours switched off. Every answer is worth three crosses; hints and wrong answers cost one.": 'quest.lede',
   "Your crosses": 'quest.yourCrosses', "Easy": 'quest.easy',

@@ -215,18 +215,21 @@ def test_nothing_that_states_the_year_reaches_a_private_house_card():
 
 
 def test_rebuilds_and_cellars_reach_only_a_curated_card():
-    # A verified entry's rebuilds (by year) and its older cellars go on the card of the building it dates;
-    # a name that is not curated there (gid 1), an entry without them (gid 2) and an unplaced one (D) give nothing
+    # A verified entry's rebuilds (by year), its older cellars and the other house on its footprint (by year) go on
+    # the card of the building it dates; a name that is not curated there (gid 1), an entry without them (gid 2) and
+    # an unplaced one (D) give nothing
     df = pd.DataFrame({
         "gid": [0, 1, 2, 3], "name": ["", "", "", ""], "architects": [[], [], [], []], "raa_id": ["", "", "", ""],
         "private": [False] * 4, "kategori": ["Allmän byggnad"] * 4,
         "ysrc": [codes.SRC_CURATED, codes.SRC_RAA, codes.SRC_CURATED, codes.SRC_RAA], "landmark": ["A", "B", "C", ""]})
-    marks = [{"name": "A", "rebuilt": [[1857, "raised"], [1757, "rebuilt"]], "cellars": True},
-             {"name": "B", "rebuilt": [[1935, "extended"]], "cellars": True}, {"name": "C"},
+    marks = [{"name": "A", "rebuilt": [[1857, "raised"], [1757, "rebuilt"]], "cellars": True,
+              "also": [[1900, 1905], [1805, 1818]]},
+             {"name": "B", "rebuilt": [[1935, "extended"]], "cellars": True, "also": [[1805, 1818]]}, {"name": "C"},
              {"name": "D", "rebuilt": [[1900, "rebuilt"]]}]
     cards = {g: c for shard in s03_tiles.card_shards(df, {}, marks) for g, c in shard.items()}
-    assert cards == {"0": {"rebuilt": [[1757, "rebuilt"], [1857, "raised"]], "cellars": True}}
-    assert {"rebuilt", "cellars"} <= set(s03_tiles.CARD_FIELDS)
+    assert cards == {"0": {"rebuilt": [[1757, "rebuilt"], [1857, "raised"]], "cellars": True,
+                           "also": [[1805, 1818], [1900, 1905]]}}
+    assert {"rebuilt", "cellars", "also"} <= set(s03_tiles.CARD_FIELDS)
     assert s03_tiles.card_shards(df) == s03_tiles.card_shards(df, {}, [])     # no entries, no rebuild lines
     assert not any(s03_tiles.card_shards(df))
 
@@ -438,6 +441,9 @@ def test_attribution_credits_each_source_in_the_d44_form():
                       "KulturNav, Byggnader i Sverige: ArkDes, CC0, bearbetad"),
         "stadsmuseet_inventories": ("Byggnadsinventeringar: Stadsmuseet i Stockholm, CC BY 4.0, processed",
                                     "Byggnadsinventeringar: Stadsmuseet i Stockholm, CC BY 4.0, bearbetad"),
+        # AB Stadsholmen's written permission (O11, 2026-10-22), under the credit it allowed (D64)
+        "stadsholmen_faktablad": ("Faktablad: AB Stadsholmen / Stadsmuseet, used with permission, processed",
+                                  "Faktablad: AB Stadsholmen / Stadsmuseet, används med tillstånd, bearbetad"),
         # the City's Hjorthagen stage years (D63): facts read from its pages, so no licence, "facts only"
         "stockholm_stages": ("Hjorthagens utbyggnadsetapper: Stockholms stad, facts only, processed",
                              "Hjorthagens utbyggnadsetapper: Stockholms stad, endast fakta, bearbetad"),

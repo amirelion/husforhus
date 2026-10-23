@@ -17,7 +17,7 @@ export function prepare(index) {
       fe: en ? fold(en) : '' })),
     // the names people use for the best-known buildings ("Slottet", "Royal Palace"), each pointing at a card's name
     baliases: (index.baliases || []).map(([name, gid]) => ({ name, gid, f: fold(name) })),
-    // what is inside a building ("Nobelprismuseet" in Börshuset, "Historiska museet" on a footprint with no named
+    // what is inside a building ("Nobelprismuseet" in Börshuset, "Liljevalchs konsthall" on a footprint with no named
     // card): Swedish, English and other names, and the stadsdel for a footprint search has no building row for
     occupants: (index.occupants || []).map(([sv, en, gid, alt = [], d = -1]) => ({ sv, en, gid, d, f: fold(sv),
       fe: fold(en), fa: alt.map(fold) })),
@@ -97,7 +97,7 @@ export function textRows(P, q, raw = '') {
     if (b && s >= 0) add({ kind: 'building', label: b.name, gid: b.gid, d: b.d, en: b.en, via: a.name }, s, a.name);
   }
   // an institution inside a building: found by any of its names, picked as the building, after an exact building
-  // name; on a footprint whose card has no name it stands alone ("Historiska museet", no "in ...")
+  // name; on a footprint whose card has no name it stands alone ("Liljevalchs konsthall", no "in ...")
   for (const o of P.occupants || []) {
     const b = byGid.get(o.gid);
     const s = score(o.f, q), se = score(o.fe, q), sa = o.fa.map(f => score(f, q)).filter(x => x >= 0);

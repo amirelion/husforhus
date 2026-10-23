@@ -9,7 +9,8 @@ from pipeline.fetch import UA
 from pipeline.landmarks import LANDMARKS
 
 KEYS = {"name", "qid", "lat", "lon", "year", "year_from", "year_to", "source", "checks"}
-OPTIONAL = {"timeline", "rebuilt", "cellars", "point"}     # the priority, then the rebuild, cellar and point fields
+OPTIONAL = {"timeline", "rebuilt", "cellars", "point", "also", "raa"}   # the priority, then the rebuild, cellar, point,
+# other-house and RAÄ-record fields
 REQUIRED = {"Riddarholmskyrkan", "Storkyrkan", "Riddarhuset", "Stockholms slott", "Stockholms stadshus",
             "Stockholms stadsbibliotek", "Kaknästornet", "Avicii Arena"}
 

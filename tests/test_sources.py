@@ -42,8 +42,8 @@ def test_repo_sources_file():
     ids = [s["id"] for s in sources]
     assert ids == ["city_lod1", "city_stadsdelar", "city_stadskarta", "raa_bebyggelse", "raa_old", "wikidata", "osm",
                    "lm_markhojd", "lm_laser", "wikipedia", "samfundet_plaques", "openplaques", "stadsmuseet_br",
-                   "stadsarkivet_bygglov", "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories", "stockholm_stages",
-                   "metro_stations", "metro_track", "ferry_routes"]
+                   "stadsarkivet_bygglov", "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories",
+                   "stadsholmen_faktablad", "stockholm_stages", "metro_stations", "metro_track", "ferry_routes"]
     by_id = {s["id"]: s for s in sources}
     # Lantmäteriet's terrain model, CC BY 4.0 with no licence question pending (it never blocks --release)
     # asks for the product name, ©Lantmäteriet, that it was processed and the licence
@@ -125,13 +125,14 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
         "stadsmuseet_br": "Stads- och byggnadsarkeologiskt register", "stadsarkivet_bygglov": "Bygglov 1875–1980",
         "stadsmuseet_photos": "Digitala Stadsmuseet, fotografier",
         "kulturnav": "KulturNav, Byggnader i Sverige", "stadsmuseet_inventories": "Byggnadsinventeringar",
-        "stockholm_stages": "Hjorthagens utbyggnadsetapper", "metro_stations": "Tunnelbanestationer", "metro_track": "Tunnelbanans spår", "ferry_routes": "Båtlinjer"}
+        "stadsholmen_faktablad": "Faktablad", "stockholm_stages": "Hjorthagens utbyggnadsetapper", "metro_stations": "Tunnelbanestationer", "metro_track": "Tunnelbanans spår", "ferry_routes": "Båtlinjer"}
     assert {k: s["credit_as"]["sv"] for k, s in by_id.items() if "credit_as" in s} == {
         "city_lod1": "© Stockholms stad, Stadsbyggnadskontoret", "city_stadsdelar": "© Stockholms stad, Stadsbyggnadskontoret",
         "city_stadskarta": "© Stockholms stad, Stadsbyggnadskontoret", "wikidata": "Wikidatas bidragsgivare",
         "osm": "© OpenStreetMap-bidragsgivare", "lm_markhojd": "© Lantmäteriet", "lm_laser": "© Lantmäteriet",
         "wikipedia": "Wikipedias bidragsgivare",
-        "samfundet_plaques": "Samfundet S:t Erik", "metro_stations": "Wikidata", "metro_track": "© OpenStreetMap-bidragsgivare",
+        "samfundet_plaques": "Samfundet S:t Erik", "stadsholmen_faktablad": "AB Stadsholmen / Stadsmuseet",
+        "metro_stations": "Wikidata", "metro_track": "© OpenStreetMap-bidragsgivare",
         "ferry_routes": "© OpenStreetMap-bidragsgivare"}
     # the City's own credit (its licence answer, 2026-10-16): "© Stockholms stad, Stadsbyggnadskontoret, CC BY"
     assert {k for k, s in by_id.items() if "licence_as" in s} == {"city_lod1", "city_stadsdelar", "city_stadskarta"}
@@ -146,6 +147,14 @@ def test_every_source_has_a_dataset_and_credit_as_has_both_languages():
     assert credit(by_id["stockholm_stages"]) == {
         "en": "Hjorthagens utbyggnadsetapper: Stockholms stad, facts only, processed",
         "sv": "Hjorthagens utbyggnadsetapper: Stockholms stad, endast fakta, bearbetad"}
+    # AB Stadsholmen's fact sheets (D64): its written permission of 2026-10-22, credited as it allowed, "AB Stadsholmen
+    # / Stadsmuseet"; About and the card link its property list, never a sheet (each PDF is named by the designation)
+    sh = by_id["stadsholmen_faktablad"]
+    assert credit(sh) == {"en": "Faktablad: AB Stadsholmen / Stadsmuseet, used with permission, processed",
+                          "sv": "Faktablad: AB Stadsholmen / Stadsmuseet, används med tillstånd, bearbetad"}
+    assert (sh["licence"], sh["url"], sh["status"]) == ("LicenseRef-Permission", "https://www.stadsholmen.se/fastigheter/",
+                                                        "confirmed")
+    assert "2026-10-22" in sh["terms"] and "Gamla stan" in sh["terms"]
 
 
 def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
@@ -154,7 +163,8 @@ def test_default_path_is_next_to_the_module(monkeypatch, tmp_path):
                                                   "raa_old", "wikidata", "osm", "lm_markhojd", "lm_laser", "wikipedia",
                                                   "samfundet_plaques", "openplaques", "stadsmuseet_br",
                                                   "stadsarkivet_bygglov", "stadsmuseet_photos", "kulturnav", "stadsmuseet_inventories",
-                                                  "stockholm_stages", "metro_stations", "metro_track", "ferry_routes"]
+                                                  "stadsholmen_faktablad", "stockholm_stages", "metro_stations",
+                                                  "metro_track", "ferry_routes"]
 
 
 def test_release_fails_on_pending_sources():

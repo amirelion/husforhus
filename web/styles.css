@@ -357,19 +357,42 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .look-layers .est-row:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 /* The north button (web/north.js): round, as tall as the Look button and in its colours. The needle's north half is
    filled, its south half drawn; app.js turns the whole icon with the map (a transform, so no layout). */
-.north-open, .postcard-open { display: grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0;
-  border-radius: 50%; background: var(--panel); color: var(--ink); cursor: pointer; }
+.north-open, .turn-open, .postcard-open { display: grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0;
+  border: 0; border-radius: 50%; background: var(--panel); color: var(--ink); cursor: pointer; }
 .north-open svg { width: 16px; height: 16px; }
 .north-open .needle-n { fill: currentColor; }
 .north-open .needle-s { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
+/* The turn button (web/turn.js): an orbit drawn as the needle's south half is, its centre and the camera on it filled.
+   Pressed (turn mode on), it takes the selected EN | SV letters' fill; the icon stays the same. */
+.turn-open svg { width: 16px; height: 16px; }
+.turn-open .orbit { fill: none; stroke: currentColor; stroke-width: 1.3; }
+.turn-open .pivot, .turn-open .cam { fill: currentColor; }
+.turn-open[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+/* In forced colours (Windows High Contrast) the system's colours replace that fill, and the pressed turn button and
+   EN | SV letters looked exactly like the others: the system's highlight pair marks them instead. */
+@media (forced-colors: active) {
+  .turn-open[aria-pressed="true"], .lang button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight;
+    color: HighlightText; }
+}
+/* A title shows only on a mouse hover, so on keyboard focus the turn button shows its tooltip itself (app.js sets
+   data-tip to the title's text), under the button and running right along the row, which leaves it room on any
+   screen wider than a phone (a phone rarely has a keyboard). ::before, since ::after is the touch band. The transparent border becomes a line in forced colours, where the fill
+   goes. The corner lifts over the legend meanwhile, as it does for the Look popover. */
+.turn-open { position: relative; }
+.turn-open:focus-visible::before { content: attr(data-tip); position: absolute; top: calc(100% + 8px); left: 0; z-index: 1;
+  width: max-content; max-width: 240px; padding: 4px 8px; border: 1px solid transparent; border-radius: 4px;
+  background: var(--ink); color: var(--panel); font-size: 12px; font-weight: 500; line-height: 1.35; text-align: left;
+  pointer-events: none; }
+.corner:has(.turn-open:focus-visible) { z-index: 25; }
 /* The postcard button (web/postcard.js): a camera, drawn as the needle's south half is. */
 .postcard-open svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
 /* On a touch screen the top-right buttons take a tap a little outside what is drawn: 44 px tall targets, for the 28 px
    north and Look buttons and About's 24 px, without changing their size or the row. Sideways they reach halfway
    into the 6 px gap, so neighbours never overlap. The Look panel's Hills slider takes the same 44 px band (below). */
 @media (pointer: coarse) {
-  .north-open, .postcard-open, .look-open, .search-open, .lang button { position: relative; }
-  .north-open::after, .postcard-open::after, .look-open::after, .search-open::after { content: ""; position: absolute; inset: -8px -3px; }
+  .north-open, .turn-open, .postcard-open, .look-open, .search-open, .lang button { position: relative; }
+  .north-open::after, .turn-open::after, .postcard-open::after, .look-open::after, .search-open::after { content: ""; position: absolute;
+    inset: -8px -3px; }
   .lang button::after { content: ""; position: absolute; inset: -10px 0; }
 }
 /* .corner is fixed, so it is its own stacking context: lift it over the legend and the card while the panel is open. */
@@ -668,8 +691,14 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
 .search-open { display: none; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .card .picked { margin: 0; padding: 8px 16px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
+/* On a tablet the search sits under the modes, and its pill's bottom edge came down over the top 3 to 8 px of the
+   corner's row (721 to about 1000 px wide), over north, turn, postcard and Look, and took their clicks there. The row
+   starts 14 px lower, and the legend opposite with it, so the open legend keeps its distance from the row
+   (e2e/turn.spec.mjs checks 768 px). */
 @media (max-width: 1100px) and (min-width: 721px) {
   .search { left: 50% !important; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + var(--gutter) + 46px); }
+  .corner .buttons { margin-top: 14px; }
+  .panel { top: calc(env(safe-area-inset-top, 0px) + var(--gutter) + 134px); }
 }
 @media (max-width: 720px) {
   .search { display: none; inset: 0; width: auto; z-index: 40; overflow-y: auto; background: var(--bg);
@@ -795,7 +824,7 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
   .search-clear { width: 44px; height: 44px; }
   /* the round top-right buttons take a full 44 px band on every side: a 16 px gap keeps the bands apart */
   .buttons { gap: 16px; }
-  .north-open::after, .postcard-open::after, .search-open::after { inset: -8px; }
+  .north-open::after, .turn-open::after, .postcard-open::after, .search-open::after { inset: -8px; }
   .lang button { min-width: 44px; }
   .play { width: 44px; height: 44px; }
   .look-close { position: relative; }
@@ -848,11 +877,16 @@ h1 { margin: 0; font-size: clamp(34px, 4.4vw, 56px); font-weight: 800; letter-sp
      sheet (Pendelbåt 80's ten stops on four lines at 360 px) would cut through them. */
   body:has(> #boat-tip:not([hidden])) :is(.panel, .walk) { visibility: hidden; }
 }
-/* On a narrow phone the corner's row (search, north, Look, Stories, About, EN | SV) wraps right-aligned onto a second
-   line rather than pushing the first buttons off the left edge (e2e/credits.spec.mjs checks 390 and 360 px). The 18 px
-   between the lines keeps the touch bands apart (Look's reaches 8 px down, About's 10 px up), so a tap just under Look
-   is still Look (e2e/smoke.spec.mjs). */
-@media (max-width: 430px) { .corner .buttons { flex-wrap: wrap; justify-content: flex-end; row-gap: 18px; } }
+/* On a narrow phone the corner's row (search, north, turn, postcard, Look, Stories, About, EN | SV) wraps right-aligned
+   onto a second line rather than pushing the first buttons off the left edge (e2e/credits.spec.mjs checks 390 and
+   360 px, e2e/turn.spec.mjs 390, 375, 340 and 320 px). .corner is held on the right only, so the row has its own
+   left limit at the gutter: without it the row wrapped only once wider than the screen, and between about 384 and
+   404 px (Swedish) or 335 and 354 px (English) the search button sat 1 to 10 px from the left edge. The 18 px between
+   the lines keeps the touch bands apart (Look's reaches 8 px down, About's 10 px up), so a tap just under Look is
+   still Look (e2e/smoke.spec.mjs). */
+@media (max-width: 430px) {
+  .corner .buttons { flex-wrap: wrap; justify-content: flex-end; row-gap: 18px; max-width: calc(100vw - 2 * var(--gutter)); }
+}
 
 /* Postcard mode (web/postcard.js): the page steps aside as it does for a history scene (scene-player.css), the search,
    the credit, the veils, the crosshair and the debug box too, so the screen shows what the picture will (visibility,

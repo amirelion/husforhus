@@ -38,7 +38,8 @@ NAMES = Path("data/review-years.md")
 GAMLA_STAN = "GAMLA STAN"
 # Where the years come from, in tier order, in words (the source names of SRC_NAMES never appear on the page).
 SOURCES = [("curated", "A hand-checked list of landmarks"),
-           ("cited", "A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum, the City)"),
+           ("cited", "A published record checked by hand (KulturNav, Swedish Wikipedia, the City Museum, AB Stadsholmen, "
+                     "the City)"),
            ("raa", "RAÄ's building register (Bebyggelseregistret)"),
            ("raa_old", "RAÄ's older register file (years the current register dropped)"),
            ("bygglov", "The City Archives' building permits, 1875–1980 (Stadsarkivet)"),
@@ -392,8 +393,8 @@ def render(acc: dict, y: pd.DataFrame, review: dict | None, gamla: pd.DataFrame 
              f"This map shows {n:,} buildings in Stockholm. Of them:", "",
              f"- **{rec:,} ({s_rec}) have a year from a record**: RAÄ's building registers (RAÄ is Sweden's National "
              "Heritage Board), a short hand-checked list of landmarks, a published record checked by hand (KulturNav, "
-             "Swedish Wikipedia, the City Museum or the City's stage years), the City Archives' building permits, "
-             "Wikidata, OpenStreetMap or a reader's report the map's maker checked"
+             "Swedish Wikipedia, the City Museum, AB Stadsholmen or the City's stage years), the City Archives' "
+             "building permits, Wikidata, OpenStreetMap or a reader's report the map's maker checked"
              + (f" ({cp:,} of them only to a century or a period, or to two readings where sources differ, shown "
                 "with ≈)" if cp else "") + ".",
              f"- **{area:,} ({s_area}) have the year of their area**: they stand in a district or an estate that RAÄ "

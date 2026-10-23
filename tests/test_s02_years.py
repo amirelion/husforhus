@@ -237,6 +237,26 @@ def test_landmark_wins_over_raa_and_keeps_the_raa_link():
     assert report["landmarks"] == {"Stockholms slott": 0}
 
 
+def test_a_landmark_links_its_own_raa_record_when_it_covers_half_the_footprint():
+    # Historiska museet (D65): the footprint's UUID joins the older range's record; the museum's record joins no UUID
+    # but covers 70% of the outline, so the landmark links it (its architects reach the card), as an entry says
+    b = buildings(("u0", "Allmän byggnad", sq(0, size=40)), ("u1", "Allmän byggnad", sq(1, size=40)),
+                  ("u2", "Allmän byggnad", sq(2, size=40)))
+    r = raa(rec("range", sq(0, size=40), 1805, 1817, "u0"), rec("museum", sq(0, size=40, dy=12), 1940, 1940),
+            rec("range1", sq(1, size=40), 1805, 1817, "u1"), rec("small", sq(1, size=40, dy=30), 1940, 1940),
+            rec("range2", sq(2, size=40), 1805, 1817, "u2"))
+    own = {"museum": "museum", "small": "small", "gone": "gone"}
+    marks = [{**landmark_at(X0 + 100 * i + 20, Y0 + 20, name=n, year=1939, year_from=1934, year_to=1939),
+              "qid": f"Q{i + 1}", "raa": {"id": own[n], "reason": "checked"}} for i, n in enumerate(own)]
+    y, report = run(b, r, marks)
+    assert y.raa_id.tolist() == ["museum", "range1", "range2"]      # 25% and an unknown record keep the joined one
+    assert (y.ysrc.tolist(), y.year.tolist()) == ([SRC_CURATED] * 3, [1939] * 3)
+    assert report["landmarks_raa_kept"] == [
+        {"name": "small", "raa": "small", "why": "it covers 25% of the footprint, less than 50%"},
+        {"name": "gone", "raa": "gone", "why": "it is not one of RAÄ's Byggnad records"}]
+    assert run(b, r, [landmark_at(X0 + 20, Y0 + 20)])[0].raa_id[0] == "range"     # no `raa`: the joined record
+
+
 def test_landmark_in_a_courtyard_or_within_15_m_resolves_else_is_dropped():
     ring = Polygon(sq(0, size=60).exterior.coords, [sq(0, size=40, dx=10, dy=10).exterior.coords])
     b = buildings(("", "Allmän byggnad", ring), ("", "Allmän byggnad", sq(2)), ("", "Allmän byggnad", sq(4)))

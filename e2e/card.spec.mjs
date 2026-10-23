@@ -218,7 +218,8 @@ test('a curated card shows its rebuilds when pinned, never on hover, and its old
     const r = await route.fetch();
     const shard = await r.json();
     if (gid >= 0 && route.request().url().endsWith(`/${String(gid % 64).padStart(2, '0')}.json`)) {
-      shard[gid] = { ...shard[gid], rebuilt: [[1757, 'rebuilt'], [1857, 'raised']], cellars: true };
+      shard[gid] = { ...shard[gid], rebuilt: [[1757, 'rebuilt'], [1857, 'raised']], cellars: true,
+        also: [[1805, 1818]] };
     }
     await route.fulfill({ response: r, json: shard });
   });
@@ -230,7 +231,9 @@ test('a curated card shows its rebuilds when pinned, never on hover, and its old
   test.skip(gid < 0, 'this build has no timeline landmark');
   await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), gid);
   const card = page.locator('#card.pinned');
-  await expect(card.locator('.rebuilt')).toHaveText('Rebuilt 1757 · raised 1857');
+  // the other house on its footprint (pipeline/landmarks.py `also`, Historiska museet's range: D65) after the rebuilds
+  await expect(card.locator('.rebuilt'))
+    .toHaveText('Rebuilt 1757 · raised 1857 · Also part of this building: a house built 1805–1818');
   await expect(card.locator('.dating')).toHaveText(/^Hand-checked landmark: built [\d–]+ on older cellar walls$/);
   // the rebuild line stands right under the dating line, in its colour and size
   const [dating, rebuilt] = await Promise.all([card.locator('.dating'), card.locator('.rebuilt')].map(l => l.evaluate(el => {
@@ -313,6 +316,36 @@ test('a cited card gives both readings where sources differ, its rebuilds when p
   expect(await links(card.locator('.dating a.cited'))).toEqual([['≈ built in the early 1600s · Swedish Wikipedia', WP2, '', '_blank']]);
   await expect(card.locator('.when .y')).toHaveText('≈ early 1600s');
   await expect(card.locator('.rebuilt')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+// AB Stadsholmen's fact sheets (D64): the card names the sheet as written with the City Museum and links the company's
+// property list, never a sheet (each PDF is named by the property designation). Added to a "Year unknown" building's
+// card as its shard reaches the page, so the test runs on the fixture too: an early-1600s span no period holds, a
+// rebuild and another house.
+test('a year from AB Stadsholmen\'s fact sheet names the sheet and links the property list', async ({ page }) => {
+  const errors = watchErrors(page);
+  const LIST = 'https://www.stadsholmen.se/fastigheter/', NAME = 'AB Stadsholmen\'s fact sheet (with the City Museum)';
+  let gid = -1;
+  await page.route('**/cards/*.json', async route => {
+    const r = await route.fetch();
+    const shard = await r.json();
+    if (gid >= 0 && route.request().url().endsWith(`/${String(gid % 64).padStart(2, '0')}.json`)) {
+      shard[gid] = { ...shard[gid], yc: { s: 'stadsholmen', u: LIST, a: 1600, z: 1624,
+        r: [{ a: 1750, z: 1750, c: true, s: 'stadsholmen', u: LIST }], o: [{ a: 1646, z: 1646, s: 'stadsholmen', u: LIST }] } };
+    }
+    await route.fulfill({ response: r, json: shard });
+  });
+  await open(page);
+  gid = await firstGid(page, b => b.yflag === 7 && b.ysrc === 0 && !b.private);
+  test.skip(gid < 0, 'this build has no "Year unknown" building');
+  const links = l => l.evaluateAll(as => as.map(a => [a.textContent, a.href, a.title]));
+  await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), gid);
+  const card = page.locator('#card.pinned');
+  await expect(card.locator('.dating')).toHaveText(new RegExp(`^≈ built in the early 1600s · ${NAME.replace(/[()]/g, '\\$&')}`));
+  expect(await links(card.locator('.dating a.cited'))).toEqual([[`≈ built in the early 1600s · ${NAME}`, LIST, '']]);
+  await expect(card.locator('.rebuilt')).toHaveText('Rebuilt or extended about 1750 · Also part of this building: a house built 1646');
+  expect(await links(card.locator('.rebuilt a.cited'))).toEqual([['1750', LIST, NAME], ['1646', LIST, NAME]]);
   expect(errors).toEqual([]);
 });
 

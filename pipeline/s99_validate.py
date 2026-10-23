@@ -77,8 +77,9 @@ Fails (exit 1, with a readable list) on:
   city.ARCHITECT_MAX_RARE cards or fewer citywide and is not a reviewed firm (pipeline/private_firms.txt; the rare-architect rule, point
   2); a photo whose licence is not CC BY, CC BY-SA, CC0 or public domain, without an author or a Commons page,
   without its title under CC 2.0–3.0, missing from web/data/photos/ or over city.WIKI's photo_bytes, or not listed in
-  photos.json, which build_dist ships from; rebuilds or older cellars on a card that is not curated, a
-  rebuild of another kind, out of order, or not after the card's own year;
+  photos.json, which build_dist ships from; rebuilds, older cellars or another house (`also`) on a card that is not
+  curated, a rebuild of another kind, out of order, or not after the card's own year, another house's span out of
+  order or outside the years;
 - excerpts (wiki/NN.json): a shard without its CC BY-SA 4.0 licence, a key that is not a gid of its own
   shard, an excerpt on a building whose card may not link an article, one without text or revision, in a language
   the card's `wp` does not list, or one that says who owns the building or had it built (privacy.owner);
@@ -1063,7 +1064,9 @@ def check_cited(a: np.ndarray, data: Path, takedowns: list[dict] = (), sources: 
     warning; on a release, an error). On this build, per footprint (a key's rows: a primary row or an either pair,
     and its rebuilt and also rows, cited.read checks they belong together): its key (a uuid, or "oid:<n>" where the
     footprint has no uuid) on exactly one footprint and no other key on that one (cited.clashes; one on none is a
-    warning, on a release an error: the City redrew it), never on a takedown (an error:
+    warning, on a release an error: the City redrew it), a row from AB Stadsholmen's fact sheets only on a property
+    the harvested sheets cover (cited.sheet_properties: the permission covers Gamla stan's sheets; without the
+    harvest, a warning, since no committed step makes it), never on a takedown (an error:
     the row would keep the year public in the repository; delete it, docs/privacy.md), carrying the footprint's year
     as the cited tier writes it (cited.year_of on the primary's span or the either pair's readings; a private house its
     decade) unless RAÄ or a landmark dates it (a warning), the row is a period around a Wikidata or OSM year (a
@@ -1097,6 +1100,11 @@ def check_cited(a: np.ndarray, data: Path, takedowns: list[dict] = (), sources: 
                 if src == "ssm_br" and place not in linked:
                     errors.append(f"cited: row {i + 1} cites a City Museum document the register does not link "
                                   "(the museum's permission covers the register's reports only)")
+    sheets = cited.sheet_properties(data) if (t.source == "stadsholmen").any() else set()
+    if sheets is None:
+        print(f"s99_validate: warning: cited: cannot check that {int((t.source == 'stadsholmen').sum())} AB "
+              f"Stadsholmen rows are on properties its fact sheets cover without {data / cited.SHEETS}",
+              file=sys.stderr)
     stray_cited = a["ysrc"] == codes.SRC_CITED
     bpath = data / "buildings.parquet"
     if not bpath.exists():
@@ -1107,6 +1115,7 @@ def check_cited(a: np.ndarray, data: Path, takedowns: list[dict] = (), sources: 
     b = pd.read_parquet(bpath, columns=[c for c in ("gid", "uuid", "oid", "fastighet", "kategori") if c in names])
     props = {normalise(f) for f in b.fastighet.dropna() if f.strip()} - {""}
     props |= register_designations(data)
+    fastighet = dict(zip(b.gid.astype(int), b.fastighet))
     for i, r in enumerate(t.to_dict("records")):
         if (mentions(r["quote"], props) or mentions(r["note"], props)
                 or mentions(r["place"].replace("_", " "), props)):
@@ -1146,6 +1155,12 @@ def check_cited(a: np.ndarray, data: Path, takedowns: list[dict] = (), sources: 
             continue                                   # check_data reports a buildings file of another build
         stray_cited[g] = False
         rec = a[g]
+        # a fact sheet is the one for the footprint's property, which the harvest must hold (the row's place is the
+        # property list, so the footprint is how the sheet is found)
+        sh = [r["_i"] for r in rs if r["source"] == "stadsholmen"]
+        if sh and sheets and normalise(str(fastighet.get(g) or "")) not in sheets:
+            errors.append(f"cited: row {sh[0] + 1} (gid {g}) cites AB Stadsholmen's fact sheet, but its footprint is on "
+                          "no property the harvested sheets cover (the permission covers Gamla stan's sheets)")
         if g in withheld:
             errors.append(f"cited: row {i + 1} (gid {g}) is on a takedown: delete the row from "
                           "pipeline/gamla_stan_years.csv (docs/privacy.md, takedowns)")
@@ -1192,18 +1207,27 @@ def check_cited(a: np.ndarray, data: Path, takedowns: list[dict] = (), sources: 
 
 
 def check_rebuilds(where: str, card: dict, rec) -> list[str]:
-    """A card's `rebuilt` and `cellars`: only on a curated building (s08_landmarks checked them against its
+    """A card's `rebuilt`, `cellars` and `also`: only on a curated building (s08_landmarks checked them against its
     article); `rebuilt` a non-empty list of [year, kind] by year, each kind one of REBUILD_KINDS and each year after
     the card's own year, by YEAR_MAX (a rebuild never sets the year, §14 of the Gamla stan research); `cellars`
-    true."""
+    true; `also` (another house on the footprint) a non-empty list of [from, to] by year, inside FLOOR_YEAR..YEAR_MAX,
+    before the card's own year or after it."""
     errors = []
-    for f in ("rebuilt", "cellars"):
+    for f in ("rebuilt", "cellars", "also"):
         if f in card and rec["ysrc"] != codes.SRC_CURATED:
             errors.append(f"{where} is not curated and carries `{f}`")
     if errors:
         return errors
     if "cellars" in card and card["cellars"] is not True:
         errors.append(f"{where} has `cellars` that is not true")
+    if "also" in card:
+        also = card["also"]
+        spans = isinstance(also, list) and also and all(
+            isinstance(r, list) and len(r) == 2 and whole(r[0]) and whole(r[1])
+            and FLOOR_YEAR <= r[0] <= r[1] <= YEAR_MAX for r in also)
+        if not spans or also != sorted(also):
+            errors.append(f"{where} has `also` that is not a list of [from, to] by year, inside "
+                          f"{FLOOR_YEAR}..{YEAR_MAX}")
     if "rebuilt" not in card:
         return errors
     rebuilt = card["rebuilt"]

@@ -107,9 +107,9 @@ test('About: the cited records count as records, their row in the years table, a
   const bySrc = { ...CONFIG.stats.bySrc, none: CONFIG.stats.bySrc.none - 24, cited: 24 };
   const config = { ...CONFIG, stats: { ...CONFIG.stats, bySrc }, about: { ...CONFIG.about, citedPeriod: 13 } };
   const html = aboutHtml(config, EN);
-  assert.match(html, /<tr><td>A published record checked by hand \(KulturNav, Swedish Wikipedia, the City Museum, the City\)<\/td><td>24<\/td>/);
+  assert.match(html, /<tr><td>A published record checked by hand \(KulturNav, Swedish Wikipedia, the City Museum, AB Stadsholmen, the City\)<\/td><td>24<\/td>/);
   const en = text(html);
-  assert.match(en, /23,445 come from a record: RAÄ's heritage register, a short hand-checked list of landmarks, published records checked by hand \(KulturNav, Swedish Wikipedia, the City Museum's building inventories and reports, and the City's move-in years for Hjorthagen's new blocks\)/);
+  assert.match(en, /23,445 come from a record: RAÄ's heritage register, a short hand-checked list of landmarks, published records checked by hand \(KulturNav, Swedish Wikipedia, the City Museum's building inventories and reports, AB Stadsholmen's fact sheets for Gamla stan, and the City's move-in years for Hjorthagen's new blocks\)/);
   assert.match(en, /Where a published record gives only a century or a period, or two records give different years \(13 buildings\), the map shows that period with ≈/);
   // two records that differ: each counts the same and the card gives both; a span no period holds has no colour, but
   // its card says it; a medieval house stands on the timeline by 1520, the latest its record allows

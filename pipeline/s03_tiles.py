@@ -22,10 +22,10 @@ the viewer changes. s01_load has already simplified footprints at city.SIMPLIFY.
 
 A card also carries the English label, protection and the year it was decided, the Wikidata
 item, the languages with an article, the photo's credit and whether to leave the floors row out (s02_attributes,
-s06_wiki); a curated card also its rebuilds and older cellars (s08_landmarks' entries); Wikipedia excerpts
-go to their own shards wiki/NN.json (CC BY-SA 4.0), and photos.json lists the photos this version uses
-(scripts/build_dist.py ships them from web/data/photos/); photo-gids.json the sorted gids whose card has a photo
-(the legend's "Highlight buildings with a photo" switch). A card also carries the City Museum's
+s06_wiki); a curated card also its rebuilds, older cellars and the other house on its footprint (s08_landmarks'
+entries); Wikipedia excerpts go to their own shards wiki/NN.json (CC BY-SA 4.0), and photos.json lists the photos
+this version uses (scripts/build_dist.py ships them from web/data/photos/); photo-gids.json the sorted gids whose card
+has a photo (the legend's "Highlight buildings with a photo" switch). A card also carries the City Museum's
 building-archaeology facts (`br`, s02_stadsmuseet: what was documented, the investigations' years, the reports),
 never a private house's. No private house that is not curated carries a RAÄ link, a
 Wikidata item, an article, a photo or an excerpt. Readers' reports the owner accepted (pipeline/contributions.csv)
@@ -83,7 +83,7 @@ SRC_NAMES = ["none", "curated", "raa", "raa_area", "wikidata", "estimate", "raa_
 KNOWN_FLAGS = (codes.EXACT, codes.RANGE, codes.LONG)
 ESTIMATED_FLAGS = (codes.AREA, codes.ESTIMATE, codes.PERIOD)
 CARD_FIELDS = ("name", "en", "architects", "raa", "prot", "since", "qid", "wp", "photo", "nofloors", "rebuilt",
-               "cellars", "addr", "addrn", "tower", "yrd", "br", "arch", "yc")
+               "cellars", "addr", "addrn", "tower", "yrd", "br", "arch", "yc", "also")
 # arch: the City Museum's archive photos (s02_stadsmuseet_photos), oldest first, after the photo as "through the years"
 ARCH_FIELDS = ("key", "w", "h", "y", "by", "page", "t")
 # rd: a reader's photo (pipeline/contributions.py), its report's reference; it has no Commons page or title
@@ -433,11 +433,11 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
     (qid, wname, wname_en, langs, photo), s02_attributes' (prot, since, nofloors) and with_places' (addr, addrn);
     `photos` maps a photo key to its credit (s06_wiki's photos.json). On a `hidden` row: no raa, qid, wp, photo or
     English label, and no address when city.PRIVATE_ADDRESSES is False. `landmarks` are s08_landmarks' entries: a
-    curated row (years.parquet `landmark`) takes its entry's `rebuilt`, by year, and `cellars`; no other
-    row does. `towers` maps a gid to its tallest laser part's height (tower_parts): the card's `tower`, whole metres,
-    never on a hidden row. `archaeology` maps a gid to its building-archaeology entry (load_archaeology): the card's
-    `br`, never on a hidden row; `archive` a gid to its archive photos (load_archive_photos): the card's `arch`, never
-    on a hidden row."""
+    curated row (years.parquet `landmark`) takes its entry's `rebuilt`, by year, `cellars` and `also` (the other
+    house on its footprint, [from, to] by year); no other row does. `towers` maps a gid to its tallest laser part's
+    height (tower_parts): the card's `tower`, whole metres, never on a hidden row. `archaeology` maps a gid to its
+    building-archaeology entry (load_archaeology): the card's `br`, never on a hidden row; `archive` a gid to its
+    archive photos (load_archive_photos): the card's `arch`, never on a hidden row."""
     photos = photos or {}
     archive = archive or {}
     towers = towers or {}
@@ -487,6 +487,8 @@ def card_shards(df: pd.DataFrame, photos: dict | None = None, landmarks: list[di
             card["rebuilt"] = sorted([int(y), str(k)] for y, k in entry["rebuilt"])
         if entry and entry.get("cellars") is True:
             card["cellars"] = True
+        if entry and entry.get("also"):      # another house on the footprint its article dates (landmarks.py `also`)
+            card["also"] = sorted([int(a), int(z)] for a, z in entry["also"])
         # The first address (and how many there are); a private house's too, unless city.PRIVATE_ADDRESSES
         # says otherwise (city.PRIVATE_ADDRESSES)
         addr = _text(col["addr"][i])

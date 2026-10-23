@@ -272,6 +272,24 @@
   modified: true   # a year read from the inventory, placed on a footprint; never the inventory's text
   status: confirmed
 
+# AB Stadsholmen's fact sheets (faktablad) for its properties in Gamla stan, written with the City Museum
+# (pipeline/gamla_stan_years.csv, source stadsholmen; D64): construction and rebuild years per building body, which the
+# table states in our own words, facts only: no text, image or file of theirs is used. The sheets are PDFs named by the
+# property designation, so a card links the property list (`url`) and never a sheet, and a row's place is that list;
+# the table keeps the page. The years are placed on footprints, so "processed".
+- id: stadsholmen_faktablad
+  url: https://www.stadsholmen.se/fastigheter/
+  publisher: AB Stadsholmen
+  product: Faktablad
+  dataset: Faktablad
+  credit_as: {en: "AB Stadsholmen / Stadsmuseet", sv: "AB Stadsholmen / Stadsmuseet"}   # the credit the permission names
+  licence: LicenseRef-Permission
+  licence_url: https://www.stadsholmen.se/fastigheter/
+  terms: "written answer from AB Stadsholmen, 2026-10-22 (O11): the construction and rebuild years in its fact sheets for Gamla stan may be shown on the map, credited AB Stadsholmen / Stadsmuseet; facts only, in our own words, never the sheets' text or a property designation"
+  attribution: Faktablad, AB Stadsholmen / Stadsmuseet (bearbetad / modified)
+  modified: true   # years read from the sheets, placed on footprints; never the sheets' text
+  status: confirmed
+
 # The City of Stockholm's building stages in Hjorthagen (pipeline/gamla_stan_years.csv, source stockholm_stage; D63):
 # each stage's move-in years and the blocks in it, from the City's Hjorthagen page on vaxer.stockholm ("Tidsplan och
 # byggaktörer") and the stages' results pages on norradjurgardsstaden2030.se (docs/research/2026-10-20-newer-buildings.md).

@@ -25,6 +25,15 @@ Each entry:
   point      optional: {"reason": ..., "source": ...}, a hand-checked point: why the item's P625 is not the building
              the year belongs to, and the research row, article or map that shows where it is. The entry's comment
              repeats the reason. The point must still place within 15 m (below); it never ships.
+  also       optional: [(year_from, year_to), ...], another house on the footprint that the article dates on its own
+             (one City outline around two buildings): the card's second line adds "Also part of this building: a
+             house built 1805–1818". Each year is written in one of the checks, so the article is checked for it. It
+             never sets the year or the colour, and may come before the entry's years or after them.
+  raa        optional: {"id": ..., "reason": ...}, the RAÄ record of the building the year belongs to, where the
+             footprint's UUID joins the record of another house on it. s02_years links the footprint to this record
+             instead (its architects, rating and protection then come from it, and the card links it), only when it
+             is a Byggnad record covering at least half the footprint, the share an unjoined record needs to date
+             one; else it keeps the joined record and says so. The reason says how it was checked.
 
 s02_years places each point on a LOD1 footprint (inside it or inside its outer ring, so a courtyard
 point counts, else the nearest footprint within 15 m) and reports any entry it cannot place.
@@ -285,6 +294,23 @@ LANDMARKS = [
     {
         "name": "Eriksdalsskolan", "qid": "Q10487739", "lat": 59.308142, "lon": 18.063303, "year": 1938,
         "year_from": 1937, "year_to": 1938, "source": "sv:Eriksdalsskolan", "checks": ("1937–1938",),
+    },
+    # One City outline around two RAÄ buildings: the museum (70% of it) and the older Kanslikasernen range along
+    # Storgatan (30%), whose record the footprint's UUID joins, so the card was named Kanslikasernen, dated 1805–1817
+    # and gave Fredrik Blom. The name (the owner's decision, 2026-10-23), the year, the item and the RAÄ record are now
+    # the museum's, and the range is the card's "also" line (D65). The article gives two spans, built 1934–39 and
+    # designed 1935–1940, and RAÄ's museum record, which the card links, says 1940: the span runs to 1940 so the card
+    # holds both readings, and the year stays 1939, when both Wikipedias say the building was finished.
+    {
+        "name": "Historiska museet", "qid": "Q1726607", "lat": 59.334722222222, "lon": 18.090277777778, "year": 1939,
+        "year_from": 1934, "year_to": 1940, "source": "en:Swedish History Museum",
+        "checks": ("build the museum in 1934–39", "designed by Romare and Scherman 1935–1940",
+                   "built in stages in 1805–1818"),
+        "also": [(1805, 1818)],
+        "raa": {"id": "ba990ef4-cd17-490d-98dc-d56c40b58a99",
+                "reason": "RAÄ's Historiska museet record (1940, Georg Scherman and Bengt Romare) has no UUID and "
+                          "covers 70% of the footprint; the footprint's UUID joins Kanslikasernen's record (1805–1817, "
+                          "Fredrik Blom), which covers the other 30%. Checked on the fx5 data 2026-10-23"},
     },
     {
         "name": "Själagårdsgatan 15", "qid": "Q136354181", "lat": 59.324234, "lon": 18.073029, "year": 1939,

@@ -10,8 +10,9 @@ so it is asked again after the backoff, and a later build never reads it as the 
 data/landmarks.json: the entries whose fields are well formed and whose article holds every check string, each with
 the revision it was checked against. s02_years reads that file, so an entry that fails never sets a year. Failures
 are reported and dropped, never fatal (spec); an article that cannot be fetched at all, with no cached copy, stops
-the step instead, so a network outage cannot quietly empty the curated tier. An entry's rebuild years are
-held to its checks too: each must be written in one of them, so the article is checked for it like any other year.
+the step instead, so a network outage cannot quietly empty the curated tier. An entry's rebuild years, and the years
+of the other house it names (`also`), are held to its checks too: each must be written in one of them, so the article
+is checked for it like any other year.
 
 Comparison: both texts have no-break spaces turned into spaces, runs of whitespace collapsed, and every dash-like
 character (hyphen, en and em dash, minus) read as "-", so "1280–1300" in a check matches "1280-1300" in an article.
@@ -33,11 +34,13 @@ RAW = Path("data/raw/wiki/landmarks")
 OUT = Path("data/landmarks.json")
 LANGS = ("sv", "en")
 KEYS = {"name", "qid", "lat", "lon", "year", "year_from", "year_to", "source", "checks"}
-# timeline: a positive priority puts the entry's name on the timeline (1 first). rebuilt, cellars and point:
-# (pipeline/landmarks.py says what each holds).
-OPTIONAL = {"timeline", "rebuilt", "cellars", "point"}
+# timeline: a positive priority puts the entry's name on the timeline (1 first). rebuilt, cellars, point, also and
+# raa: (pipeline/landmarks.py says what each holds).
+OPTIONAL = {"timeline", "rebuilt", "cellars", "point", "also", "raa"}
 REBUILD_KINDS = ("rebuilt", "raised", "extended")    # ombyggt, påbyggt, tillbyggt (web/i18n card.rebuild.*)
 POINT_KEYS = {"reason", "source"}
+RAA_KEYS = {"id", "reason"}
+RAA_ID = re.compile(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}")     # a record's id, as its public URL ends
 RETRIES = 3
 BACKOFF_S = (5, 30)              # seconds before the second and the third try (fetch.post_query_retrying)
 PAUSE_S = 1.0                    # between two articles sent (cached ones send nothing)
@@ -124,6 +127,13 @@ def problems(entry: dict) -> list[str]:
     if "point" in entry and not (isinstance(point, dict) and set(point) == POINT_KEYS
                                  and all(isinstance(v, str) and v.strip() for v in point.values())):
         out.append("point must be {reason, source}, both non-empty text")
+    if "also" in entry:
+        out += also_problems(entry)
+    rec = entry.get("raa")
+    if "raa" in entry and not (isinstance(rec, dict) and set(rec) == RAA_KEYS and isinstance(rec["id"], str)
+                               and RAA_ID.fullmatch(rec["id"]) and isinstance(rec["reason"], str)
+                               and rec["reason"].strip()):
+        out.append("raa must be {id, reason}: a RAÄ record's id and how it was checked")
     return out
 
 
@@ -149,6 +159,32 @@ def rebuild_problems(entry: dict) -> list[str]:
             out.append(f"rebuilt: {year} must come after year_to ({entry['year_to']}) and by 2026")
         elif not any(re.search(rf"(?<!\d){year}(?!\d)", c) for c in checks):
             out.append(f"rebuilt: {year} is not one of the checks or inside one")
+    return out
+
+
+def also_problems(entry: dict) -> list[str]:
+    """What is wrong with an entry's `also` (another house on the footprint the article dates): a non-empty list of
+    (year_from, year_to), each 1000 <= year_from <= year_to <= 2026 and each year written in one of the checks (alone
+    or inside one, as a whole number), so the article is checked for it; no span twice. Unlike a rebuild it may come
+    before the entry's own years."""
+    also = entry["also"]
+    spans = isinstance(also, (list, tuple)) and also and all(
+        isinstance(r, (list, tuple)) and len(r) == 2 and all(isinstance(y, int) and not isinstance(y, bool) for y in r)
+        for r in also)
+    if not spans:
+        return ["also must be a non-empty list of (year_from, year_to)"]
+    out = []
+    if len({tuple(r) for r in also}) < len(also):
+        out.append("also: a span is given twice")
+    checks = entry["checks"] if isinstance(entry["checks"], (list, tuple)) else []
+    checks = [norm(c) for c in checks if isinstance(c, str)]
+    for a, z in also:
+        if not 1000 <= a <= z <= 2026:
+            out.append(f"also: {a}–{z} must satisfy 1000 <= year_from <= year_to <= 2026")
+            continue
+        for year in dict.fromkeys((a, z)):
+            if not any(re.search(rf"(?<!\d){year}(?!\d)", c) for c in checks):
+                out.append(f"also: {year} is not one of the checks or inside one")
     return out
 
 

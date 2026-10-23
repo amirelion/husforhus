@@ -89,6 +89,31 @@ def test_problems_accepts_a_point_with_its_reason_and_source_and_refuses_the_res
     assert s08.problems({**PALACE, "point": "a map"}) == [bad]
 
 
+def test_problems_accepts_another_house_the_checks_date_and_refuses_the_rest():
+    # Historiska museet (D65): one City outline around the 1930s museum and the 1805–1818 range, which the article dates
+    # on its own: each of its years must be in the checks, and unlike a rebuild it may come before the entry's years
+    museum = {**PALACE, "name": "Historiska museet", "year": 1939, "year_from": 1934, "year_to": 1939,
+              "checks": ("in 1934–39", "built in stages in 1805–1818"), "also": [(1805, 1818)]}
+    assert s08.problems(museum) == []
+    assert s08.problems({**museum, "also": [[1805, 1818]]}) == []                    # as data/landmarks.json holds it
+    assert s08.problems({**museum, "also": [(1805, 1817)]}) == ["also: 1817 is not one of the checks or inside one"]
+    assert s08.problems({**museum, "also": [(1818, 1805)]}) == [
+        "also: 1818–1805 must satisfy 1000 <= year_from <= year_to <= 2026"]
+    assert s08.problems({**museum, "also": [(1805, 1818), (1805, 1818)]}) == ["also: a span is given twice"]
+    for bad in ([], [(1805,)], [("1805", 1818)], [(True, 1818)], "1805–1818"):
+        assert s08.problems({**museum, "also": bad}) == ["also must be a non-empty list of (year_from, year_to)"]
+
+
+def test_problems_accepts_a_raa_record_with_its_reason_and_refuses_the_rest():
+    # The RAÄ record of the building the year belongs to, where the footprint's UUID joins another house's (D65)
+    raa = {"id": "ba990ef4-cd17-490d-98dc-d56c40b58a99", "reason": "covers 70% of the footprint"}
+    assert s08.problems({**PALACE, "raa": raa}) == []
+    bad = "raa must be {id, reason}: a RAÄ record's id and how it was checked"
+    for rec in ({**raa, "id": "BA990EF4-CD17-490D-98DC-D56C40B58A99"}, {**raa, "id": "ba990ef4"}, {**raa, "reason": ""},
+                {"id": raa["id"]}, {**raa, "by": "someone"}, raa["id"], {**raa, "id": None}):
+        assert s08.problems({**PALACE, "raa": rec}) == [bad], rec
+
+
 def test_an_entry_without_a_wikidata_item_needs_a_hand_checked_point():
     # Decided 2026-10-17: a Gamla stan house cited to its kvarter article has no item; qid "" says so, and
     # its point, which no P625 can confirm, must say where it comes from

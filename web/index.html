@@ -62,7 +62,7 @@
   <p class="search-status visually-hidden" aria-live="polite"></p>
 </div>
 
-<!-- Top right: what the map shows, then the buttons (north, Look, About); a long title (a period's name) pushes
+<!-- Top right: what the map shows, then the buttons (north, turn, Look, About); a long title (a period's name) pushes
      the buttons down. -->
 <div class="corner">
   <div class="tally" aria-live="polite">
@@ -73,6 +73,9 @@
     <button class="search-open" aria-label="Search" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6"/><path d="M10.4 10.4L14 14"/></svg></button>
     <!-- The north button (web/north.js): the needle points north as the map turns; a press turns the map to face it. -->
     <button class="north-open" aria-label="Face north" title="Face north (N)" aria-keyshortcuts="N"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="needle-n" d="M8 1.6 10.5 8h-5z"/><path class="needle-s" d="M5.5 8 8 14.4 10.5 8z"/></svg></button>
+    <!-- Turn mode (web/turn.js): pressed, a plain drag turns and tilts the map instead of moving it. The icon is a camera
+         on its orbit round a point, the orbit broken where the camera sits (the mask). -->
+    <button class="turn-open" aria-label="Turn the map" aria-pressed="false" title="Turn the map: press, then drag to turn and tilt (T)" aria-keyshortcuts="T" data-i18n-aria="ui.turn"><svg viewBox="0 0 16 16" aria-hidden="true"><mask id="turn-gap"><rect width="16" height="16" fill="#fff"/><circle cx="11.74" cy="3.66" r="2.6"/></mask><g mask="url(#turn-gap)"><ellipse class="orbit" cx="8" cy="8" rx="6.6" ry="3.3" transform="rotate(-30 8 8)"/></g><circle class="pivot" cx="8" cy="8" r="1.4"/><circle class="cam" cx="11.74" cy="3.66" r="1.75"/></svg></button>
     <!-- Postcard mode (web/postcard.js): the map without its panels, framed and saved as a picture. -->
     <button class="postcard-open" aria-label="Postcard" title="Postcard (P)" aria-keyshortcuts="P" data-i18n-aria="postcard.open"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 5.6c0-.8.6-1.4 1.4-1.4h1.6l1.1-1.7h3.4l1.1 1.7h1.6c.8 0 1.4.6 1.4 1.4v6.2c0 .8-.6 1.4-1.4 1.4H3.6c-.8 0-1.4-.6-1.4-1.4z"/><circle cx="8" cy="8.5" r="2.4"/></svg></button>
     <!-- The Look switcher (web/switcher.js) fills the dialog: a popover here, a bottom sheet on a phone. -->

@@ -3,7 +3,9 @@
 Hand-checked, like the landmarks (docs/research/2026-10-20-gamla-stan-years.md; the rules in
 docs/research/2026-10-16-gamla-stan-ages.md §13 and §14), but no landmark. The file's name is older than its
 contents: since 2026-10-21 it also holds Hjorthagen's new blocks (source stockholm_stage, D63:
-docs/research/2026-10-20-newer-buildings.md), one built row per footprint with its stage's move-in years.
+docs/research/2026-10-20-newer-buildings.md), one built row per footprint with its stage's move-in years. Since
+2026-10-23 Gamla stan's rows also come from AB Stadsholmen's fact sheets (source stadsholmen, D64), used with its
+written permission of 2026-10-22.
 s02_years writes the rows as codes.SRC_CITED, and private houses keep their decade-only rule. Keyed by footprint, so a
 row survives renumbered gids. Columns:
   key         the footprint: its LOD1 UUID (buildings.parquet `uuid`), or "oid:<n>" for one the City's data gives no
@@ -43,12 +45,18 @@ row survives renumbered gids. Columns:
               no article title, D49), a KulturNav entry, or a City Museum document in Digitala Stadsmuseet: one of the
               CC BY inventories (CC_BY_INVENTORIES) or a report the museum's register links (s99 checks that), or the
               City of Stockholm's page for a Hjorthagen building stage (STAGE_PAGE: the stage's results page on
-              norradjurgardsstaden2030.se, or its row on vaxer.stockholm's Hjorthagen page)
-  page        the page of a City Museum PDF the year is on; empty for the other sources
+              norradjurgardsstaden2030.se, or its row on vaxer.stockholm's Hjorthagen page), or, for a row from one
+              of AB Stadsholmen's fact sheets, its property list (STADSHOLMEN_LIST, "Våra fastigheter"), never the
+              sheet's own PDF: each PDF's file name is the property's designation, which never reaches the web (D17)
+              and which the request for permission promised not to show (D64). The sheet is the one for the
+              footprint's property; a row that relies on a neighbour's sheet says so in its note
+  page        the page of a City Museum PDF or an AB Stadsholmen fact sheet the year is on; empty for the other
+              sources
   quote       the source's words, at most QUOTE_WORDS words, without a property designation (s99 checks it): a short
               quotation from Wikipedia (CC BY-SA 4.0) or KulturNav (CC0), linked to its revision or entry by `place`;
-              required for those two, empty for the City Museum's (its text never enters git: decided 2026-10-20) and
-              the City's stage pages (a stage's move-in years and its blocks are facts; no text is taken: D63).
+              required for those two, empty for the City Museum's (its text never enters git: decided 2026-10-20),
+              AB Stadsholmen's (the permission covers the years, never the sheets' text: D64) and the City's stage
+              pages (a stage's move-in years and its blocks are facts; no text is taken: D63).
               Wikipedia's own words only: a sentence the article quotes from someone else (inside quotation marks,
               relayed()) is not Wikipedia's text; cite the work it quotes instead (the network test refuses one)
   confidence  high | medium (low stays on hold, in the research note)
@@ -74,6 +82,7 @@ two readings). A period row on a footprint a Wikidata or OSM year dates inside t
 record is the more precise (`cited_period_vs_record`; an either pair is applied: its two readings are the hand-checked
 answer).
 """
+import json
 import re
 import sys
 from collections import Counter
@@ -84,6 +93,7 @@ import numpy as np
 import pandas as pd
 
 from . import city, codes
+from .privacy import normalise
 from .ssm_archive import ARCHIVE, REPORT_RE
 from .yearrules import FLOOR_YEAR, LATEST_YEAR, display
 
@@ -116,6 +126,13 @@ INVENTORY = re.compile(re.escape(ARCHIVE) + r"Dokument/Byggnadsinventeringar/(\d
 # (Norra 1, Västra, Norra 2), or the City's Hjorthagen page on vaxer.stockholm, whose stage list gives Brofästet's years
 STAGE_PAGE = re.compile(r"https://(?:www\.norradjurgardsstaden2030\.se/resultat/etapp/[a-z0-9]+(?:-[a-z0-9]+)*"
                         r"|vaxer\.stockholm/omraden/stadsutvecklingsomraden/norra-djurgardsstaden/i-hjorthagen/)")
+# AB Stadsholmen's list of its properties, from which each property's page links its fact sheet (D64). A row cites
+# the list, not the sheet: the sheet's PDF is named by the property designation (for a made-up property Exempel 1,
+# "Exempel1-FAKTABLAD.pdf")
+STADSHOLMEN_LIST = re.compile(r"https://www\.stadsholmen\.se/fastigheter/")
+# The research harvest of the fact sheets (D64; git-ignored, like every raw input): each PDF, the archive copy it was
+# read from and the property it covers. s99 checks a Stadsholmen row's footprint against it where it is present
+SHEETS = Path("raw") / "stadsholmen" / "MANIFEST.json"
 # Each source: the page a row cites (fullmatch), its sources.yml entry (the credit), whether a page number is needed
 # and whether a quote is.
 SOURCES = {
@@ -126,6 +143,7 @@ SOURCES = {
     "ssm_inventory": {"place": INVENTORY, "credit": "stadsmuseet_inventories", "page": True, "quote": False},
     "ssm_br": {"place": REPORT_RE, "credit": "stadsmuseet_br", "page": True, "quote": False},
     "stockholm_stage": {"place": STAGE_PAGE, "credit": "stockholm_stages", "page": False, "quote": False},
+    "stadsholmen": {"place": STADSHOLMEN_LIST, "credit": "stadsholmen_faktablad", "page": True, "quote": False},
 }
 PERIOD_BOUNDS = [(p[3], min(p[4], LATEST_YEAR)) for p in city.PERIODS]
 
@@ -145,6 +163,18 @@ def place_ok(source: str, place: str) -> bool:
 def is_place(s: str) -> bool:
     """True where s is a page one of the sources' rows may cite (s99's privacy check: such a link's digits are no FNR)."""
     return any(place_ok(name, s) for name in SOURCES)
+
+
+def sheet_properties(data: Path) -> set[str] | None:
+    """The property designations AB Stadsholmen's harvested fact sheets cover (data/raw/stadsholmen/MANIFEST.json,
+    SHEETS: one entry per PDF, its `fastighet`), normalised as s99 compares a FASTIGHET (privacy.normalise); None where
+    this machine has no harvest. s99 checks that a Stadsholmen row's footprint lies on one of them: the permission of
+    2026-10-22 covers the sheets for Gamla stan, and the harvest holds those alone."""
+    path = Path(data) / SHEETS
+    if not path.is_file():
+        return None
+    entries = json.loads(path.read_text(encoding="utf-8")).values()
+    return {normalise(e["fastighet"]) for e in entries if e.get("fastighet")}
 
 
 def century_like(year_from: int, year_to: int) -> bool:
@@ -179,14 +209,16 @@ def row_errors(r: dict) -> list[str]:
     else:
         if not src["place"].fullmatch(r["place"]):
             e.append(f"place is not a {r['source']} page"
-                     + (" (a revision by its oldid alone, no article title)" if r["source"] == "wikipedia_sv" else ""))
+                     + (" (a revision by its oldid alone, no article title)" if r["source"] == "wikipedia_sv" else "")
+                     + (" (AB Stadsholmen's property list, never a fact sheet's PDF: its file name is the property "
+                        "designation)" if r["source"] == "stadsholmen" else ""))
         elif not place_ok(r["source"], r["place"]):
             e.append("place is not one of the City Museum's CC BY inventories (CC_BY_INVENTORIES)")
         if src["page"] != bool(r["page"]) or (r["page"] and not r["page"].isdigit()):
-            e.append("page is a page number for a City Museum PDF only")
+            e.append("page is a page number for a City Museum PDF or an AB Stadsholmen fact sheet only")
         if src["quote"] != bool(r["quote"].strip()):
-            e.append("quote is required for KulturNav and Wikipedia and empty for the City Museum and the City's "
-                     "stage pages")
+            e.append("quote is required for KulturNav and Wikipedia and empty for the City Museum, AB Stadsholmen "
+                     "and the City's stage pages")
     if len(r["quote"].split()) > QUOTE_WORDS or "\n" in r["quote"]:
         e.append(f"quote is more than {QUOTE_WORDS} words or one line")
     if r["confidence"] not in CONFIDENCE:
