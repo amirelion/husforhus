@@ -337,7 +337,7 @@ def test_the_repo_table_reads_and_holds_the_decided_rows():
     t = cited.read()
     t = t[t.source != "stockholm_stage"]           # Gamla stan and Riddarholmen (Hjorthagen's stages: the next test)
     keys = cited.by_key(t)
-    assert (len(t), len(keys)) == (409, 188)
+    assert (len(t), len(keys)) == (410, 188)
     # Vindragarlagets hus was the wrong house (its record is the next footprint, which RAÄ dates); Mälartorget 15 is
     # held (two building phases on one footprint): docs/research/2026-10-20-gamla-stan-years.md. Held on the review's
     # answers of 2026-10-20 too: Själagårdsgatan 5, Köpmangatan 22, the house behind Kindstugatan 11 and the
@@ -426,15 +426,15 @@ def test_the_repo_table_s_hjorthagen_rows_give_each_block_its_stage_s_move_in_ye
 
 
 def test_the_repo_table_s_stadsholmen_rows_link_the_property_list_with_their_page():
-    # D64: AB Stadsholmen's fact sheets for Gamla stan, 158 rows on 59 footprints, 27 of them dated by no row before;
+    # D64: AB Stadsholmen's fact sheets for Gamla stan, 159 rows on 60 footprints, 27 of them dated by no row before;
     # each links the company's property list, never the sheet's PDF (named by the designation), with the sheet's page
     # and no quote
     t = cited.read()
     sh = t[t.source == "stadsholmen"]
-    assert (len(sh), sh.key.nunique()) == (158, 59)
+    assert (len(sh), sh.key.nunique()) == (159, 60)
     assert set(sh.place) == {SHLIST} and sh.page.str.fullmatch(r"\d+").all() and not sh.quote.any()
     assert len(set(sh.key) - set(t.key[t.source != "stadsholmen"])) == 27
-    assert sh.kind.value_counts().to_dict() == {"rebuilt": 119, "period": 17, "also": 8, "built": 7,
+    assert sh.kind.value_counts().to_dict() == {"rebuilt": 120, "period": 17, "also": 8, "built": 7,
                                                 "rebuilt_from_new": 4, "either": 3}
     keys = cited.by_key(t)
     # Suckiska huset (Österlånggatan 37): the sheet's new house of 1662 over medieval cellars, which the block article

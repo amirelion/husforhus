@@ -1392,7 +1392,7 @@ const building = gid => ({ ...readAttrs(attrs, gid, config.attrStride), groups: 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 // The pinned card's pin at the end of its place line: Google Maps at the building's position (web/geo.js). Never on a
 // private house: the map shows where it stands, but does not hand out a street-level view of someone's home.
-const mapsPin = b => `<a class="gmaps" href="${esc(googleMapsUrl(b.x, b.z, config.origin))}" target="_blank" rel="noopener" title="${esc(T('card.gmaps'))}" aria-label="${esc(T('card.gmaps'))}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 15s5-4.6 5-8.6A5 5 0 0 0 3 6.4C3 10.4 8 15 8 15z"/><circle cx="8" cy="6.4" r="1.8"/></svg></a>`;
+const mapsPin = (b, card) => `<a class="gmaps" href="${esc(googleMapsUrl(b.x, b.z, config.origin, card?.addr))}" target="_blank" rel="noopener" title="${esc(T('card.gmaps'))}" aria-label="${esc(T('card.gmaps'))}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 15s5-4.6 5-8.6A5 5 0 0 0 3 6.4C3 10.4 8 15 8 15z"/><circle cx="8" cy="6.4" r="1.8"/></svg></a>`;
 const link = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
 // The self-hosted latin font subsets lack "≈" (U+2248); the span gives it the system font on purpose (W7). The card
 // and the legend's note use it.
@@ -1459,7 +1459,7 @@ function cardHtml(gid, pinned) {
     <header class="card-head" style="--band:${unknown ? unknownFill(THEME) : band};--band-ink:${inkOn(band)}">
       ${more.name ? `<h3 id="card-title">${esc(more.name)}</h3>` : ''}
       ${more.en && LANG === 'en' ? `<p class="en">${esc(more.en)}</p>` : ''}
-      ${place || (pinned && !b.private) ? `<p class="place" id="card-place">${place ? `<span>${esc(place)}</span>` : ''}${pinned && !b.private ? mapsPin(b) : ''}</p>` : ''}
+      ${place || (pinned && !b.private) ? `<p class="place" id="card-place">${place ? `<span>${esc(place)}</span>` : ''}${pinned && !b.private ? mapsPin(b, more) : ''}</p>` : ''}
       <div class="when"><span class="y" ${more.name ? '' : 'id="card-title"'}>${approx(yearLine(b, label, T, more.yc))}</span>
         ${unknown || b.yflag === YFLAG.PERIOD ? '' : `<span class="period">${esc(label)}</span>`}</div>
     </header>`;

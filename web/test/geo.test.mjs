@@ -16,6 +16,14 @@ test('SWEREF 99 18 00 to WGS84: the central meridian and Stortorget', () => {
   assert.ok(latS < lat);
 });
 
-test('the Google Maps link searches the coordinates, no key', () => {
+test('the Google Maps link searches the coordinates when the card has no address, no key', () => {
   assert.match(googleMapsUrl(0, 0, ORIGIN), /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=59\.32\d{4},18\.07\d{4}$/);
+  assert.equal(googleMapsUrl(0, 0, ORIGIN, ''), googleMapsUrl(0, 0, ORIGIN));
+});
+
+test('with an address the Google Maps link searches it in Stockholm, encoded', () => {
+  assert.equal(googleMapsUrl(0, 0, ORIGIN, 'Wollmar Yxkullsgatan 4'),
+    'https://www.google.com/maps/search/?api=1&query=Wollmar%20Yxkullsgatan%204%2C%20Stockholm');
+  assert.equal(googleMapsUrl(0, 0, ORIGIN, 'Lövängsgatan 12'),
+    'https://www.google.com/maps/search/?api=1&query=L%C3%B6v%C3%A4ngsgatan%2012%2C%20Stockholm');
 });

@@ -57,7 +57,9 @@ test('a pinned card has a Google Maps pin, but never a private house\'s', async 
   await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), other);
   const pin = page.locator('#card.pinned .gmaps');
   await expect(pin).toHaveCount(1);
-  await expect(pin).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=59\.\d{6},1[78]\.\d{6}$/);
+  // the card's first address in Stockholm, or the building's position when its card has no address
+  await expect(pin).toHaveAttribute('href',
+    /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=([^&]+%2C%20Stockholm|59\.\d{6},1[78]\.\d{6})$/);
   await expect(pin).toHaveAttribute('aria-label', 'Open in Google Maps');
   await page.evaluate(g => window.__dbg.pinCard(g, 300, 300), home);
   await expect(page.locator('#card.pinned')).toBeVisible();

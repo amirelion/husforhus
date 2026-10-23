@@ -18,10 +18,12 @@ Plans, not promises: the order can change.
 ### Features
 - **A turn button.** Right after the compass, an orbit button (or the T key) switches a plain drag, or a one-finger drag on a phone, from moving the map to turning and tilting it; a right-drag or ⌘/Ctrl-drag then moves it, and two fingers zoom and move. Its tooltip says what a press does, the hint under the map follows the mode, and every visit starts in move mode.
 - **AB Stadsholmen's fact sheets.** A Gamla stan card can name AB Stadsholmen's fact sheet (written with the City Museum) as its source, with the years the house was raised, rebuilt or given a new front. Used with the company's permission; the card links its list of properties.
+- **Google Maps by address.** A pinned card's map pin now searches the building's address in Stockholm, so Google opens its own place for it (with directions) instead of a bare pin at coordinates; a card without an address still uses the position.
 - **Historiska museet's card** is named for the museum and dated by the museum building (1934–1940), with the older Kanslikasernen range as a second line.
 
 ### Data
 - Data version `v20261023-fx6`: 158 rows from AB Stadsholmen's fact sheets on 59 Gamla stan footprints (Gamla stan's "Year unknown" falls from 175 to 157 of 442); 11 more institutions placed by hand (196 in search), among them Skogskyrkogården, Polismuseet, Unga Klara and Kista bibliotek; Kista Science Tower's Wikidata item moved onto the tower. Otherwise as `v20261021-fx5`.
+- Data version `v20261023-fx7`: Prästgatan 13's fact sheet, read from stadsholmen.se once it answered again, adds the house's rebuild of 1863. The site's other 52 Gamla stan sheets are byte-identical to the archive copies `v20261023-fx6` used. Otherwise as `v20261023-fx6`.
 
 ## 2026-10-21
 
