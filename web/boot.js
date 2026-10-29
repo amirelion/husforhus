@@ -4,11 +4,13 @@
 // so the listener captures it on the window. A module that arrives but cannot run (a top-level throw, or syntax the
 // browser cannot parse) reports on the window itself, with the module's address; that counts while nothing has
 // loaded yet. A file, not an inline handler: the page's Content-Security-Policy allows scripts from its own address
-// only (scripts/build_dist.py).
+// only (scripts/build_dist.py). Only the site's own scripts count: a script someone else adds to the page (the host's
+// analytics beacon, which that policy blocks, or a browser extension's) failing is not the city failing. Counting it
+// once wiped the percentage mid-load and stopped the tiles on phones (2026-10-29).
 addEventListener('error', e => {
   const el = document.getElementById('loading');
   if (!el) return;
-  const fetchFailed = e.target instanceof HTMLScriptElement;
+  const fetchFailed = e.target instanceof HTMLScriptElement && e.target.src.startsWith(location.origin + '/');
   const runFailed = e.target === window && /^[^?#]*\.js([?#]|$)/.test(e.filename || '')
     && e.filename.startsWith(location.origin) && document.getElementById('progress')?.textContent === '0';
   if (!fetchFailed && !runFailed) return;

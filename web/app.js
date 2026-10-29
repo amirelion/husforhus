@@ -1025,7 +1025,8 @@ for (const w of pool) {
   w.onmessage = ({ data }) => {
     addTile(data);
     loaded++;
-    progressEl.textContent = Math.round(100 * loaded / config.tiles.length);
+    // A failure message replaces the percentage; the lane must go on loading tiles all the same.
+    if (progressEl?.isConnected) progressEl.textContent = Math.round(100 * loaded / config.tiles.length);
     if (loaded === config.tiles.length && !failedId) {   // a failure stays
       document.getElementById('loading').hidden = true;
       document.getElementById('ready').textContent = T('ui.ready');   // the live region's "done" (finding 7)

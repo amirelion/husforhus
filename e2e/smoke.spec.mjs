@@ -640,6 +640,22 @@ test('a module that fails to run shows the failure message', async ({ page }) =>
   expect(errors).toEqual([]);
 });
 
+// A script someone else adds (the host's analytics beacon, blocked by the page's policy, or an extension's) failing is
+// not the city failing: the percentage stays and every tile loads. Counting it stopped the tiles on phones (2026-10-29).
+test("another site's failed script does not stop the city", async ({ page }) => {
+  const errors = watchErrors(page, e => /beacon\.example/.test(e));
+  await page.route('https://beacon.example/**', route => route.abort());
+  await page.addInitScript(() => document.addEventListener('DOMContentLoaded', () => {
+    const s = document.createElement('script');
+    s.src = 'https://beacon.example/beacon.min.js';
+    document.body.append(s);
+  }));
+  await page.goto('/');
+  await expect(page.locator('#loading')).toBeHidden({ timeout: 30000 });
+  expect(await page.evaluate(() => document.getElementById('ready').textContent)).not.toBe('');
+  expect(errors).toEqual([]);
+});
+
 // The first paint is Ärg before any script runs: styles.css's own tokens, font and color-scheme, so a slow
 // app.js never shows another look first. Here app.js never arrives.
 test('the page is in Ärg before app.js runs', async ({ page }) => {

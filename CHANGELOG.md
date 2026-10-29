@@ -13,6 +13,11 @@ Plans, not promises: the order can change.
 - **More blue plaques** when Samfundet S:t Erik publishes its updated plaque list, and a second look at the 17 plaques not yet placed on a building (the other 17 unplaced are on bridges).
 - **Finer ground.** Lantmäteriet's 1 m elevation model instead of the City's contour lines, which also fixes about 130 buildings that stand on too-tall pedestals.
 
+## 2026-10-29
+
+### Fixes
+- **The city loads on phones again.** A script the host adds to the page (and the page's own security policy blocks) was taken for a failed start: the loading line showed "Could not load the city data" or lost its percentage, and only a few blocks in the middle of the city were drawn. Only the site's own scripts count now, and the tiles keep loading whatever the loading line shows.
+
 ## 2026-10-23
 
 ### Features
