@@ -9,7 +9,8 @@
     "dist": "uv run python scripts/build_dist.py",
     "preview:local": "npm run dist -- --allow-dirty && wrangler dev --port 8787",
     "deploy:preview": "npm run test:web && npm run dist && wrangler deploy --message \"commit $(git rev-parse --short HEAD)\"",
-    "test:worker": "node --test src/test/*.test.mjs",
+    "check:live": "node scripts/check_live.mjs",
+    "test:worker":"node --test src/test/*.test.mjs",
     "test:e2e:worker": "playwright test --config playwright.worker.config.mjs"
   },
   "devDependencies": {
