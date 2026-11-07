@@ -10,9 +10,10 @@
 addEventListener('error', e => {
   const el = document.getElementById('loading');
   if (!el) return;
-  const fetchFailed = e.target instanceof HTMLScriptElement && e.target.src.startsWith(location.origin + '/');
-  const runFailed = e.target === window && /^[^?#]*\.js([?#]|$)/.test(e.filename || '')
-    && e.filename.startsWith(location.origin) && document.getElementById('progress')?.textContent === '0';
+  const ours = url => (url || '').startsWith(location.origin + '/');
+  const fetchFailed = e.target instanceof HTMLScriptElement && ours(e.target.src);
+  const runFailed = e.target === window && /^[^?#]*\.js([?#]|$)/.test(e.filename || '') && ours(e.filename)
+    && document.getElementById('progress')?.textContent === '0';
   if (!fetchFailed && !runFailed) return;
   el.hidden = false;
   el.textContent = swedish()

@@ -1022,17 +1022,18 @@ for (const w of pool) {
   };
   // A tile that fails to parse throws inside the worker; without this its lane would stop at a percentage.
   w.onerror = e => loadFailed(e);
+  // The next tile first: nothing that throws below may stop this lane (one throw once stopped the tiles on phones).
   w.onmessage = ({ data }) => {
-    addTile(data);
+    next();
+    try { addTile(data); } catch (e) { loadFailed(e); }
     loaded++;
-    // A failure message replaces the percentage; the lane must go on loading tiles all the same.
-    if (progressEl?.isConnected) progressEl.textContent = Math.round(100 * loaded / config.tiles.length);
+    // No #progress if a failure message replaced the line before the tiles started.
+    if (progressEl) progressEl.textContent = Math.round(100 * loaded / config.tiles.length);
     if (loaded === config.tiles.length && !failedId) {   // a failure stays
       document.getElementById('loading').hidden = true;
       document.getElementById('ready').textContent = T('ui.ready');   // the live region's "done" (finding 7)
       foldCreditSoon();
     }
-    next();
   };
   next();
 }

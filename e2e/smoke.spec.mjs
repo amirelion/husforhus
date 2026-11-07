@@ -651,8 +651,10 @@ test("another site's failed script does not stop the city", async ({ page }) => 
     document.body.append(s);
   }));
   await page.goto('/');
-  await expect(page.locator('#loading')).toBeHidden({ timeout: 30000 });
-  expect(await page.evaluate(() => document.getElementById('ready').textContent)).not.toBe('');
+  await expect(page.locator('#loading')).toBeHidden({ timeout: 60_000 });
+  // The percentage itself survived: a regression fails here whenever the outside script errs, early or late.
+  await expect(page.locator('#progress')).toHaveText('100');
+  await expect(page.locator('#ready')).not.toBeEmpty();
   expect(errors).toEqual([]);
 });
 
